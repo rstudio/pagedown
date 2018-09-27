@@ -1,0 +1,14 @@
+@import 'https://fonts.googleapis.com/css?family=Old+Standard+TT';
+
+body {
+  font-family: 'Old Standard TT', Palatino, "Palatino Linotype", "Palatino LT STD", Georgia, 'source-han-serif-sc', 'Source Han Serif SC', 'Source Han Serif CN', 'Source Han Serif TC', 'Source Han Serif TW', 'Source Han Serif', 'Songti SC', 'Microsoft YaHei', serif;
+}
+blockquote {
+  font-family: 'Old Standard TT', Palatino, "Palatino Linotype", "Palatino LT STD", Georgia, 'STKaiti', 'KaiTi', '楷体', 'SimKai', 'DFKai-SB', 'NSimSun', serif;
+}
+code {
+  font-family: Consolas, Courier, "Courier New", 'STKaiti', 'KaiTi', 'SimKai', monospace;
+}
+pre, code {
+  font-size: .95em;
+}

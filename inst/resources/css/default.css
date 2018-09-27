@@ -1,0 +1,172 @@
+:root {
+  --background: whitesmoke;
+  --width: 6in;
+  --height: 9in;
+  --color-paper: white;
+  --color-mbox: rgba(0, 0, 0, 0.2);
+}
+
+/* store some string variables */
+h1 {
+  string-set: h1-text content(text);
+}
+h2 {
+  string-set: h2-text content(text);
+}
+
+/* page size */
+@page {
+  size: 6in 9in; /* var(--width) doesn't work in browser when printing */
+}
+@page :blank {
+
+}
+@page :left {
+  @top-left {
+    content: counter(page);
+  }
+  @top-right {
+    content: string(h1-text);
+    white-space: nowrap !important;
+  }
+}
+@page :right {
+  @top-right {
+    content: counter(page);
+  }
+  @top-left {
+    content: string(h2-text);
+    white-space: nowrap !important;
+  }
+}
+@page chapter:first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: counter(page);
+  }
+}
+@page :first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: none !important;
+  }
+}
+
+/* page breaks; aka CSS fragmentation */
+.level1 {
+  page: chapter;
+  break-before: recto;
+}
+h1, h2, h3, h4, h5, h6 {
+  break-after: avoid;
+}
+.footenotes {
+  break-before: always;
+  break-after: always;
+}
+ul {
+  /* break-inside: avoid; */
+}
+
+/* generated content */
+a[href^="http"]::after {
+  content: " (" attr(href) ")";
+  font-size: 90%;
+  hyphens: none;
+  word-break: break-all;
+}
+.main a[href^='#']:not([class^="footnote-"])::after {
+  content: " (page " target-counter(attr(href), page) ")";
+}
+
+/* TOC */
+.toc ul {
+  list-style: none;
+  padding-left: 0;
+  overflow-x: hidden;
+}
+.toc li li {
+  padding-left: 1em;
+}
+.toc a {
+  text-decoration: none;
+  background: white;
+  padding-right: .33em;
+}
+.toc a::after {
+  content: target-counter(attr(href), page);
+  float: right;
+  background: white;
+}
+.toc li::before {
+  float: left;
+  width: 0;
+  white-space: nowrap;
+  /* content: leader(dotted) */
+  content: ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ";
+}
+
+/* misc elements */
+.subtitle span {
+  font-size: .9em;
+}
+img {
+  max-width: 100%;
+}
+.footnotes {
+  font-size: 90%;
+}
+.footnotes hr::before {
+  content: "Footnotes:";
+}
+.footnotes hr {
+  border: none;
+}
+body {
+  hyphens: auto;
+}
+code {
+  hyphens: none;
+}
+
+/* two pages in a row if possible on screen */
+@media screen {
+  body {
+    background-color: var(--background);
+  }
+  .pagedjs_pages {
+    display: flex;
+    max-width: calc(var(--width) * 2);
+    flex: 0;
+    flex-wrap: wrap;
+    margin: 0 auto;
+  }
+  .pagedjs_page {
+    background: var(--color-paper);
+    box-shadow: 0 0 0 1px var(--color-mbox);
+    margin: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    margin: auto auto 5mm auto;
+  }
+}
+
+/* when a row can hold two pages, start first page on the right */
+@media (min-width: 12.32in) {
+  .pagedjs_page {
+    margin: auto 0 5mm 0;
+  }
+  .pagedjs_first_page {
+    margin-left: var(--width);
+  }
+}
