@@ -74,8 +74,8 @@ h1, h2, h3, h4, h5, h6 {
   break-before: always;
   break-after: always;
 }
-ul {
-  /* break-inside: avoid; */
+.figure {
+  break-inside: avoid;
 }
 
 /* generated content */
