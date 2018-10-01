@@ -3,3 +3,14 @@
 language: R
 sudo: false
 cache: packages
+
+before_install:
+  - "curl https://xran.yihui.name/.gitconfig -o ~/.gitconfig"
+
+before_script:
+  - R CMD INSTALL .
+  - Rscript -e "setwd('inst/examples'); for (f in list.files(, '[.]Rmd$')) rmarkdown::render(f)"
+
+after_success:
+  - "(curl https://xran.yihui.name/r-xran | bash)"
+  - cd inst/examples; ./deploy_github

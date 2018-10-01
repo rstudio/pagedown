@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+[ -z "${GH_TOKEN}" ] && exit 0
+[ "${TRAVIS_BRANCH}" != "master" ] && exit 0
+
+OLD_DIR=$(pwd)
+rm -rf ~/_output
+mkdir ~/_output && cd ~/_output
+git clone -b gh-pages https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git .
+cp -r ${OLD_DIR}/* ./
+rm deploy_github *.Rmd index.bib
+git add --all *
+git commit -m"update homepage (travis build ${TRAVIS_BUILD_NUMBER})"
+git push -q -f origin gh-pages
