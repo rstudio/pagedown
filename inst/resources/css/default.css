@@ -79,7 +79,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* generated content */
-a[href^="http"]::after {
+a[href^="http"]:not([class="uri"])::after {
   content: " (" attr(href) ")";
   font-size: 90%;
   hyphens: none;
