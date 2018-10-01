@@ -15,6 +15,7 @@
 #' @param theme The Bootstrap theme. By default, Bootstrap is not used.
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
 #' @return An R Markdown output format.
+#' @import stats utils
 #' @export
 html_paged = function(
   ..., css = c('default-fonts', 'default'), theme = NULL,
