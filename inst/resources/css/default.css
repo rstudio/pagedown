@@ -117,6 +117,9 @@ a[href^="http"]::after {
 }
 
 /* misc elements */
+.shorttitle {
+  display: none;
+}
 .subtitle span {
   font-size: .9em;
 }
