@@ -1,0 +1,66 @@
+---
+title: "pagedown: Create Paged HTML Documents for Printing from R Markdown"
+shorttitle: "Printing R Markdown with CSS"
+author: "Yihui Xie and Romain Lesur"
+date: '`r Sys.Date()`'
+subtitle: A Less Traveled Road to PDF and Printing
+output:
+  pagedown::html_paged: 
+    toc: true
+    self_contained: false
+toc-title: Contents
+bibliography: index.bib
+---
+
+# Introduction
+
+When talking about PDF and printing, we often think of tools like LaTeX and Microsoft Word. When talking about HTML and CSS, we may have never imagined their possible off-screen, use such as printing to PDF.
+
+Can we print a book with HTML and CSS? W3C published [the first working draft](https://www.w3.org/1999/06/WD-css3-page-19990623) on "Paged Media Properties for CSS(3)", which was last updated in 2013. Although the working draft has been there for nearly two decades, it is still not common to see authors write or print books with HTML and CSS. The main reason is that the W3C specs are still in the draft mode, so most web browsers have not really implemented them.
+
+HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it comes to typesetting content under the constraint of "pages". However, they can be extremely powerful and flexible in other aspects, especially when combined with the power of JavaScript.
+
+## CSS for print
+
+## CSS frameworks
+
+# Paged.js {#pagedjs}
+
+# Applications 
+
+# Tests
+
+Test cross-references of pages: [Paged.js](#pagedjs).
+
+A footnote.^[This is a footnote.]
+
+R code chunks:
+
+```{r}
+isFALSE = function(x) {
+  identical(x, FALSE)
+}
+isFALSE(F)
+```
+
+R plots (Figure \@ref(fig:test-plot)):
+
+```{r, test-plot, fig.dim=c(5, 3.5), fig.cap='Test a plot.'}
+par(mar = c(4, 4, .5, .1))
+plot(cars, pch = 19)
+```
+
+Tables (Table \@ref(tab:test-table)):
+
+```{r, test-table}
+knitr::kable(head(iris[, -5]), caption = 'Test a table.')
+```
+
+
+Cite @R-base and @R-pagedown.
+
+```{r, include=FALSE}
+knitr::write_bib(.packages(), 'index.bib')
+```
+
+# Bibliography {-}

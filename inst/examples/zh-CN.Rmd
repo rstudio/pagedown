@@ -1,0 +1,36 @@
+---
+title: "网页排版中文范例"
+author: "谢益辉"
+date: '`r Sys.Date()`'
+subtitle: 不用 Word 或 LaTeX 一样可以生成 PDF
+output:
+  pagedown::html_paged: 
+    toc: true
+    self_contained: false
+toc-title: 目录
+---
+
+# 简介 {#intro}
+
+谁说生成 PDF 一样要用 Word 或 LaTeX 呢？
+
+测试代码：
+
+```{r}
+1 + 1:10
+```
+
+测试引用：
+
+> 姑苏开遍碧桃时，邂逅河阳女画师。  
+红豆江南留梦影，白苹风末唱秋词。  
+除非宿草难为友，那更名花愿作姬。  
+只笑三郎年已老，华清池水恨流脂。
+
+## CSS 打印标准 {#css-standard}
+
+## CSS 样式框架 {#css-frameworks}
+
+# Paged.js {#pagedjs}
+
+# 应用范例 {#applications}
