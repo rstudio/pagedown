@@ -60,7 +60,7 @@ knitr::kable(head(iris[, -5]), caption = 'Test a table.')
 Cite @R-base and @R-pagedown.
 
 ```{r, include=FALSE}
-knitr::write_bib(.packages(), 'index.bib')
+knitr::write_bib(c(.packages(), 'pagedown'), 'index.bib')
 ```
 
 # Bibliography {-}
