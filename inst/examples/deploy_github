@@ -9,6 +9,7 @@ OLD_DIR=$(pwd)
 rm -rf ~/_output
 mkdir ~/_output && cd ~/_output
 git clone -b gh-pages https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git .
+rm -rf *_files
 cp -r ${OLD_DIR}/* ./
 rm deploy_github *.Rmd index.bib
 git add --all *
