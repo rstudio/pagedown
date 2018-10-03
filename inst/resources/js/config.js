@@ -18,8 +18,14 @@ const appendShortTitleSpans = (level) => {
 };
 
 var appendShortTitles1 = appendShortTitleSpans(1);
+var appendShortTitles2 = appendShortTitleSpans(2);
 
 window.PagedConfig = {
-  before: appendShortTitles1,
+  before: () => {
+    return Promise.all([
+      appendShortTitles1(),
+      appendShortTitles2()
+    ]);
+  },
   after: (flow) => { console.log("after", flow) },
 };

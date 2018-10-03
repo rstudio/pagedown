@@ -10,7 +10,8 @@
 .shorttitle1 {
   string-set: h1-text content(text);
 }
-h2 {
+
+.shorttitle2 {
   string-set: h2-text content(text);
 }
 
@@ -117,7 +118,7 @@ a[href^="http"]:not([class="uri"])::after {
 }
 
 /* misc elements */
-.shorttitle1 {
+.shorttitle1, .shorttitle2 {
   display: none;
 }
 .subtitle span {
