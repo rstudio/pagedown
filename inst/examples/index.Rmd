@@ -28,7 +28,7 @@ HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it
 
 # Applications 
 
-# Tests
+# Tests {data-short-title="Alt. level1 running title"}
 
 Test cross-references of pages: [Paged.js](#pagedjs).
 

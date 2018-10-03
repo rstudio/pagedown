@@ -7,7 +7,7 @@
 }
 
 /* store some string variables */
-h1 {
+.shorttitle {
   string-set: h1-text content(text);
 }
 h2 {
