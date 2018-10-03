@@ -7,7 +7,7 @@
 }
 
 /* store some string variables */
-.shorttitle {
+.shorttitle1 {
   string-set: h1-text content(text);
 }
 h2 {
@@ -117,7 +117,7 @@ a[href^="http"]:not([class="uri"])::after {
 }
 
 /* misc elements */
-.shorttitle {
+.shorttitle1 {
   display: none;
 }
 .subtitle span {

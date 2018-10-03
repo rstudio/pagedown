@@ -1,21 +1,25 @@
 // Configuration script for paged.js
 
-const appendShortTitleSpans = () => {
-  return new Promise((resolve, reject) => {
-    Array.from(document.getElementsByClassName('level1')).forEach(div => {
-      var mainHeader = div.getElementsByTagName('h1')[0];
-      var mainTitle = mainHeader.textContent;
-      var runningTitle = 'shortTitle' in div.dataset ? div.dataset.shortTitle : mainTitle;
-      var runningHeader = document.createElement('span');
-      runningHeader.className = 'shorttitle';
-      runningHeader.innerText = runningTitle;
-      div.insertBefore(runningHeader, mainHeader);
+const appendShortTitleSpans = (level) => {
+  return () => {
+    return new Promise((resolve, reject) => {
+      Array.from(document.getElementsByClassName('level' + level)).forEach(div => {
+        var mainHeader = div.getElementsByTagName('h' + level)[0];
+        var mainTitle = mainHeader.textContent;
+        var runningTitle = 'shortTitle' in div.dataset ? div.dataset.shortTitle : mainTitle;
+        var span = document.createElement('span');
+        span.className = 'shorttitle' + level;
+        span.innerText = runningTitle;
+        div.insertBefore(span, mainHeader);
+      });
+      resolve();
     });
-    resolve();
-  });
+  };
 };
 
+var appendShortTitles1 = appendShortTitleSpans(1);
+
 window.PagedConfig = {
-  before: appendShortTitleSpans,
+  before: appendShortTitles1,
   after: (flow) => { console.log("after", flow) },
 };
