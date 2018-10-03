@@ -25,6 +25,22 @@ $endif$
 
 <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
 
+<script type="text/javascript">
+  window.PagedConfig = {
+    auto: false
+  };
+
+  window.MathJax = {
+    AuthorInit: () => {
+      MathJax.Hub.Register.StartupHook("Begin", () => {
+        MathJax.Hub.Queue( () => {
+          window.PagedPolyfill.preview();
+        });
+      });
+    }
+  };
+</script>
+
 $for(header-includes)$
 $header-includes$
 $endfor$
