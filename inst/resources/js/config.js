@@ -1,5 +1,8 @@
 // Configuration script for paged.js
-
+/* A factory returning a function that appends short titles spans.
+   The text content of these spans are reused for running titles (see default.css).
+   Argument: level - An integer between 1 and 6.
+*/
 const appendShortTitleSpans = (level) => {
   return () => {
     return new Promise((resolve, reject) => {
