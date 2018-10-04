@@ -25,6 +25,22 @@ $endif$
 
 <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
 
+<script type="text/javascript">
+  window.PagedConfig = {
+    auto: false
+  };
+
+  window.MathJax = {
+    AuthorInit: () => {
+      MathJax.Hub.Register.StartupHook("Begin", () => {
+        MathJax.Hub.Queue( () => {
+          window.PagedPolyfill.preview();
+        });
+      });
+    }
+  };
+</script>
+
 $for(header-includes)$
 $header-includes$
 $endfor$
@@ -178,12 +194,16 @@ $if(math)$
     var script = document.createElement("script");
     script.type = "text/javascript";
     var src = "$if(mathjax)$$mathjax$$endif$";
-    if (src === "" || src === "true") src = "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
     if (location.protocol !== "file:" && /^https?:/.test(src))
       src = src.replace(/^https?:/, '');
     script.src = src;
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
+</script>
+$else$
+<script>
+  window.PagedPolyfill.preview();
 </script>
 $endif$
 
