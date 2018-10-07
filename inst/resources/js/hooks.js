@@ -1,11 +1,24 @@
 // Hooks for paged.js
 
-// This hook takes the value stored in the data-pagedown-item-num attribute to
-// restart the ordered lists.
-// It is intended to be used with the storeNumbersOrderedLists function (see config.js)
-class numberOl extends Paged.Handler {
+// This hook fixes the bug for ordered lists (when an ordered list is splitted
+// on different pages, the numbering restarts from 1).
+class orderedListsFix extends Paged.Handler {
   constructor(chunker, polisher, caller) {
     super(chunker, polisher, caller);
+  }
+
+  beforeParsed(content) {
+    const orderedLists = content.querySelectorAll('ol');
+
+    function storeNumbers(list) {
+      var items = list.children;
+      for (var i = 0; i < items.length; i++) {
+        items[i].setAttribute('data-pagedown-item-num', i + 1);
+      }
+    }
+    for (var j = 0; j < orderedLists.length; j++) {
+      storeNumbers(orderedLists[j]);
+    }
   }
 
   afterRendered(pages) {
@@ -16,47 +29,42 @@ class numberOl extends Paged.Handler {
   }
 }
 
-// Hook for broken items: when a list item is broken, the marker appears on the
-// remaining content.
-// The following hook removes the marker.
+Paged.registerHandlers(orderedListsFix);
 
-function hasItemParent(node) {
-  if (node.parentElement === null) {
-    return false;
-  } else {
-    if (node.parentElement.tagName === 'LI') {
-      return true;
-    } else {
-      return hasItemParent(node.parentElement);
-    }
-  }
-}
-
-var brokenItem = false;
-
+// Hook fixing the bug for broken items (when a list item is broken, the marker appears on the
+// remaining content).
+// The following hook removes the extra marker.
 class removeMarkerOnBrokenItem extends Paged.Handler {
   constructor(chunker, polisher, caller) {
     super(chunker, polisher, caller);
   }
 
   afterPageLayout(pageFragment, page, breakToken) {
-    if (brokenItem === true) {
-      pageFragment.classList.add('broken-item');
+    function hasItemParent(node) {
+      if (node.parentElement === null) {
+        return false;
+      } else {
+        if (node.parentElement.tagName === 'LI') {
+          return true;
+        } else {
+          return hasItemParent(node.parentElement);
+        }
+      }
     }
-    if (typeof(breakToken) === "undefined") {
-      brokenItem = false;
-    } else {
-      brokenItem = breakToken.node.nodeName === "#text" && hasItemParent(breakToken.node);
+
+    if (breakToken !== undefined) {
+      if (breakToken.node.nodeName === "#text" && hasItemParent(breakToken.node)) {
+        pageFragment.classList.add('broken-item');
+      }
     }
   }
 
   afterRendered(pages) {
-    var brokenItems = document.querySelectorAll('.broken-item li:first-of-type');
+    var brokenItems = document.querySelectorAll('.broken-item+.pagedjs_page li:first-of-type');
     for (var item of brokenItems) {
       item.style.listStyleType = "none";
     }
   }
 }
 
-// Register hooks
-Paged.registerHandlers(numberOl, removeMarkerOnBrokenItem);
+Paged.registerHandlers(removeMarkerOnBrokenItem);
