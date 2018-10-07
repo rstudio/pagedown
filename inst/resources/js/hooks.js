@@ -16,8 +16,8 @@ class orderedListsFix extends Paged.Handler {
         items[i].setAttribute('data-pagedown-item-num', i + 1);
       }
     }
-    for (var j = 0; j < orderedLists.length; j++) {
-      storeNumbers(orderedLists[j]);
+    for (var list of orderedLists) {
+      storeNumbers(list);
     }
   }
 
