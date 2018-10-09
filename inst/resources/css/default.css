@@ -104,15 +104,15 @@ a[href^="http"]:not([class="uri"])::after {
   padding-right: .33em;
 }
 .toc a::after {
+  /* content: leader(dotted) target-counter(attr(href), page); */
   content: target-counter(attr(href), page);
   float: right;
   background: white;
 }
-.toc li::before {
+.toc .leaders::before {
   float: left;
   width: 0;
   white-space: nowrap;
-  /* content: leader(dotted) */
   content: ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ";
 }
 
