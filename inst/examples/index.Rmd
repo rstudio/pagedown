@@ -30,6 +30,8 @@ HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it
 
 # Tests
 
+## Miscellaneous tests used during pagedown development
+
 Test cross-references of pages: [Paged.js](#pagedjs).
 
 A footnote.^[This is a footnote.]
