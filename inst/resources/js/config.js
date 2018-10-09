@@ -14,7 +14,13 @@ function appendShortTitleSpans(level) {
       var span = document.createElement('span');
       span.className = 'shorttitle' + level;
       span.innerText = runningTitle;
-      div.insertBefore(span, mainHeader);
+      mainHeader.insertAdjacentElement('afterend', span);
+      if (level == 1 && div.querySelector('.level2') === null) {
+        var span2 = document.createElement('span');
+        span2.className = 'shorttitle2';
+        span2.innerText = ' ';
+        span.insertAdjacentElement('afterend', span2);
+      }
     }
 
     for (const div of divs) {
