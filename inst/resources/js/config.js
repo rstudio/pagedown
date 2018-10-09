@@ -7,17 +7,14 @@ function appendShortTitleSpans(level) {
   return async () => {
     var divs = Array.from(document.getElementsByClassName('level' + level));
 
-    function addSpan(div) {
-      return new Promise((resolve, reject) => {
-        var mainHeader = div.getElementsByTagName('h' + level)[0];
-        var mainTitle = mainHeader.textContent;
-        var runningTitle = 'shortTitle' in div.dataset ? div.dataset.shortTitle : mainTitle;
-        var span = document.createElement('span');
-        span.className = 'shorttitle' + level;
-        span.innerText = runningTitle;
-        div.insertBefore(span, mainHeader);
-        resolve();
-      });
+    async function addSpan(div) {
+      var mainHeader = div.getElementsByTagName('h' + level)[0];
+      var mainTitle = mainHeader.textContent;
+      var runningTitle = 'shortTitle' in div.dataset ? div.dataset.shortTitle : mainTitle;
+      var span = document.createElement('span');
+      span.className = 'shorttitle' + level;
+      span.innerText = runningTitle;
+      div.insertBefore(span, mainHeader);
     }
 
     for (const div of divs) {
@@ -35,6 +32,5 @@ window.PagedConfig = {
       appendShortTitles1(),
       appendShortTitles2()
     ]);
-  },
-  after: (flow) => { console.log("after", flow) },
+  }
 };
