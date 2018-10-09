@@ -29,6 +29,38 @@ HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it
 # Applications 
 
 # Tests
+## A list
+
+1. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec rhoncus dolor in risus tempor iaculis. Vivamus id euismod leo. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Proin pretium turpis eget orci iaculis, et euismod arcu commodo. Nulla maximus turpis elit, volutpat volutpat mauris fringilla non. Aenean rutrum vitae tortor egestas viverra. Sed malesuada lectus ac efficitur posuere. Nullam euismod odio dolor, id porttitor nulla sodales at. Nunc hendrerit dictum pulvinar. Nunc consequat ante ac urna posuere tincidunt. In ornare ligula ac aliquet tempor. Nunc eros nunc, vehicula vel efficitur quis, mattis ac massa.
+
+1. Etiam mollis nunc ex, ut molestie nisl convallis id. Sed et tellus lacus. Suspendisse ultricies nibh ut malesuada commodo. Mauris venenatis odio at quam interdum semper. Nulla semper, mi sed laoreet efficitur, nulla ipsum elementum ex, in blandit orci massa non lectus. Nullam ac rutrum mauris, ut aliquet orci. Nulla porttitor sit amet erat in lobortis. Praesent cursus sagittis urna eget vestibulum. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+
+1. Quisque a vulputate metus. Vestibulum id odio sed sem rhoncus rutrum ut egestas arcu. Donec tempor purus gravida nibh ultrices euismod. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nunc facilisis luctus tortor, sed maximus arcu condimentum ut. Aliquam erat volutpat. Pellentesque maximus leo erat, at sagittis magna rutrum ac. Mauris pulvinar purus vitae dapibus mollis. Aenean euismod, erat quis tempus elementum, lorem sem tristique justo, sed commodo enim augue at dolor. Etiam lacus nunc, mollis non dui non, vulputate elementum lacus. Aenean ac sem a mi facilisis sollicitudin. Phasellus congue nec massa et laoreet. Quisque dapibus velit nibh, id mattis augue convallis eget. Pellentesque sagittis, neque id maximus hendrerit, eros arcu scelerisque quam, non vestibulum magna dui eget sapien. Etiam rhoncus mattis tortor at tincidunt. Nam interdum, ante et malesuada vestibulum, leo sapien blandit risus, nec sodales dolor lorem eget ex.
+
+1. Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse et imperdiet turpis. Sed nulla massa, lobortis dictum imperdiet et, euismod nec urna. Fusce in nunc sit amet velit tincidunt sodales vitae in augue. Fusce et justo quis arcu ultrices maximus vitae ac massa. Praesent eleifend aliquet aliquam. Ut arcu libero, vehicula et elementum ut, lobortis eu lacus. Duis mollis nisi ut eros tristique, a pharetra neque iaculis. Integer a lorem volutpat, interdum massa ac, viverra tortor.
+
+1. Etiam cursus mauris mi, in pellentesque nulla imperdiet non. Nullam ut condimentum leo. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Integer tempor enim maximus enim tincidunt, id maximus nulla malesuada. Praesent sed lectus dapibus, laoreet dui eu, ultricies ex. Proin dignissim tellus dolor, ac vulputate metus porta a. Proin in libero ut ligula varius scelerisque nec eget sem. Duis ullamcorper risus massa, quis euismod enim sagittis nec. Phasellus justo magna, mollis ac erat vitae, porta pharetra massa. In ornare posuere ipsum at posuere. Sed metus lacus, rutrum sed laoreet ut, porta vitae augue. Suspendisse vel odio nunc. Nulla et tellus in justo aliquet efficitur. Aliquam erat volutpat.
+
+1. Cras ipsum metus, mollis eu ultrices ut, lobortis nec nisl. Donec egestas mollis faucibus. Vestibulum lobortis dictum arcu a egestas. Nunc posuere molestie ante, iaculis ultrices urna porttitor et. Nullam nec ligula non purus tincidunt sollicitudin. Fusce eu cursus erat. Sed dapibus, urna et auctor dignissim, magna dui pulvinar quam, vel mattis felis justo at eros. Integer commodo vitae arcu sed dignissim. In porttitor nibh sapien, eget dignissim nulla malesuada et. Vestibulum non justo eros. Duis venenatis tortor tincidunt tortor pretium molestie. Donec efficitur mattis porta.
+
+## Test mathjax
+
+The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
+
+How about some RBM stuff first:  
+$$
+  E(\mathbf{v}, \mathbf{h}) = -\sum_{i,j}w_{ij}v_i h_j - \sum_i b_i v_i - \sum_j c_j h_j
+$$
+It works! Multiline equations?
+$$
+  \begin{align}
+    p(v_i=1|\mathbf{h}) & = \sigma\left(\sum_j w_{ij}h_j + b_i\right) \\
+    p(h_j=1|\mathbf{v}) & = \sigma\left(\sum_i w_{ij}v_i + c_j\right)
+  \end{align}
+$$
+It also works. Inline equations? Here is an example: $p(x|y) = \frac{p(y|x)p(x)}{p(y)}$. It still works perfectly well.
+
+## Miscellaneous tests used during pagedown development
 
 Test cross-references of pages: [Paged.js](#pagedjs).
 
@@ -62,22 +94,5 @@ Cite @R-base and @R-pagedown.
 ```{r, include=FALSE}
 knitr::write_bib(c(.packages(), 'pagedown'), 'index.bib')
 ```
-
-## Test mathjax
-
-The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
-
-How about some RBM stuff first:  
-$$
-  E(\mathbf{v}, \mathbf{h}) = -\sum_{i,j}w_{ij}v_i h_j - \sum_i b_i v_i - \sum_j c_j h_j
-$$
-It works! Multiline equations?
-$$
-  \begin{align}
-    p(v_i=1|\mathbf{h}) & = \sigma\left(\sum_j w_{ij}h_j + b_i\right) \\
-    p(h_j=1|\mathbf{v}) & = \sigma\left(\sum_i w_{ij}v_i + c_j\right)
-  \end{align}
-$$
-It also works. Inline equations? Here is an example: $p(x|y) = \frac{p(y|x)p(x)}{p(y)}$. It still works perfectly well.
 
 # Bibliography {-}

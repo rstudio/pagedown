@@ -35,6 +35,6 @@ html_paged = function(
 pagedjs_dependency = function(css = NULL) {
   list(htmltools::htmlDependency(
     'paged', packageVersion('pagedown'), src = pkg_resource(),
-    script = c('js/paged.js'), stylesheet = file.path('css', css), all_files = FALSE
+    script = c('js/config.js', 'js/paged.js', 'js/hooks.js'), stylesheet = file.path('css', css), all_files = FALSE
   ))
 }
