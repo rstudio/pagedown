@@ -2,7 +2,7 @@
 
 // This hook fixes the bug for ordered lists (when an ordered list is splitted
 // on different pages, the numbering restarts from 1).
-class orderedListsFix extends Paged.Handler {
+Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
     super(chunker, polisher, caller);
   }
@@ -27,14 +27,12 @@ class orderedListsFix extends Paged.Handler {
       list.start = list.firstElementChild.dataset.pagedownItemNum;
     }
   }
-}
-
-Paged.registerHandlers(orderedListsFix);
+});
 
 // Hook fixing the bug for broken items (when a list item is broken, the marker appears on the
 // remaining content).
 // The following hook removes the extra marker.
-class removeMarkerOnBrokenItem extends Paged.Handler {
+Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
     super(chunker, polisher, caller);
   }
@@ -65,6 +63,4 @@ class removeMarkerOnBrokenItem extends Paged.Handler {
       item.style.listStyleType = "none";
     }
   }
-}
-
-Paged.registerHandlers(removeMarkerOnBrokenItem);
+});
