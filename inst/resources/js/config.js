@@ -1,6 +1,14 @@
 // Configuration script for paged.js
 
 (function() {
+  // This function add spans for leading symbols.
+  async function addLeadersSpans() {
+    var anchors = document.querySelectorAll('.toc a');
+    for (var a of anchors) {
+      a.innerHTML = a.innerHTML + '<span class="leaders"></span>';
+    }
+  }
+
   /* A factory returning a function that appends short titles spans.
      The text content of these spans are reused for running titles (see default.css).
      Argument: level - An integer between 1 and 6.
@@ -35,8 +43,9 @@
   var appendShortTitles2 = appendShortTitleSpans(2);
 
   window.PagedConfig = {
-    before: () => {
-      return Promise.all([
+    before: async () => {
+      await Promise.all([
+        addLeadersSpans(),
         appendShortTitles1(),
         appendShortTitles2()
       ]);
