@@ -44,15 +44,18 @@ HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it
 
 1. Cras ipsum metus, mollis eu ultrices ut, lobortis nec nisl. Donec egestas mollis faucibus. Vestibulum lobortis dictum arcu a egestas. Nunc posuere molestie ante, iaculis ultrices urna porttitor et. Nullam nec ligula non purus tincidunt sollicitudin. Fusce eu cursus erat. Sed dapibus, urna et auctor dignissim, magna dui pulvinar quam, vel mattis felis justo at eros. Integer commodo vitae arcu sed dignissim. In porttitor nibh sapien, eget dignissim nulla malesuada et. Vestibulum non justo eros. Duis venenatis tortor tincidunt tortor pretium molestie. Donec efficitur mattis porta.
 
-## Test mathjax
+## Test MathJax
 
 The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
 
-How about some RBM stuff first:  
+How about some RBM stuff first:
+
 $$
   E(\mathbf{v}, \mathbf{h}) = -\sum_{i,j}w_{ij}v_i h_j - \sum_i b_i v_i - \sum_j c_j h_j
 $$
+
 It works! Multiline equations?
+
 $$
   \begin{align}
     p(v_i=1|\mathbf{h}) & = \sigma\left(\sum_j w_{ij}h_j + b_i\right) \\
