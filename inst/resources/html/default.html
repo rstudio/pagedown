@@ -25,6 +25,33 @@ $endif$
 
 <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
 
+$if(math)$
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  window.PagedConfig = {
+    before: () => {
+      return new Promise((resolve, reject) => {
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        var src = "true";
+        if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+        if (location.protocol !== "file:" && /^https?:/.test(src))
+          src = src.replace(/^https?:/, '');
+        script.src = src;
+        window.MathJax = {
+          AuthorInit: () => {
+            MathJax.Hub.Register.StartupHook("Begin", () => {
+              MathJax.Hub.Queue(resolve);
+            });
+          }
+        };
+        document.getElementsByTagName("head")[0].appendChild(script);
+      });
+    }
+  };
+</script>
+$endif$
+
 $for(header-includes)$
 $header-includes$
 $endfor$
@@ -171,21 +198,6 @@ $$(document).ready(function () {
 </script>
 $endif$
 
-$if(math)$
-<!-- dynamically load mathjax for compatibility with self-contained -->
-<script>
-  (function () {
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    var src = "$if(mathjax)$$mathjax$$endif$";
-    if (src === "" || src === "true") src = "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML";
-    if (location.protocol !== "file:" && /^https?:/.test(src))
-      src = src.replace(/^https?:/, '');
-    script.src = src;
-    document.getElementsByTagName("head")[0].appendChild(script);
-  })();
-</script>
-$endif$
 
 </body>
 </html>
