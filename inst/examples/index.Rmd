@@ -28,8 +28,9 @@ HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it
 
 # Applications 
 
-# Tests
-## A list
+# Tests {data-short-title="Some tests"}
+
+## A list {data-short-title="An ordered list"}
 
 1. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec rhoncus dolor in risus tempor iaculis. Vivamus id euismod leo. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Proin pretium turpis eget orci iaculis, et euismod arcu commodo. Nulla maximus turpis elit, volutpat volutpat mauris fringilla non. Aenean rutrum vitae tortor egestas viverra. Sed malesuada lectus ac efficitur posuere. Nullam euismod odio dolor, id porttitor nulla sodales at. Nunc hendrerit dictum pulvinar. Nunc consequat ante ac urna posuere tincidunt. In ornare ligula ac aliquet tempor. Nunc eros nunc, vehicula vel efficitur quis, mattis ac massa.
 

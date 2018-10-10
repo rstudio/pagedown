@@ -4,13 +4,15 @@
   --height: 9in;
   --color-paper: white;
   --color-mbox: rgba(0, 0, 0, 0.2);
+  --running-title-width: 2.5in;
 }
 
 /* store some string variables */
-h1 {
+.shorttitle1 {
   string-set: h1-text content(text);
 }
-h2 {
+
+.shorttitle2 {
   string-set: h2-text content(text);
 }
 
@@ -21,24 +23,51 @@ h2 {
 @page :blank {
 
 }
+
+/* left page */
+.running-h1-title {
+  position: running(runningH1Title);
+  width: var(--running-title-width);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.running-h1-title:before {
+  content: string(h1-text);
+}
 @page :left {
   @top-left {
     content: counter(page);
   }
   @top-right {
-    content: string(h1-text);
+    content: element(runningH1Title);
     white-space: nowrap !important;
   }
+}
+
+/* right page */
+.running-h2-title {
+  position: running(runningH2Title);
+  width: var(--running-title-width);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.running-h2-title:before {
+  /* We would want to write: */
+  /* content: string(h2-text, start); */
+  /* However, this is yet unsupported by Paged.js, see https://gitlab.pagedmedia.org/tools/pagedjs/issues/38 */
+  content: string(h2-text);
 }
 @page :right {
   @top-right {
     content: counter(page);
   }
   @top-left {
-    content: string(h2-text);
+    content: element(runningH2Title);
     white-space: nowrap !important;
   }
 }
+
+/* New chapter page */
 @page chapter:first {
   @top-left {
     content: none;
@@ -117,7 +146,7 @@ a[href^="http"]:not([class="uri"])::after {
 }
 
 /* misc elements */
-.shorttitle {
+.shorttitle1, .shorttitle2 {
   display: none;
 }
 .subtitle span {
