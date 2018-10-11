@@ -15,7 +15,7 @@
 #' @param theme The Bootstrap theme. By default, Bootstrap is not used.
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
 #' @return An R Markdown output format.
-#' @import stats utils
+#' @import stats utils xfun
 #' @export
 html_paged = function(
   ..., css = c('default-fonts', 'default'), theme = NULL,
@@ -26,7 +26,7 @@ html_paged = function(
   check_css(css2)
   html_document2 = function(..., extra_dependencies = list()) {
     bookdown::html_document2(..., extra_dependencies = c(
-      extra_dependencies, pagedjs_dependency(paste0(css2, '.css'))
+      extra_dependencies, pagedjs_dependency(with_ext(css2, '.css'))
     ))
   }
   html_document2(..., css = css, theme = theme, template = template)
