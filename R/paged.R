@@ -19,7 +19,7 @@
 #' @export
 html_paged = function(
   ..., css = c('default-fonts', 'default'), theme = NULL,
-  template = pkg_resource('html', 'default.html')
+  template = pkg_resource('html', 'paged.html')
 ) {
   css2 = grep('[.]css$', css, value = TRUE, invert = TRUE)
   css  = setdiff(css, css2)

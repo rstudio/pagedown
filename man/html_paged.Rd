@@ -5,7 +5,7 @@
 \title{Create a paged HTML document suitable for printing}
 \usage{
 html_paged(..., css = c("default-fonts", "default"), theme = NULL, 
-    template = pkg_resource("html", "default.html"))
+    template = pkg_resource("html", "paged.html"))
 }
 \arguments{
 \item{...}{Arguments passed to \code{bookdown::html_document2}.}
