@@ -21,20 +21,26 @@ html_paged = function(
   ..., css = c('default-fonts', 'default'), theme = NULL,
   template = pkg_resource('html', 'paged.html')
 ) {
+  html_format(..., css = css, theme = theme, template = template, .pagedjs = TRUE)
+}
+
+pagedown_dependency = function(css = NULL, js = FALSE) {
+  list(htmltools::htmlDependency(
+    'paged', packageVersion('pagedown'), src = pkg_resource(),
+    script = if (js) c('js/config.js', 'js/paged.js', 'js/hooks.js'),
+    stylesheet = file.path('css', css), all_files = FALSE
+  ))
+}
+
+html_format = function(..., css, template, .dependencies = NULL, .pagedjs = FALSE) {
   css2 = grep('[.]css$', css, value = TRUE, invert = TRUE)
   css  = setdiff(css, css2)
   check_css(css2)
   html_document2 = function(..., extra_dependencies = list()) {
     bookdown::html_document2(..., extra_dependencies = c(
-      extra_dependencies, pagedjs_dependency(xfun::with_ext(css2, '.css'))
+      extra_dependencies, .dependencies,
+      pagedown_dependency(xfun::with_ext(css2, '.css'), .pagedjs)
     ))
   }
-  html_document2(..., css = css, theme = theme, template = template)
-}
-
-pagedjs_dependency = function(css = NULL) {
-  list(htmltools::htmlDependency(
-    'paged', packageVersion('pagedown'), src = pkg_resource(),
-    script = c('js/config.js', 'js/paged.js', 'js/hooks.js'), stylesheet = file.path('css', css), all_files = FALSE
-  ))
+  html_document2(..., css = css, template = template)
 }
