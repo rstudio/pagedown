@@ -146,9 +146,6 @@ a[href^="http"]:not([class="uri"])::after {
 }
 
 /* misc elements */
-.shorttitle1, .shorttitle2 {
-  display: none;
-}
 .subtitle span {
   font-size: .9em;
 }
