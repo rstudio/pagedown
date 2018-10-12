@@ -3,4 +3,3 @@
 export(html_paged)
 import(stats)
 import(utils)
-import(xfun)
