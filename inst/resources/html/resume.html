@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"$if(lang)$ lang="$lang$" xml:lang="$lang$"$endif$>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="generator" content="pandoc" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    $for(author-meta)$<meta name="author" content="$author-meta$" />$endfor$
+    $if(date-meta)$<meta name="date" content="$date-meta$" />$endif$
+    <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+
+    $for(header-includes)$
+    $header-includes$
+    $endfor$
+
+    $for(css)$
+    <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
+    $endfor$
+
+  </head>
+  <body>
+    $for(include-before)$
+    $include-before$
+    $endfor$
+
+    <section id="main">
+      <header id="title">
+        <h1>$left-column.title.main$</h1>
+        <span class="subtitle">$left-column.title.sub$</span>
+      </header>
+      $for(left-column.blocks)$
+      <section class="main-block$if(left-column.blocks.concise)$ concise$endif$">
+        <h2>
+          <i class="fa fa-$left-column.blocks.icon$"></i> $left-column.blocks.title$
+        </h2>
+        $for(left-column.blocks.items)$
+        <section class="blocks">
+          <div class="date">
+            $if(left-column.blocks.items.from)$<span>$left-column.blocks.items.from$</span>$endif$
+            $if(left-column.blocks.items.to)$<span>$left-column.blocks.items.to$</span>$endif$
+          </div>
+          <div class="decorator">
+          </div>
+          <div class="details">
+            <header>
+              <h3>$left-column.blocks.items.name$</h3>
+              $if(left-column.blocks.items.place)$<span class="place">$left-column.blocks.items.place$</span>$endif$
+              $if(left-column.blocks.items.location)$<span class="location"><i class="fas fa-map-marker-alt"></i> $left-column.blocks.items.location$</span>$endif$
+            </header>
+            <div$if(left-column.blocks.items.concise)$ class="concise"$endif$>$left-column.blocks.items.content$</div>
+          </div>
+        </section>
+        $endfor$
+      </section>
+      $endfor$
+    </section>
+
+    <aside id="sidebar">
+      $for(right-column)$
+      <div class="side-block" id="$right-column.id$">
+        $if(right-column.title)$<h1>$right-column.title$</h1>$endif$
+        $right-column.content$
+      </div>
+      $endfor$
+    </aside>
+
+    $for(include-after)$
+    $include-after$
+    $endfor$
+
+  </body>
+</html>
