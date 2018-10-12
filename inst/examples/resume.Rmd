@@ -1,117 +1,134 @@
 ---
-title: "Jon Snow's Resume"
-author: Jon Snow
+title: "Lijia Yu's resume"
+author: Lijia Yu
 date: "`r Sys.Date()`"
 output:
   pagedown:::html_resume:
     self_contained: false
 left-column:
   title:
-    main: Jon Snow
-    sub:  King in the North
+    main: Lijia Yu
+    sub:  Currently searching for a PhD student position
 
   blocks:
-  - title: Experiences
-    icon:  suitcase
-    items:
-    - name: Bastard in Residence
-      place: Winterfell Castle
-      location: North
-      from: 2001
-      content: |
-        - Spent time with the rest of the family.
-        - Waited outside on formal occasions.
-    - name: Lord Commander
-      place: Night Watch
-      location: Castle Black
-      from: 2001
-      to: 2006
-      content: |
-        - Defended a thousand-years tradition
-        - Liked the job so much, got stabbed and died and still came back
-          the next SHanged all the rascals.
-    - name: King in the North
-      place: Winterfell Castle
-      location: North
-      from: 2006
-      to: 2007
-      content: |
-        - Tightened links with the Mother of Dragons
-        - Wisely delegated important responsabilities to my sister.
-      
-  - title: Selected Projects
-    icon: folder-open
-    items:
-    - name: Hardhome Rescue
-      place: Some Workplace
-      to: 2006
-      content: |
-        - Came there for the people, stayed for the white walkers. 
-        - Brought back a few hundred wildings.
-    - name: Wilding Raid Rebutal
-      place: Some other workplace
-      to: 2006
-      content: |
-        - Fought back one of the largest wilding armies ever.
-        - Stepped up when the commander was down.
-        - Events led to my nomination as Lord Commander
-    - name: White Walker Capture
-      place: Some other workplace
-      to: 2007
-      content: |
-        - Organized and led an elite squadron for the capture of a Walker.
-        - Outcome led to world peace in front of a common ennemy.
-
+    
   - title: Education
     icon: graduation-cap
     concise: true
     items:
-    - name: Martial Training
-      place: Winterfell Castle
-      location: North
-      from: 2001
-      content: >
-        Relationship of the number with the answer to life, the universe and
-        everything
-    - name: Squire Training
-      place: Castle Black
-      location: North
-      from: 2001
-      to: 2003
-      content: >
-        Made the bed, folded the towels, listened a lot.
-    - name: School of Life
-      concise: true
-      content: |
-        Generic dialectic life lessons including
-        
-        - Do we ever *know* anything ?
-        - Is *this* a trick ?
-        - How to king
+    - name: Beijing University of Chemical Technology
+      place: B.S. in Information and Computing Sciences
+      location: Beijing, China
+      to: 2010
+      #content: >
+      #  Thesis: Dyadic wavelet and its application in edge detection
+    - name: University of Chinese Academy of Sciences
+      place: M.S. in Bioinformatics
+      location: Beijing, China
+      to: 2014
+      #content: 
+        #Thesis: A multi-omics study for intra-individual divergence of the distributions between mRNA isoforms in mammals
 
+        
+  - title: Research Experience
+    icon:  laptop
+    items:
+    - name: Graduate Research Assistant
+      place: Beijing Institute of Genomics, Chinese Academy of Sciences
+      location: Beijing, China
+      from: 2011
+      to: 2014
+      content: |
+        - Performed computational biology research towards understanding regulation of alternative splicing in human and mouse transcriptome.
+        - Found EGFR pathway related mutations, aimed to understand the impacts of cancer mutations on EGFR signaling pathway.
+    - name: Bioinformatican
+      place: My Health Gene Technology Co., Ltd.
+      location: Beijing, China
+      from: 2015
+      to: 2016
+      content: |
+        - Investigated how cancer cells spread to other parts of the body at the single cell level.
+    - name: Visiting Scientist
+      place: University of Alabama at Birmingham
+      location: AL, USA
+      from: 2016
+      to: 2018
+      content: |
+        - Investigated the role of mitochondria in development of cancer.
+        - Investigated the evolution of genome architecture and its role in important evolutionary events.
+        - Detected thrombotic thrombocytopenic purpura related mutations in mutiple patients' blood genome.
+      
+  - title: Professional Experience
+    icon: suitcase
+    items:
+    - name: Data Scientist, intern
+      place: SupStat Inc.
+      location: Beijing, China
+      to: 2014
+      content: |
+        - Taught R language for beginners. 
+        - Wrote Shiny app demos.
+        - Converted statistical tutorials from SPSS to R language.
+    - name: Bioinformatician
+      place: My Health Gene Technology Co., Ltd.
+      location: Beijing, China
+      from: 2015
+      to: 2016
+      content: |
+        - Analyzed whole-exome sequencing data. 
+        - Wrote analysis pipelines of ChIP-seq, single cell DNA-seq and single cell RNA-seq.
+        - Studied tumor metastasis and wrote research report. 
+        - Also did case studies to identify the genetic defect causing rare disease.
+
+
+  - title: Teaching Experience
+    icon: chalkboard-teacher
+    items:
+      - name: Introduction to R Language for Beginners.
+        place: Instructor of R and Data Mining Training Courses at SupStat Inc.
+        location: Beijing, China
+        to: 2014
+      - name: Computational Biology and Bioinformatics.
+        place: Teaching assistant of GBS CB2-201 courses at UAB
+        location: AL, USA
+        from: 2016
+        to: 2017
+
+  - title: Selected Publications and Posters
+    icon: file
+    items:
+      - name: Genetic and epigenetic signals are found predictive to the distribution of intra-individual divergence of alternative splicing.
+        place: Poster for 2013 International Conference of Genomics
+        location: Qingdao, China
+        to: 2014
+        content: |
+          **Yu L**, Chen B, Zhang Z.
+      - name: ESCRT-0 complex modulates Rbf mutant cell survival by regulating Rhomboid endosomal trafficking and EGFR signaling.
+        place: J Cell Sci. 2016 May 15;129(10):2075-84.
+        to: 2016 
+        content: |
+          Sheng Z, **Yu L**, Zhang T, Pei X, Li X, Zhang Z and Du W. 
+       
 right-column:
 - title: Contact Info
   id: contact
   content: |
-    - <i class="fa fa-globe"></i> jonsnow.nth
-    - <i class="fa fa-linkedin"></i> linkedin.com/in/john
-    - <i class="fa fa-envelope"></i> jonsnow@example.com
-    - <i class="fa fa-twitter"></i> @kingInTheNorthBaby
-    - <i class="fa fa-phone"></i> 800.000.0000
+    - <i class="fa fa-envelope"></i> lijia.yu@outlook.com
+    - <i class="fa fa-github"></i> github.com/yulijia
+    - <i class="fa fa-phone"></i> +1 000-000-0000
+    - For more information, please contact me via email.
 - title: Skills
   id: skills
   content: |
-    - Fighting
-    - Wall climbing
+    - Experienced in statistical analysis, statistical learning models, and optimization methods.
     
-    <!-- -->
+    - Full experience with next generation sequencing data analysis.
     
-    - Rescuscitating
-    - Kinging
+    - Highly skilled in R, Bash, Perl, Python, LaTeX
+
 - id: disclaimer
   content: |
-    This resume was made with HTML/CSS (`github.com/mnjul/html-resume`) and
-    **pagedown** (`github.com/rstudio/pagedown`).
+    This resume was made with the R package [**pagedown**](https://github.com/rstudio/pagedown).
     
     Last updated on `r Sys.Date()`.
 ---
