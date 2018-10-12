@@ -65,8 +65,9 @@ left-column:
       info: SupStat Inc.
       location: Beijing, China
       to: 2014
+      concise: true
       content: |
-        - Taught R language for beginners. 
+        - Taught R language to beginners. 
         - Wrote Shiny app demos.
         - Converted statistical tutorials from SPSS to R language.
     - name: Bioinformatician
@@ -74,10 +75,11 @@ left-column:
       location: Beijing, China
       from: 2015
       to: 2016
+      concise: true
       content: |
         - Analyzed whole-exome sequencing data. 
         - Wrote analysis pipelines of ChIP-seq, single cell DNA-seq and single cell RNA-seq.
-        - Studied tumor metastasis and wrote research report. 
+        - Studied tumor metastasis and wrote research reports. 
         - Also did case studies to identify the genetic defect causing rare disease.
 
 
