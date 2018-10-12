@@ -2,9 +2,7 @@
 title: "Lijia Yu's resume"
 author: Lijia Yu
 date: "`r Sys.Date()`"
-output:
-  pagedown:::html_resume:
-    self_contained: false
+output: pagedown::html_resume
 left-column:
   title:
     main: Lijia Yu
