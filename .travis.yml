@@ -9,7 +9,7 @@ before_install:
 
 before_script:
   - R CMD INSTALL .
-  - Rscript -e "setwd('inst/examples'); for (f in list.files(, '[.]Rmd$')) rmarkdown::render(f)"
+  - Rscript tools/website.R
 
 after_success:
   - "(curl https://xran.yihui.name/r-xran | bash)"

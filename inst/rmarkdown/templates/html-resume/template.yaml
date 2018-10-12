@@ -1,0 +1,4 @@
+name: HTML Resume
+description: >
+   An HTML resume that can be printed to PDF.
+create_dir: FALSE
