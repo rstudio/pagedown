@@ -17,13 +17,13 @@ left-column:
     concise: true
     items:
     - name: Beijing University of Chemical Technology
-      place: B.S. in Information and Computing Sciences
+      info: B.S. in Information and Computing Sciences
       location: Beijing, China
       to: 2010
       #content: >
       #  Thesis: Dyadic wavelet and its application in edge detection
     - name: University of Chinese Academy of Sciences
-      place: M.S. in Bioinformatics
+      info: M.S. in Bioinformatics
       location: Beijing, China
       to: 2014
       #content: 
@@ -34,7 +34,7 @@ left-column:
     icon:  laptop
     items:
     - name: Graduate Research Assistant
-      place: Beijing Institute of Genomics, Chinese Academy of Sciences
+      info: Beijing Institute of Genomics, Chinese Academy of Sciences
       location: Beijing, China
       from: 2011
       to: 2014
@@ -42,14 +42,14 @@ left-column:
         - Performed computational biology research towards understanding regulation of alternative splicing in human and mouse transcriptome.
         - Found EGFR pathway related mutations, aimed to understand the impacts of cancer mutations on EGFR signaling pathway.
     - name: Bioinformatican
-      place: My Health Gene Technology Co., Ltd.
+      info: My Health Gene Technology Co., Ltd.
       location: Beijing, China
       from: 2015
       to: 2016
       content: |
         - Investigated how cancer cells spread to other parts of the body at the single cell level.
     - name: Visiting Scientist
-      place: University of Alabama at Birmingham
+      info: University of Alabama at Birmingham
       location: AL, USA
       from: 2016
       to: 2018
@@ -62,7 +62,7 @@ left-column:
     icon: suitcase
     items:
     - name: Data Scientist, intern
-      place: SupStat Inc.
+      info: SupStat Inc.
       location: Beijing, China
       to: 2014
       content: |
@@ -70,7 +70,7 @@ left-column:
         - Wrote Shiny app demos.
         - Converted statistical tutorials from SPSS to R language.
     - name: Bioinformatician
-      place: My Health Gene Technology Co., Ltd.
+      info: My Health Gene Technology Co., Ltd.
       location: Beijing, China
       from: 2015
       to: 2016
@@ -85,11 +85,11 @@ left-column:
     icon: chalkboard-teacher
     items:
       - name: Introduction to R Language for Beginners.
-        place: Instructor of R and Data Mining Training Courses at SupStat Inc.
+        info: Instructor of R and Data Mining Training Courses at SupStat Inc.
         location: Beijing, China
         to: 2014
       - name: Computational Biology and Bioinformatics.
-        place: Teaching assistant of GBS CB2-201 courses at UAB
+        info: Teaching assistant of GBS CB2-201 courses at UAB
         location: AL, USA
         from: 2016
         to: 2017
@@ -98,13 +98,13 @@ left-column:
     icon: file
     items:
       - name: Genetic and epigenetic signals are found predictive to the distribution of intra-individual divergence of alternative splicing.
-        place: Poster for 2013 International Conference of Genomics
+        info: Poster for 2013 International Conference of Genomics
         location: Qingdao, China
         to: 2014
         content: |
           **Yu L**, Chen B, Zhang Z.
       - name: ESCRT-0 complex modulates Rbf mutant cell survival by regulating Rhomboid endosomal trafficking and EGFR signaling.
-        place: J Cell Sci. 2016 May 15;129(10):2075-84.
+        info: J Cell Sci. 2016 May 15;129(10):2075-84.
         to: 2016 
         content: |
           Sheng Z, **Yu L**, Zhang T, Pei X, Li X, Zhang Z and Du W. 
