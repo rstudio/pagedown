@@ -8,7 +8,8 @@ html_paged(..., css = c("default-fonts", "default"), theme = NULL,
     template = pkg_resource("html", "paged.html"))
 }
 \arguments{
-\item{...}{Arguments passed to \code{bookdown::html_document2}.}
+\item{...}{Arguments passed to
+\code{bookdown::\link[bookdown]{html_document2}}.}
 
 \item{css}{A character vector of CSS file paths. If a path does not contain
 the \file{.css} extension, it is assumed to be a built-in CSS file. For
@@ -24,10 +25,9 @@ built-in CSS files, run \code{pagedown:::list_css()}.}
 An R Markdown output format.
 }
 \description{
-This is an output format based on
-\code{bookdown::\link[bookdown]{html_document2}} (which means you can use
-those Markdown features added by \pkg{bookdown}). The HTML output document is
-split into multiple pages via a JavaScript library \pkg{paged.js}. These
-pages contain elements commonly seen in PDF documents, such as page numbers
-and running headers.
+This is an output format based on \code{bookdown::html_document2} (which
+means you can use those Markdown features added by \pkg{bookdown}). The HTML
+output document is split into multiple pages via a JavaScript library
+\pkg{paged.js}. These pages contain elements commonly seen in PDF documents,
+such as page numbers and running headers.
 }

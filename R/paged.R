@@ -1,12 +1,12 @@
 #' Create a paged HTML document suitable for printing
 #'
-#' This is an output format based on
-#' \code{bookdown::\link[bookdown]{html_document2}} (which means you can use
-#' those Markdown features added by \pkg{bookdown}). The HTML output document is
-#' split into multiple pages via a JavaScript library \pkg{paged.js}. These
-#' pages contain elements commonly seen in PDF documents, such as page numbers
-#' and running headers.
-#' @param ... Arguments passed to \code{bookdown::html_document2}.
+#' This is an output format based on \code{bookdown::html_document2} (which
+#' means you can use those Markdown features added by \pkg{bookdown}). The HTML
+#' output document is split into multiple pages via a JavaScript library
+#' \pkg{paged.js}. These pages contain elements commonly seen in PDF documents,
+#' such as page numbers and running headers.
+#' @param ... Arguments passed to
+#'   \code{bookdown::\link[bookdown]{html_document2}}.
 #' @param css A character vector of CSS file paths. If a path does not contain
 #'   the \file{.css} extension, it is assumed to be a built-in CSS file. For
 #'   example, \code{default-fonts} means the file
