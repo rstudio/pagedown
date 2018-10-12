@@ -4,10 +4,10 @@
 \alias{html_resume}
 \title{Create a resume in HTML}
 \usage{
-html_resume(css = "resume", template = pkg_resource("html", "resume.html"))
+html_resume(..., css = "resume", template = pkg_resource("html", "resume.html"))
 }
 \arguments{
-\item{css, template}{See \code{\link{html_paged}()}.}
+\item{..., css, template}{See \code{\link{html_paged}()}.}
 }
 \value{
 An R Markdown output format.
