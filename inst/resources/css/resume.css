@@ -49,6 +49,10 @@ li{
   list-style-type: none;
 }
 
+a{
+  text-decoration: none;
+}
+
 #main{
   float: left;
   width: var(--main-width);
