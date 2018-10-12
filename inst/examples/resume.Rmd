@@ -1,0 +1,117 @@
+---
+title: "Jon Snow's Resume"
+author: Jon Snow
+date: "`r Sys.Date()`"
+output:
+  pagedown:::html_resume:
+    self_contained: false
+left-column:
+  title:
+    main: Jon Snow
+    sub:  King in the North
+
+  blocks:
+  - title: Experiences
+    icon:  suitcase
+    items:
+    - name: Bastard in Residence
+      place: Winterfell Castle
+      location: North
+      from: 2001
+      content: |
+        - Spent time with the rest of the family.
+        - Waited outside on formal occasions.
+    - name: Lord Commander
+      place: Night Watch
+      location: Castle Black
+      from: 2001
+      to: 2006
+      content: |
+        - Defended a thousand-years tradition
+        - Liked the job so much, got stabbed and died and still came back
+          the next SHanged all the rascals.
+    - name: King in the North
+      place: Winterfell Castle
+      location: North
+      from: 2006
+      to: 2007
+      content: |
+        - Tightened links with the Mother of Dragons
+        - Wisely delegated important responsabilities to my sister.
+      
+  - title: Selected Projects
+    icon: folder-open
+    items:
+    - name: Hardhome Rescue
+      place: Some Workplace
+      to: 2006
+      content: |
+        - Came there for the people, stayed for the white walkers. 
+        - Brought back a few hundred wildings.
+    - name: Wilding Raid Rebutal
+      place: Some other workplace
+      to: 2006
+      content: |
+        - Fought back one of the largest wilding armies ever.
+        - Stepped up when the commander was down.
+        - Events led to my nomination as Lord Commander
+    - name: White Walker Capture
+      place: Some other workplace
+      to: 2007
+      content: |
+        - Organized and led an elite squadron for the capture of a Walker.
+        - Outcome led to world peace in front of a common ennemy.
+
+  - title: Education
+    icon: graduation-cap
+    concise: true
+    items:
+    - name: Martial Training
+      place: Winterfell Castle
+      location: North
+      from: 2001
+      content: >
+        Relationship of the number with the answer to life, the universe and
+        everything
+    - name: Squire Training
+      place: Castle Black
+      location: North
+      from: 2001
+      to: 2003
+      content: >
+        Made the bed, folded the towels, listened a lot.
+    - name: School of Life
+      concise: true
+      content: |
+        Generic dialectic life lessons including
+        
+        - Do we ever *know* anything ?
+        - Is *this* a trick ?
+        - How to king
+
+right-column:
+- title: Contact Info
+  id: contact
+  content: |
+    - <i class="fa fa-globe"></i> jonsnow.nth
+    - <i class="fa fa-linkedin"></i> linkedin.com/in/john
+    - <i class="fa fa-envelope"></i> jonsnow@example.com
+    - <i class="fa fa-twitter"></i> @kingInTheNorthBaby
+    - <i class="fa fa-phone"></i> 800.000.0000
+- title: Skills
+  id: skills
+  content: |
+    - Fighting
+    - Wall climbing
+    
+    <!-- -->
+    
+    - Rescuscitating
+    - Kinging
+- id: disclaimer
+  content: |
+    This resume was made with HTML/CSS (`github.com/mnjul/html-resume`) and
+    **pagedown** (`github.com/rstudio/pagedown`).
+    
+    Last updated on `r Sys.Date()`.
+---
