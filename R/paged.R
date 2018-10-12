@@ -26,7 +26,7 @@ html_paged = function(
   check_css(css2)
   html_document2 = function(..., extra_dependencies = list()) {
     bookdown::html_document2(..., extra_dependencies = c(
-      extra_dependencies, pagedjs_dependency(paste0(css2, '.css'))
+      extra_dependencies, pagedjs_dependency(xfun::with_ext(css2, '.css'))
     ))
   }
   html_document2(..., css = css, theme = theme, template = template)
