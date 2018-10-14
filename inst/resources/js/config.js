@@ -26,7 +26,7 @@
 
   // This function add spans for leading symbols.
   async function addLeadersSpans() {
-    var anchors = document.querySelectorAll('.toc a');
+    var anchors = document.querySelectorAll('.toc a, .lof a, .lot a');
     for (var a of anchors) {
       a.innerHTML = a.innerHTML + '<span class="leaders"></span>';
     }
