@@ -80,7 +80,7 @@ a{
 #title{
   position: relative;
   left: 0.55in;
-  margin-bottom: 0.3in;
+  margin: auto 0.55in 0.3in auto;
   line-height: 1.2;
 }
 
@@ -97,6 +97,11 @@ a{
 
 .subtitle{
   font-size: 8pt;
+}
+
+#title .content {
+  text-transform: none;
+  margin-top: 0.1in;
 }
 
 /*** categorial blocks ***/
