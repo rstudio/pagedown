@@ -1,12 +1,3 @@
-@page{
-  size: letter portrait;
-  margin: 0;
-}
-
-*{
-  box-sizing: border-box;
-}
-
 :root{
   --page-width: 8.5in;
   --page-height: 11in;
@@ -27,6 +18,15 @@
   --date-block-width: 0.6in;
 
   --main-blocks-title-icon-offset-left: -19pt;
+}
+
+@page{
+  size: letter portrait;
+  margin: 0;
+}
+
+*{
+  box-sizing: border-box;
 }
 
 body{
