@@ -13,6 +13,21 @@
 
   var runMathJax = getBeforeAsync();
 
+  // bookdown uses ids of the form #fig:something #tab:something
+  // Paged.js crashes when it looks for the page number of an id containing a
+  // colon, see https://stackoverflow.com/questions/45110893/select-elements-by-attributes-with-colon
+  // We need to sanitize the ids and the href
+  async function sanitizeIds() {
+    var ids = document.querySelectorAll('*[id*="\\:"]');
+    var links = document.querySelectorAll('*[href*="\\:"]');
+    for (var item of ids) {
+      item.id = item.id.replace(/:/, "-");
+    }
+    for (var link of links) {
+      link.href = link.getAttribute("href").replace(/:/, "-");
+    }
+  }
+
   // This function expands the links in the lists of figures or tables (loft)
   async function expandLinksInLoft() {
     var items = document.querySelectorAll('.lof li, .lot li');
@@ -69,6 +84,7 @@
 
   window.PagedConfig = {
     before: async () => {
+      await sanitizeIds();
       await expandLinksInLoft();
       await Promise.all([
         addLeadersSpans(),
