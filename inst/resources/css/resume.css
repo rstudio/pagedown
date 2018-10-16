@@ -1,6 +1,6 @@
 @page{
   size: letter portrait;
-  margin: 1in 0.5in 1in 1in; /* 0 length margin is forbidden */
+  margin: 1in 1in 1in 1in; /* 0 length margin is forbidden by Paged.js */
 }
 
 /*
@@ -13,11 +13,15 @@
   --height : paper height
 */
 
+*{
+  box-sizing: border-box;
+}
+
 .pagedjs_page {
   --content-area-width: calc(var(--width) - var(--margin-left) - var(--margin-right));
   --content-area-height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
-  --main-width: calc(0.75*var(--content-area-width));
-  --sidebar-width: calc(0.25*var(--content-area-width));
+  --sidebar-width: 2.1in;
+  --main-width: calc(var(--content-area-width) - var(--sidebar-width));
   --sidebar-background-color: #f2f2f2;
   --decorator-horizontal-margin: 0.2in;
 
@@ -38,11 +42,7 @@
 }
 
 @page{
-  background: linear-gradient(to left, var(--sidebar-background-color), var(--sidebar-background-color) var(--sidebar-background-width), white var(--sidebar-background-width));
-}
-
-*{
-  box-sizing: border-box;
+  background: linear-gradient(to left, white, white var(--margin-right), var(--sidebar-background-color) var(--margin-right), var(--sidebar-background-color) var(--sidebar-background-width), white var(--sidebar-background-width));
 }
 
 body{
