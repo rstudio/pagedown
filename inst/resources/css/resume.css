@@ -9,9 +9,11 @@
   --content-area-height: calc(var(--page-height) - var(--page-margin-top) - var(--page-margin-bottom));
   --main-width: calc(0.75*var(--content-area-width));
   --sidebar-width: calc(0.25*var(--content-area-width));
+  --sidebar-background-color: #f2f2f2;
   --decorator-horizontal-margin: 0.2in;
 
   --sidebar-horizontal-padding: 0.2in;
+  --sidebar-background-width: calc(var(--page-margin-right) + var(--sidebar-width));
 
   /* XXX: using px for very good precision control */
   --decorator-outer-offset-top: 10px;
@@ -29,6 +31,7 @@
 @page{
   size: letter portrait;
   margin: var(--page-margin-top) var(--page-margin-right) var(--page-margin-bottom) var(--page-margin-left);
+  background: linear-gradient(to left, var(--sidebar-background-color), var(--sidebar-background-color) var(--sidebar-background-width), white var(--sidebar-background-width));
 }
 
 *{
@@ -71,7 +74,6 @@ a{
   width: var(--sidebar-width);
   height: var(--content-area-height);
   padding: 0.6in var(--sidebar-horizontal-padding);
-  background-color: #f2f2f2;
   font-size: 8.5pt;
 }
 
