@@ -1,19 +1,28 @@
-:root{
-  --page-width: 8.5in;
-  --page-height: 11in;
-  --page-margin-top: 1in;
-  --page-margin-right: 1in;
-  --page-margin-bottom: 1in;
-  --page-margin-left: 1in;
-  --content-area-width: calc(var(--page-width) - var(--page-margin-left) - var(--page-margin-right));
-  --content-area-height: calc(var(--page-height) - var(--page-margin-top) - var(--page-margin-bottom));
+@page{
+  size: letter portrait;
+  margin: 1in 0.5in 1in 1in; /* 0 length margin is forbidden */
+}
+
+/*
+  Paged.js populates .pagedjs_page with the following CSS variables (they can be reused):
+  --margin-top
+  --margin-right
+  --margin-bottom
+  --margin-left
+  --width : paper width
+  --height : paper height
+*/
+
+.pagedjs_page {
+  --content-area-width: calc(var(--width) - var(--margin-left) - var(--margin-right));
+  --content-area-height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
   --main-width: calc(0.75*var(--content-area-width));
   --sidebar-width: calc(0.25*var(--content-area-width));
   --sidebar-background-color: #f2f2f2;
   --decorator-horizontal-margin: 0.2in;
 
   --sidebar-horizontal-padding: 0.2in;
-  --sidebar-background-width: calc(var(--page-margin-right) + var(--sidebar-width));
+  --sidebar-background-width: calc(var(--margin-right) + var(--sidebar-width));
 
   /* XXX: using px for very good precision control */
   --decorator-outer-offset-top: 10px;
@@ -29,8 +38,6 @@
 }
 
 @page{
-  size: letter portrait;
-  margin: var(--page-margin-top) var(--page-margin-right) var(--page-margin-bottom) var(--page-margin-left);
   background: linear-gradient(to left, var(--sidebar-background-color), var(--sidebar-background-color) var(--sidebar-background-width), white var(--sidebar-background-width));
 }
 
@@ -39,7 +46,6 @@
 }
 
 body{
-  width: var(--content-area-width);
   margin: 0;
   font-family: "Open Sans", sans-serif;
   font-weight: 300;
