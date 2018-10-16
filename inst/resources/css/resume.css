@@ -378,3 +378,30 @@ a{
   font-weight: 400;
   font-style: normal;
 }
+
+/* Paged.js viewer */
+
+:root {
+  --background: #dcdcdc;
+}
+
+@media screen {
+  body {
+    background-color: var(--background);
+  }
+
+  .pagedjs_pages {
+    max-width: var(--width);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    transform-origin: 0 0;
+    margin: 0 auto;
+  }
+
+  .pagedjs_page {
+    box-shadow: 0 0 8px #313131;
+    flex: none;
+    margin: auto auto 12px auto;
+  }
+}
