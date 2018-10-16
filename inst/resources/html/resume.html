@@ -24,6 +24,15 @@
     $include-before$
     $endfor$
 
+    <aside id="sidebar">
+      $for(right-column)$
+      <div class="side-block" id="$right-column.id$">
+        $if(right-column.title)$<h1>$right-column.title$</h1>$endif$
+        $right-column.content$
+      </div>
+      $endfor$
+    </aside>
+
     <section id="main">
       <header id="title">
         <h1>$left-column.title.main$</h1>
@@ -56,15 +65,6 @@
       </section>
       $endfor$
     </section>
-
-    <aside id="sidebar">
-      $for(right-column)$
-      <div class="side-block" id="$right-column.id$">
-        $if(right-column.title)$<h1>$right-column.title$</h1>$endif$
-        $right-column.content$
-      </div>
-      $endfor$
-    </aside>
 
     $for(include-after)$
     $include-after$
