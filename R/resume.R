@@ -7,7 +7,7 @@
 #' @export
 html_resume = function(..., css = 'resume', template = pkg_resource('html', 'resume.html')) {
   html_format(
-    ..., css = css, template = template, theme = NULL,
+    ..., css = css, template = template, theme = NULL, .pagedjs= TRUE,
     .dependencies = list(rmarkdown::html_dependency_font_awesome())
   )
 }
