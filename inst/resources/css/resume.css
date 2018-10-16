@@ -121,6 +121,7 @@ a{
 
 .main-block{
   margin-top: 0.1in;
+  page-break-inside: avoid;
 }
 
 #main h2{
