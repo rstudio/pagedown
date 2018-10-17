@@ -4,7 +4,7 @@
 }
 
 /*
-  Paged.js populates :root with the following CSS variables (they can be reused):
+  Paged.js populates .pagedjs_page with the following CSS variables (they can be reused):
   --margin-top
   --margin-right
   --margin-bottom
@@ -17,7 +17,7 @@
   box-sizing: border-box;
 }
 
-:root {
+.pagedjs_page {
   --content-area-width: calc(var(--width) - var(--margin-left) - var(--margin-right));
   --content-area-height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
   --sidebar-width: 2.1in;
