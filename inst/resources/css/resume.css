@@ -17,10 +17,14 @@
   box-sizing: border-box;
 }
 
+:root {
+  --root-font-size: 10pt;
+}
+
 .pagedjs_page {
   --content-area-width: calc(var(--width) - var(--margin-left) - var(--margin-right));
   --content-area-height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
-  --sidebar-width: 2.1in;
+  --sidebar-width: 15rem;
   --main-width: calc(var(--content-area-width) - var(--sidebar-width));
   --sidebar-background-color: #f2f2f2;
   --decorator-horizontal-margin: 0.2in;
@@ -35,10 +39,14 @@
   --decorator-outer-dim: 9px;
   --decorator-border: 1px solid #ccc;
 
-  --row-blocks-padding-top: 5pt;
+  --row-blocks-padding-top: 0.5rem;
   --date-block-width: 0.6in;
 
-  --main-blocks-title-icon-offset-left: -19pt;
+  --main-blocks-title-icon-offset-left:  calc(-17pt - 0.25 * var(--root-font-size));
+}
+
+html {
+  font-size: var(--root-font-size);
 }
 
 @page{
@@ -71,7 +79,7 @@ a{
   float: left;
   width: var(--main-width);
   padding: 0.25in 0.25in 0 0.25in;
-  font-size: 7pt;
+  font-size: 0.7rem;
 }
 
 #sidebar{
@@ -80,7 +88,7 @@ a{
   width: var(--sidebar-width);
   height: var(--content-area-height);
   padding: 0.6in var(--sidebar-horizontal-padding);
-  font-size: 8.5pt;
+  font-size: 0.85rem;
 }
 
 /* main */
@@ -99,17 +107,17 @@ a{
 
 #title h1{
   font-weight: 300;
-  font-size: 18pt;
+  font-size: 1.8rem;
   line-height: 1.5;
 }
 
 #title h1 strong{
-  margin: auto 2pt auto 4pt;
+  margin: auto 0.2rem auto 0.4rem;
   font-weight: 600;
 }
 
 .subtitle{
-  font-size: 8pt;
+  font-size: 0.8rem;
 }
 
 #title .content {
@@ -130,7 +138,7 @@ a{
   /* XXX: 0.5px for aligning fx printing */
   left: calc((var(--date-block-width) + var(--decorator-horizontal-margin)));
   font-weight: 400;
-  font-size: 11pt;
+  font-size: 1.1rem;
   color: #555;
 }
 
@@ -185,9 +193,9 @@ a{
 
 .date{
   flex: 0 0 var(--date-block-width);
-  padding-top: calc(var(--row-blocks-padding-top) + 2.5pt) !important;
+  padding-top: calc(var(--row-blocks-padding-top) + 0.25rem) !important;
   padding-right: var(--decorator-horizontal-margin);
-  font-size: 7pt;
+  font-size: 0.7rem;
   text-align: right;
   line-height: 1;
 }
@@ -198,10 +206,10 @@ a{
 
 .date span:nth-child(2)::before{
   position: relative;
-  top: 1pt;
-  right: 5.5pt;
+  top: 0.1rem;
+  right: 0.55rem;
   display: block;
-  height: 10pt;
+  height: 1rem;
   content: '|';
 }
 
@@ -255,7 +263,7 @@ a{
 .details{
   flex: 1 0 0;
   padding-left: var(--decorator-horizontal-margin);
-  padding-top: calc(var(--row-blocks-padding-top) - 0.5pt) !important; /* not sure why but this is needed for better alignment */
+  padding-top: calc(var(--row-blocks-padding-top) - 0.05rem) !important; /* not sure why but this is needed for better alignment */
 }
 
 .details header{
@@ -263,7 +271,7 @@ a{
 }
 
 .details h3{
-  font-size: 9pt;
+  font-size: 0.9rem;
 }
 
 .main-block:not(.concise) .details div{
@@ -282,7 +290,7 @@ a{
 
 .details .place{
   float: left;
-  font-size: 7.5pt;
+  font-size: 0.75rem;
 }
 
 .details .location{
@@ -332,7 +340,7 @@ a{
 
 #sidebar h1{
   font-weight: 400;
-  font-size: 11pt;
+  font-size: 1.1rem;
 }
 
 .side-block{
@@ -348,7 +356,7 @@ a{
 }
 
 #contact li > i{
-  width: 9pt; /* for text alignment */
+  width: 0.9rem; /* for text alignment */
   text-align: right;
 }
 
@@ -365,7 +373,7 @@ a{
   position: absolute;
   bottom: var(--sidebar-horizontal-padding);
   right: var(--sidebar-horizontal-padding);
-  font-size: 7.5pt;
+  font-size: 0.75rem;
   font-style: italic;
   line-height: 1.1;
   text-align: right;
