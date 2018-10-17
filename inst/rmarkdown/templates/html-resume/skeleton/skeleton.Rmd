@@ -37,7 +37,9 @@ left-column:
     icon:  laptop
     items:
     - name: Graduate Research Assistant
-      info: Beijing Institute of Genomics, Chinese Academy of Sciences
+      info: | 
+          Beijing Institute of Genomics,  
+          Chinese Academy of Sciences
       location: Beijing, China
       from: 2011
       to: 2014
