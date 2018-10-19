@@ -45,6 +45,12 @@
   --main-blocks-title-icon-offset-left:  calc(-17pt - 0.25 * var(--root-font-size));
 }
 
+:root {
+  --viewer-background-color: #dcdcdc;
+  --viewer-pages-spacing: 12px;
+  --viewer-shadow-color: #313131;
+}
+
 html {
   font-size: var(--root-font-size);
 }
@@ -389,27 +395,30 @@ a{
 
 /* Paged.js viewer */
 
-:root {
-  --background: #dcdcdc;
-}
-
 @media screen {
   body {
-    background-color: var(--background);
+    background-color: var(--viewer-background-color);
+    margin: 0; /* for mobile */
+    width: calc(var(--width) + 2 * var(--viewer-pages-spacing)); /* for mobile */
   }
 
   .pagedjs_pages {
     max-width: var(--width);
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    transform-origin: 0 0;
-    margin: 0 auto;
   }
 
   .pagedjs_page {
-    box-shadow: 0 0 8px #313131;
-    flex: none;
-    margin: auto auto 12px auto;
+    box-shadow: 0 0 calc(0.66667 * var(--viewer-pages-spacing)) var(--viewer-shadow-color);
+    margin: var(--viewer-pages-spacing) 0;
+  }
+}
+
+@media screen and (min-width: 8.5in) {
+  /* not a mobile */
+  body {
+    margin: auto;
+    width: unset;
   }
 }
