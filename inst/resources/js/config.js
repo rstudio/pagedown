@@ -19,12 +19,14 @@
   // We need to sanitize the ids and the href
   async function sanitizeIds() {
     var ids = document.querySelectorAll('*[id*="\\:"]');
-    var links = document.querySelectorAll('*[href*="\\:"]');
-    for (var item of ids) {
-      item.id = item.id.replace(/:/, "-");
-    }
-    for (var link of links) {
-      link.href = link.getAttribute("href").replace(/:/, "-");
+    for (var elem of ids) {
+      var id = elem.id;
+      var selector = id.replace(/:/, "\\:");
+      var links = document.querySelectorAll('*[href*="#' + selector + '"]');
+      elem.id = elem.id.replace(/:/, "-");
+      for (var link of links) {
+        link.href = link.getAttribute("href").replace(/:/, "-");
+      }
     }
   }
 
