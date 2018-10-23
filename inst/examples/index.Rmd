@@ -28,9 +28,40 @@ HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it
 
 # Applications 
 
-# Tests {data-short-title="Some tests"}
+# Supported features
 
-## A list {data-short-title="An ordered list"}
+## Links
+
+In markdown, the usual ways to insert links are _automatic_ and _inline_ links.
+
+### Automatic links
+
+_Automatic links_ are created using pointy brackets, e.g `<https://bookdown.org/>`.  
+The full URL is then inserted in the final document <https://bookdown.org/>.  
+This is convenient for a short and meaningful URL.
+
+### Inline links
+
+_Inline links_ are useful when you do not want to show the full URL but an alternative text (because most of the URLs are ugly). In markdown, the link text is inserted in square brackets and the URL in parentheses, e.g. `[bookdown website](https://bookdown.org/)`. On a website, the URL is hidden and replaced by the link text: [bookdown website](). The user can interactively access to the URL by clicking on the link. 
+
+When printing a document, we lose interactivity. So, we need to show the hidden URLs. By default, the `html_paged` format adds the URLs after the link text in parentheses, for instance `[bookdown website](https://bookdown.org/)` is rendered as [bookdown website](https://bookdown.org/).
+
+You also can use the `links-to-footnotes` top-level YAML parameter: it transforms all the URLs as footnotes. You will get the same result as `bookdown website^[https://bookdown.org/]`.  
+To activate the `links-to-footnotes` option, insert `links-to-footnotes: true` in the YAML header. For instance:
+
+```yaml
+---
+title: "A paged HTML document"
+output: pagedown::html_paged
+toc-title: Contents
+bibliography: index.bib
+links-to-footnotes: true
+---
+```
+
+## Tests {data-short-title="Some tests"}
+
+### A list {data-short-title="An ordered list"}
 
 1. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec rhoncus dolor in risus tempor iaculis. Vivamus id euismod leo. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Proin pretium turpis eget orci iaculis, et euismod arcu commodo. Nulla maximus turpis elit, volutpat volutpat mauris fringilla non. Aenean rutrum vitae tortor egestas viverra. Sed malesuada lectus ac efficitur posuere. Nullam euismod odio dolor, id porttitor nulla sodales at. Nunc hendrerit dictum pulvinar. Nunc consequat ante ac urna posuere tincidunt. In ornare ligula ac aliquet tempor. Nunc eros nunc, vehicula vel efficitur quis, mattis ac massa.
 
@@ -44,7 +75,7 @@ HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it
 
 1. Cras ipsum metus, mollis eu ultrices ut, lobortis nec nisl. Donec egestas mollis faucibus. Vestibulum lobortis dictum arcu a egestas. Nunc posuere molestie ante, iaculis ultrices urna porttitor et. Nullam nec ligula non purus tincidunt sollicitudin. Fusce eu cursus erat. Sed dapibus, urna et auctor dignissim, magna dui pulvinar quam, vel mattis felis justo at eros. Integer commodo vitae arcu sed dignissim. In porttitor nibh sapien, eget dignissim nulla malesuada et. Vestibulum non justo eros. Duis venenatis tortor tincidunt tortor pretium molestie. Donec efficitur mattis porta.
 
-## Test MathJax
+### Test MathJax
 
 The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
 
@@ -64,7 +95,7 @@ $$
 $$
 It also works. Inline equations? Here is an example: $p(x|y) = \frac{p(y|x)p(x)}{p(y)}$. It still works perfectly well.
 
-## Miscellaneous tests used during pagedown development
+### Miscellaneous tests used during pagedown development
 
 Test cross-references of pages: [Paged.js](#pagedjs).
 
