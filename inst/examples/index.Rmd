@@ -30,13 +30,31 @@ HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it
 
 # Supported features
 
+## Lists of Tables and Figures
+
+Lists of tables and/or figures can be inserted in the document using the `lot` and `lof` variables.  
+You also can customize their titles with the `lot-title` and `lof-title` variables in the YAML header, for instance:
+
+```yaml
+---
+title: "A document with lists of tables and figures"
+output: pagedown::html_paged
+toc-title: Contents
+bibliography: index.bib
+lot: true
+lot-title: "Tables"
+lof: true
+lof-title: "Figures"
+---
+```
+
 ## Links
 
 In markdown, the usual ways to insert links are _automatic_ and _inline_ links.
 
 ### Automatic links
 
-_Automatic links_ are created using pointy brackets, e.g `<https://bookdown.org/>`.  
+_Automatic links_ are created using pointy brackets, e.g. `<https://bookdown.org/>`.  
 The full URL is then inserted in the final document <https://bookdown.org/>.  
 This is convenient for a short and meaningful URL.
 
