@@ -23,7 +23,10 @@ html_paged = function(
 ) {
   html_format(
     ..., css = css, theme = theme, template = template, .pagedjs = TRUE,
-    .pandoc_args = c("--lua-filter", pkg_resource('lua', 'uri-to-fn.lua'))
+    .pandoc_args = c(
+      "--lua-filter", pkg_resource('lua', 'uri-to-fn.lua'),
+      "--lua-filter", pkg_resource('lua', 'loft.lua')
+    )
   )
 }
 

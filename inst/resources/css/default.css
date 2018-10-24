@@ -118,8 +118,8 @@ a[href^="http"]:not([class="uri"])::after {
   content: " (page " target-counter(attr(href), page) ")";
 }
 
-/* TOC */
-.toc ul {
+/* TOC, LOT, LOF */
+.toc ul, .lot ul, .lof ul {
   list-style: none;
   padding-left: 0;
   overflow-x: hidden;
@@ -127,18 +127,18 @@ a[href^="http"]:not([class="uri"])::after {
 .toc li li {
   padding-left: 1em;
 }
-.toc a {
+.toc a, .lot a, .lof a {
   text-decoration: none;
   background: white;
   padding-right: .33em;
 }
-.toc a::after {
+.toc a::after, .lot a::after, .lof a::after {
   /* content: leader(dotted) target-counter(attr(href), page); */
   content: target-counter(attr(href), page);
   float: right;
   background: white;
 }
-.toc .leaders::before {
+.toc .leaders::before, .lot .leaders::before, .lof .leaders::before {
   float: left;
   width: 0;
   white-space: nowrap;

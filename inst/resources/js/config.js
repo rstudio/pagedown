@@ -13,9 +13,20 @@
 
   var runMathJax = getBeforeAsync();
 
+  // This function expands the links in the lists of figures or tables (loft)
+  async function expandLinksInLoft() {
+    var items = document.querySelectorAll('.lof li, .lot li');
+    for (var item of items) {
+      var anchor = item.firstChild;
+      anchor.innerText = item.innerText;
+      item.innerText = '';
+      item.append(anchor);
+    }
+  }
+
   // This function add spans for leading symbols.
   async function addLeadersSpans() {
-    var anchors = document.querySelectorAll('.toc a');
+    var anchors = document.querySelectorAll('.toc a, .lof a, .lot a');
     for (var a of anchors) {
       a.innerHTML = a.innerHTML + '<span class="leaders"></span>';
     }
@@ -58,6 +69,7 @@
 
   window.PagedConfig = {
     before: async () => {
+      await expandLinksInLoft();
       await Promise.all([
         addLeadersSpans(),
         appendShortTitles1(),
