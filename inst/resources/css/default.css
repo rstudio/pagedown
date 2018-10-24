@@ -114,7 +114,7 @@ a[href^="http"]:not([class="uri"])::after {
   hyphens: none;
   word-break: break-all;
 }
-.main a[href^="#"]:not([class^="footnote-"]):not([href^="#fig-"]):not([href^="#tab-"])::after {
+.main a[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
   content: " (page " target-counter(attr(href), page) ")";
 }
 

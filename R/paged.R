@@ -21,8 +21,12 @@ html_paged = function(
   ..., css = c('default-fonts', 'default'), theme = NULL,
   template = pkg_resource('html', 'paged.html')
 ) {
-  html_format(..., css = css, theme = theme, template = template, .pagedjs = TRUE,
-              .pandoc_args = c("--lua-filter", pkg_resource('lua', 'loft.lua'))
+  html_format(
+    ..., css = css, theme = theme, template = template, .pagedjs = TRUE,
+    .pandoc_args = c(
+      "--lua-filter", pkg_resource('lua', 'uri-to-fn.lua'),
+      "--lua-filter", pkg_resource('lua', 'loft.lua')
+    )
   )
 }
 
@@ -47,7 +51,7 @@ html_format = function(
       pagedown_dependency(xfun::with_ext(css2, '.css'), .pagedjs)
     ))
   }
-  html_document2(..., css = css, template = template,
-                 pandoc_args = c(.pandoc_args, pandoc_args)
+  html_document2(
+    ..., css = css, template = template, pandoc_args = c(.pandoc_args, pandoc_args)
   )
 }
