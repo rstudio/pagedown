@@ -8,11 +8,13 @@
 }
 
 :root{
+  --pages-number: 2;
   --page-width: 8.5in;
   --margin-right: 1in;
   --margin-left: 1in;
-  --main-width: calc(6.4in - var(--margin-left));
-  --sidebar-width: calc(var(--page-width) - var(--main-width) - var(--margin-right));
+  --content-width: calc(var(--page-width) - var(--margin-right) - var(--margin-left));
+  --main-width: 4.5in;
+  --sidebar-width: calc(var(--content-width) - var(--main-width));
   --decorator-horizontal-margin: 0.2in;
 
   --sidebar-horizontal-padding: 0.2in;
@@ -31,13 +33,14 @@
 }
 
 body{
-  width: var(--page-width);
+  width: var(--content-width);
   font-family: "Open Sans", sans-serif;
   font-weight: 300;
   line-height: 1.3;
   color: #444;
   hyphens: auto;
   display: grid;
+  grid-template-rows: repeat(var(--pages-number), 100vh);
 }
 
 h1, h2, h3{
@@ -57,6 +60,7 @@ a{
   width: var(--main-width);
   padding: 0.25in 0.25in 0 0.25in;
   font-size: 7pt;
+  grid-row: 1/-1;
 }
 
 #sidebar{
@@ -66,6 +70,7 @@ a{
   background-color: #f2f2f2;
   font-size: 8.5pt;
   grid-column-start: 2;
+  grid-row: 1/-1;
 }
 
 /* main */
@@ -106,6 +111,7 @@ a{
 
 .main-block{
   margin-top: 0.1in;
+  page-break-inside: avoid;
 }
 
 #main h2{
