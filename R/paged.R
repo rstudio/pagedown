@@ -21,7 +21,9 @@ html_paged = function(
   ..., css = c('default-fonts', 'default'), theme = NULL,
   template = pkg_resource('html', 'paged.html')
 ) {
-  html_format(..., css = css, theme = theme, template = template, .pagedjs = TRUE)
+  html_format(..., css = css, theme = theme, template = template, .pagedjs = TRUE,
+              .pandoc_args = c("--lua-filter", pkg_resource('lua', 'uri-to-fn.lua'))
+  )
 }
 
 pagedown_dependency = function(css = NULL, js = FALSE) {
@@ -32,7 +34,10 @@ pagedown_dependency = function(css = NULL, js = FALSE) {
   ))
 }
 
-html_format = function(..., css, template, .dependencies = NULL, .pagedjs = FALSE) {
+html_format = function(
+  ..., css, template, pandoc_args = NULL, .dependencies = NULL,
+  .pagedjs = FALSE, .pandoc_args = NULL
+) {
   css2 = grep('[.]css$', css, value = TRUE, invert = TRUE)
   css  = setdiff(css, css2)
   check_css(css2)
@@ -42,5 +47,7 @@ html_format = function(..., css, template, .dependencies = NULL, .pagedjs = FALS
       pagedown_dependency(xfun::with_ext(css2, '.css'), .pagedjs)
     ))
   }
-  html_document2(..., css = css, template = template)
+  html_document2(..., css = css, template = template,
+                 pandoc_args = c(.pandoc_args, pandoc_args)
+  )
 }
