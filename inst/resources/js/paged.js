@@ -388,6 +388,21 @@
 		return rect;
 	}
 
+	function getClientRects(element) {
+		if (!element) {
+			return;
+		}
+		let rect;
+		if (typeof element.getClientRects !== "undefined") {
+			rect = element.getClientRects();
+		} else {
+			let range = document.createRange();
+			range.selectNode(element);
+			rect = range.getClientRects();
+		}
+		return rect;
+	}
+
 	/**
 	 * Generates a UUID
 	 * based on: http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -411,6 +426,89 @@
 				return element.getAttribute(attributes[i]);
 			}
 		}
+	}
+
+	/* Based on by https://mths.be/cssescape v1.5.1 by @mathias | MIT license
+	 * Allows # and .
+	 */
+	function querySelectorEscape(value) {
+		if (arguments.length == 0) {
+			throw new TypeError('`CSS.escape` requires an argument.');
+		}
+		var string = String(value);
+		var length = string.length;
+		var index = -1;
+		var codeUnit;
+		var result = '';
+		var firstCodeUnit = string.charCodeAt(0);
+		while (++index < length) {
+			codeUnit = string.charCodeAt(index);
+			// Note: there’s no need to special-case astral symbols, surrogate
+			// pairs, or lone surrogates.
+
+			// If the character is NULL (U+0000), then the REPLACEMENT CHARACTER
+			// (U+FFFD).
+			if (codeUnit == 0x0000) {
+				result += '\uFFFD';
+				continue;
+			}
+
+			if (
+				// If the character is in the range [\1-\1F] (U+0001 to U+001F) or is
+				// U+007F, […]
+				(codeUnit >= 0x0001 && codeUnit <= 0x001F) || codeUnit == 0x007F ||
+				// If the character is the first character and is in the range [0-9]
+				// (U+0030 to U+0039), […]
+				(index == 0 && codeUnit >= 0x0030 && codeUnit <= 0x0039) ||
+				// If the character is the second character and is in the range [0-9]
+				// (U+0030 to U+0039) and the first character is a `-` (U+002D), […]
+				(
+					index == 1 &&
+					codeUnit >= 0x0030 && codeUnit <= 0x0039 &&
+					firstCodeUnit == 0x002D
+				)
+			) {
+				// https://drafts.csswg.org/cssom/#escape-a-character-as-code-point
+				result += '\\' + codeUnit.toString(16) + ' ';
+				continue;
+			}
+
+			if (
+				// If the character is the first character and is a `-` (U+002D), and
+				// there is no second character, […]
+				index == 0 &&
+				length == 1 &&
+				codeUnit == 0x002D
+			) {
+				result += '\\' + string.charAt(index);
+				continue;
+			}
+
+			// If the character is not handled by one of the above rules and is
+			// greater than or equal to U+0080, is `-` (U+002D) or `_` (U+005F), or
+			// is in one of the ranges [0-9] (U+0030 to U+0039), [A-Z] (U+0041 to
+			// U+005A), or [a-z] (U+0061 to U+007A), […]
+			if (
+				codeUnit >= 0x0080 ||
+				codeUnit == 0x002D ||
+				codeUnit == 0x005F ||
+				codeUnit == 35 || // Allow #
+				codeUnit == 46 || // Allow .
+				codeUnit >= 0x0030 && codeUnit <= 0x0039 ||
+				codeUnit >= 0x0041 && codeUnit <= 0x005A ||
+				codeUnit >= 0x0061 && codeUnit <= 0x007A
+			) {
+				// the character itself
+				result += string.charAt(index);
+				continue;
+			}
+
+			// Otherwise, the escaped character.
+			// https://drafts.csswg.org/cssom/#escape-a-character
+			result += '\\' + string.charAt(index);
+
+		}
+		return result;
 	}
 
 	function isElement(node) {
@@ -476,6 +574,30 @@
 		}
 
 		return after;
+	}
+
+	function nodeBefore(node, limiter) {
+		let before = node;
+		if (before.previousSibling) {
+			if (limiter && node === limiter) {
+				return;
+			}
+			before = before.previousSibling;
+		} else {
+			while (before) {
+				before = before.parentNode;
+				if (limiter && before === limiter) {
+					before = undefined;
+					break;
+				}
+				if (before && before.previousSibling) {
+					before = prev.previousSibling;
+					break;
+				}
+			}
+		}
+
+		return before;
 	}
 
 	function elementAfter(node, limiter) {
@@ -641,7 +763,7 @@
 
 		while(currentOffset < max) {
 				currentLetter = currentText[currentOffset];
-			 if (/^\S$/.test(currentLetter)) {
+			 if (/^[\S\u202F\u00A0]$/.test(currentLetter)) {
 				 if (!range) {
 					 range = document.createRange();
 					 range.setStart(node, currentOffset);
@@ -809,12 +931,11 @@
 	  return node.childNodes[index];
 	}
 
-	function isVisible(node) {
-		if (isElement(node) && window.getComputedStyle(node).display !== "none") {
+	function hasContent(node) {
+		if (isElement(node)) {
 			return true;
 		} else if (isText(node) &&
-				node.textContent.trim().length &&
-				window.getComputedStyle(node.parentNode).display !== "none") {
+				node.textContent.trim().length) {
 			return true;
 		}
 		return false;
@@ -853,7 +974,7 @@
 	    let done;
 	    let next;
 
-	    let hasContent = false;
+	    let hasRenderedContent = false;
 	    let newBreakToken;
 
 	    let check = 0;
@@ -885,7 +1006,7 @@
 	      this.hooks && this.hooks.layoutNode.trigger(node);
 
 	      // Check if the rendered element has a break set
-	      if (hasContent && this.shouldBreak(node)) {
+	      if (hasRenderedContent && this.shouldBreak(node)) {
 	        newBreakToken = this.findBreakToken(wrapper, source, bounds);
 
 	        if (!newBreakToken) {
@@ -901,8 +1022,8 @@
 	      let rendered = this.append(node, wrapper, breakToken, shallow);
 
 	      // Check if layout has content yet
-	      if (!hasContent) {
-	        hasContent = isVisible(node);
+	      if (!hasRenderedContent) {
+	        hasRenderedContent = hasContent(node);
 	      }
 
 	      // Skip to the next node if a deep clone was rendered
@@ -933,7 +1054,16 @@
 	  }
 
 	  shouldBreak(node) {
-	    return needsBreakBefore(node) || needsPreviousBreakAfter(node) || needsPageBreak(node);
+	    let previousSibling = node.previousSibling;
+	    let parentNode = node.parentNode;
+	    let parentBreakBefore = needsBreakBefore(node) && parentNode && !previousSibling && needsBreakBefore(parentNode);
+	    let doubleBreakBefore;
+
+	    if (parentBreakBefore) {
+	      doubleBreakBefore = node.dataset.breakBefore === parentNode.dataset.breakBefore;
+	    }
+
+	    return !doubleBreakBefore && needsBreakBefore(node) || needsPreviousBreakAfter(node) || needsPageBreak(node);
 	  }
 
 	  getStart(source, breakToken) {
@@ -1011,7 +1141,7 @@
 	  createBreakToken(overflow, rendered, source) {
 	    let container = overflow.startContainer;
 	    let offset = overflow.startOffset;
-	    let node, renderedNode, parent, index, temp, startOffset;
+	    let node, renderedNode, parent, index, temp;
 
 	    if (isElement(container)) {
 	      temp = child(container, offset);
@@ -1049,8 +1179,6 @@
 	      parent = findElement(renderedNode, source);
 	      index = indexOf$1(container);
 	      node = child(parent, index);
-	      startOffset = container.textContent.slice(offset);
-	      offset = parent.textContent.indexOf(startOffset);
 	    }
 
 	    if (!node) {
@@ -1094,12 +1222,15 @@
 	    let range;
 
 	    let walker = walk(rendered.firstChild, rendered);
-	    let next, done, node, offset, skip;
+	    let next, done, node, offset, skip, breakAvoid, prev, br;
 	    while (!done) {
 	      next = walker.next();
 	      done = next.done;
 	      node = next.value;
 	      skip = false;
+	      breakAvoid = false;
+	      prev = undefined;
+	      br = undefined;
 
 	      if (node) {
 	        let pos = getBoundingClientRect(node);
@@ -1109,13 +1240,23 @@
 	        if (!range && left >= end) {
 	          // Check if it is a float
 	          let isFloat = false;
-	          if (isElement(node)) {
+
+	          if (isElement(node) ) {
 	            let styles = window.getComputedStyle(node);
 	            isFloat = styles.getPropertyValue("float") !== "none";
-	            skip = window.getComputedStyle(node)["break-inside"] === "avoid";
+	            skip = styles.getPropertyValue("break-inside") === "avoid";
+	            breakAvoid = node.dataset.breakBefore === "avoid" || node.dataset.previousBreakAfter === "avoid";
+	            prev = breakAvoid && nodeBefore(node, rendered);
+	            br = node.tagName === "BR" || node.tagName === "WBR";
 	          }
 
-	          if (!isFloat && isElement(node)) {
+	          if (prev) {
+	            range = document.createRange();
+	            range.setStartBefore(prev);
+	            break;
+	          }
+
+	          if (!br && !isFloat && isElement(node)) {
 	            range = document.createRange();
 	            range.setStartBefore(node);
 	            break;
@@ -1130,21 +1271,33 @@
 	        }
 
 	        if (!range && isText(node) &&
-	            right > end && node.textContent.trim().length &&
+	            node.textContent.trim().length &&
 	            window.getComputedStyle(node.parentNode)["break-inside"] !== "avoid") {
-	          range = document.createRange();
-	          offset = this.textBreak(node, start, end);
-	          if (!offset) {
-	            range = undefined;
-	          } else {
-	            range.setStart(node, offset);
+
+	          let rects = getClientRects(node);
+	          let rect;
+	          left = 0;
+	          for (var i = 0; i != rects.length; i++) {
+	            rect = rects[i];
+	            if (!left || rect.left > left) {
+	              left = rect.left;
+	            }
 	          }
-	          break;
+
+	          if(left >= end) {
+	            range = document.createRange();
+	            offset = this.textBreak(node, start, end);
+	            if (!offset) {
+	              range = undefined;
+	            } else {
+	              range.setStart(node, offset);
+	            }
+	            break;
+	          }
 	        }
 
 	        // Skip children
 	        if (skip || right < end) {
-
 	          next = nodeAfter(node, rendered);
 	          if (next) {
 	            walker = walk(next, rendered);
@@ -2501,7 +2654,7 @@
 	    this.remove(oldItem);
 	};
 
-	var List_1 = List;
+	var list = List;
 
 	var createCustomError = function createCustomError(name, message) {
 	    // use Object.create(), because some VMs prevent setting line/column otherwise
@@ -3965,7 +4118,6 @@
 	var findIdentifierEnd$2 = utils.findIdentifierEnd;
 	var findNumberEnd$2 = utils.findNumberEnd;
 	var findDecimalNumberEnd$1 = utils.findDecimalNumberEnd;
-	var findStringEnd$2 = utils.findStringEnd;
 	var isHex$1 = utils.isHex;
 
 	var SYMBOL_TYPE$2 = _const.SYMBOL_TYPE;
@@ -3973,8 +4125,6 @@
 	var PLUSSIGN$2 = _const.TYPE.PlusSign;
 	var HYPHENMINUS$3 = _const.TYPE.HyphenMinus;
 	var NUMBERSIGN = _const.TYPE.NumberSign;
-	var APOSTROPHE$1 = _const.TYPE.Apostrophe;
-	var QUOTATIONMARK$1 = _const.TYPE.QuotationMark;
 
 	var PERCENTAGE = {
 	    '%': true
@@ -4146,19 +4296,6 @@
 	    return findIdentifierEnd$2(str, offset + 1);
 	}
 
-	function ident(token, addTokenToMatch) {
-	    if (token === null) {
-	        return false;
-	    }
-
-	    if (consumeIdentifier(token.value, 0) !== token.value.length) {
-	        return false;
-	    }
-
-	    addTokenToMatch();
-	    return true;
-	}
-
 	function astNode(type) {
 	    return function(token, addTokenToMatch) {
 	        if (token === null || token.node.type !== type) {
@@ -4168,25 +4305,6 @@
 	        addTokenToMatch();
 	        return true;
 	    };
-	}
-
-	function string(token, addTokenToMatch) {
-	    if (token === null || token.value.length < 2) {
-	        return false;
-	    }
-
-	    var quote = token.value.charCodeAt(0);
-
-	    if (quote !== APOSTROPHE$1 && quote !== QUOTATIONMARK$1) {
-	        return false;
-	    }
-
-	    if (findStringEnd$2(token.value, 1, quote) !== token.value.length) {
-	        return false;
-	    }
-
-	    addTokenToMatch();
-	    return true;
 	}
 
 	function dimension(type) {
@@ -4392,7 +4510,7 @@
 	    'flex': dimension(FLEX),
 	    'hex-color': hexColor,
 	    'id-selector': idSelector, // element( <id-selector> )
-	    'ident': ident,
+	    'ident': astNode('Identifier'),
 	    'integer': integer,
 	    'length': zeroUnitlessDimension(LENGTH),
 	    'number': number,
@@ -4402,7 +4520,7 @@
 	    'positive-integer': positiveInteger,
 	    'resolution': dimension(RESOLUTION),
 	    'semitones': dimension(SEMITONES),
-	    'string': string,
+	    'string': astNode('String'),
 	    'time': dimension(TIME),
 	    'unicode-range': astNode('UnicodeRange'),
 	    'url': url,
@@ -4493,7 +4611,7 @@
 	var EXCLAMATIONMARK$1 = 33;    // !
 	var NUMBERSIGN$1 = 35;         // #
 	var AMPERSAND = 38;          // &
-	var APOSTROPHE$2 = 39;         // '
+	var APOSTROPHE$1 = 39;         // '
 	var LEFTPARENTHESIS$1 = 40;    // (
 	var RIGHTPARENTHESIS$1 = 41;   // )
 	var ASTERISK = 42;           // *
@@ -4698,11 +4816,11 @@
 	    var name;
 
 	    tokenizer.eat(LESSTHANSIGN$1);
-	    tokenizer.eat(APOSTROPHE$2);
+	    tokenizer.eat(APOSTROPHE$1);
 
 	    name = scanWord(tokenizer);
 
-	    tokenizer.eat(APOSTROPHE$2);
+	    tokenizer.eat(APOSTROPHE$1);
 	    tokenizer.eat(GREATERTHANSIGN$1);
 
 	    return maybeMultiplied(tokenizer, {
@@ -4882,7 +5000,7 @@
 	            return maybeMultiplied(tokenizer, readGroup(tokenizer));
 
 	        case LESSTHANSIGN$1:
-	            return tokenizer.nextCharCode() === APOSTROPHE$2
+	            return tokenizer.nextCharCode() === APOSTROPHE$1
 	                ? readProperty(tokenizer)
 	                : readType(tokenizer);
 
@@ -4911,7 +5029,7 @@
 	                type: 'Comma'
 	            };
 
-	        case APOSTROPHE$2:
+	        case APOSTROPHE$1:
 	            return maybeMultiplied(tokenizer, {
 	                type: 'String',
 	                value: scanString(tokenizer)
@@ -6188,9 +6306,9 @@
 	            var start = getFirstMatchNode(matchNode);
 	            var end = getLastMatchNode(matchNode);
 
-	            lexer.syntax.walk(ast, function(node, item, list) {
+	            lexer.syntax.walk(ast, function(node, item, list$$1) {
 	                if (node === start) {
-	                    var nodes = new List_1();
+	                    var nodes = new list();
 
 	                    do {
 	                        nodes.appendData(item.data);
@@ -6203,7 +6321,7 @@
 	                    } while (item !== null);
 
 	                    fragments.push({
-	                        parent: list,
+	                        parent: list$$1,
 	                        nodes: nodes
 	                    });
 	                }
@@ -6303,7 +6421,7 @@
 	                            if (typeof fieldType === 'string') {
 	                                valid = node[key] && node[key].type === fieldType;
 	                            } else if (Array.isArray(fieldType)) {
-	                                valid = node[key] instanceof List_1;
+	                                valid = node[key] instanceof list;
 	                            }
 	                    }
 	                }
@@ -6859,16 +6977,16 @@
 	        readSequence: sequence,
 
 	        createList: function() {
-	            return new List_1();
+	            return new list();
 	        },
 	        createSingleNodeList: function(node) {
-	            return new List_1().appendData(node);
+	            return new list().appendData(node);
 	        },
-	        getFirstListNode: function(list) {
-	            return list && list.first();
+	        getFirstListNode: function(list$$1) {
+	            return list$$1 && list$$1.first();
 	        },
-	        getLastListNode: function(list) {
-	            return list.last();
+	        getLastListNode: function(list$$1) {
+	            return list$$1.last();
 	        },
 
 	        parseWithFallback: function(consumer, fallback) {
@@ -6902,10 +7020,10 @@
 
 	            return null;
 	        },
-	        getLocationFromList: function(list) {
+	        getLocationFromList: function(list$$1) {
 	            if (this.needPositions) {
-	                var head = this.getFirstListNode(list);
-	                var tail = this.getLastListNode(list);
+	                var head = this.getFirstListNode(list$$1);
+	                var tail = this.getLastListNode(list$$1);
 	                return this.scanner.getLocationRange(
 	                    head !== null ? head.loc.start.offset - this.scanner.startOffset : this.scanner.tokenStart,
 	                    tail !== null ? tail.loc.end.offset - this.scanner.startOffset : this.scanner.tokenStart,
@@ -10159,8 +10277,8 @@
 	        fromPlainObject: function(ast) {
 	            walk(ast, {
 	                enter: function(node) {
-	                    if (node.children && node.children instanceof List_1 === false) {
-	                        node.children = new List_1().fromArray(node.children);
+	                    if (node.children && node.children instanceof list === false) {
+	                        node.children = new list().fromArray(node.children);
 	                    }
 	                }
 	            });
@@ -10170,7 +10288,7 @@
 	        toPlainObject: function(ast) {
 	            walk(ast, {
 	                leave: function(node) {
-	                    if (node.children && node.children instanceof List_1) {
+	                    if (node.children && node.children instanceof list) {
 	                        node.children = node.children.toArray();
 	                    }
 	                }
@@ -10403,7 +10521,7 @@
 	        var value = node[key];
 
 	        if (value) {
-	            if (Array.isArray(value) || value instanceof List_1) {
+	            if (Array.isArray(value) || value instanceof list) {
 	                value = value.map(clone);
 	            } else if (value.constructor === Object) {
 	                value = clone(value);
@@ -10526,7 +10644,7 @@
 	    var convert = create$3(walk);
 
 	    var syntax = {
-	        List: List_1,
+	        List: list,
 	        Tokenizer: tokenizer,
 	        Lexer: Lexer_1,
 
@@ -18487,7 +18605,7 @@
 		syntax: "space-between | space-around | space-evenly | stretch"
 	},
 		"content-list": {
-		syntax: "[ <string> | contents | <image> | <quote> | <target> | <leader()> | <element()> ]+"
+		syntax: "[ <string> | contents | <image> | <quote> | <target> | <leader()> ]+"
 	},
 		"content-position": {
 		syntax: "center | start | end | flex-start | flex-end"
@@ -19830,50 +19948,6 @@
 		},
 		"pseudo-page": {
 			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"id-selector": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
-			syntax: null
-		},
-		"attribute-selector": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
-			syntax: null
-		},
-		"wq-name": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
-			syntax: null
-		},
-		"ns-prefix": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
-			syntax: null
-		},
-		"class-selector": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
-			syntax: null
-		},
-		"compound-selector": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
-			syntax: null
-		},
-		"type-selector": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
-			syntax: null
-		},
-		"subclass-selector": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
-			syntax: null
-		},
-		"pseudo-class-selector": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
-			syntax: null
-		},
-		"pseudo-element-selector": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
-			syntax: null
-		},
-		"compound-selector-list": {
-			comment: "temporary omit due lack of nested syntax definition(s)",
 			syntax: null
 		}
 	};
@@ -23248,6 +23322,20 @@
   margin: unset;
 }
 
+.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-to]:after,
+.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-to]::after {
+  content: unset;
+}
+
+.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from]:before,
+.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from]::before {
+  content: unset;
+}
+
+.pagedjs_pages > .pagedjs_page > .pagedjs_area > div li[data-split-from]:first-of-type {
+  list-style: none;
+}
+
 /*
 [data-page]:not([data-split-from]),
 [data-break-before="page"]:not([data-split-from]),
@@ -23274,6 +23362,10 @@
 
 .pagedjs_clear-after::after {
   content: none !important;
+}
+
+img {
+  height: auto;
 }
 
 @media print {
@@ -23335,8 +23427,7 @@
 		}
 
 		setup() {
-			this.base = this.addBase();
-			this.inserted.push(this.base);
+			this.base = this.insert(baseStyles);
 			this.styleEl = document.createElement("style");
 			document.head.appendChild(this.styleEl);
 			this.styleSheet = this.styleEl.sheet;
@@ -23372,47 +23463,30 @@
 			return await Promise.all(fetched)
 				.then(async (originals) => {
 					let text = "";
-
-					let original, index;
-					let href, sheet;
-
-					for (index = 0; index < originals.length; index++) {
-						original = originals[index];
-
-						href = urls[index];
-
-						sheet = new Sheet(href, this.hooks);
-
-						await sheet.parse(original);
-
-						this.sheets.push(sheet);
-
-						if (typeof sheet.width !== "undefined") {
-							this.width = sheet.width;
-						}
-
-						if (typeof sheet.height !== "undefined") {
-							this.height = sheet.height;
-						}
-
-						if (typeof sheet.orientation !== "undefined") {
-							this.orientation = sheet.orientation;
-						}
-
-	 					text += sheet.toString();
+					for (let index = 0; index < originals.length; index++) {
+						text += await this.convertViaSheet(originals[index], urls[index]);
 					}
-
-					let s = this.insert(text);
-					this.inserted.push(s);
-					// console.log(text);
+					this.insert(text);
 					return text;
 				});
 		}
 
-		addBase() {
-			return this.insert(baseStyles);
-		}
+		async convertViaSheet(cssStr, href) {
+			let sheet = new Sheet(href, this.hooks);
+			await sheet.parse(cssStr);
+			this.sheets.push(sheet);
 
+			if (typeof sheet.width !== "undefined") {
+				this.width = sheet.width;
+			}
+			if (typeof sheet.height !== "undefined") {
+				this.height = sheet.height;
+			}
+			if (typeof sheet.orientation !== "undefined") {
+				this.orientation = sheet.orientation;
+			}
+			return sheet.toString();
+		}
 
 		insert(text){
 			let head = document.querySelector("head");
@@ -23424,6 +23498,7 @@
 
 			head.appendChild(style);
 
+			this.inserted.push(style);
 			return style;
 		}
 
@@ -24088,7 +24163,7 @@
 		addMarginaliaStyles(page, list, item, sheet) {
 			for (let loc in page.marginalia) {
 				let block = lib.clone(page.marginalia[loc]);
-				let hasContent = false;
+				let hasContent$$1 = false;
 
 				if(block.children.isEmpty()) {
 					continue;
@@ -24099,9 +24174,9 @@
 					enter: (node, item, list) => {
 						if (node.property === "content") {
 							if (node.value.children && node.value.children.first().name === "none") {
-								hasContent = false;
+								hasContent$$1 = false;
 							} else {
-								hasContent = true;
+								hasContent$$1 = true;
 							}
 							list.remove(item);
 						}
@@ -24162,7 +24237,7 @@
 					page: page,
 					selector: sel,
 					block: page.marginalia[loc],
-					hasContent: hasContent
+					hasContent: hasContent$$1
 				};
 
 			}
@@ -24953,6 +25028,8 @@
 						if (prop.property === "break-after") {
 							let nodeAfter$$1 = elementAfter(elements[i], parsed);
 
+							elements[i].setAttribute("data-break-after", prop.value);
+
 							if (nodeAfter$$1) {
 								nodeAfter$$1.setAttribute("data-previous-break-after", prop.value);
 							}
@@ -25066,10 +25143,6 @@
 			super(chunker, polisher, caller);
 		}
 
-		// layout(pageElement, page) {
-		//
-		// }
-
 		afterPageLayout(pageElement, page, breakToken, chunker) {
 			let splits = Array.from(pageElement.querySelectorAll("[data-split-from]"));
 			let pages = pageElement.parentNode;
@@ -25092,16 +25165,209 @@
 					if (!from.dataset.splitFrom) {
 						from.dataset.splitOriginal = true;
 					}
+
+					this.handleAlignment(from);
 				}
 			});
 		}
+
+	  handleAlignment(node) {
+			let styles = window.getComputedStyle(node);
+			let align = styles["text-align"];
+			let alignLast = styles["text-align-last"];
+			if (align === "justify" && alignLast === "auto") {
+				node.style["text-align-last"] = "justify";
+			}
+		}
+
+	}
+
+	class Counters extends Handler {
+		constructor(chunker, polisher, caller) {
+			super(chunker, polisher, caller);
+
+			this.styleSheet = polisher.styleSheet;
+			this.counters = {};
+		}
+
+		onDeclaration(declaration, dItem, dList, rule) {
+			let property = declaration.property;
+
+			if (property === "counter-increment") {
+				this.handleIncrement(declaration, rule);
+				dList.remove(dItem);
+			} else if (property === "counter-reset") {
+				this.handleReset(declaration, rule);
+				dList.remove(dItem);
+			}
+		}
+
+		onContent(funcNode, fItem, fList, declaration, rule) {
+			if (funcNode.name === "counter") ;
+		}
+
+		afterParsed(parsed) {
+			this.processCounters(parsed, this.counters);
+		}
+
+		addCounter(name) {
+			if (name in this.counters) {
+				return this.counters[name];
+			}
+
+			this.counters[name] = {
+				name: name,
+				increments: {},
+				resets: {}
+			};
+
+			return this.counters[name];
+		}
+
+		handleIncrement(declaration, rule) {
+			let identifier = declaration.value.children.first();
+			let number = declaration.value.children.getSize() > 1
+								&& declaration.value.children.last().value;
+			let name = identifier && identifier.name;
+			let selector = lib.generate(rule.ruleNode.prelude);
+
+			let counter;
+			if (!(name in this.counters)) {
+				counter = this.addCounter(name);
+			} else {
+				counter = this.counters[name];
+			}
+
+			counter.increments[selector] = {
+				selector: selector,
+				number: number || 1
+			};
+		}
+
+		handleReset(declaration, rule) {
+			let identifier = declaration.value.children.first();
+			let number = declaration.value.children.getSize() > 1
+								&& declaration.value.children.last().value;
+			let name = identifier && identifier.name;
+			let selector = lib.generate(rule.ruleNode.prelude);
+
+			let counter;
+			if (!(name in this.counters)) {
+				counter = this.addCounter(name);
+			} else {
+				counter = this.counters[name];
+			}
+
+			counter.resets[selector] = {
+				selector: selector,
+				number: number || 0
+			};
+		}
+
+		processCounters(parsed, counters) {
+			let counter;
+			for (let c in counters) {
+				counter = this.counters[c];
+				this.processCounterIncrements(parsed, counter);
+				this.processCounterResets(parsed, counter);
+				this.addCounterValues(parsed, counter);
+			}
+		}
+
+		processCounterIncrements(parsed, counter) {
+			let increment;
+			for (let inc in counter.increments) {
+				increment = counter.increments[inc];
+				// Find elements for increments
+				let incrementElements = parsed.querySelectorAll(increment.selector);
+				// Add counter data
+				for (var i = 0; i < incrementElements.length; i++) {
+					incrementElements[i].setAttribute("data-counter-"+ counter.name +"-increment", increment.number);
+				}
+			}
+		}
+
+		processCounterResets(parsed, counter) {
+			let reset;
+			for (let r in counter.resets) {
+				reset = counter.resets[r];
+				// Find elements for resets
+				let resetElements = parsed.querySelectorAll(reset.selector);
+				// Add counter data
+				for (var i = 0; i < resetElements.length; i++) {
+					resetElements[i].setAttribute("data-counter-"+ counter.name +"-reset", reset.number);
+				}
+			}
+		}
+
+		addCounterValues(parsed, counter) {
+			let counterName = counter.name;
+			let elements = parsed.querySelectorAll("[data-counter-"+ counterName +"-reset], [data-counter-"+ counterName +"-increment]");
+
+			let count = 0;
+			let element;
+			let increment, reset;
+
+			for (var i = 0; i < elements.length; i++) {
+				element = elements[i];
+
+				if (element.hasAttribute("data-counter-"+ counterName +"-reset")) {
+					reset = element.getAttribute("data-counter-"+ counterName +"-reset");
+					count = parseInt(reset);
+				}
+
+				if (element.hasAttribute("data-counter-"+ counterName +"-increment")) {
+
+					increment = element.getAttribute("data-counter-"+ counterName +"-increment");
+
+					this.styleSheet.insertRule(`[data-ref="${element.dataset.ref}"] { counter-reset: ${counterName} ${count} }`, this.styleSheet.cssRules.length);
+					this.styleSheet.insertRule(`[data-ref="${element.dataset.ref}"] { counter-increment: ${counterName} ${increment}}`, this.styleSheet.cssRules.length);
+
+					count += parseInt(increment);
+
+					element.setAttribute("data-counter-"+counterName+"-value", count);
+				}
+
+			}
+		}
+
+	}
+
+	class Lists extends Handler {
+		constructor(chunker, polisher, caller) {
+			super(chunker, polisher, caller);
+		}
+		afterParsed(content) {
+	    const orderedLists = content.querySelectorAll('ol');
+
+	    for (var list of orderedLists) {
+	      this.addDataNumbers(list);
+	    }
+	  }
+
+		afterPageLayout(pageElement, page, breakToken, chunker) {
+	    var orderedLists = pageElement.getElementsByTagName('ol');
+	    for (var list of orderedLists) {
+	      list.start = list.firstElementChild.dataset.itemNum;
+	    }
+	  }
+
+		addDataNumbers(list) {
+			let items = list.children;
+			for (var i = 0; i < items.length; i++) {
+				items[i].setAttribute('data-item-num', i + 1);
+			}
+		}
+
 	}
 
 	var pagedMediaHandlers = [
 		AtPage,
 		Breaks,
 		PrintMedia,
-		Splits
+		Splits,
+		Counters,
+		Lists
 	];
 
 	class RunningHeaders extends Handler {
@@ -25373,6 +25639,7 @@
 						// this.styleSheet.insertRule(`:root { --string-${name}: "${cssVar}"; }`, this.styleSheet.cssRules.length);
 						// fragment.style.setProperty(`--string-${name}`, `"${cssVar}"`);
 						set.first = cssVar;
+						fragment.style.setProperty(`--string-${name}`, `"${set.first}"`);
 					} else {
 						console.log(set.value + "needs css replacement");
 					}
@@ -25455,7 +25722,7 @@
 						return;
 					}
 					let val = attr(selected, target.args);
-					let element = chunker.pagesArea.querySelector(val);
+					let element = chunker.pagesArea.querySelector(querySelectorEscape(val));
 
 					if (element) {
 						let selector = UUID();
@@ -25548,7 +25815,7 @@
 				let queried = fragment.querySelectorAll(query);
 				queried.forEach((selected, index) => {
 					let val = attr(selected, target.args);
-					let element = fragment.querySelector(val);
+					let element = fragment.querySelector(querySelectorEscape(val));
 					if (element) {
 						if (target.style === "content") {
 							let text = element.textContent;
@@ -26049,8 +26316,6 @@
 
 			// Hooks
 			this.hooks = {};
-			this.hooks.beforePolishing = new Hook(this);
-			this.hooks.beforeChunking = new Hook(this);
 
 			// default size
 			this.size = {
@@ -26126,16 +26391,16 @@
 			return template.content;
 		}
 
-		removeStyles() {
+		removeStyles(doc=document) {
 			// Get all stylesheets
-			let stylesheets = Array.from(document.querySelectorAll("link[rel='stylesheet']"));
+			let stylesheets = Array.from(doc.querySelectorAll("link[rel='stylesheet']"));
 			let hrefs = stylesheets.map((sheet) => {
 				sheet.remove();
 				return sheet.href;
 			});
 
 			// Get inline styles
-			let inlineStyles = Array.from(document.querySelectorAll("style:not([data-pagedjs-inserted-styles])"));
+			let inlineStyles = Array.from(doc.querySelectorAll("style:not([data-pagedjs-inserted-styles])"));
 			inlineStyles.forEach((inlineStyle) => {
 				let obj = {};
 				obj[window.location.href] = inlineStyle.textContent;
@@ -26147,6 +26412,7 @@
 		}
 
 		async preview(content, stylesheets, renderTo) {
+
 			if (!content) {
 				content = this.wrapContent();
 			}
