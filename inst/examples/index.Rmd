@@ -77,6 +77,10 @@ links-to-footnotes: true
 ---
 ```
 
+## Footnotes
+
+The default behavior of pagedown is to render notes as endnotes because Paged.js does not natively support footnotes for now. However, we introduced an experimental support for footnotes. You can test it including `notes-as-footnotes: true` in the YAML header of your document. If you get any trouble with this experimental feature, please open an issue on GitHub.
+
 ## Tests {data-short-title="Some tests"}
 
 ### A list {data-short-title="An ordered list"}
