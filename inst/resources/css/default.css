@@ -161,6 +161,9 @@ img {
 .footnotes hr {
   border: none;
 }
+.footnote-break {
+  width: 1in;
+}
 body {
   hyphens: auto;
 }
