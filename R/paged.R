@@ -14,6 +14,7 @@
 #'   built-in CSS files, run \code{pagedown:::list_css()}.
 #' @param theme The Bootstrap theme. By default, Bootstrap is not used.
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
+#' @references \url{https://rstudio.github.io/pagedown/}
 #' @return An R Markdown output format.
 #' @import stats utils
 #' @export

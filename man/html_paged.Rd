@@ -31,3 +31,6 @@ output document is split into multiple pages via a JavaScript library
 \pkg{paged.js}. These pages contain elements commonly seen in PDF documents,
 such as page numbers and running headers.
 }
+\references{
+\url{https://rstudio.github.io/pagedown/}
+}

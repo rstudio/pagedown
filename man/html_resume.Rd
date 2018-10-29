@@ -16,3 +16,6 @@ An R Markdown output format.
 This output format is based on Min-Zhong Lu's HTML/CSS in the Github repo
 \url{https://github.com/mnjul/html-resume}.
 }
+\references{
+\url{https://rstudio.github.io/pagedown/html-resume.html}
+}
