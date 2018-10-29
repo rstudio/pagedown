@@ -20,13 +20,29 @@ Can we print a book with HTML and CSS? W3C published [the first working draft](h
 
 HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it comes to typesetting content under the constraint of "pages". However, they can be extremely powerful and flexible in other aspects, especially when combined with the power of JavaScript.
 
+```{r, eval=FALSE}
+remotes::install_github('rstudio/pagedown')
+```
+
 ## CSS for print
 
 ## CSS frameworks
 
 # Paged.js {#pagedjs}
 
+To create a paged HTML document, you can use the output format `pagedown::html_paged`.
+
 # Applications 
+
+You can print the following (HTML) applications to PDF using Google Chrome (remember to set margins to none, and allow background graphics to be printed). There are a few templates in the **pagedown** package, which you can access from RStudio's menu `File -> New File -> R Markdown -> From Template`.
+
+## Resume
+
+Currently **pagedown** has one resume format: `pagedown::html_resume`. See https://pagedown.rbind.io/html-resume/ for an example.
+
+## Poster
+
+You can create a poster with the `pagedown::poster_relaxed` format. See https://pagedown.rbind.io/poster-relaxed/ for an example.
 
 # Supported features
 
