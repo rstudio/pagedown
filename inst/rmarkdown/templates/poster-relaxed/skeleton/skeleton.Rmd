@@ -1,0 +1,169 @@
+---
+title: "An HTML poster example"
+author: "Yihui Xie"
+date: "`r Sys.Date()`"
+output:
+  pagedown::poster_relaxed:
+    self_contained: false
+bibliography: packages.bib
+references:
+  - id: remarkjs
+    author:
+    - family: Bang
+      given: Ole Petter
+    title: 'A simple, in-browser, markdown-driven slideshow tool'
+    issued:
+      year: 2018
+    URL: https://remarkjs.com
+  - id: naruto
+    author:
+    - family: Kishimoto
+      given: Masashi
+    title: 'Naruto Shippūden'
+    issued:
+      year: 2007
+    URL: https://en.wikipedia.org/wiki/Naruto
+---
+
+
+
+
+Presentation Ninja [with]{.tiny} R and xaringan
+================================================================================
+
+In late 2016, Yihui discovered remark.js [@remarkjs] and loved it at the first sight. A few weeks later in the R Markdown ecosystem [@R-rmarkdown], an R package was born and named **xaringan** [@R-xaringan], which nobody knows how to pronounce (including Yihui himself, because it was adapted from the Japanese manga series Naruto by @naruto). Anyway, this package has gained some popularity, and some CSS ninja have started contributing themes to it. One day, Yihui was thinking about creating a gallery for existing themes in **xaringan**. After a few replies in the [Github issue](https://github.com/yihui/xaringan/issues/172), he realized there might be enough topics on **xaringan** for a short book. Accidentally, he invented a new development model for writing books: the Github-issue-driven book development.
+
+
+
+
+[Authors]{.red}
+================================================================================
+
+We are a team of shinobi and kunoichi who wish to share the fun and secrets of the **xaringan** package with you.
+
+::: member-cards
+## Emi Tanaka
+
+![Emi](https://avatars3.githubusercontent.com/u/7620319?s=400&v=4)
+
+Lead author, and the ninja theme author
+
+Emi laid out the first sketch of the book, which made Yihui believe that the book had been half-done.
+
+## Joseph Casillas
+
+![](https://avatars1.githubusercontent.com/u/1747068?s=400&v=4)
+
+Contributor of **xaringan**
+
+"Count me in," replied Joseph when Yihui asked who wanted to co-author the book.
+
+## Eric Nantz
+
+![](https://avatars0.githubusercontent.com/u/1043111?s=400&v=4)
+
+Host of the R Podcast
+
+Yihui is eager to know how much Eric's writing is better than his magnetic voice.
+
+## Yihui Xie
+
+![](https://avatars0.githubusercontent.com/u/163582?s=400&v=4)
+
+Main author of **xaringan**
+
+Yihui knows a bit about R/HTML/CSS/JS and wrote **knitr** [@R-knitr], which became a cornerstone of R Markdown.
+:::
+
+[All pictures above are from the authors' Github profiles. This poster was created via the R package [**pagedown**](https://github.com/rstudio/pagedown).]{.disclaimer}
+
+
+
+
+[Motivation]{.blue}
+================================================================================
+
+```{r, include=FALSE}
+lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, qui officia deserunt mollit anim id est laborum.'
+```
+
+## There are many secrets about **xaringan**, **knitr**, and R Markdown to be revealed
+
+`r lorem`
+
+![The **xaringan** logo, adapted from Sharingan of the Uchiha clan.](https://user-images.githubusercontent.com/163582/45438104-ea200600-b67b-11e8-80fa-d9f2a99a03b0.png)
+
+## HTML/CSS/JS are fun to play with
+
+- `r lorem`
+
+
+
+
+[Schedule]{.pink}
+================================================================================
+
+```{css, echo=FALSE}
+.section-4 {
+  background-image: url(https://upload.wikimedia.org/wikipedia/commons/7/7e/Mudra-Naruto-KageBunshin.svg) !important;
+  background-size: 40% !important;
+  background-position: right top !important;
+  background-repeat: no-repeat !important;
+}
+```
+
+
+## Outline (2018-12-15)
+
+`r lorem`
+
+## Content (2019-03-01)
+
+`r lorem`
+
+## Review and revision (2019-03-31)
+
+`r lorem`
+
+## Copyediting (2019-04-20)
+
+`r lorem`
+
+## Publishing (2019-05-30)
+
+`r lorem`
+
+
+
+
+[Contents]{.green}
+================================================================================
+
+`r lorem`
+
+`r lorem`
+
+```r
+# some nice R code here
+1 + 1
+fit = lm(dist ~ speed, cars)
+```
+`r lorem`
+
+![The most well-known feature of **xaringan**: the random Moustache Karl (aka `yolo = TRUE`).](https://github.com/yihui/xaringan/releases/download/v0.0.2/karl-moustache.jpg)
+
+`r lorem`
+
+$$\bar{X}=\frac{1}{n}\sum_{i=1}^nX_i$$
+
+`r lorem`
+
+
+
+
+[Bibliography]{.yellow}
+================================================================================
+
+```{r, include=FALSE}
+knitr::write_bib(c('knitr', 'rmarkdown', 'xaringan'), 'packages.bib')
+```

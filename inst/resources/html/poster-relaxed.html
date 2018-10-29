@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"$if(lang)$ lang="$lang$" xml:lang="$lang$"$endif$>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="generator" content="pandoc" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    $for(author-meta)$<meta name="author" content="$author-meta$" />$endfor$
+    $if(date-meta)$<meta name="date" content="$date-meta$" />$endif$
+    <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+
+    $for(header-includes)$
+    $header-includes$
+    $endfor$
+
+    $if(highlightjs)$
+    <link rel="stylesheet" href="$highlightjs$/$if(highlightjs-theme)$$highlightjs-theme$$else$default$endif$.css" $if(html5)$$else$type="text/css" $endif$/>
+    <script src="$highlightjs$/highlight.js"></script>
+    <script type="text/javascript">hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+    $endif$
+
+    $if(highlighting-css)$<style type="text/css">$highlighting-css$</style>$endif$
+
+    $for(css)$
+    <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
+    $endfor$
+
+  </head>
+  <body>
+
+$for(include-before)$
+$include-before$
+$endfor$
+
+$body$
+
+<script type="text/javascript">
+(function() {
+  // add appropriate classes to h1 and its parent div
+  var i, j, d, s, el, els = document.getElementsByTagName('h1');
+  for (i = 0; i < els.length; i++) {
+    el = els[i];
+    el.parentNode.className += ' section-' + (i + 1);
+    if (i === 0) continue;  // that's all we need for the poster title
+    el.className += ' ui title ribbon label';  // poster sections
+    s = el.firstElementChild;  // move the class from inner <span> to <h1>
+    if (s) {
+      el.className += ' ' + s.className;
+      s.outerHTML = s.innerHTML;
+    }
+    el.parentNode.className += ' ui raised segment';
+    // wrap everything except the h1 in a section into <div class="content">
+    d = document.createElement('div');
+    d.className = 'content';
+    while (el.nextSibling) {
+      d.append(el.nextSibling);
+    }
+    el.parentNode.append(d);
+  }
+
+  // turn h2 sections in <div class="member-cards"> into semantic ui's cards
+  els = document.querySelectorAll('.member-cards');
+  for (i = 0; i < els.length; i++) {
+    el = els[i].querySelectorAll('h2');
+    for (j = 0; j < el.length; j++) {
+      s = el[j];
+      d = document.createElement('div');
+      d.className = 'ui card';
+      d.innerHTML = '<div class="image"></div><div class="content">' +
+        '<div class="header"></div><div class="meta"></div>' +
+        '<div class="description"></div></div>'
+      d.firstChild.innerHTML = s.nextElementSibling.querySelector('img').outerHTML;
+      s.parentNode.removeChild(s.nextElementSibling);
+      d.lastChild.children[0].innerHTML = s.innerHTML;
+      d.lastChild.children[1].innerHTML = s.nextElementSibling.innerHTML;
+      s.parentNode.removeChild(s.nextElementSibling);
+      d.lastChild.children[2].innerHTML = s.nextElementSibling.innerHTML;
+      s.parentNode.removeChild(s.nextElementSibling);
+      s.parentNode.replaceChild(d, s);
+    }
+  }
+
+  // remove the section divs for h2 - h5
+  els = document.querySelectorAll('h2, h3, h4, h5');
+  for (i = 0; i < els.length; i++) {
+    el = els[i].parentNode;
+    if (el && el.tagName === 'DIV' && /section level/.test(el.className)) {
+      el.outerHTML = el.innerHTML;
+    }
+  }
+
+  // replace <p><span class="foo">bar</span></p> with <div class="foo">bar</div>
+  els = document.getElementsByTagName('p');
+  for (i = 0; i < els.length;) {
+    el = els[i]; i++;
+    if (el.childElementCount !== 1) continue;
+    s = el.firstElementChild;
+    if (s.tagName !== 'SPAN' || s.outerHTML !== el.innerHTML) continue;
+    d = document.createElement('div');
+    d.innerHTML = s.innerHTML;
+    d.className = s.className;
+    el.parentNode.replaceChild(d, el);
+    i--;
+  }
+
+  // break words in <a> if the text and uri are identical
+  els = document.getElementsByTagName('a');
+  for (i = 0; i < els.length; i++) {
+    el = els[i];
+    if (el.getAttribute('href') === el.innerText) el.style.wordBreak = 'break-all';
+  }
+})();
+</script>
+
+$if(math)$
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "$if(mathjax)$$mathjax$$endif$";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:" && /^https?:/.test(src))
+      src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+$endif$
+
+$for(include-after)$
+$include-after$
+$endfor$
+
+  </body>
+</html>

@@ -8,6 +8,7 @@ Authors@R: c(
   person(family = "RStudio, Inc.", role = "cph"),
   person("Adam", "Hyde", role = "ctb", comment = "paged.js in resources/js/"),
   person("Min-Zhong", "Lu", role = "ctb", comment = "resume.css in resources/css/"),
+  person("Zulko", role = "ctb", comment = "poster-relaxed.css in resources/css/"),
   person()
   )
 Description: Use the paged media properties in CSS and the JavaScript polyfill
