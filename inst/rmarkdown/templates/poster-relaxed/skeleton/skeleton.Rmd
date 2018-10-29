@@ -95,7 +95,7 @@ lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
 
 ## HTML/CSS/JS are fun to play with
 
-- `r lorem`
+`r paste('-', strwrap(lorem, 230), collapse = '\n')`
 
 
 
