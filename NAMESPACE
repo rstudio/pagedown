@@ -2,5 +2,6 @@
 
 export(html_paged)
 export(html_resume)
+export(poster_relaxed)
 import(stats)
 import(utils)
