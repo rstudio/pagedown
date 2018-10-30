@@ -32,5 +32,5 @@ output document is split into multiple pages via a JavaScript library
 such as page numbers and running headers.
 }
 \references{
-\url{https://rstudio.github.io/pagedown/}
+\url{https://pagedown.rbind.io}
 }

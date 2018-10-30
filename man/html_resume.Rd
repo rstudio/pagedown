@@ -14,8 +14,6 @@ An R Markdown output format.
 }
 \description{
 This output format is based on Min-Zhong Lu's HTML/CSS in the Github repo
-\url{https://github.com/mnjul/html-resume}.
-}
-\references{
-\url{https://rstudio.github.io/pagedown/html-resume.html}
+\url{https://github.com/mnjul/html-resume}. See
+\url{https://pagedown.rbind.io/html-resume/} for an example.
 }

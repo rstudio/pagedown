@@ -14,9 +14,7 @@ poster_relaxed(..., css = "poster-relaxed", template = pkg_resource("html",
 An R Markdown output format.
 }
 \description{
-The output format \code{poster_relaxed()} is based on an example in the Github repo
-\url{https://github.com/RelaxedJS/ReLaXed-examples}.
-}
-\references{
-\url{https://rstudio.github.io/pagedown/poster-relaxed.html}
+The output format \code{poster_relaxed()} is based on an example in the
+Github repo \url{https://github.com/RelaxedJS/ReLaXed-examples}. See
+\url{https://pagedown.rbind.io/poster-relaxed/} for an example.
 }
