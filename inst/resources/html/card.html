@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"$if(lang)$ lang="$lang$" xml:lang="$lang$"$endif$>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="author" content="$author-meta$" />
+  <title>$if(title-prefix)$$title-prefix$ - $endif$$author-meta$: $pagetitle$</title>
+  $if(googlefonts)$
+  <link href="https://fonts.googleapis.com/css?family=$googlefonts$" rel="stylesheet">
+  $endif$
+  <style>
+  @page {
+    margin: 0;
+    size: $pagewidth$ $pageheight$;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+  .wrapper {
+    font-family: $if(mainfont)$$mainfont$, $endif$sans-serif;
+    color: white;
+    background-color: black;
+    width: $pagewidth$;
+    height: $pageheight$;
+    margin: auto;
+  }
+  .logo {
+    display: block;
+    width: 75%;
+    margin: auto;
+    padding: .3in 0 0;
+  }
+  .me {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    line-height: 1.7em;
+    padding: 0.4cm;
+  }
+  .name {
+    font-weight: bold;
+  }
+  .coordinates {
+    color: #bbb;
+    margin-top: 0.5cm;
+    line-height: 1em;
+  }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper">
+  $if(logo)$<img class="logo" src="$logo$"/ alt="Logo">$endif$
+  <div class="me">
+    <div class="name">$author$</div>
+    <div class="title">$title$</div>
+    <div class="coordinates">
+      $body$
+    </div>
+  </div>
+  </div>
+</body>
+</html>

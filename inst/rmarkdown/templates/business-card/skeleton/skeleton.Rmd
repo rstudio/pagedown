@@ -1,0 +1,30 @@
+---
+author: "Tareef Kawaf"
+title: "President of RStudio, Inc."
+output:
+  pagedown::business_card:
+    logo: "https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png"
+    # googlefonts: "Righteous" # feel free to try other fonts at https://fonts.google.com
+---
+
++1 844-448-1212
+
+info@rstudio.com
+
+www.rstudio.com
+
+@rstudio
+
+
+
+<!-- if you prefer black text on white background, set eval=TRUE on the chunk below -->
+
+```{css, eval=FALSE}
+.wrapper {
+  color: black;
+  background-color: white;
+}
+.coordinates {
+  color: #333;
+}
+```
