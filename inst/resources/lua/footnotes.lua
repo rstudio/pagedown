@@ -15,7 +15,7 @@ local function getMeta(meta)
 end
 
 local function noteToSpan(note)
-  if not options["notes-as-footnotes"] then return nil end
+  if not options["paged-footnotes"] then return nil end
   noteId = noteId + 1
   local inlines = pandoc.utils.blocks_to_inlines(note.content, {pandoc.Str'\010'}) -- insert \n between Pandoc's blocks
   local attr = {}
