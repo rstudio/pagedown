@@ -44,6 +44,10 @@ Currently **pagedown** has one resume format: `pagedown::html_resume`. See https
 
 You can create a poster with the `pagedown::poster_relaxed` format. See https://pagedown.rbind.io/poster-relaxed/ for an example.
 
+## Business card
+
+To create a simple business card, you can use the `pagedown::business_card` format. See https://pagedown.rbind.io/business-card/ for an example.
+
 # Supported features
 
 ## Lists of Tables and Figures

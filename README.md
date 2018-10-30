@@ -23,3 +23,7 @@ Below are some existing R Markdown output formats and examples.
 ## Posters (`pagedown::poster_relaxed`)
 
 [![A poster of the ReLaXed style](https://user-images.githubusercontent.com/163582/47672385-e12dba00-db7f-11e8-92de-af94d5bab12f.jpg)](https://pagedown.rbind.io/poster-relaxed/)
+
+## Business cards
+
+[![A business card](https://user-images.githubusercontent.com/163582/47741877-68933000-dc49-11e8-94f8-92724b67e9a6.png)](https://pagedown.rbind.io/business-card/)
