@@ -32,6 +32,7 @@ chrome_print = function(
         'Cannot find Google Chrome automatically from the Windows Registry Hive. ',
         "Please pass the full path of chrome.exe to the 'browser' argument."
       )
+      res
     },
     unix = if (xfun::is_macos()) {
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
