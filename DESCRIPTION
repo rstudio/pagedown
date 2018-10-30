@@ -20,7 +20,7 @@ Imports: rmarkdown, bookdown, htmltools, xfun
 License: MIT + file LICENSE
 URL: https://github.com/rstudio/pagedown
 BugReports: https://github.com/rstudio/pagedown/issues
-SystemRequirements: Pandoc (>= 2.2.1)
+SystemRequirements: Pandoc (>= 2.2.3)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.0

@@ -24,14 +24,14 @@ html_paged = function(
 ) {
   html_format(
     ..., css = css, theme = theme, template = template, .pagedjs = TRUE,
-    .pandoc_args = lua_filters('uri-to-fn.lua', 'loft.lua')
+    .pandoc_args = lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua') # uri-to-fn.lua must come before footnotes.lua
   )
 }
 
 pagedown_dependency = function(css = NULL, js = FALSE) {
   list(htmltools::htmlDependency(
     'paged', packageVersion('pagedown'), src = pkg_resource(),
-    script = if (js) c('js/config.js', 'js/paged.js'),
+    script = if (js) c('js/config.js', 'js/paged.js', 'js/hooks.js'),
     stylesheet = file.path('css', css), all_files = FALSE
   ))
 }
