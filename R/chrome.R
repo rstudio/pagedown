@@ -51,10 +51,15 @@ chrome_print = function(
   # remove hash/query parameters in url
   if (missing(output) && !file.exists(url))
     output = xfun::with_ext(basename(gsub('[#?].*', '', url)), 'pdf')
+  output2 = normalizePath(output, mustWork = FALSE)
+  if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
+    'Cannot create the directory for the output file: ', d
+  )
 
   if (isTRUE(verbose)) verbose = ''
+
   res = system2(browser, c(
-    extra_args, '--headless', paste0('--print-to-pdf=', shQuote(output)), url
+    extra_args, '--headless', paste0('--print-to-pdf=', shQuote(output2)), url
   ), stdout = verbose, stderr = verbose)
   if (res != 0) stop(
     'Failed to print the document to PDF (for more info, re-run with the argument verbose = TRUE).'
