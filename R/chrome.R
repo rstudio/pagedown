@@ -10,6 +10,8 @@
 #'   will be \file{bar.pdf} under the current working directory.
 #' @param browser Path to Google Chrome or Chromium. This function will try to
 #'   find it automatically if the path is not explicitly provided.
+#' @param wait The number of seconds to wait before deeming the page to be
+#'   ready. Use a larger value if the page takes longer to load completely.
 #' @param extra_args Extra command-line arguments to be passed to Chrome.
 #' @param verbose Whether to show verbose command-line output.
 #' @references
@@ -17,7 +19,7 @@
 #' @return Path of the output file (invisibly).
 #' @export
 chrome_print = function(
-  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome',
+  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', wait = 5,
   extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = switch(
@@ -59,6 +61,7 @@ chrome_print = function(
   if (isTRUE(verbose)) verbose = ''
 
   res = system2(browser, c(
+    paste0('--virtual-time-budget=', format(wait * 1e6, scientific = FALSE)),
     extra_args, '--headless', paste0('--print-to-pdf=', shQuote(output2)), url
   ), stdout = verbose, stderr = verbose)
   if (res != 0) stop(

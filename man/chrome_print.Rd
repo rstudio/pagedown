@@ -5,7 +5,7 @@
 \title{Print a web page to PDF using the headless Chrome}
 \usage{
 chrome_print(url, output = xfun::with_ext(url, "pdf"), browser = "google-chrome", 
-    extra_args = c("--disable-gpu"), verbose = FALSE)
+    wait = 5, extra_args = c("--disable-gpu"), verbose = FALSE)
 }
 \arguments{
 \item{url}{A URL or local file path to a web page.}
@@ -17,6 +17,9 @@ will be \file{bar.pdf} under the current working directory.}
 
 \item{browser}{Path to Google Chrome or Chromium. This function will try to
 find it automatically if the path is not explicitly provided.}
+
+\item{wait}{The number of seconds to wait before deeming the page to be
+ready. Use a larger value if the page takes longer to load completely.}
 
 \item{extra_args}{Extra command-line arguments to be passed to Chrome.}
 
