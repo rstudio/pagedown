@@ -33,7 +33,7 @@ html_paged = function(
 #' This output format is similar to \code{html_paged}. The only difference is in
 #' the default stylesheets. See \url{https://pagedown.rbind.io/html-letter/} for
 #' an example.
-#' @param ...,css Arguments passed to \code{\link{html_paged()}}.
+#' @param ...,css Arguments passed to \code{\link{html_paged}()}.
 #' @return An R Markdown output format.
 #' @export
 html_letter = function(..., css = c('default', 'letter')) {

@@ -7,7 +7,7 @@
 html_letter(..., css = c("default", "letter"))
 }
 \arguments{
-\item{..., css}{Arguments passed to \code{\link{html_paged()}}.}
+\item{..., css}{Arguments passed to \code{\link{html_paged}()}.}
 }
 \value{
 An R Markdown output format.
