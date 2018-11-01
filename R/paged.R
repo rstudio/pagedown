@@ -28,6 +28,18 @@ html_paged = function(
   )
 }
 
+#' Create a letter in HTML
+#'
+#' This output format is similar to \code{html_paged}. The only difference is in
+#' the default stylesheets. See \url{https://pagedown.rbind.io/html-letter/} for
+#' an example.
+#' @param ...,css Arguments passed to \code{\link{html_paged()}}.
+#' @return An R Markdown output format.
+#' @export
+html_letter = function(..., css = c('default', 'letter')) {
+  html_paged(..., css = css, fig_caption = FALSE)
+}
+
 pagedown_dependency = function(css = NULL, js = FALSE) {
   list(htmltools::htmlDependency(
     'paged', packageVersion('pagedown'), src = pkg_resource(),
