@@ -1,0 +1,100 @@
+/* page size */
+@page {
+  size: 6in 9in; /* var(--width) doesn't work in browser when printing */
+}
+@page :blank {
+
+}
+
+/* store some string variables */
+.shorttitle1 {
+  string-set: h1-text content(text);
+}
+
+.shorttitle2 {
+  string-set: h2-text content(text);
+}
+
+/* left page */
+.running-h1-title {
+  position: running(runningH1Title);
+  width: var(--running-title-width);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.running-h1-title:before {
+  content: string(h1-text);
+}
+
+@page :left {
+  @top-left {
+    content: counter(page);
+  }
+  @top-right {
+    content: element(runningH1Title);
+    white-space: nowrap !important;
+  }
+}
+
+/* right page */
+.running-h2-title {
+  position: running(runningH2Title);
+  width: var(--running-title-width);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.running-h2-title:before {
+  /* We would want to write: */
+  /* content: string(h2-text, start); */
+  /* However, this is yet unsupported by Paged.js, see https://gitlab.pagedmedia.org/tools/pagedjs/issues/38 */
+  content: string(h2-text);
+}
+@page :right {
+  @top-right {
+    content: counter(page);
+  }
+  @top-left {
+    content: element(runningH2Title);
+    white-space: nowrap !important;
+  }
+}
+
+/* New chapter page */
+@page chapter:first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: counter(page);
+  }
+}
+@page :first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: none !important;
+  }
+}
+
+/* page breaks; aka CSS fragmentation */
+.level1 {
+  page: chapter;
+  break-before: recto;
+}
+h1, h2, h3, h4, h5, h6 {
+  break-after: avoid;
+}
+.footenotes {
+  break-before: always;
+  break-after: always;
+}
+.figure {
+  break-inside: avoid;
+}

@@ -19,7 +19,7 @@
 #' @import stats utils
 #' @export
 html_paged = function(
-  ..., css = c('default-fonts', 'default'), theme = NULL,
+  ..., css = c('default-fonts', 'default-page', 'default'), theme = NULL,
   template = pkg_resource('html', 'paged.html')
 ) {
   html_format(
