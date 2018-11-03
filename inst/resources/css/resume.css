@@ -8,7 +8,6 @@
 }
 
 :root{
-  --pages-number: 2;
   --page-width: 8.5in;
   --margin-right: 1in;
   --margin-left: 1in;
@@ -40,7 +39,6 @@ body{
   color: #444;
   hyphens: auto;
   display: grid;
-  grid-template-rows: repeat(var(--pages-number), 100vh);
 }
 
 h1, h2, h3{
