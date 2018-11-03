@@ -58,7 +58,6 @@ a{
   width: var(--main-width);
   padding: 0.25in 0.25in 0 0.25in;
   font-size: 7pt;
-  grid-row: 1/-1;
 }
 
 #sidebar{
@@ -68,7 +67,6 @@ a{
   background-color: #f2f2f2;
   font-size: 8.5pt;
   grid-column-start: 2;
-  grid-row: 1/-1;
 }
 
 /* main */
