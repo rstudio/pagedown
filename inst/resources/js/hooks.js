@@ -4,6 +4,8 @@
 Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
     super(chunker, polisher, caller);
+
+    this.splittedParagraphRefs = [];
   }
 
   beforeParsed(content) {
@@ -29,6 +31,27 @@ Paged.registerHandlers(class extends Paged.Handler {
       handler.style.width = '100%';
       handler.style.float = 'right';
       handler.style.pageBreakInside = 'avoid';
+    }
+  }
+
+  afterPageLayout(pageFragment, page, breakToken) {
+    function hasItemParent(node) {
+      if (node.parentElement === null) {
+        return false;
+      } else {
+        if (node.parentElement.tagName === 'LI') {
+          return true;
+        } else {
+          return hasItemParent(node.parentElement);
+        }
+      }
+    }
+    // If a li item is broken, we store the reference of the p child element
+    // see https://github.com/rstudio/pagedown/issues/23#issue-376548000
+    if (breakToken !== undefined) {
+      if (breakToken.node.nodeName === "#text" && hasItemParent(breakToken.node)) {
+        this.splittedParagraphRefs.push(breakToken.node.parentElement.dataset.ref);
+      }
     }
   }
 
@@ -69,6 +92,17 @@ Paged.registerHandlers(class extends Paged.Handler {
         footnote.style.paddingTop = 0;
         footnote.style.paddingBottom = 0;
         footnote.style.display = 'block';
+      }
+    }
+
+    for (var ref of this.splittedParagraphRefs) {
+      var paragraphFirstPage = document.querySelector('[data-split-to="' + ref + '"]');
+      // We test whether the paragraph is empty
+      // see https://github.com/rstudio/pagedown/issues/23#issue-376548000
+      if (paragraphFirstPage.innerText === "") {
+        paragraphFirstPage.parentElement.style.display = "none";
+        var paragraphSecondPage = document.querySelector('[data-split-from="' + ref + '"]');
+        paragraphSecondPage.parentElement.style.setProperty('list-style', 'inherit', 'important');
       }
     }
   }
