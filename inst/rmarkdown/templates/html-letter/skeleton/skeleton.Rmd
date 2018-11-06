@@ -21,15 +21,9 @@ School of Ninja, Hacker's University
 
 Dear Hiring Manager,
 
-It is my honor to write a letter of recommendation for Dr. Emi Tanaka, a great hacker in my eyes.
+It is my honor to write a letter of recommendation for Dr. Emi Tanaka, a great hacker in my eyes. Emi said [it was heck of a praise](https://twitter.com/statsgen/status/1023118510745038848) when I said Earo was a very impressive hacker. Well, the fact is that I have been actually impressed many more times by Emi, which is probably because Earo is a relatively low-key hacker, and I have seen a lot of cool things Emi posted on Twitter this year. If I were to write a full letter about them, it would probably take me two whole days. Below is a one-hour attempt to show the many ways in which she can be so cool.
 
-Emi said [it was heck of a praise](https://twitter.com/statsgen/status/1023118510745038848) when I said Earo was a very impressive hacker. Well, the fact is that I have been actually impressed many more times by Emi, which is probably because Earo is a relatively low-key hacker, and I have seen a lot of cool things Emi posted on Twitter this year. If I were to write a full letter about them, it would probably take me two whole days. Below is a one-hour attempt^[Originally published at https://yihui.name/en/2018/07/emi-tanaka/.] to show the many ways in which she can be so cool.
-
-<!--
-![The kunoichi theme for xaringan, made by Emi](https://github.com/emitanaka/ninja-theme/raw/master/docs/images/kunoichi-showcase.gif)
--->
-
-![The hacker's way of parking](https://slides.yihui.name/gif/impossible-parking.gif)
+![The kunoichi theme for xaringan, made by Emi](https://github.com/emitanaka/ninja-theme/raw/master/docs/images/kunoichi-showcase.gif){height=8.5cm}
 
 - She added the [ninja themes to **xaringan**](https://github.com/yihui/xaringan/pull/165).
 
@@ -55,8 +49,9 @@ Emi said [it was heck of a praise](https://twitter.com/statsgen/status/102311851
 
 - And [she just started answering](https://stackoverflow.com/a/51575804/559676) #rstats questions on Stack Overflow the other day! Thank you!!
 
-Creative, enthusiastic, excellent taste of design, with great attention to details. That is my overall impression of this hacker.
+Creative, enthusiastic, excellent taste of design, with great attention to details. That is my overall impression of this hacker.^[This letter was originally published in my blog at https://yihui.name/en/2018/07/emi-tanaka/.]
 
+![The hacker's way of parking](https://slides.yihui.name/gif/impossible-parking.gif)
 
 ![Yihui's signature](https://user-images.githubusercontent.com/163582/47831497-c6656c00-dd5e-11e8-87b3-1f03fa97baa0.png)  
 Yihui Xie  

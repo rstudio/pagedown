@@ -48,6 +48,10 @@ You can create a poster with the `pagedown::poster_relaxed` format. See https://
 
 To create a simple business card, you can use the `pagedown::business_card` format. See https://pagedown.rbind.io/business-card/ for an example.
 
+## Letter
+
+You can write a letter with the `pagedown::html_letter` format. See https://pagedown.rbind.io/html-letter/ for an example.
+
 # Supported features
 
 ## Lists of Tables and Figures
