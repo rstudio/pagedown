@@ -14,6 +14,9 @@ a[href^="http"]:not([class="uri"])::after {
   hyphens: none;
   word-break: break-all;
 }
+.references a[href^=http]:not([class=uri])::after {
+  content: none;
+}
 .main a[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
   content: " (page " target-counter(attr(href), page) ")";
 }
