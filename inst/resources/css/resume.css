@@ -12,7 +12,7 @@
   --margin-right: 0.5in;
   --margin-left: 0.25in;
   --content-width: calc(var(--page-width) - var(--margin-right) - var(--margin-left));
-  --root-font-size: 13pt;
+  --root-font-size: 12pt;
   --sidebar-width: 15rem;
   --main-width: calc(var(--content-width) - var(--sidebar-width));
   --decorator-horizontal-margin: 0.2in;
@@ -61,7 +61,7 @@ a{
 
 #main{
   width: var(--main-width);
-  padding: 0.25in 0.25in 0 0.25in;
+  padding: 0 0.25in 0 0.25in;
   font-size: 0.7rem;
 }
 
@@ -70,7 +70,7 @@ a{
   width: var(--sidebar-width);
   padding: 0.6in var(--sidebar-horizontal-padding);
   background-color: #f2f2f2;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   grid-column-start: 2;
 }
 
@@ -112,7 +112,6 @@ a{
 
 .main-block{
   margin-top: 0.1in;
-  page-break-inside: avoid;
 }
 
 #main h2{
@@ -254,7 +253,7 @@ a{
 }
 
 .details h3{
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .main-block:not(.concise) .details div{
@@ -333,7 +332,6 @@ a{
 #contact ul{
   margin-top: 0.05in;
   padding-left: 0;
-  font-family: "Source Code Pro";
   font-weight: 400;
   line-height: 1.75;
 }
