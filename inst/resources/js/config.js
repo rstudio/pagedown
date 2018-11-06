@@ -13,6 +13,8 @@
 
   var runMathJax = getBeforeAsync();
 
+  var windowLoaded = new Promise(function($){window.addEventListener('load', $, {once: true})});
+
   // This function expands the links in the lists of figures or tables (loft)
   async function expandLinksInLoft() {
     var items = document.querySelectorAll('.lof li, .lot li');
@@ -76,7 +78,8 @@
         appendShortTitles2()
       ]);
       await runMathJax();
-    },
-    auto: false
+      await windowLoaded;
+      await document.fonts.ready;
+    }
   };
 })();
