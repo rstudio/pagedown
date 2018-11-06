@@ -76,6 +76,7 @@
         appendShortTitles2()
       ]);
       await runMathJax();
-    }
+    },
+    auto: false
   };
 })();
