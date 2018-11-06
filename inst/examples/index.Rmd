@@ -38,7 +38,7 @@ You can print the following (HTML) applications to PDF using Google Chrome (reme
 
 ## Resume
 
-Currently **pagedown** has one resume format: `pagedown::html_resume`. See https://pagedown.rbind.io/html-resume/ for an example.
+Currently **pagedown** has one resume format: `pagedown::html_resume`. See https://pagedown.rbind.io/html-resume/ for an example. Note that when you print the resume to PDF in Google Chrome, you may want to remove the headers and footers (click "More Settings" and uncheck "Headers and footers").
 
 ## Poster
 
