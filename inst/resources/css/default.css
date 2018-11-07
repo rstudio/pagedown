@@ -5,6 +5,7 @@
   --color-paper: white;
   --color-mbox: rgba(0, 0, 0, 0.2);
   --running-title-width: 2.5in;
+  --screen-pages-spacing: 5mm;
 }
 
 /* generated content */
@@ -78,6 +79,7 @@ code {
 @media screen {
   body {
     background-color: var(--background);
+    margin: var(--screen-pages-spacing) auto 0 auto;
   }
   .pagedjs_pages {
     display: flex;
@@ -91,16 +93,23 @@ code {
     box-shadow: 0 0 0 1px var(--color-mbox);
     flex-shrink: 0;
     flex-grow: 0;
-    margin: auto auto 5mm auto;
+    margin: auto auto var(--screen-pages-spacing) auto;
   }
 }
 
 /* when a row can hold two pages, start first page on the right */
 @media (min-width: 12.32in) {
   .pagedjs_page {
-    margin: auto 0 5mm 0;
+    margin: auto 0 var(--screen-pages-spacing) 0;
   }
   .pagedjs_first_page {
     margin-left: var(--width);
+  }
+}
+
+/* use a fixed width body for mobiles */
+@media screen and (max-width:1180px)  {
+  body {
+    width: calc(var(--width) + 2 * var(--screen-pages-spacing));
   }
 }
