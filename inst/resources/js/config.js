@@ -80,6 +80,11 @@
       await runMathJax();
       await windowLoaded;
       await document.fonts.ready;
+    },
+    after: () => {
+      if (!!window.pagedownListener) {
+        pagedownListener('');
+      }
     }
   };
 })();
