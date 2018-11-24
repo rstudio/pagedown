@@ -69,7 +69,7 @@ chrome_print = function(
 
   res = system2(browser, c(
     paste0('--virtual-time-budget=', format(wait * 1e6, scientific = FALSE)),
-    extra_args, '--headless', paste0('--print-to-pdf=', shQuote(output2)), url
+    extra_args, '--headless', '--no-first-run', paste0('--print-to-pdf=', shQuote(output2)), url
   ), stdout = verbose, stderr = verbose)
   if (res != 0) stop(
     'Failed to print the document to PDF (for more info, re-run with the argument verbose = TRUE).'
