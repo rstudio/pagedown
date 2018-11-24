@@ -10,8 +10,11 @@
 #'   will be \file{bar.pdf} under the current working directory.
 #' @param browser Path to Google Chrome or Chromium. This function will try to
 #'   find it automatically if the path is not explicitly provided.
-#' @param wait The number of seconds to wait before deeming the page to be
-#'   ready. Use a larger value if the page takes longer to load completely.
+#' @param work_dir Name of headless Chrome working directory. In order to avoid
+#'   Chrome to fail, it is recommended to use a subdirectory of your home
+#'   directory.
+#' @param timeout The number of seconds before canceling the document
+#'   generation. Use a larger value if the document takes longer to build.
 #' @param extra_args Extra command-line arguments to be passed to Chrome.
 #' @param verbose Whether to show verbose command-line output.
 #' @references
@@ -19,8 +22,8 @@
 #' @return Path of the output file (invisibly).
 #' @export
 chrome_print = function(
-  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', wait = 5,
-  extra_args = c('--disable-gpu'), verbose = FALSE
+  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', work_dir,
+  timeout = 60, extra_args = c('--disable-gpu'), verbose = FALSE, debug_port = 9222
 ) {
   if (missing(browser)) browser = switch(
     .Platform$OS.type,
@@ -68,9 +71,10 @@ chrome_print = function(
   if (isTRUE(verbose)) verbose = ''
 
   res = system2(browser, c(
-    paste0('--virtual-time-budget=', format(wait * 1e6, scientific = FALSE)),
-    extra_args, '--headless', '--no-first-run', paste0('--print-to-pdf=', shQuote(output2)), url
-  ), stdout = verbose, stderr = verbose)
+    paste0('--remote-debugging-port=', debug_port),
+    paste0('--user-data-dir=', work_dir),
+    extra_args, '--headless', '--no-first-run', '--no-default-browser-check'
+  ), stdout = verbose, stderr = verbose, timeout = timeout)
   if (res != 0) stop(
     'Failed to print the document to PDF (for more info, re-run with the argument verbose = TRUE).'
   )
