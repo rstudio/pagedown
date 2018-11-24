@@ -58,6 +58,12 @@ chrome_print = function(
     'Cannot create the directory for the output file: ', d
   )
 
+  # proxy settings
+  proxy = get_proxy()
+  behind_proxy = nzchar(proxy)
+  if (behind_proxy)
+    extra_args = c(chrome_proxy_args(proxy), extra_args)
+
   if (isTRUE(verbose)) verbose = ''
 
   res = system2(browser, c(
@@ -69,4 +75,39 @@ chrome_print = function(
   )
 
   invisible(output)
+}
+
+get_proxy = function() {
+  # the order of the variables is important
+  # because the first non empty variable is kept
+  env_var = c('https_proxy', 'HTTPS_PROXY', 'http_proxy', 'HTTP_PROXY')
+  values = Sys.getenv(env_var)
+  values = values[nzchar(values)]
+  if (length(values) > 0)
+    values[1]
+  else
+    ''
+}
+
+chrome_proxy_args = function(proxy) {
+  proxy_arg = paste0('--proxy-server=', proxy)
+
+  no_proxy_urls = get_no_proxy_urls()
+  no_proxy_string = paste(no_proxy_urls, collapse = ';')
+  no_proxy_arg = paste0('--proxy-bypass-list=', no_proxy_string)
+
+  c(proxy_arg, no_proxy_arg)
+}
+
+get_no_proxy_urls = function() {
+  env_var = Sys.getenv(c('no_proxy', 'NO_PROXY'))
+  sep = gregexpr(';', env_var)
+  no_proxy = do.call(c, regmatches(env_var, sep, invert = TRUE))
+  no_proxy = c(default_no_proxy_urls(), no_proxy)
+  no_proxy = no_proxy[nzchar(no_proxy)]
+  unique(no_proxy)
+}
+
+default_no_proxy_urls = function() {
+  c('localhost', '127.0.0.1')
 }
