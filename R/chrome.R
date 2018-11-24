@@ -25,6 +25,7 @@ chrome_print = function(
   if (missing(browser)) browser = switch(
     .Platform$OS.type,
     windows = {
+      extra_args = c(extra_args, '--no-sandbox')
       res = tryCatch({
         unlist(utils::readRegistry('ChromeHTML\\shell\\open\\command', 'HCR'))
       }, error = function(e) '')
