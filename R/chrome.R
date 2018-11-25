@@ -76,6 +76,14 @@ chrome_print = function(
     paste0('--user-data-dir=', work_dir),
     extra_args, '--headless', '--no-first-run', '--no-default-browser-check'
   ), stdout = verbose, stderr = verbose, timeout = timeout)
+
+  if (!is_remote_protocol_ok(debug_port)) stop(
+    'A more recent version of Chrome is required. '
+  )
+
+  entrypoints = get_entrypoints(debug_port)
+
+
   if (res != 0) stop(
     'Failed to print the document to PDF (for more info, re-run with the argument verbose = TRUE).'
   )
@@ -107,13 +115,64 @@ chrome_proxy_args = function(proxy) {
 
 get_no_proxy_urls = function() {
   env_var = Sys.getenv(c('no_proxy', 'NO_PROXY'))
-  sep = gregexpr(';', env_var)
-  no_proxy = do.call(c, regmatches(env_var, sep, invert = TRUE))
+  no_proxy = do.call(c, strsplit(env_var, '[,;]'))
   no_proxy = c(default_no_proxy_urls(), no_proxy)
-  no_proxy = no_proxy[nzchar(no_proxy)]
   unique(no_proxy)
 }
 
 default_no_proxy_urls = function() {
   c('localhost', '127.0.0.1')
 }
+
+is_remote_protocol_ok = function(debug_port, retry_delay = 0.2, max_attempts = 15) {
+  url = sprintf('http://localhost:%s/json/protocol', debug_port)
+  for (i in 1:max_attempts) {
+    remote_protocol = tryCatch(jsonlite::read_json(url), error = function(e) NULL)
+    if (!is.null(remote_protocol))
+      break
+    else
+      if (i < max_attempts)
+        Sys.sleep(retry_delay)
+      else
+        stop('Cannot connect to headless Chrome. ')
+  }
+
+  required_commands = list(
+    Browser = c('close'),
+    Page = c('enable', 'navigate'),
+    Runtime = c('enable', 'addBinding')
+  )
+
+  remote_domains = sapply(remote_protocol$domains, function(x) x$domain)
+  if (!all(required_domains %in% remote_domains))
+    return(FALSE)
+
+  remote_commands = sapply(names(required_commands), function(domain) {
+    sapply(
+      remote_protocol$domains[remote_domains %in% domain][[1]]$commands,
+      function(x) x$name
+    )
+  })
+
+  all(mapply(function(x, table) all(x %in% table), required_commands, remote_commands))
+}
+
+get_entrypoints = function(debug_port) {
+  open_debuggers =
+    jsonlite::read_json(sprintf('http://localhost:%s/json', debug_port), simplifyVector = TRUE)
+  browser =
+    jsonlite::read_json(sprintf('http://localhost:%s/json/version', debug_port), simplifyVector = TRUE)
+
+  adresses = list(
+    page_address = open_debuggers$webSocketDebuggerUrl[open_debuggers$type == 'page'],
+    browser_address = browser$webSocketDebuggerUrl
+  )
+
+  if (any(sapply(adresses, function(x) length(x) == 0))) stop(
+    'Cannot connect R to Chrome. ',
+    'Please retry.'
+  )
+
+  adresses
+}
+
