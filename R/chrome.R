@@ -17,6 +17,7 @@
 #'   generation. Use a larger value if the document takes longer to build.
 #' @param extra_args Extra command-line arguments to be passed to Chrome.
 #' @param verbose Whether to show verbose command-line output.
+#' @param debug_port Headless Chrome remote debugging port.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
 #' @return Path of the output file (invisibly).
