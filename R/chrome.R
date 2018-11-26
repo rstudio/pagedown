@@ -29,7 +29,6 @@ chrome_print = function(
   if (missing(browser)) browser = switch(
     .Platform$OS.type,
     windows = {
-      extra_args = c(extra_args, '--no-sandbox')
       res = tryCatch({
         unlist(utils::readRegistry('ChromeHTML\\shell\\open\\command', 'HCR'))
       }, error = function(e) '')
@@ -52,6 +51,9 @@ chrome_print = function(
     },
     stop('Your platform is not supported')
   ) else if (!file.exists(browser)) browser = Sys.which(browser)
+
+  if (.Platform$OS.type == 'windows')
+    extra_args = c(extra_args, '--no-sandbox')
 
   if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
 
