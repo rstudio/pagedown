@@ -5,7 +5,8 @@
 \title{Print a web page to PDF using the headless Chrome}
 \usage{
 chrome_print(url, output = xfun::with_ext(url, "pdf"), browser = "google-chrome", 
-    wait = 5, extra_args = c("--disable-gpu"), verbose = FALSE)
+    work_dir, timeout = 60, extra_args = c("--disable-gpu"), verbose = FALSE, 
+    debug_port = 9222)
 }
 \arguments{
 \item{url}{A URL or local file path to a web page.}
@@ -18,12 +19,18 @@ will be \file{bar.pdf} under the current working directory.}
 \item{browser}{Path to Google Chrome or Chromium. This function will try to
 find it automatically if the path is not explicitly provided.}
 
-\item{wait}{The number of seconds to wait before deeming the page to be
-ready. Use a larger value if the page takes longer to load completely.}
+\item{work_dir}{Name of headless Chrome working directory. In order to avoid
+Chrome to fail, it is recommended to use a subdirectory of your home
+directory.}
+
+\item{timeout}{The number of seconds before canceling the document
+generation. Use a larger value if the document takes longer to build.}
 
 \item{extra_args}{Extra command-line arguments to be passed to Chrome.}
 
 \item{verbose}{Whether to show verbose command-line output.}
+
+\item{debug_port}{Headless Chrome remote debugging port.}
 }
 \value{
 Path of the output file (invisibly).

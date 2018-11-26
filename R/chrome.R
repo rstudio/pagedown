@@ -63,6 +63,12 @@ chrome_print = function(
     'Cannot create the directory for the output file: ', d
   )
 
+  # check that work_dir does not exist because it will be deleted at the end
+  work_dir2 = normalizePath(work_dir, mustWork = FALSE)
+  if (isTRUE(dir.exists(work_dir2))) stop(
+    paste('The directory', work_dir, 'already exists.')
+  )
+
   # proxy settings
   proxy = get_proxy()
   behind_proxy = nzchar(proxy)
@@ -75,18 +81,18 @@ chrome_print = function(
     paste0('--remote-debugging-port=', debug_port),
     paste0('--user-data-dir=', work_dir),
     extra_args, '--headless', '--no-first-run', '--no-default-browser-check'
-  ), stdout = verbose, stderr = verbose, timeout = timeout)
+  ), stdout = verbose, stderr = verbose, wait = FALSE)
 
   if (!is_remote_protocol_ok(debug_port)) stop(
     'A more recent version of Chrome is required. '
   )
 
-  entrypoints = get_entrypoints(debug_port)
+  ws = lapply(get_entrypoints(debug_port), websocket::WebSocket$new)
+  configure_ws_connexions(ws, work_dir2, url, output2, !nzchar(verbose), timeout)
 
-
-  if (res != 0) stop(
-    'Failed to print the document to PDF (for more info, re-run with the argument verbose = TRUE).'
-  )
+  # if (res != 0) stop(
+  #   'Failed to print the document to PDF (for more info, re-run with the argument verbose = TRUE).'
+  # )
 
   invisible(output)
 }
@@ -103,7 +109,9 @@ get_proxy = function() {
     ''
 }
 
-chrome_proxy_args = function(proxy) {
+chrome_proxy_args = function(
+  proxy
+) {
   proxy_arg = paste0('--proxy-server=', proxy)
 
   no_proxy_urls = get_no_proxy_urls()
@@ -124,7 +132,9 @@ default_no_proxy_urls = function() {
   c('localhost', '127.0.0.1')
 }
 
-is_remote_protocol_ok = function(debug_port, retry_delay = 0.2, max_attempts = 15) {
+is_remote_protocol_ok = function(
+  debug_port, retry_delay = 0.2, max_attempts = 15
+) {
   url = sprintf('http://localhost:%s/json/protocol', debug_port)
   for (i in 1:max_attempts) {
     remote_protocol = tryCatch(jsonlite::read_json(url), error = function(e) NULL)
@@ -137,14 +147,10 @@ is_remote_protocol_ok = function(debug_port, retry_delay = 0.2, max_attempts = 1
         stop('Cannot connect to headless Chrome. ')
   }
 
-  required_commands = list(
-    Browser = c('close'),
-    Page = c('enable', 'navigate'),
-    Runtime = c('enable', 'addBinding')
-  )
+  required_commands = required_commands()
 
   remote_domains = sapply(remote_protocol$domains, function(x) x$domain)
-  if (!all(required_domains %in% remote_domains))
+  if (!all(names(required_commands) %in% remote_domains))
     return(FALSE)
 
   remote_commands = sapply(names(required_commands), function(domain) {
@@ -157,15 +163,17 @@ is_remote_protocol_ok = function(debug_port, retry_delay = 0.2, max_attempts = 1
   all(mapply(function(x, table) all(x %in% table), required_commands, remote_commands))
 }
 
-get_entrypoints = function(debug_port) {
+get_entrypoints = function(
+  debug_port
+) {
   open_debuggers =
     jsonlite::read_json(sprintf('http://localhost:%s/json', debug_port), simplifyVector = TRUE)
   browser =
     jsonlite::read_json(sprintf('http://localhost:%s/json/version', debug_port), simplifyVector = TRUE)
 
   adresses = list(
-    page_address = open_debuggers$webSocketDebuggerUrl[open_debuggers$type == 'page'],
-    browser_address = browser$webSocketDebuggerUrl
+    page = open_debuggers$webSocketDebuggerUrl[open_debuggers$type == 'page'],
+    browser = browser$webSocketDebuggerUrl
   )
 
   if (any(sapply(adresses, function(x) length(x) == 0))) stop(
@@ -176,3 +184,65 @@ get_entrypoints = function(debug_port) {
   adresses
 }
 
+required_commands = function() {
+  list(
+    Browser = c('close'),
+    Page = c('enable', 'navigate', 'printToPDF'),
+    Runtime = c('enable', 'addBinding')
+  )
+}
+
+configure_ws_connexions <- function(
+  ws, work_dir, url, output, verbose, timeout
+) {
+  close_chrome = function() {
+    ws$page$close()
+    ws$browser$send('{"id":99,"method":"Browser.close"}')
+    unlink(work_dir, recursive = TRUE)
+  }
+  #later::later(close_chrome, delay = timeout)
+  if (isTRUE(verbose))
+    ws$browser$onMessage(function(event) {
+      cat('Message received from headless Chrome:', event$data, '\n')
+    })
+  ws$page$onMessage(function(event) {
+    if (isTRUE(verbose))
+      cat('Message received from headless Chrome:', event$data, '\n')
+    msg = jsonlite::fromJSON(event$data)
+    id = msg$id
+    method = msg$method
+    if (!is.null(msg$error)) {
+      cat('Chrome error while rendering the PDF:', event$data, '\n')
+      close_chrome()
+    }
+    if (!is.null(id)) switch(
+      id,
+      # Command #1 received -> calback: command #2 Page.enable
+      ws$page$send('{"id":2,"method":"Page.enable"}'),
+      # Command #2 received -> callback: command #3 Runtime.addBinding
+      ws$page$send('{"id":3,"method":"Runtime.addBinding","params":{"name":"pagedownListener"}}'),
+      # Command #3 received -> callback: command #4 Page.navigate
+      ws$page$send(sprintf('{"id":4,"method":"Page.navigate","params":{"url":"%s"}}', url)),
+      # Command #4 received - No callback
+      NULL, {
+      # Command #5 received - Test if the html document use the paged.js polyfill
+        if (!isTRUE(msg$result$result$value))
+          ws$page$send('{"id":6,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
+      }, {
+      # Command #6 received (printToPDF) -> callback: save to PDF file & close Chrome
+        writeBin(jsonlite::base64_dec(msg$result$data), output)
+        close_chrome()
+      }
+    )
+    if (!is.null(method)) {
+      if (method == "Page.domContentEventFired") {
+        ws$page$send('{"id":5,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
+      }
+      if (method == "Runtime.bindingCalled")
+        ws$page$send('{"id":6,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
+    }
+  })
+  ws$page$onOpen(function(event) {
+    ws$page$send('{"id":1,"method":"Runtime.enable"}')
+  })
+}
