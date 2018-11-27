@@ -252,7 +252,7 @@ close_chrome = function(headless_ps, work_dir) {
 required_commands = function() {
   list(
     Page = c('enable', 'navigate', 'printToPDF'),
-    Runtime = c('enable', 'addBinding')
+    Runtime = c('enable', 'addBinding', 'evaluate')
   )
 }
 
