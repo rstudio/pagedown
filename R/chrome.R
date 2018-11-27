@@ -91,11 +91,7 @@ chrome_print = function(
   }
 
   ws = websocket::WebSocket$new(get_entrypoint(debug_port, headless_ps, work_dir2))
-  configure_ws_connexions(headless_ps, ws, work_dir2, url, output2, !nzchar(verbose), timeout)
-
-  # if (res != 0) stop(
-  #   'Failed to print the document to PDF (for more info, re-run with the argument verbose = TRUE).'
-  # )
+  print_pdf(headless_ps, ws, work_dir2, url, output2, !nzchar(verbose), timeout)
 
   invisible(output)
 }
@@ -193,7 +189,7 @@ get_entrypoint = function(
   page
 }
 
-configure_ws_connexions <- function(
+print_pdf <- function(
   headless_ps, ws, work_dir, url, output, verbose, timeout
 ) {
   later::later(function() if (ws$readyState() < 2) ws$close(), delay = timeout)
