@@ -16,7 +16,7 @@ Description: Use the paged media properties in CSS and the JavaScript polyfill
   pages. Each page can have its page size, page numbers, margin boxes, and
   running headers, etc. Applications of this package include books, letters,
   reports, papers, and posters.
-Imports: rmarkdown, bookdown, htmltools, jsonlite, later, websocket, xfun
+Imports: rmarkdown, bookdown, htmltools, jsonlite, later, processx, websocket, xfun
 License: MIT + file LICENSE
 URL: https://github.com/rstudio/pagedown
 BugReports: https://github.com/rstudio/pagedown/issues
