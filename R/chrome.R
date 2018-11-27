@@ -86,7 +86,7 @@ chrome_print = function(
   ), stdout = verbose, stderr = verbose, wait = FALSE)
 
   if (!is_remote_protocol_ok(debug_port)) stop(
-    'A more recent version of Chrome is required. '
+    'A more recent version of Chrome is required. ' # How can we kill chrome with system2(..., wait=FALSE)?
   )
 
   ws = lapply(get_entrypoints(debug_port), websocket::WebSocket$new)
@@ -146,23 +146,30 @@ is_remote_protocol_ok = function(
       if (i < max_attempts)
         Sys.sleep(retry_delay)
       else
-        stop('Cannot connect to headless Chrome. ')
+        stop('Cannot connect to headless Chrome. ') # how can we kill chrome with system2(..., wait=FALSE)?
   }
 
-  required_commands = required_commands()
-
   remote_domains = sapply(remote_protocol$domains, function(x) x$domain)
-  if (!all(names(required_commands) %in% remote_domains))
+  if (!all(names(required_commands()) %in% remote_domains))
     return(FALSE)
 
-  remote_commands = sapply(names(required_commands), function(domain) {
+  remote_commands = sapply(names(required_commands()), function(domain) {
     sapply(
       remote_protocol$domains[remote_domains %in% domain][[1]]$commands,
       function(x) x$name
     )
   })
 
-  all(mapply(function(x, table) all(x %in% table), required_commands, remote_commands))
+  remote_events =  sapply(names(required_events()), function(domain) {
+    sapply(
+      remote_protocol$domains[remote_domains %in% domain][[1]]$events,
+      function(x) x$name
+    )
+  })
+
+  all(mapply(function(x, table) all(x %in% table), required_commands(), remote_commands),
+      mapply(function(x, table) all(x %in% table), required_events(), remote_events)
+  )
 }
 
 get_entrypoints = function(
@@ -186,37 +193,32 @@ get_entrypoints = function(
   adresses
 }
 
-required_commands = function() {
-  list(
-    Browser = c('close'),
-    Page = c('enable', 'navigate', 'printToPDF'),
-    Runtime = c('enable', 'addBinding')
-  )
-}
-
 configure_ws_connexions <- function(
   ws, work_dir, url, output, verbose, timeout
 ) {
-  close_chrome = function() {
-    ws$page$close()
-    ws$browser$send('{"id":99,"method":"Browser.close"}')
-    unlink(work_dir, recursive = TRUE)
-  }
-  #later::later(close_chrome, delay = timeout)
+  later::later(function(x) close_chrome(ws, work_dir), delay = timeout)
+
   if (isTRUE(verbose))
     ws$browser$onMessage(function(event) {
       cat('Message received from headless Chrome:', event$data, '\n')
     })
+
+  ws$page$onOpen(function(event) {
+    ws$page$send('{"id":1,"method":"Runtime.enable"}')
+  })
+
   ws$page$onMessage(function(event) {
     if (isTRUE(verbose))
       cat('Message received from headless Chrome:', event$data, '\n')
     msg = jsonlite::fromJSON(event$data)
     id = msg$id
     method = msg$method
+
     if (!is.null(msg$error)) {
       cat('Chrome error while rendering the PDF:', event$data, '\n')
-      close_chrome()
+      close_chrome(ws, work_dir)
     }
+
     if (!is.null(id)) switch(
       id,
       # Command #1 received -> calback: command #2 Page.enable
@@ -233,7 +235,8 @@ configure_ws_connexions <- function(
       }, {
       # Command #6 received (printToPDF) -> callback: save to PDF file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
-        close_chrome()
+        #close_chrome()
+        later::later(ws$page$close, 0.5)
       }
     )
     if (!is.null(method)) {
@@ -244,7 +247,30 @@ configure_ws_connexions <- function(
         ws$page$send('{"id":6,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
     }
   })
-  ws$page$onOpen(function(event) {
-    ws$page$send('{"id":1,"method":"Runtime.enable"}')
+
+  ws$page$onClose(function(event) {
+    ws$browser$send('{"id":99,"method":"Browser.close"}')
+    unlink(work_dir, recursive = TRUE)
   })
+}
+
+required_commands = function() {
+  list(
+    Browser = c('close'),
+    Page = c('enable', 'navigate', 'printToPDF'),
+    Runtime = c('enable', 'addBinding')
+  )
+}
+
+required_events = function() {
+  list(
+    Page = c('domContentEventFired'),
+    Runtime = c('bindingCalled')
+  )
+}
+
+close_chrome = function(ws, work_dir) {
+  ws$page$close()
+  ws$browser$send('{"id":99,"method":"Browser.close"}')
+  unlink(work_dir, recursive = TRUE)
 }
