@@ -9,6 +9,11 @@
     $for(author-meta)$<meta name="author" content="$author-meta$" />$endfor$
     $if(date-meta)$<meta name="date" content="$date-meta$" />$endif$
     <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+    <style type="text/css">
+    #main > h1, #aside > h1, #disclaimer > h2 {
+      display: none;
+    }
+    </style>
 
     $for(header-includes)$
     $header-includes$
@@ -20,52 +25,77 @@
 
   </head>
   <body>
-    $for(include-before)$
-    $include-before$
-    $endfor$
+$for(include-before)$
+$include-before$
+$endfor$
 
-    <section id="main">
-      <header id="title">
-        <h1>$left-column.title.main$</h1>
-        <div class="subtitle">$left-column.title.sub$</div>
-        <div class="content">$left-column.title.content$</div>
-      </header>
-      $for(left-column.blocks)$
-      <section class="main-block$if(left-column.blocks.concise)$ concise$endif$">
-        <h2>
-          <i class="fa fa-$left-column.blocks.icon$"></i> $left-column.blocks.title$
-        </h2>
-        $for(left-column.blocks.items)$
-        <section class="blocks">
-          <div class="date">
-            $if(left-column.blocks.items.from)$<span>$left-column.blocks.items.from$</span>$endif$
-            $if(left-column.blocks.items.to)$<span>$left-column.blocks.items.to$</span>$endif$
-          </div>
-          <div class="decorator">
-          </div>
-          <div class="details">
-            <header>
-              <h3>$left-column.blocks.items.name$</h3>
-              $if(left-column.blocks.items.info)$<span class="place">$left-column.blocks.items.info$</span>$endif$
-              $if(left-column.blocks.items.location)$<span class="location"><i class="fas fa-map-marker-alt"></i> $left-column.blocks.items.location$</span>$endif$
-            </header>
-            <div$if(left-column.blocks.items.concise)$ class="concise"$endif$>$left-column.blocks.items.content$</div>
-          </div>
-        </section>
-        $endfor$
-      </section>
-      $endfor$
-    </section>
+$body$
 
-    <aside id="sidebar">
-      $for(right-column)$
-      <div class="side-block" id="$right-column.id$">
-        $if(right-column.title)$<h1>$right-column.title$</h1>$endif$
-        $right-column.content$
-      </div>
-      $endfor$
-    </aside>
+<script>
+(function() {
+  var i, s, j, el, els;
+  var create_el = function(type, className, content) {
+    var el = document.createElement(type);
+    if (className) el.className = className;
+    if (content) el.innerText = content;
+    return el;
+  }
 
+  // replace h2 title with h1
+  var title = document.getElementById('title').querySelector('h2');
+  title.parentNode.replaceChild(create_el('h1', false, title.innerText), title);
+
+  // tweak class names of sections, and add icons
+  els = document.getElementById('main').querySelectorAll('.level2');
+  for (i = 0; i < els.length; i++) {
+    el = els[i];
+    if (i === 0 && el.id === 'title') continue;
+    el.className += ' main-block';
+    if (el.dataset['concise']) el.className += ' concise';
+    s = el.dataset['icon'] || 'bookmark';
+    el.firstElementChild.insertBefore(create_el('i', 'fa fa-' + s), el.firstElementChild.firstChild);
+  }
+
+  // tweak class names of blocks in sections
+  els = document.getElementById('main').querySelectorAll('.level3');
+  for (i = 0; i < els.length; i++) {
+    el = els[i];
+    if (el.parentNode.id === 'title') continue;
+    el.className += ' blocks';
+    el.innerHTML = '<div class="date"></div>' + '<div class="decorator"></div>' +
+      '<div class="details"><header></header><div></div></div>' + el.innerHTML;
+    var ps = el.querySelectorAll('p');
+    // move the date paragraph to the date div
+    if (ps.length >= 3) {
+      s = ps[2].innerText.split('-');
+      el.removeChild(ps[2]);
+      for (j = 0; j < s.length; j++) {
+        el.children[0].appendChild(create_el('span', false, s[j]))
+      }
+    }
+    // move title, description, location to the details div
+    (function(h) {
+      h.appendChild(el.children[3]);
+      var p = el.children[3], s = p.innerText;  // description
+      if (s !== 'N/A') {
+        h.appendChild(create_el('span', 'place', s));
+      }
+      el.removeChild(p);
+      p = el.children[3], s = p.innerText;  // location
+      if (s !== 'N/A') {
+        s = create_el('span', 'location', s);
+        s.innerHTML = '<i class="fa fa-map-marker-alt"></i> ' + s.innerHTML;
+        h.appendChild(s);
+      }
+      el.removeChild(p);
+    })(el.children[2].firstElementChild);
+    // move the rest of content in a block into the last div of the details div
+    while (el.children[2].nextSibling) {
+      el.children[2].lastElementChild.append(el.children[2].nextSibling);
+    }
+  }
+})();
+</script>
     $for(include-after)$
     $include-after$
     $endfor$

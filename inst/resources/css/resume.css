@@ -65,7 +65,7 @@ a{
   font-size: 0.7rem;
 }
 
-#sidebar{
+#aside{
   position: relative; /* for disclaimer */
   width: var(--sidebar-width);
   padding: 0.6in var(--sidebar-horizontal-padding);
@@ -77,7 +77,7 @@ a{
 /* main */
 
 /** big title **/
-#title, h1, h2{
+h1, h2{
   text-transform: uppercase;
 }
 
@@ -94,19 +94,10 @@ a{
   line-height: 1.5;
 }
 
-#title h1 strong{
-  margin: auto 0.2rem auto 0.4rem;
-  font-weight: 600;
-}
-
-.subtitle{
+#title h3{
   font-size: 0.8rem;
 }
 
-#title .content {
-  text-transform: none;
-  margin-top: 0.1in;
-}
 
 /*** categorial blocks ***/
 
@@ -320,12 +311,12 @@ a{
 
 /* sidebar */
 
-#sidebar h1{
+#aside h2{
   font-weight: 400;
   font-size: 1.1rem;
 }
 
-.side-block{
+#aside .level2{
   margin-top: 0.5in;
 }
 
