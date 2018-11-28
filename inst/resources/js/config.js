@@ -44,6 +44,7 @@
 
       async function addSpan(div) {
         var mainHeader = div.getElementsByTagName('h' + level)[0];
+        if (!mainHeader) return;
         var mainTitle = mainHeader.textContent;
         var runningTitle = 'shortTitle' in div.dataset ? div.dataset.shortTitle : mainTitle;
         var span = document.createElement('span');
