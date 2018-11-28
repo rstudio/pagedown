@@ -51,6 +51,10 @@ h1, h2, h3{
   color: #000;
 }
 
+#main > h1, #aside > h1, #disclaimer > h2 {
+  display: none;
+}
+
 li{
   list-style-type: none;
 }

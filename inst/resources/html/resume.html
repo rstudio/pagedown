@@ -9,11 +9,6 @@
     $for(author-meta)$<meta name="author" content="$author-meta$" />$endfor$
     $if(date-meta)$<meta name="date" content="$date-meta$" />$endif$
     <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
-    <style type="text/css">
-    #main > h1, #aside > h1, #disclaimer > h2 {
-      display: none;
-    }
-    </style>
 
     $for(header-includes)$
     $header-includes$
