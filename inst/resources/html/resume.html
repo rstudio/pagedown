@@ -40,6 +40,10 @@ $body$
   var title = document.getElementById('title').querySelector('h2');
   title.parentNode.replaceChild(create_el('h1', false, title.innerText), title);
 
+  // add the class .aside to #aside
+  el = document.getElementById('aside');
+  if (el) el.className += ' aside';
+
   // tweak class names of sections, and add icons
   els = document.getElementById('main').querySelectorAll('.level2');
   for (i = 0; i < els.length; i++) {

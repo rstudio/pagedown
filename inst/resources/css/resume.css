@@ -89,11 +89,16 @@ img{
 
 #aside{
   position: relative; /* for disclaimer */
-  width: var(--sidebar-width);
   height: var(--content-area-height);
+}
+
+.aside{
+  width: var(--sidebar-width);
   padding: 0.6in var(--sidebar-horizontal-padding);
   font-size: 0.8rem;
   float: right;
+  position: absolute;
+  right: 0;
 }
 
 /* main */
@@ -314,6 +319,10 @@ h1, h2{
   content: '• ';
 }
 
+.aside li::before {
+  content: none;
+}
+
 .details .concise ul{
   margin: 0 !important;
   -webkit-columns: 2;
@@ -333,12 +342,12 @@ h1, h2{
 
 /* sidebar */
 
-#aside h2{
+.aside h2{
   font-weight: 400;
   font-size: 1.1rem;
 }
 
-#aside .level2{
+.aside .level2{
   margin-top: 0.5in;
 }
 
