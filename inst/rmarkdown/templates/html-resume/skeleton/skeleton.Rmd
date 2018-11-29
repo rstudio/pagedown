@@ -4,22 +4,28 @@ author: Lijia Yu
 date: "`r Sys.Date()`"
 output:
   pagedown::html_resume:
+    # set it to true for a self-contained HTML page but it'll take longer to render
     self_contained: false
 ---
 
 Aside
 ================================================================================
 
+
 ![Lijia Yu](https://avatars1.githubusercontent.com/u/895125?s=400&v=4){width=80%}
 
-## Contact Info {#contact}
+
+Contact Info {#contact}
+--------------------------------------------------------------------------------
 
 - <i class="fa fa-envelope"></i> lijia.yu@outlook.com
 - <i class="fa fa-github"></i> [github.com/yulijia](https://github.com/yulijia)
 - <i class="fa fa-phone"></i> +1 000-000-0000
 - For more information, please contact me via email.
 
-## Skills {#skills}
+
+Skills {#skills}
+--------------------------------------------------------------------------------
 
 - Experienced in statistical analysis, statistical learning models, and optimization methods.
 
@@ -27,7 +33,9 @@ Aside
 
 - Highly skilled in R, Bash, Perl, Python, LaTeX
 
-## Disclaimer {#disclaimer}
+
+Disclaimer {#disclaimer}
+--------------------------------------------------------------------------------
 
 This resume was made with the R package [**pagedown**](https://github.com/rstudio/pagedown).
 
@@ -38,7 +46,8 @@ Last updated on `r Sys.Date()`.
 Main
 ================================================================================
 
-## Lijia Yu {#title}
+Lijia Yu {#title}
+--------------------------------------------------------------------------------
 
 ### Currently searching for a PhD student position
 
@@ -47,8 +56,10 @@ student position at the moment. I made this resume because Yihui asked me
 if I'd like to test the **pagedown** package with my resume. If you are
 interested in my background and skills, please feel free to contact me.
 
-## Education {data-icon=graduation-cap data-concise=true}
-    
+
+Education {data-icon=graduation-cap data-concise=true}
+--------------------------------------------------------------------------------
+
 ### Beijing University of Chemical Technology
 
 B.S. in Information and Computing Sciences
@@ -69,7 +80,9 @@ Beijing, China
 
 Thesis: A multi-omics study for intra-individual divergence of the distributions between mRNA isoforms in mammals
 
-## Research Experience {data-icon=laptop}
+
+Research Experience {data-icon=laptop}
+--------------------------------------------------------------------------------
 
 ### Graduate Research Assistant
 
@@ -104,7 +117,9 @@ AL, USA
 - Investigated the evolution of genome architecture and its role in important evolutionary events.
 - Detected thrombotic thrombocytopenic purpura related mutations in mutiple patients' blood genome.
   
-## Professional Experience {data-icon=suitcase}
+
+Professional Experience {data-icon=suitcase}
+--------------------------------------------------------------------------------
 
 ### Data Scientist, intern
 
@@ -114,7 +129,7 @@ Beijing, China
 
 2014
 
-:::concise
+::: concise
 - Taught R language to beginners. 
 - Wrote Shiny app demos.
 - Converted statistical tutorials from SPSS to R language.
@@ -135,7 +150,9 @@ Beijing, China
 - Also did case studies to identify the genetic defect causing rare disease.
 :::
 
-## Teaching Experience {data-icon=chalkboard-teacher}
+
+Teaching Experience {data-icon=chalkboard-teacher}
+--------------------------------------------------------------------------------
 
 ### Introduction to R Language for Beginners.
 
@@ -153,7 +170,9 @@ AL, USA
 
 2016-2017
 
-## Selected Publications and Posters {data-icon=file}
+
+Selected Publications and Posters {data-icon=file}
+--------------------------------------------------------------------------------
 
 ### Genetic and epigenetic signals are found predictive to the distribution of intra-individual divergence of alternative splicing.
 
