@@ -22,7 +22,34 @@ chrome_print = function(
   url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', wait = 10,
   extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
-  if (missing(browser)) browser = switch(
+  if (missing(browser)) browser = find_chrome() else {
+    if (!file.exists(browser)) browser = Sys.which(browser)
+  }
+  if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
+
+  # remove hash/query parameters in url
+  if (missing(output) && !file.exists(url))
+    output = xfun::with_ext(basename(gsub('[#?].*', '', url)), 'pdf')
+  output2 = normalizePath(output, mustWork = FALSE)
+  if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
+    'Cannot create the directory for the output file: ', d
+  )
+
+  if (isTRUE(verbose)) verbose = ''
+
+  res = system2(browser, c(
+    paste0('--virtual-time-budget=', format(wait * 1000, scientific = FALSE)),
+    extra_args, '--headless', paste0('--print-to-pdf=', shQuote(output2)), url
+  ), stdout = verbose, stderr = verbose)
+  if (res != 0) stop(
+    'Failed to print the document (for more info, re-run with the argument verbose = TRUE).'
+  )
+
+  invisible(output)
+}
+
+find_chrome = function() {
+  switch(
     .Platform$OS.type,
     windows = {
       res = tryCatch({
@@ -46,27 +73,5 @@ chrome_print = function(
       res
     },
     stop('Your platform is not supported')
-  ) else if (!file.exists(browser)) browser = Sys.which(browser)
-
-  if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
-
-  # remove hash/query parameters in url
-  if (missing(output) && !file.exists(url))
-    output = xfun::with_ext(basename(gsub('[#?].*', '', url)), 'pdf')
-  output2 = normalizePath(output, mustWork = FALSE)
-  if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
-    'Cannot create the directory for the output file: ', d
   )
-
-  if (isTRUE(verbose)) verbose = ''
-
-  res = system2(browser, c(
-    paste0('--virtual-time-budget=', format(wait * 1000, scientific = FALSE)),
-    extra_args, '--headless', paste0('--print-to-pdf=', shQuote(output2)), url
-  ), stdout = verbose, stderr = verbose)
-  if (res != 0) stop(
-    'Failed to print the document to PDF (for more info, re-run with the argument verbose = TRUE).'
-  )
-
-  invisible(output)
 }
