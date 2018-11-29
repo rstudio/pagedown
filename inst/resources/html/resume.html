@@ -89,8 +89,10 @@ $body$
       el.removeChild(p);
     })(el.children[2].firstElementChild);
     // move the rest of content in a block into the last div of the details div
-    while (el.children[2].nextSibling) {
-      el.children[2].lastElementChild.append(el.children[2].nextSibling);
+    s = el.children[2];
+    while (j = s.nextSibling) {
+      if (j.className === 'aside') { s = j; continue; }
+      el.children[2].lastElementChild.append(j);
     }
   }
 })();
