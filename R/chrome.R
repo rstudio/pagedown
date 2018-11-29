@@ -19,7 +19,7 @@
 #' @return Path of the output file (invisibly).
 #' @export
 chrome_print = function(
-  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', wait = 5,
+  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', wait = 10,
   extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = switch(
@@ -61,7 +61,7 @@ chrome_print = function(
   if (isTRUE(verbose)) verbose = ''
 
   res = system2(browser, c(
-    paste0('--virtual-time-budget=', format(wait * 1e6, scientific = FALSE)),
+    paste0('--virtual-time-budget=', format(wait * 1000, scientific = FALSE)),
     extra_args, '--headless', paste0('--print-to-pdf=', shQuote(output2)), url
   ), stdout = verbose, stderr = verbose)
   if (res != 0) stop(
