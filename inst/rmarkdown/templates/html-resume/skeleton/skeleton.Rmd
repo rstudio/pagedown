@@ -7,7 +7,36 @@ output:
     self_contained: false
 ---
 
-# Main
+Aside
+================================================================================
+
+![Lijia Yu](https://avatars1.githubusercontent.com/u/895125?s=400&v=4){width=80%}
+
+## Contact Info {#contact}
+
+- <i class="fa fa-envelope"></i> lijia.yu@outlook.com
+- <i class="fa fa-github"></i> [github.com/yulijia](https://github.com/yulijia)
+- <i class="fa fa-phone"></i> +1 000-000-0000
+- For more information, please contact me via email.
+
+## Skills {#skills}
+
+- Experienced in statistical analysis, statistical learning models, and optimization methods.
+
+- Full experience with next generation sequencing data analysis.
+
+- Highly skilled in R, Bash, Perl, Python, LaTeX
+
+## Disclaimer {#disclaimer}
+
+This resume was made with the R package [**pagedown**](https://github.com/rstudio/pagedown).
+
+Last updated on `r Sys.Date()`.
+
+
+
+Main
+================================================================================
 
 ## Lijia Yu {#title}
 
@@ -145,26 +174,3 @@ N/A
 2016 
 
 Sheng Z, **Yu L**, Zhang T, Pei X, Li X, Zhang Z and Du W. 
- 
-# Aside
-
-## Contact Info {#contact}
-
-- <i class="fa fa-envelope"></i> lijia.yu@outlook.com
-- <i class="fa fa-github"></i> github.com/yulijia
-- <i class="fa fa-phone"></i> +1 000-000-0000
-- For more information, please contact me via email.
-
-## Skills {#skills}
-
-- Experienced in statistical analysis, statistical learning models, and optimization methods.
-
-- Full experience with next generation sequencing data analysis.
-
-- Highly skilled in R, Bash, Perl, Python, LaTeX
-
-## Disclaimer {#disclaimer}
-
-This resume was made with the R package [**pagedown**](https://github.com/rstudio/pagedown).
-
-Last updated on `r Sys.Date()`.
