@@ -5,7 +5,7 @@
 \title{Print a web page to PDF using the headless Chrome}
 \usage{
 chrome_print(url, output = xfun::with_ext(url, "pdf"), browser = "google-chrome", 
-    wait = 5, extra_args = c("--disable-gpu"), verbose = FALSE)
+    wait = 10, extra_args = c("--disable-gpu"), verbose = FALSE)
 }
 \arguments{
 \item{url}{A URL or local file path to a web page.}
