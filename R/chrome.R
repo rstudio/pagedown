@@ -35,6 +35,9 @@ chrome_print = function(
     'Cannot create the directory for the output file: ', d
   )
 
+  # proxy settings
+  extra_args = c(proxy_args(), extra_args)
+
   if (isTRUE(verbose)) verbose = ''
 
   res = system2(browser, c(
@@ -74,4 +77,21 @@ find_chrome = function() {
     },
     stop('Your platform is not supported')
   )
+}
+
+proxy_args = function() {
+  # the order of the variables is important because the first non-empty variable is kept
+  val = Sys.getenv(c('https_proxy', 'HTTPS_PROXY', 'http_proxy', 'HTTP_PROXY'))
+  val = val[val != '']
+  if (length(val) == 0) return()
+  c(
+    paste0('--proxy-server=', val[1]),
+    paste0('--proxy-bypass-list=', paste(no_proxy_urls(), collapse = ';'))
+  )
+}
+
+no_proxy_urls = function() {
+  x = do.call(c, strsplit(Sys.getenv(c('no_proxy', 'NO_PROXY')), '[,;]'))
+  x = c('localhost', '127.0.0.1', x)
+  unique(x)
 }
