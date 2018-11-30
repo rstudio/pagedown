@@ -35,3 +35,11 @@ Below are some existing R Markdown output formats and examples.
 ## Letters (`pagedown::html_letter`)
 
 [![A letter in HTML](https://user-images.githubusercontent.com/163582/47872372-61e8f200-dddc-11e8-839b-d8e8ef8f51eb.png)](https://pagedown.rbind.io/html-letter)
+
+## Authors and contributors
+
+The main authors of this package are Yihui Xie (RStudio) and Romain Lesur. Romain has received a grant from the Shuttleworth Foundation for his work on both Paged.js and **pagedown**.
+
+[![Shuttleworth Funded](https://user-images.githubusercontent.com/163582/49319242-72ff4e80-f4c1-11e8-89fe-d8749355d261.jpg)](https://www.shuttleworthfoundation.org)
+
+You can find [the full list of contributors of **pagedown** here](https://github.com/rstudio/pagedown/graphs/contributors). We always welcome new contributions. In particular, if you are familiar with CSS, we'd love to include your contributions of more creative and beautiful CSS stylesheets in this package. It is also very helpful if you don't know CSS but just tell us the creative and beautiful web pages you have seen, since other CSS experts may be able to port them into **pagedown**.
