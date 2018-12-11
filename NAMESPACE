@@ -2,6 +2,7 @@
 
 export(business_card)
 export(chrome_print)
+export(find_chrome)
 export(html_letter)
 export(html_paged)
 export(html_resume)

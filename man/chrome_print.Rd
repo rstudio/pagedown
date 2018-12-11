@@ -2,10 +2,10 @@
 % Please edit documentation in R/chrome.R
 \name{chrome_print}
 \alias{chrome_print}
-\title{Print a web page to PDF using the headless Chrome}
+\title{Print a web page to PDF using the headless Chrome (experimental)}
 \usage{
 chrome_print(url, output = xfun::with_ext(url, "pdf"), browser = "google-chrome", 
-    wait = 10, extra_args = c("--disable-gpu"), verbose = FALSE)
+    extra_args = c("--disable-gpu"), verbose = FALSE)
 }
 \arguments{
 \item{url}{A URL or local file path to a web page.}
@@ -16,10 +16,8 @@ remote URL \file{https://www.example.org/foo/bar.html}, the default output
 will be \file{bar.pdf} under the current working directory.}
 
 \item{browser}{Path to Google Chrome or Chromium. This function will try to
-find it automatically if the path is not explicitly provided.}
-
-\item{wait}{The number of seconds to wait before deeming the page to be
-ready. Use a larger value if the page takes longer to load completely.}
+find it automatically via \code{\link{find_chrome}()} if the path is not
+explicitly provided.}
 
 \item{extra_args}{Extra command-line arguments to be passed to Chrome.}
 
@@ -32,6 +30,13 @@ Path of the output file (invisibly).
 This is a wrapper function to execute the command \command{chrome --headless
 --print-to-pdf url}. Google Chrome (or Chromium on Linux) must be installed
 prior to using this function.
+}
+\note{
+Currently this function is very likely to print the page too early,
+  i.e., before the page is practically ready (all JavaScript code has
+  finished processing the DOM). You are recommended to open the page in a
+  Chrome browser and print it to PDF manually if this function does not work
+  well. We will improve it in the future.
 }
 \references{
 \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
