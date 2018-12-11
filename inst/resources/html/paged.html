@@ -46,6 +46,36 @@ $if(hyphenopoly)$
         // Hyphenopoly will detect the lang attribute in the html tag
         // If there is no lang defined, we can define a fallback language
         defaultLanguage: "en-us",
+        dontHyphenate: {
+            video: true,
+            audio: true,
+            script: true,
+            code: true,
+            pre: true,
+            img: true,
+            br: true,
+            samp: true,
+            kbd: true,
+            var: true,
+            abbr: true,
+            acronym: true,
+            sub: true,
+            sup: true,
+            button: true,
+            option: true,
+            label: true,
+            textarea: true,
+            input: true,
+            math: true,
+            svg: true,
+            style: true,
+            h1: true,
+            h2: true,
+            h3: true,
+            h4: true,
+            h5: true,
+            h6: true
+        },
         // Do not hyphenate MathJax elements
         dontHyphenateClass: "math"
       },
