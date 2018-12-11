@@ -267,7 +267,7 @@
             elements = makeElementCollection();
 
             const dontHyphenateSelector = (function createSel() {
-                let s = ".donthyphenate";
+                let s = "." + H.c.dontHyphenateClass;
                 let k = null;
                 for (k in C.dontHyphenate) {
                     if (C.dontHyphenate[k]) {
