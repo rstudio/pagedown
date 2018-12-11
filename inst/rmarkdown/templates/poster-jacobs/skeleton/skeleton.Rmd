@@ -50,7 +50,10 @@ Lorem ipsum dolor **sit amet**, consectetur adipiscing elit. Donec ut volutpat e
 
 ```{r, cars-plot, fig.width=6, fig.height=3, dev='svg', out.width='100%', fig.cap='Figure Caption.', echo=FALSE}
 par(mar = c(4, 4, .1, .1), las = 1)
-plot(cars, pch = 19, col = 'darkblue')
+boxplot(
+  Sepal.Length ~ Species, data = iris, horizontal = TRUE,
+  col = c('limegreen', 'steelblue', 'orange'), notch = TRUE
+)
 ```
 
 Test citations @R-base @R-pagedown. See Figure \@ref(fig:cars-plot).
