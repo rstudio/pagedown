@@ -25,15 +25,64 @@ $endif$
 
 <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
 
+$if(hyphenopoly)$
+<!-- Configure Hyphenopoly.js and ensure that Hyphenopoly.js runs before Paged.js -->
+<script>
+(function() {
+  var hyphenate = new Promise(resolve => {
+    // Hyphenopoly configuration global object (required):
+    window.Hyphenopoly = {
+      require: {
+        // see the inst/resources/js/Hyphenopoly/patterns for supported languages
+        // for each language, a long word (more than 12 characters) has to be provided in the language
+        "de": "Silbentrennungsalgorithmus",
+        "en-gb": "Antidisestablishmentarianism",
+        "en-us": "Supercalifragilisticexpialidocious",
+        "es": "Superextraordinarisimo",
+        "fr": "Anticonstitutionnellement",
+        "pt": "Anticonstitucionalissimamente"
+      },
+      setup: {
+        // Hyphenopoly will detect the lang attribute in the html tag
+        // If there is no lang defined, we can define a fallback language
+        defaultLanguage: "en-us",
+        // Do not hyphenate MathJax elements
+        dontHyphenateClass: "math"
+      },
+      handleEvent: {
+        // Do not show Hyphenopoly errors in the Chrome console
+        error: function(e) {
+          e.preventDefault();
+        },
+        hyphenopolyEnd: resolve
+      }
+    };
+  });
+
+  // Hyphenopoly must run first
+  window.PagedConfig = {
+    before: () => {
+      return hyphenate;
+    }
+  }
+})();
+</script>
+$endif$
+
 $if(math)$
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
+(function() {
+  // Retrieve PagedConfig global object (only relevant when Hyphenopoly.js is used)
+  var previousPagedConfig = window.PagedConfig || {before: () => {return Promise.resolve();}};
+
   window.PagedConfig = {
-    before: () => {
-      return new Promise((resolve, reject) => {
+    before: async () => {
+      await previousPagedConfig.before();
+      await new Promise((resolve, reject) => {
         var script = document.createElement("script");
         script.type = "text/javascript";
-        var src = "true";
+        var src = "$if(mathjax)$$mathjax$$endif$";
         if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
         if (location.protocol !== "file:" && /^https?:/.test(src))
           src = src.replace(/^https?:/, '');
@@ -49,6 +98,7 @@ $if(math)$
       });
     }
   };
+})();
 </script>
 $endif$
 
@@ -121,7 +171,7 @@ img {
 $endif$
 </head>
 
-<body>
+<body$if(hyphenopoly)$ class="hyphenate"$endif$>
 
 <div class="running-h1-title"></div>
 
