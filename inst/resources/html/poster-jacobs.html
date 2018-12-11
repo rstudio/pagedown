@@ -33,7 +33,42 @@ $for(include-before)$
 $include-before$
 $endfor$
 
+<div class="poster-title">
+  <h1 class="title">$title$</h1>
+  <h2 class="author">$for(author)$$author$$sep$, $endfor$</h2>
+  <h2 class="institute">$institute$</h2>
+</div>
+
 $body$
+
+<script type="text/javascript">
+(function() {
+  // add appropriate classes to h1 and its parent div
+  var i, d, p, s, el, els = document.getElementsByTagName('h1');
+  for (i = 0; i < els.length; i++) {
+    el = els[i]; p = el.parentNode;
+    if (p.className === 'section level1') {
+      el.append(document.createElement('hr'));
+    }
+    p.className += ' section-' + (i + 1);
+    s = p.dataset['color'];
+    if (s) el.style.color = s;
+    s = p.dataset['backgroundColor'];
+    if (s) p.style.backgroundColor = s;
+    s = p.dataset['borderColor'];
+    if (s) {
+      el.style.backgroundColor = s;
+      p.style.borderColor = s;
+    }
+    d = document.createElement('div');
+    d.className = 'content';
+    while (el.nextSibling) {
+      d.append(el.nextSibling);
+    }
+    p.append(d);
+  }
+})();
+</script>
 
 $if(math)$
 <!-- dynamically load mathjax for compatibility with self-contained -->

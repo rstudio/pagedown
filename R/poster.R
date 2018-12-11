@@ -19,6 +19,10 @@ poster_relaxed = function(
 # TODO: most posters like https://www.overleaf.com/gallery/tagged/poster
 
 # https://www.overleaf.com/latex/templates/landscape-beamer-poster-template/vjpmsxxdvtqk
-poster_jacobs = function(..., css = 'poster-jacobs') {
-  poster_relaxed(..., css = css)
+#' @rdname poster_relaxed
+#' @export
+poster_jacobs = function(
+  ..., css = 'poster-jacobs', template = pkg_resource('html', 'poster-jacobs.html')
+) {
+  poster_relaxed(..., css = css, template = template)
 }
