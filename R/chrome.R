@@ -9,7 +9,8 @@
 #'   remote URL \file{https://www.example.org/foo/bar.html}, the default output
 #'   will be \file{bar.pdf} under the current working directory.
 #' @param browser Path to Google Chrome or Chromium. This function will try to
-#'   find it automatically if the path is not explicitly provided.
+#'   find it automatically via \code{\link{find_chrome}()} if the path is not
+#'   explicitly provided.
 #' @param extra_args Extra command-line arguments to be passed to Chrome.
 #' @param verbose Whether to show verbose command-line output.
 #' @references
@@ -54,6 +55,14 @@ chrome_print = function(
   invisible(output)
 }
 
+#' Find Google Chrome or Chromium in the system
+#'
+#' On Windows, this function tries to find Chrome from the registry. On macOS,
+#' it returns a hard-coded path of Chrome under \file{/Applications}. On Linux,
+#' it searches for \command{chromium-browser} and \command{google-chrome} from
+#' the system's \var{PATH} variable.
+#' @return A character string.
+#' @export
 find_chrome = function() {
   switch(
     .Platform$OS.type,
