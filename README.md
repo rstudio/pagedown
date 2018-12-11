@@ -24,9 +24,15 @@ Below are some existing R Markdown output formats and examples.
 
 [![An HTML resume](https://user-images.githubusercontent.com/163582/46879762-7a34a500-ce0c-11e8-87e3-496f3577ff05.png)](https://pagedown.rbind.io/html-resume/)
 
-## Posters (`pagedown::poster_relaxed`)
+## Posters
+
+### `pagedown::poster_relaxed`
 
 [![A poster of the ReLaXed style](https://user-images.githubusercontent.com/163582/47672385-e12dba00-db7f-11e8-92de-af94d5bab12f.jpg)](https://pagedown.rbind.io/poster-relaxed/)
+
+### `pagedown::poster_jacobs`
+
+[![A poster of the Jacobs University style](https://user-images.githubusercontent.com/163582/49780277-7b326780-fcd3-11e8-9eb6-69e46292158c.png)](https://pagedown.rbind.io/poster-jacobs/)
 
 ## Business cards (`pagedown::business_card`)
 
