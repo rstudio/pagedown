@@ -16,8 +16,8 @@
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
 #' @param self_contained Produce a standalone HTML file with no external
 #'   dependencies. By default, \code{html_paged} document are not self contained.
-#'   In this case, you need a web server to see you document for instance,
-#'   \code{xaringan::infinite_moon_reader()}.
+#'   In this case, you need a web server to preview your document for instance,
+#'   \code{xaringan::inf_mr()}.
 #' @param hyphens Use the \code{Hyphenopoly.js} JavaScript library for hyphenations.
 #'   Note that this option is incompatible with \code{self_contained = TRUE}.
 #' @references \url{https://pagedown.rbind.io}
@@ -30,10 +30,10 @@ html_paged = function(
   hyphens = FALSE
 ) {
   if (isTRUE(hyphens) & isTRUE(self_contained))
-    stop('The hyphens option is incompatible with the self_contained option. ')
+    stop('The hyphens option is incompatible with self_contained = TRUE. ')
   html_format(
     ..., css = css, theme = theme, template = template,
-    hyphens = hyphens, .pagedjs = TRUE,
+    self_contained = self_contained, hyphens = hyphens, .pagedjs = TRUE,
     .pandoc_args = lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua') # uri-to-fn.lua must come before footnotes.lua
   )
 }

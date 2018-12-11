@@ -24,8 +24,8 @@ built-in CSS files, run \code{pagedown:::list_css()}.}
 
 \item{self_contained}{Produce a standalone HTML file with no external
 dependencies. By default, \code{html_paged} document are not self contained.
-In this case, you need a web server to see you document for instance,
-\code{xaringan::infinite_moon_reader()}.}
+In this case, you need a web server to preview your document for instance,
+\code{xaringan::inf_mr()}.}
 
 \item{hyphens}{Use the \code{Hyphenopoly.js} JavaScript library for hyphenations.
 Note that this option is incompatible with \code{self_contained = TRUE}.}
