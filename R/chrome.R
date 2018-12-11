@@ -1,4 +1,4 @@
-#' Print a web page to PDF using the headless Chrome
+#' Print a web page to PDF using the headless Chrome (experimental)
 #'
 #' This is a wrapper function to execute the command \command{chrome --headless
 #' --print-to-pdf url}. Google Chrome (or Chromium on Linux) must be installed
@@ -10,16 +10,19 @@
 #'   will be \file{bar.pdf} under the current working directory.
 #' @param browser Path to Google Chrome or Chromium. This function will try to
 #'   find it automatically if the path is not explicitly provided.
-#' @param wait The number of seconds to wait before deeming the page to be
-#'   ready. Use a larger value if the page takes longer to load completely.
 #' @param extra_args Extra command-line arguments to be passed to Chrome.
 #' @param verbose Whether to show verbose command-line output.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
+#' @note Currently this function is very likely to print the page too early,
+#'   i.e., before the page is practically ready (all JavaScript code has
+#'   finished processing the DOM). You are recommended to open the page in a
+#'   Chrome browser and print it to PDF manually if this function does not work
+#'   well. We will improve it in the future.
 #' @return Path of the output file (invisibly).
 #' @export
 chrome_print = function(
-  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', wait = 10,
+  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome',
   extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
@@ -41,8 +44,8 @@ chrome_print = function(
   if (isTRUE(verbose)) verbose = ''
 
   res = system2(browser, c(
-    paste0('--virtual-time-budget=', format(wait * 1000, scientific = FALSE)),
-    extra_args, '--headless', paste0('--print-to-pdf=', shQuote(output2)), url
+    '--virtual-time-budget=10000', extra_args, '--headless',
+    paste0('--print-to-pdf=', shQuote(output2)), url
   ), stdout = verbose, stderr = verbose)
   if (res != 0) stop(
     'Failed to print the document (for more info, re-run with the argument verbose = TRUE).'
