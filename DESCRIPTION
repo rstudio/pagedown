@@ -9,6 +9,7 @@ Authors@R: c(
   person("Adam", "Hyde", role = "ctb", comment = "paged.js in resources/js/"),
   person("Min-Zhong", "Lu", role = "ctb", comment = "resume.css in resources/css/"),
   person("Zulko", role = "ctb", comment = "poster-relaxed.css in resources/css/"),
+  person("Mathias", "Nater", role = "ctb", comment = "Hyphenopoly.js library in resources/js"),
   person()
   )
 Description: Use the paged media properties in CSS and the JavaScript polyfill

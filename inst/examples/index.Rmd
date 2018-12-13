@@ -105,6 +105,45 @@ links-to-footnotes: true
 
 The default behavior of pagedown is to render notes as endnotes because Paged.js does not natively support footnotes for now. However, we introduced an experimental support for footnotes. You can test it including `paged-footnotes: true` in the YAML header of your document. If you get any trouble with this experimental feature, please open an issue on GitHub.
 
+## Hyphenation
+
+Since Chromium/Chrome is the only browser offering a minimal support for CSS Paged Media, you need it to preview `html_paged` documents. However, Chrome offers a very limited support for hyphenation^[see <https://developer.mozilla.org/docs/Web/CSS/hyphens>.]: it is only available on Mac for English and Latin languages.
+
+In order to offer a wider support for hyphenation, **pagedown** uses the [Hyphenopoly.js library](https://github.com/mnater/Hyphenopoly). The `hyphens` option activates Hyphenopoly.js:
+
+```yaml
+---
+title: "A paged HTML document"
+output:
+  pagedown::html_paged:
+    hyphens: true
+    self_contained: false
+---
+```
+
+Because of technical restrictions, the `hyphens: true` option is not compatible with `self_contained: true` option. 
+
+If your document is not written in American English, you are recommended to declare the main language of the document with the `lang` variable:
+
+```yaml
+---
+title: "Un document HTML paginé"
+output:
+  pagedown::html_paged:
+    hyphens: true
+    self_contained: false
+lang: fr
+---
+```
+
+For now, **pagedown** offers hyphenation for the following languages: American English (`en-us`), British English (`en-gb`), German (`de`), Spanish (`es`), French (`fr`) and Portuguese (`pt`). More languages will be added in the future.
+
+You can use different languages in the same document. For instance, a Portuguese sentence can be declared using a bracketed span:
+
+```markdown
+[De boas intenções está o Inferno cheio]{lang="pt"}
+```
+
 ## Tests {data-short-title="Some tests"}
 
 ### A list {data-short-title="An ordered list"}

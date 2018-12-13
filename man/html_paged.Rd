@@ -5,7 +5,8 @@
 \title{Create a paged HTML document suitable for printing}
 \usage{
 html_paged(..., css = c("default-fonts", "default-page", "default"), theme = NULL, 
-    template = pkg_resource("html", "paged.html"))
+    template = pkg_resource("html", "paged.html"), self_contained = FALSE, 
+    hyphens = FALSE)
 }
 \arguments{
 \item{...}{Arguments passed to
@@ -20,6 +21,14 @@ built-in CSS files, run \code{pagedown:::list_css()}.}
 \item{theme}{The Bootstrap theme. By default, Bootstrap is not used.}
 
 \item{template}{The path to the Pandoc template to convert Markdown to HTML.}
+
+\item{self_contained}{Produce a standalone HTML file with no external
+dependencies. By default, \code{html_paged} document are not self contained.
+In this case, you need a web server to preview your document for instance,
+\code{xaringan::inf_mr()}.}
+
+\item{hyphens}{Use the \code{Hyphenopoly.js} JavaScript library for hyphenations.
+Note that this option is incompatible with \code{self_contained = TRUE}.}
 }
 \value{
 An R Markdown output format.

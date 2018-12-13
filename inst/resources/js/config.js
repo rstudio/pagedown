@@ -1,18 +1,7 @@
 // Configuration script for paged.js
 
 (function() {
-  // Retrieve MathJax loading function
-  function getBeforeAsync() {
-    if (typeof window.PagedConfig !== "undefined") {
-      if (typeof window.PagedConfig.before !== "undefined") {
-        return window.PagedConfig.before;
-      }
-    }
-    return async () => {};
-  }
-
-  var runMathJax = getBeforeAsync();
-
+  var previousPagedConfig = window.PagedConfig || {before: () => {return Promise.resolve();}};
   var windowLoaded = new Promise(function($){window.addEventListener('load', $, {once: true})});
 
   // This function expands the links in the lists of figures or tables (loft)
@@ -78,7 +67,7 @@
         appendShortTitles1(),
         appendShortTitles2()
       ]);
-      await runMathJax();
+      await previousPagedConfig.before();
       await windowLoaded;
       await document.fonts.ready;
     }
