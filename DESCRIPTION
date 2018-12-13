@@ -1,7 +1,7 @@
 Package: pagedown
 Type: Package
 Title: Paginate the HTML Output of R Markdown with CSS for Print
-Version: 0.0.25
+Version: 0.0.26
 Authors@R: c(
   person("Yihui", "Xie", role = c("aut", "cre"), email = "xie@yihui.name", comment = c(ORCID = "0000-0003-0645-5666")),
   person("Romain", "Lesur", role = c("aut", "cph"), comment = c(ORCID = "0000-0002-0721-5595")),
@@ -12,11 +12,12 @@ Authors@R: c(
   person()
   )
 Description: Use the paged media properties in CSS and the JavaScript polyfill
-  library "paged.js" to split the content of an HTML document into discrete
+  library 'paged.js' to split the content of an HTML document into discrete
   pages. Each page can have its page size, page numbers, margin boxes, and
   running headers, etc. Applications of this package include books, letters,
   reports, papers, and posters.
 Imports: rmarkdown (>= 1.11), bookdown (>= 0.8), htmltools, xfun
+Suggests: testit
 License: MIT + file LICENSE
 URL: https://github.com/rstudio/pagedown
 BugReports: https://github.com/rstudio/pagedown/issues
