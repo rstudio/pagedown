@@ -11,7 +11,7 @@ Authors@R: c(
   person("Zulko", role = "ctb", comment = "poster-relaxed.css in resources/css/"),
   person()
   )
-Description: Use the paged media properties in CSS and the JavaScript polyfill
+Description: Use the paged media properties in CSS and the JavaScript
   library 'paged.js' to split the content of an HTML document into discrete
   pages. Each page can have its page size, page numbers, margin boxes, and
   running headers, etc. Applications of this package include books, letters,
