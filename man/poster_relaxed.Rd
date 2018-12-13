@@ -21,4 +21,9 @@ An R Markdown output format.
 The output format \code{poster_relaxed()} is based on an example in the
 Github repo \url{https://github.com/RelaxedJS/ReLaXed-examples}. See
 \url{https://pagedown.rbind.io/poster-relaxed/} for an example.
+
+The output format \code{poster_jacobs()} is based on the
+  \dQuote{Jacobs Landscape Poster LaTeX Template Version 1.0} at
+  \url{https://www.overleaf.com/gallery/tagged/poster}. See
+  \url{https://pagedown.rbind.io/poster-jacobs/} for an example.
 }

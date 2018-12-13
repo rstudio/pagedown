@@ -18,7 +18,10 @@ poster_relaxed = function(
 
 # TODO: most posters like https://www.overleaf.com/gallery/tagged/poster
 
-# https://www.overleaf.com/latex/templates/landscape-beamer-poster-template/vjpmsxxdvtqk
+#' @description The output format \code{poster_jacobs()} mimics the style of the
+#'   \dQuote{Jacobs Landscape Poster LaTeX Template Version 1.0} at
+#'   \url{https://www.overleaf.com/gallery/tagged/poster}. See
+#'   \url{https://pagedown.rbind.io/poster-jacobs/} for an example.
 #' @rdname poster_relaxed
 #' @export
 poster_jacobs = function(
