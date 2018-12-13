@@ -309,70 +309,6 @@
 	});
 	var eventEmitter_1 = eventEmitter.methods;
 
-	/**
-	 * Hooks allow for injecting functions that must all complete in order before finishing
-	 * They will execute in parallel but all must finish before continuing
-	 * Functions may return a promise if they are asycn.
-	 * From epubjs/src/utils/hooks
-	 * @param {any} context scope of this
-	 * @example this.content = new Hook(this);
-	 */
-	class Hook {
-		constructor(context){
-			this.context = context || this;
-			this.hooks = [];
-		}
-
-		/**
-		 * Adds a function to be run before a hook completes
-		 * @example this.content.register(function(){...});
-		 */
-		register(){
-			for(var i = 0; i < arguments.length; ++i) {
-				if (typeof arguments[i]  === "function") {
-					this.hooks.push(arguments[i]);
-				} else {
-					// unpack array
-					for(var j = 0; j < arguments[i].length; ++j) {
-						this.hooks.push(arguments[i][j]);
-					}
-				}
-			}
-		}
-
-		/**
-		 * Triggers a hook to run all functions
-		 * @example this.content.trigger(args).then(function(){...});
-		 */
-		trigger(){
-			var args = arguments;
-			var context = this.context;
-			var promises = [];
-
-			this.hooks.forEach(function(task) {
-				var executing = task.apply(context, args);
-
-				if(executing && typeof executing["then"] === "function") {
-					// Task is a function that returns a promise
-					promises.push(executing);
-				}
-				// Otherwise Task resolves immediately, continue
-			});
-
-
-			return Promise.all(promises);
-		}
-
-		// Adds a function to be run before a hook completes
-		list(){
-			return this.hooks;
-		}
-
-		clear(){
-			return this.hooks = [];
-		}
-	}
-
 	function getBoundingClientRect(element) {
 		if (!element) {
 			return;
@@ -410,13 +346,13 @@
 	 */
 	function UUID() {
 		var d = new Date().getTime();
-		if (typeof performance !== 'undefined' && typeof performance.now === 'function'){
-				d += performance.now(); //use high-precision timer if available
+		if (typeof performance !== "undefined" && typeof performance.now === "function"){
+			d += performance.now(); //use high-precision timer if available
 		}
-		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-				var r = (d + Math.random() * 16) % 16 | 0;
-				d = Math.floor(d / 16);
-				return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+		return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+			var r = (d + Math.random() * 16) % 16 | 0;
+			d = Math.floor(d / 16);
+			return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
 		});
 	}
 
@@ -433,13 +369,13 @@
 	 */
 	function querySelectorEscape(value) {
 		if (arguments.length == 0) {
-			throw new TypeError('`CSS.escape` requires an argument.');
+			throw new TypeError("`CSS.escape` requires an argument.");
 		}
 		var string = String(value);
 		var length = string.length;
 		var index = -1;
 		var codeUnit;
-		var result = '';
+		var result = "";
 		var firstCodeUnit = string.charCodeAt(0);
 		while (++index < length) {
 			codeUnit = string.charCodeAt(index);
@@ -449,7 +385,7 @@
 			// If the character is NULL (U+0000), then the REPLACEMENT CHARACTER
 			// (U+FFFD).
 			if (codeUnit == 0x0000) {
-				result += '\uFFFD';
+				result += "\uFFFD";
 				continue;
 			}
 
@@ -469,7 +405,7 @@
 				)
 			) {
 				// https://drafts.csswg.org/cssom/#escape-a-character-as-code-point
-				result += '\\' + codeUnit.toString(16) + ' ';
+				result += "\\" + codeUnit.toString(16) + " ";
 				continue;
 			}
 
@@ -480,7 +416,7 @@
 				length == 1 &&
 				codeUnit == 0x002D
 			) {
-				result += '\\' + string.charAt(index);
+				result += "\\" + string.charAt(index);
 				continue;
 			}
 
@@ -505,11 +441,32 @@
 
 			// Otherwise, the escaped character.
 			// https://drafts.csswg.org/cssom/#escape-a-character
-			result += '\\' + string.charAt(index);
+			result += "\\" + string.charAt(index);
 
 		}
 		return result;
 	}
+
+	/**
+	 * Creates a new pending promise and provides methods to resolve or reject it.
+	 * From: https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred#backwards_forwards_compatible
+	 * @returns {object} defered
+	 */
+	function defer() {
+		this.resolve = null;
+
+		this.reject = null;
+
+		this.id = UUID();
+
+		this.promise = new Promise((resolve, reject) => {
+			this.resolve = resolve;
+			this.reject = reject;
+		});
+		Object.freeze(this);
+	}
+
+	const requestIdleCallback = typeof window !== "undefined" && ("requestIdleCallback" in window ? window.requestIdleCallback : window.requestAnimationFrame);
 
 	function isElement(node) {
 		return node && node.nodeType === 1;
@@ -591,7 +548,7 @@
 					break;
 				}
 				if (before && before.previousSibling) {
-					before = prev.previousSibling;
+					before = before.previousSibling;
 					break;
 				}
 			}
@@ -762,21 +719,21 @@
 		let range;
 
 		while(currentOffset < max) {
-				currentLetter = currentText[currentOffset];
-			 if (/^[\S\u202F\u00A0]$/.test(currentLetter)) {
-				 if (!range) {
-					 range = document.createRange();
-					 range.setStart(node, currentOffset);
-				 }
-			 } else {
-				 if (range) {
-					 range.setEnd(node, currentOffset);
-					 yield range;
-					 range = undefined;
-				 }
-			 }
+			currentLetter = currentText[currentOffset];
+			if (/^[\S\u202F\u00A0]$/.test(currentLetter)) {
+				if (!range) {
+					range = document.createRange();
+					range.setStart(node, currentOffset);
+				}
+			} else {
+				if (range) {
+					range.setEnd(node, currentOffset);
+					yield range;
+					range = undefined;
+				}
+			}
 
-			 currentOffset += 1;
+			currentOffset += 1;
 		}
 
 		if (range) {
@@ -790,12 +747,12 @@
 		let currentText = wordRange.startContainer;
 		let max = currentText.length;
 		let currentOffset = wordRange.startOffset;
-		let currentLetter;
+		// let currentLetter;
 
 		let range;
 
 		while(currentOffset < max) {
-			 currentLetter = currentText[currentOffset];
+			 // currentLetter = currentText[currentOffset];
 			 range = document.createRange();
 			 range.setStart(currentText, currentOffset);
 			 range.setEnd(currentText, currentOffset+1);
@@ -807,87 +764,86 @@
 	}
 
 	function isContainer(node) {
-	  let container;
+		let container;
 
-	  if (typeof node.tagName === "undefined") {
-	    return true;
-	  }
+		if (typeof node.tagName === "undefined") {
+			return true;
+		}
 
-	  if (node.style.display === "none") {
-	    return false;
-	  }
+		if (node.style.display === "none") {
+			return false;
+		}
 
-	  switch (node.tagName) {
-	    // Inline
-	    case "A":
-	    case "ABBR":
-	    case "ACRONYM":
-	    case "B":
-	    case "BDO":
-	    case "BIG":
-	    case "BR":
-	    case "BUTTON":
-	    case "CITE":
-	    case "CODE":
-	    case "DFN":
-	    case "EM":
-	    case "I":
-	    case "IMG":
-	    case "INPUT":
-	    case "KBD":
-	    case "LABEL":
-	    case "MAP":
-	    case "OBJECT":
-	    case "Q":
-	    case "SAMP":
-	    case "SCRIPT":
-	    case "SELECT":
-	    case "SMALL":
-	    case "SPAN":
-	    case "STRONG":
-	    case "SUB":
-	    case "SUP":
-	    case "TEXTAREA":
-	    case "TIME":
-	    case "TT":
-	    case "VAR":
-	    // Content
-	    case "P":
-	    case "H1":
-	    case "H2":
-	    case "H3":
-	    case "H4":
-	    case "H5":
-	    case "H6":
-	    case "FIGCAPTION":
-	    case "BLOCKQUOTE":
-	    case "PRE":
-	    case "LI":
-	    case "TR":
-	    case "DT":
-	    case "DD":
-	    case "VIDEO":
-	    case "CANVAS":
-	      container = false;
-	      break;
-	    default:
-	      container = true;
-	  }
+		switch (node.tagName) {
+			// Inline
+			case "A":
+			case "ABBR":
+			case "ACRONYM":
+			case "B":
+			case "BDO":
+			case "BIG":
+			case "BR":
+			case "BUTTON":
+			case "CITE":
+			case "CODE":
+			case "DFN":
+			case "EM":
+			case "I":
+			case "IMG":
+			case "INPUT":
+			case "KBD":
+			case "LABEL":
+			case "MAP":
+			case "OBJECT":
+			case "Q":
+			case "SAMP":
+			case "SCRIPT":
+			case "SELECT":
+			case "SMALL":
+			case "SPAN":
+			case "STRONG":
+			case "SUB":
+			case "SUP":
+			case "TEXTAREA":
+			case "TIME":
+			case "TT":
+			case "VAR":
+			case "P":
+			case "H1":
+			case "H2":
+			case "H3":
+			case "H4":
+			case "H5":
+			case "H6":
+			case "FIGCAPTION":
+			case "BLOCKQUOTE":
+			case "PRE":
+			case "LI":
+			case "TR":
+			case "DT":
+			case "DD":
+			case "VIDEO":
+			case "CANVAS":
+				container = false;
+				break;
+			default:
+				container = true;
+		}
 
-	  return container;
+		return container;
 	}
 
 	function cloneNode(n, deep=false) {
-	  return n.cloneNode(deep);
+		return n.cloneNode(deep);
 	}
 
 	function findElement(node, doc) {
-	  const ref = node.getAttribute("data-ref");
-	  return findRef(ref, doc);
+		const ref = node.getAttribute("data-ref");
+		return findRef(ref, doc);
 	}
 
 	function findRef(ref, doc) {
-	  return doc.querySelector(`[data-ref='${ref}']`);
+		return doc.querySelector(`[data-ref='${ref}']`);
 	}
 
 	function validNode(node) {
@@ -920,15 +876,15 @@
 
 
 	function indexOf$1(node) {
-	  let parent = node.parentNode;
-	  if (!parent) {
-	    return 0;
-	  }
-	  return Array.prototype.indexOf.call(parent.childNodes, node);
+		let parent = node.parentNode;
+		if (!parent) {
+			return 0;
+		}
+		return Array.prototype.indexOf.call(parent.childNodes, node);
 	}
 
 	function child(node, index) {
-	  return node.childNodes[index];
+		return node.childNodes[index];
 	}
 
 	function hasContent(node) {
@@ -941,7 +897,73 @@
 		return false;
 	}
 
-	const PER_PAGE_CHECK = 4;
+	/**
+	 * Hooks allow for injecting functions that must all complete in order before finishing
+	 * They will execute in parallel but all must finish before continuing
+	 * Functions may return a promise if they are asycn.
+	 * From epubjs/src/utils/hooks
+	 * @param {any} context scope of this
+	 * @example this.content = new Hook(this);
+	 */
+	class Hook {
+		constructor(context){
+			this.context = context || this;
+			this.hooks = [];
+		}
+
+		/**
+		 * Adds a function to be run before a hook completes
+		 * @example this.content.register(function(){...});
+		 * @return {undefined} void
+		 */
+		register(){
+			for(var i = 0; i < arguments.length; ++i) {
+				if (typeof arguments[i]  === "function") {
+					this.hooks.push(arguments[i]);
+				} else {
+					// unpack array
+					for(var j = 0; j < arguments[i].length; ++j) {
+						this.hooks.push(arguments[i][j]);
+					}
+				}
+			}
+		}
+
+		/**
+		 * Triggers a hook to run all functions
+		 * @example this.content.trigger(args).then(function(){...});
+		 * @return {undefined} void
+		 */
+		trigger(){
+			var args = arguments;
+			var context = this.context;
+			var promises = [];
+
+			this.hooks.forEach(function(task) {
+				var executing = task.apply(context, args);
+
+				if(executing && typeof executing["then"] === "function") {
+					// Task is a function that returns a promise
+					promises.push(executing);
+				}
+				// Otherwise Task resolves immediately, continue
+			});
+
+
+			return Promise.all(promises);
+		}
+
+		// Adds a function to be run before a hook completes
+		list(){
+			return this.hooks;
+		}
+
+		clear(){
+			return this.hooks = [];
+		}
+	}
+
+	const MAX_CHARS_PER_BREAK = 1500;
 
 	/**
 	 * Layout
@@ -949,489 +971,529 @@
 	 */
 	class Layout {
 
-	  constructor(element, hooks) {
-	    this.element = element;
-
-	    this.bounds = this.element.getBoundingClientRect();
+		constructor(element, hooks, maxChars) {
+			this.element = element;
 
-	    if (hooks) {
-	      this.hooks = hooks;
-	    } else {
-	      this.hooks = {};
-	      this.hooks.layout = new Hook();
-	      this.hooks.renderNode = new Hook();
-	      this.hooks.layoutNode = new Hook();
-	      this.hooks.overflow = new Hook();
-	    }
-
-	  }
-
-	  renderTo(wrapper, source, breakToken, bounds=this.bounds) {
-	    let start = this.getStart(source, breakToken);
-	    let walker = walk(start, source);
-
-	    let node;
-	    let done;
-	    let next;
-
-	    let hasRenderedContent = false;
-	    let newBreakToken;
-
-	    let check = 0;
-
-	    while (!done && !newBreakToken) {
-	      next = walker.next();
-	      node = next.value;
-	      done = next.done;
+			this.bounds = this.element.getBoundingClientRect();
 
-	      if (!node) {
-	        newBreakToken = this.findBreakToken(wrapper, source, bounds);
-	        return newBreakToken;
-	      }
-
-	      /*
-	      let exists;
-	      if (isElement(node)) {
-	        exists = findElement(node, wrapper);
-	      } else {
-	        exists = false;
-	      }
-
-	      if (exists) {
-	        console.log("found", exists);
-	        break;
-	      }
-	      */
-
-	      this.hooks && this.hooks.layoutNode.trigger(node);
-
-	      // Check if the rendered element has a break set
-	      if (hasRenderedContent && this.shouldBreak(node)) {
-	        newBreakToken = this.findBreakToken(wrapper, source, bounds);
-
-	        if (!newBreakToken) {
-	          newBreakToken = this.breakAt(node);
-	        }
-
-	        break;
-	      }
-
-	      // Should the Node be a shallow or deep clone
-	      let shallow = isContainer(node);
-
-	      let rendered = this.append(node, wrapper, breakToken, shallow);
-
-	      // Check if layout has content yet
-	      if (!hasRenderedContent) {
-	        hasRenderedContent = hasContent(node);
-	      }
-
-	      // Skip to the next node if a deep clone was rendered
-	      if (!shallow) {
-	        walker = walk(nodeAfter(node, source), source);
-	      }
-
-	      // Only check every few elements
-	      if (check >= PER_PAGE_CHECK) {
-	        check = 0;
-
-	        this.hooks && this.hooks.layout.trigger(wrapper, this);
-
-	        newBreakToken = this.findBreakToken(wrapper, source, bounds);
-	      }
-
-	      check += 1;
-	    }
-
-	    return newBreakToken;
-	  }
-
-	  breakAt(node, offset=0) {
-	    return {
-	      node,
-	      offset
-	    }
-	  }
-
-	  shouldBreak(node) {
-	    let previousSibling = node.previousSibling;
-	    let parentNode = node.parentNode;
-	    let parentBreakBefore = needsBreakBefore(node) && parentNode && !previousSibling && needsBreakBefore(parentNode);
-	    let doubleBreakBefore;
-
-	    if (parentBreakBefore) {
-	      doubleBreakBefore = node.dataset.breakBefore === parentNode.dataset.breakBefore;
-	    }
-
-	    return !doubleBreakBefore && needsBreakBefore(node) || needsPreviousBreakAfter(node) || needsPageBreak(node);
-	  }
-
-	  getStart(source, breakToken) {
-	    let start;
-	    let node = breakToken && breakToken.node;
-
-	    if (node) {
-	      start = node;
-	    } else {
-	      start = source.firstChild;
-	    }
-
-	    return start;
-	  }
-
-	  append(node, dest, breakToken, shallow=true, rebuild=true) {
-
-	    let clone = cloneNode(node, !shallow);
-
-	    if (node.parentNode && isElement(node.parentNode)) {
-	      let parent = findElement(node.parentNode, dest);
-	      // Rebuild chain
-	      if (parent) {
-	        parent.appendChild(clone);
-	      } else if (rebuild) {
-	        let fragment = rebuildAncestors(node);
-	        parent = findElement(node.parentNode, fragment);
-	        if (!parent) {
-	          dest.appendChild(clone);
-	        } else if (breakToken && isText(breakToken.node) && breakToken.offset > 0) {
-	          clone.textContent = clone.textContent.substring(breakToken.offset);
-	          parent.appendChild(clone);
-	        } else {
-	          parent.appendChild(clone);
-	        }
-
-	        dest.appendChild(fragment);
-	      } else {
-	        dest.appendChild(clone);
-	      }
-
-
-	    } else {
-	      dest.appendChild(clone);
-	    }
-
-	    this.hooks && this.hooks.renderNode.trigger(clone);
-
-	    return clone;
-	  }
-
-	  avoidBreakInside(node, limiter) {
-	    let breakNode;
-
-	    if (node === limiter) {
-	      return;
-	    }
-
-	    while (node.parentNode) {
-	      node = node.parentNode;
-
-	      if (node === limiter) {
-	        break;
-	      }
-
-	      if(window.getComputedStyle(node)["break-inside"] === "avoid") {
-	        breakNode = node;
-	        break;
-	      }
-
-	    }
-	    return breakNode;
-	  }
-
-	  createBreakToken(overflow, rendered, source) {
-	    let container = overflow.startContainer;
-	    let offset = overflow.startOffset;
-	    let node, renderedNode, parent, index, temp;
-
-	    if (isElement(container)) {
-	      temp = child(container, offset);
-
-	      if (isElement(temp)) {
-	        renderedNode = findElement(temp, rendered);
-
-	        if (!renderedNode) {
-	          // Find closest element with data-ref
-	          renderedNode = findElement(prevValidNode(temp), rendered);
-	          return;
-	        }
-
-	        node = findElement(renderedNode, source);
-	        offset = 0;
-	      } else {
-	        renderedNode = findElement(container, rendered);
-
-	        if (!renderedNode) {
-	          renderedNode = findElement(prevValidNode(container), rendered);
-	        }
-
-	        parent = findElement(renderedNode, source);
-	        index = indexOf$1(temp);
-	        node = child(parent, index);
-	        offset = 0;
-	      }
-	    } else {
-	      renderedNode = findElement(container.parentNode, rendered);
-
-	      if (!renderedNode) {
-	        renderedNode = findElement(prevValidNode(container.parentNode), rendered);
-	      }
-
-	      parent = findElement(renderedNode, source);
-	      index = indexOf$1(container);
-	      node = child(parent, index);
-	    }
-
-	    if (!node) {
-	      return;
-	    }
-
-	    return {
-	      node,
-	      offset
-	    };
-
-	  }
-
-	  findBreakToken(rendered, source, bounds=this.bounds, extract=true) {
-	    let overflow = this.findOverflow(rendered, bounds);
-	    let breakToken;
-
-	    if (overflow) {
-	      breakToken = this.createBreakToken(overflow, rendered, source);
-
-	      if (breakToken && breakToken.node && extract) {
-	        this.removeOverflow(overflow);
-	      }
-
-	    }
-	    return breakToken;
-	  }
-
-	  hasOverflow(element, bounds=this.bounds) {
-	    let constrainingElement = element.parentNode; // this gets the element, instead of the wrapper for the width workaround
-	    let { width } = element.getBoundingClientRect();
-	    let { scrollWidth } = constrainingElement;
-	    return Math.max(Math.floor(width), scrollWidth) > Math.round(bounds.width);
-	  }
-
-	  findOverflow(rendered, bounds=this.bounds) {
-	    if (!this.hasOverflow(rendered, bounds)) return;
-
-	    let start = Math.round(bounds.left);
-	    let end =  Math.round(bounds.right);
-	    let range;
-
-	    let walker = walk(rendered.firstChild, rendered);
-	    let next, done, node, offset, skip, breakAvoid, prev, br;
-	    while (!done) {
-	      next = walker.next();
-	      done = next.done;
-	      node = next.value;
-	      skip = false;
-	      breakAvoid = false;
-	      prev = undefined;
-	      br = undefined;
-
-	      if (node) {
-	        let pos = getBoundingClientRect(node);
-	        let left = Math.floor(pos.left);
-	        let right = Math.floor(pos.right);
-
-	        if (!range && left >= end) {
-	          // Check if it is a float
-	          let isFloat = false;
-
-	          if (isElement(node) ) {
-	            let styles = window.getComputedStyle(node);
-	            isFloat = styles.getPropertyValue("float") !== "none";
-	            skip = styles.getPropertyValue("break-inside") === "avoid";
-	            breakAvoid = node.dataset.breakBefore === "avoid" || node.dataset.previousBreakAfter === "avoid";
-	            prev = breakAvoid && nodeBefore(node, rendered);
-	            br = node.tagName === "BR" || node.tagName === "WBR";
-	          }
-
-	          if (prev) {
-	            range = document.createRange();
-	            range.setStartBefore(prev);
-	            break;
-	          }
-
-	          if (!br && !isFloat && isElement(node)) {
-	            range = document.createRange();
-	            range.setStartBefore(node);
-	            break;
-	          }
-
-	          if (isText(node) && node.textContent.trim().length) {
-	            range = document.createRange();
-	            range.setStartBefore(node);
-	            break;
-	          }
-
-	        }
-
-	        if (!range && isText(node) &&
-	            node.textContent.trim().length &&
-	            window.getComputedStyle(node.parentNode)["break-inside"] !== "avoid") {
-
-	          let rects = getClientRects(node);
-	          let rect;
-	          left = 0;
-	          for (var i = 0; i != rects.length; i++) {
-	            rect = rects[i];
-	            if (!left || rect.left > left) {
-	              left = rect.left;
-	            }
-	          }
-
-	          if(left >= end) {
-	            range = document.createRange();
-	            offset = this.textBreak(node, start, end);
-	            if (!offset) {
-	              range = undefined;
-	            } else {
-	              range.setStart(node, offset);
-	            }
-	            break;
-	          }
-	        }
-
-	        // Skip children
-	        if (skip || right < end) {
-	          next = nodeAfter(node, rendered);
-	          if (next) {
-	            walker = walk(next, rendered);
-	          }
-
-	        }
-
-	      }
-	    }
-
-	    // Find End
-	    if (range) {
-	      range.setEndAfter(rendered.lastChild);
-	      return range;
-	    }
-
-	  }
-
-	  findEndToken(rendered, source, bounds=this.bounds) {
-	    if (rendered.childNodes.length === 0) {
-	      return;
-	    }
-
-	    let lastChild = rendered.lastChild;
-
-	    let lastNodeIndex;
-	    while (lastChild && lastChild.lastChild) {
-	      if (!validNode(lastChild)) {
-	        // Only get elements with refs
-	        lastChild = lastChild.previousSibling;
-	      } else if(!validNode(lastChild.lastChild)) {
-	        // Deal with invalid dom items
-	        lastChild = prevValidNode(lastChild.lastChild);
-	        break;
-	      } else {
-	        lastChild = lastChild.lastChild;
-	      }
-	    }
-
-	    if (isText(lastChild)) {
-
-	      if (lastChild.parentNode.dataset.ref) {
-	        lastNodeIndex = indexOf$1(lastChild);
-	        lastChild = lastChild.parentNode;
-	      } else {
-	        lastChild = lastChild.previousSibling;
-	      }
-	    }
-
-	    let original = findElement(lastChild, source);
-
-	    if (lastNodeIndex) {
-	      original = original.childNodes[lastNodeIndex];
-	    }
-
-	    let after = nodeAfter(original);
-
-	    return this.breakAt(after);
-	  }
-
-	  textBreak(node, start, end) {
-	    let wordwalker = words(node);
-	    let left = 0;
-	    let right = 0;
-	    let word, next, done, pos;
-	    let offset;
-	    while (!done) {
-	      next = wordwalker.next();
-	      word = next.value;
-	      done = next.done;
-
-	      if (!word) {
-	        break;
-	      }
-
-	      pos = getBoundingClientRect(word);
-
-	      left = Math.floor(pos.left);
-	      right = Math.floor(pos.right);
-
-	      if (left >= end) {
-	        offset = word.startOffset;
-	        break;
-	      }
-
-	      if (right > end) {
-	        let letterwalker = letters(word);
-	        let letter, nextLetter, doneLetter;
-
-	        while (!doneLetter) {
-	          nextLetter = letterwalker.next();
-	          letter = nextLetter.value;
-	          doneLetter = nextLetter.done;
-
-	          if (!letter) {
-	            break;
-	          }
-
-	          pos = getBoundingClientRect(letter);
-	          left = Math.floor(pos.left);
-
-	          if (left >= end) {
-	            offset = letter.startOffset;
-	            done = true;
-
-	            break;
-	          }
-	        }
-	      }
-
-	    }
-
-	    return offset;
-	  }
-
-	  removeOverflow(overflow) {
-	    this.hyphenateAtBreak(overflow);
-
-	    return overflow.extractContents();
-	  }
-
-	  hyphenateAtBreak(overflow) {
-	    if (isText(overflow.startContainer) && overflow.startOffset > 0) {
-	      let startText = overflow.startContainer.textContent;
-	      let startOffset = overflow.startOffset;
-	      let prevLetter = startText[startOffset-1];
-
-	      // Add a hyphen if previous character is a letter or soft hyphen
-	      if (/^\w|\u00AD$/.test(prevLetter)) {
-	        overflow.startContainer.textContent = startText.slice(0, startOffset) + "\u2010";
-	        overflow.setStart(overflow.startContainer, startOffset + 1);
-	      }
-	    }
-	  }
+			if (hooks) {
+				this.hooks = hooks;
+			} else {
+				this.hooks = {};
+				this.hooks.layout = new Hook();
+				this.hooks.renderNode = new Hook();
+				this.hooks.layoutNode = new Hook();
+				this.hooks.overflow = new Hook();
+			}
+
+			this.maxChars = maxChars || MAX_CHARS_PER_BREAK;
+		}
+
+		async renderTo(wrapper, source, breakToken, bounds=this.bounds) {
+			let start = this.getStart(source, breakToken);
+			let walker = walk(start, source);
+
+			let node;
+			let done;
+			let next;
+
+			let hasRenderedContent = false;
+			let newBreakToken;
+
+			let length = 0;
+
+			while (!done && !newBreakToken) {
+				next = walker.next();
+				node = next.value;
+				done = next.done;
+
+				if (!node) {
+					this.hooks && this.hooks.layout.trigger(wrapper, this);
+
+					let imgs = wrapper.querySelectorAll("img");
+					if (imgs.length) {
+						await this.waitForImages(imgs);
+					}
+
+					newBreakToken = this.findBreakToken(wrapper, source, bounds);
+					return newBreakToken;
+				}
+
+				this.hooks && this.hooks.layoutNode.trigger(node);
+
+				// Check if the rendered element has a break set
+				if (hasRenderedContent && this.shouldBreak(node)) {
+
+					this.hooks && this.hooks.layout.trigger(wrapper, this);
+
+					let imgs = wrapper.querySelectorAll("img");
+					if (imgs.length) {
+						await this.waitForImages(imgs);
+					}
+
+					newBreakToken = this.findBreakToken(wrapper, source, bounds);
+
+					if (!newBreakToken) {
+						newBreakToken = this.breakAt(node);
+					}
+
+					length = 0;
+
+					break;
+				}
+
+				// Should the Node be a shallow or deep clone
+				let shallow = isContainer(node);
+
+				let rendered = this.append(node, wrapper, breakToken, shallow);
+
+				length += rendered.textContent.length;
+
+				// Check if layout has content yet
+				if (!hasRenderedContent) {
+					hasRenderedContent = hasContent(node);
+				}
+
+				// Skip to the next node if a deep clone was rendered
+				if (!shallow) {
+					walker = walk(nodeAfter(node, source), source);
+				}
+
+				// Only check x characters
+				if (length >= this.maxChars) {
+
+					this.hooks && this.hooks.layout.trigger(wrapper, this);
+
+					let imgs = wrapper.querySelectorAll("img");
+					if (imgs.length) {
+						await this.waitForImages(imgs);
+					}
+
+					newBreakToken = this.findBreakToken(wrapper, source, bounds);
+
+					if (newBreakToken) {
+						length = 0;
+					}
+				}
+
+			}
+
+			return newBreakToken;
+		}
+
+		breakAt(node, offset=0) {
+			return {
+				node,
+				offset
+			};
+		}
+
+		shouldBreak(node) {
+			let previousSibling = node.previousSibling;
+			let parentNode = node.parentNode;
+			let parentBreakBefore = needsBreakBefore(node) && parentNode && !previousSibling && needsBreakBefore(parentNode);
+			let doubleBreakBefore;
+
+			if (parentBreakBefore) {
+				doubleBreakBefore = node.dataset.breakBefore === parentNode.dataset.breakBefore;
+			}
+
+			return !doubleBreakBefore && needsBreakBefore(node) || needsPreviousBreakAfter(node) || needsPageBreak(node);
+		}
+
+		getStart(source, breakToken) {
+			let start;
+			let node = breakToken && breakToken.node;
+
+			if (node) {
+				start = node;
+			} else {
+				start = source.firstChild;
+			}
+
+			return start;
+		}
+
+		append(node, dest, breakToken, shallow=true, rebuild=true) {
+
+			let clone = cloneNode(node, !shallow);
+
+			if (node.parentNode && isElement(node.parentNode)) {
+				let parent = findElement(node.parentNode, dest);
+				// Rebuild chain
+				if (parent) {
+					parent.appendChild(clone);
+				} else if (rebuild) {
+					let fragment = rebuildAncestors(node);
+					parent = findElement(node.parentNode, fragment);
+					if (!parent) {
+						dest.appendChild(clone);
+					} else if (breakToken && isText(breakToken.node) && breakToken.offset > 0) {
+						clone.textContent = clone.textContent.substring(breakToken.offset);
+						parent.appendChild(clone);
+					} else {
+						parent.appendChild(clone);
+					}
+
+					dest.appendChild(fragment);
+				} else {
+					dest.appendChild(clone);
+				}
+
+
+			} else {
+				dest.appendChild(clone);
+			}
+
+			this.hooks && this.hooks.renderNode.trigger(clone);
+
+			return clone;
+		}
+
+		async waitForImages(imgs) {
+			let results = Array.from(imgs).map(async (img) => {
+				return this.awaitImageLoaded(img);
+			});
+			await Promise.all(results);
+		}
+
+		async awaitImageLoaded(image) {
+			return new Promise(resolve => {
+				if (image.complete !== true) {
+					image.onload = function() {
+						let { width, height } = window.getComputedStyle(image);
+						resolve(width, height);
+					};
+					image.onerror = function(e) {
+						let { width, height } = window.getComputedStyle(image);
+						resolve(width, height, e);
+					};
+				} else {
+					let { width, height } = window.getComputedStyle(image);
+					resolve(width, height);
+				}
+			});
+		}
+
+		avoidBreakInside(node, limiter) {
+			let breakNode;
+
+			if (node === limiter) {
+				return;
+			}
+
+			while (node.parentNode) {
+				node = node.parentNode;
+
+				if (node === limiter) {
+					break;
+				}
+
+				if(window.getComputedStyle(node)["break-inside"] === "avoid") {
+					breakNode = node;
+					break;
+				}
+
+			}
+			return breakNode;
+		}
+
+		createBreakToken(overflow, rendered, source) {
+			let container = overflow.startContainer;
+			let offset = overflow.startOffset;
+			let node, renderedNode, parent, index, temp;
+
+			if (isElement(container)) {
+				temp = child(container, offset);
+
+				if (isElement(temp)) {
+					renderedNode = findElement(temp, rendered);
+
+					if (!renderedNode) {
+						// Find closest element with data-ref
+						renderedNode = findElement(prevValidNode(temp), rendered);
+						return;
+					}
+
+					node = findElement(renderedNode, source);
+					offset = 0;
+				} else {
+					renderedNode = findElement(container, rendered);
+
+					if (!renderedNode) {
+						renderedNode = findElement(prevValidNode(container), rendered);
+					}
+
+					parent = findElement(renderedNode, source);
+					index = indexOf$1(temp);
+					node = child(parent, index);
+					offset = 0;
+				}
+			} else {
+				renderedNode = findElement(container.parentNode, rendered);
+
+				if (!renderedNode) {
+					renderedNode = findElement(prevValidNode(container.parentNode), rendered);
+				}
+
+				parent = findElement(renderedNode, source);
+				index = indexOf$1(container);
+				node = child(parent, index);
+			}
+
+			if (!node) {
+				return;
+			}
+
+			return {
+				node,
+				offset
+			};
+
+		}
+
+		findBreakToken(rendered, source, bounds=this.bounds, extract=true) {
+			let overflow = this.findOverflow(rendered, bounds);
+			let breakToken;
+
+			if (overflow) {
+				breakToken = this.createBreakToken(overflow, rendered, source);
+
+				if (breakToken && breakToken.node && extract) {
+					this.removeOverflow(overflow);
+				}
+
+			}
+			return breakToken;
+		}
+
+		hasOverflow(element, bounds=this.bounds) {
+			let constrainingElement = element && element.parentNode; // this gets the element, instead of the wrapper for the width workaround
+			let { width } = element.getBoundingClientRect();
+			let scrollWidth = constrainingElement ? constrainingElement.scrollWidth : 0;
+			return Math.max(Math.floor(width), scrollWidth) > Math.round(bounds.width);
+		}
+
+		findOverflow(rendered, bounds=this.bounds) {
+			if (!this.hasOverflow(rendered, bounds)) return;
+
+			let start = Math.round(bounds.left);
+			let end =  Math.round(bounds.right);
+			let range;
+
+			let walker = walk(rendered.firstChild, rendered);
+
+			// Find Start
+			let next, done, node, offset, skip, breakAvoid, prev, br;
+			while (!done) {
+				next = walker.next();
+				done = next.done;
+				node = next.value;
+				skip = false;
+				breakAvoid = false;
+				prev = undefined;
+				br = undefined;
+
+				if (node) {
+					let pos = getBoundingClientRect(node);
+					let left = Math.floor(pos.left);
+					let right = Math.floor(pos.right);
+
+					if (!range && left >= end) {
+						// Check if it is a float
+						let isFloat = false;
+
+						if (isElement(node) ) {
+							let styles = window.getComputedStyle(node);
+							isFloat = styles.getPropertyValue("float") !== "none";
+							skip = styles.getPropertyValue("break-inside") === "avoid";
+							breakAvoid = node.dataset.breakBefore === "avoid" || node.dataset.previousBreakAfter === "avoid";
+							prev = breakAvoid && nodeBefore(node, rendered);
+							br = node.tagName === "BR" || node.tagName === "WBR";
+						}
+
+						if (prev) {
+							range = document.createRange();
+							range.setStartBefore(prev);
+							break;
+						}
+
+						if (!br && !isFloat && isElement(node)) {
+							range = document.createRange();
+							range.setStartBefore(node);
+							break;
+						}
+
+						if (isText(node) && node.textContent.trim().length) {
+							range = document.createRange();
+							range.setStartBefore(node);
+							break;
+						}
+
+					}
+
+					if (!range && isText(node) &&
+							node.textContent.trim().length &&
+							window.getComputedStyle(node.parentNode)["break-inside"] !== "avoid") {
+
+						let rects = getClientRects(node);
+						let rect;
+						left = 0;
+						for (var i = 0; i != rects.length; i++) {
+							rect = rects[i];
+							if (!left || rect.left > left) {
+								left = rect.left;
+							}
+						}
+
+						if(left >= end) {
+							range = document.createRange();
+							offset = this.textBreak(node, start, end);
+							if (!offset) {
+								range = undefined;
+							} else {
+								range.setStart(node, offset);
+							}
+							break;
+						}
+					}
+
+					// Skip children
+					if (skip || right < end) {
+						next = nodeAfter(node, rendered);
+						if (next) {
+							walker = walk(next, rendered);
+						}
+
+					}
+
+				}
+			}
+
+			// Find End
+			if (range) {
+				range.setEndAfter(rendered.lastChild);
+				return range;
+			}
+
+		}
+
+		findEndToken(rendered, source, bounds=this.bounds) {
+			if (rendered.childNodes.length === 0) {
+				return;
+			}
+
+			let lastChild = rendered.lastChild;
+
+			let lastNodeIndex;
+			while (lastChild && lastChild.lastChild) {
+				if (!validNode(lastChild)) {
+					// Only get elements with refs
+					lastChild = lastChild.previousSibling;
+				} else if(!validNode(lastChild.lastChild)) {
+					// Deal with invalid dom items
+					lastChild = prevValidNode(lastChild.lastChild);
+					break;
+				} else {
+					lastChild = lastChild.lastChild;
+				}
+			}
+
+			if (isText(lastChild)) {
+
+				if (lastChild.parentNode.dataset.ref) {
+					lastNodeIndex = indexOf$1(lastChild);
+					lastChild = lastChild.parentNode;
+				} else {
+					lastChild = lastChild.previousSibling;
+				}
+			}
+
+			let original = findElement(lastChild, source);
+
+			if (lastNodeIndex) {
+				original = original.childNodes[lastNodeIndex];
+			}
+
+			let after = nodeAfter(original);
+
+			return this.breakAt(after);
+		}
+
+		textBreak(node, start, end) {
+			let wordwalker = words(node);
+			let left = 0;
+			let right = 0;
+			let word, next, done, pos;
+			let offset;
+			while (!done) {
+				next = wordwalker.next();
+				word = next.value;
+				done = next.done;
+
+				if (!word) {
+					break;
+				}
+
+				pos = getBoundingClientRect(word);
+
+				left = Math.floor(pos.left);
+				right = Math.floor(pos.right);
+
+				if (left >= end) {
+					offset = word.startOffset;
+					break;
+				}
+
+				if (right > end) {
+					let letterwalker = letters(word);
+					let letter, nextLetter, doneLetter;
+
+					while (!doneLetter) {
+						nextLetter = letterwalker.next();
+						letter = nextLetter.value;
+						doneLetter = nextLetter.done;
+
+						if (!letter) {
+							break;
+						}
+
+						pos = getBoundingClientRect(letter);
+						left = Math.floor(pos.left);
+
+						if (left >= end) {
+							offset = letter.startOffset;
+							done = true;
+
+							break;
+						}
+					}
+				}
+
+			}
+
+			return offset;
+		}
+
+		removeOverflow(overflow) {
+			this.hyphenateAtBreak(overflow);
+
+			return overflow.extractContents();
+		}
+
+		hyphenateAtBreak(overflow) {
+			if (isText(overflow.startContainer) && overflow.startOffset > 0) {
+				let startText = overflow.startContainer.textContent;
+				let startOffset = overflow.startOffset;
+				let prevLetter = startText[startOffset-1];
+
+				// Add a hyphen if previous character is a letter or soft hyphen
+				if (/^\w|\u00AD$/.test(prevLetter)) {
+					overflow.startContainer.textContent = startText.slice(0, startOffset) + "\u2010";
+					overflow.setStart(overflow.startContainer, startOffset + 1);
+				}
+			}
+		}
 	}
 
 	eventEmitter(Layout.prototype);
@@ -1441,253 +1503,262 @@
 	 * @class
 	 */
 	class Page {
-	  constructor(pagesArea, pageTemplate, blank, hooks) {
-	    this.pagesArea = pagesArea;
-	    this.pageTemplate = pageTemplate;
-	    this.blank = blank;
+		constructor(pagesArea, pageTemplate, blank, hooks) {
+			this.pagesArea = pagesArea;
+			this.pageTemplate = pageTemplate;
+			this.blank = blank;
 
-	    // this.mapper = new Mapping(undefined, undefined, undefined, true);
+			this.width = undefined;
+			this.height = undefined;
 
-	    this.width = undefined;
-	    this.height = undefined;
+			this.hooks = hooks;
 
-	    this.hooks = hooks;
+			// this.element = this.create(this.pageTemplate);
+		}
 
-	    // this.element = this.create(this.pageTemplate);
-	  }
+		create(template, after) {
+			//let documentFragment = document.createRange().createContextualFragment( TEMPLATE );
+			//let page = documentFragment.children[0];
+			let clone = document.importNode(this.pageTemplate.content, true);
 
-	  create(template, after) {
-	    //let documentFragment = document.createRange().createContextualFragment( TEMPLATE );
-	    //let page = documentFragment.children[0];
-	    let clone = document.importNode(this.pageTemplate.content, true);
+			let page;
+			if (after) {
+				this.pagesArea.insertBefore(clone, after.nextSibling);
+				let index = Array.prototype.indexOf.call(this.pagesArea.children, after.nextSibling);
+				page = this.pagesArea.children[index];
+			} else {
+				this.pagesArea.appendChild(clone);
+				page = this.pagesArea.lastChild;
+			}
 
-	    let page;
-	    if (after) {
-	      this.pagesArea.insertBefore(clone, after.nextSibling);
-	      let index = Array.prototype.indexOf.call(this.pagesArea.children, after.nextSibling);
-	      page = this.pagesArea.children[index];
-	    } else {
-	      this.pagesArea.appendChild(clone);
-	      page = this.pagesArea.lastChild;
-	    }
+			let area = page.querySelector(".pagedjs_page_content");
 
-	    let area = page.querySelector(".pagedjs_page_content");
 
+			let size = area.getBoundingClientRect();
 
-	    let size = area.getBoundingClientRect();
 
+			area.style.columnWidth = Math.round(size.width) + "px";
+			area.style.columnGap = "calc(var(--margin-right) + var(--margin-left))";
+			// area.style.overflow = "scroll";
 
-	    area.style.columnWidth = Math.round(size.width) + "px";
-	    area.style.columnGap = "calc(var(--margin-right) + var(--margin-left))";
-	    // area.style.overflow = "scroll";
+			this.width = Math.round(size.width);
+			this.height = Math.round(size.height);
 
-	    this.width = Math.round(size.width);
-	    this.height = Math.round(size.height);
+			this.element = page;
+			this.area = area;
 
-	    this.element = page;
-	    this.area = area;
+			return page;
+		}
 
-	    return page;
-	  }
+		createWrapper() {
+			let wrapper = document.createElement("div");
 
-	  createWrapper() {
-	    let wrapper = document.createElement("div");
+			this.area.appendChild(wrapper);
 
-	    this.area.appendChild(wrapper);
+			this.wrapper = wrapper;
 
-	    this.wrapper = wrapper;
+			return wrapper;
+		}
 
-	    return wrapper;
-	  }
+		index(pgnum) {
+			this.position = pgnum;
 
-	  index(pgnum) {
-	    this.position = pgnum;
+			let page = this.element;
 
-	    let page = this.element;
+			let id = `page-${pgnum+1}`;
 
-	    let id = `page-${pgnum+1}`;
+			this.id = id;
 
-	    this.id = id;
+			page.dataset.pageNumber = pgnum+1;
 
-	    page.dataset.pageNumber = pgnum+1;
+			if (this.name) {
+				page.classList.add("pagedjs_" + this.name + "_page");
+			}
 
-	    if (this.name) {
-	      page.classList.add("pagedjs_" + this.name + "_page");
-	    }
+			if (this.blank) {
+				page.classList.add("pagedjs_blank_page");
+			}
 
-	    if (this.blank) {
-	      page.classList.add("pagedjs_blank_page");
-	    }
+			if (pgnum === 0) {
+				page.classList.add("pagedjs_first_page");
+			}
 
-	    if (pgnum === 0) {
-	      page.classList.add("pagedjs_first_page");
-	    }
+			if (pgnum % 2 !== 1) {
+				page.classList.remove("pagedjs_left_page");
+				page.classList.add("pagedjs_right_page");
+			} else {
+				page.classList.remove("pagedjs_right_page");
+				page.classList.add("pagedjs_left_page");
+			}
+		}
 
-	    if (pgnum % 2 !== 1) {
-	      page.classList.remove("pagedjs_left_page");
-	      page.classList.add("pagedjs_right_page");
-	    } else {
-	      page.classList.remove("pagedjs_right_page");
-	      page.classList.add("pagedjs_left_page");
-	    }
-	  }
+		/*
+		size(width, height) {
+			if (width === this.width && height === this.height) {
+				return;
+			}
+			this.width = width;
+			this.height = height;
 
-	  /*
-	  size(width, height) {
-	    if (width === this.width && height === this.height) {
-	      return;
-	    }
-	    this.width = width;
-	    this.height = height;
+			this.element.style.width = Math.round(width) + "px";
+			this.element.style.height = Math.round(height) + "px";
+			this.element.style.columnWidth = Math.round(width) + "px";
+		}
+		*/
 
-	    this.element.style.width = Math.round(width) + "px";
-	    this.element.style.height = Math.round(height) + "px";
-	    this.element.style.columnWidth = Math.round(width) + "px";
-	  }
-	  */
-
-	  layout(contents, breakToken) {
-	    // console.log("layout page", this.id);
-	    this.clear();
-
-	    this.layoutMethod = new Layout(this.area, this.hooks);
-
-	    breakToken = this.layoutMethod.renderTo(this.wrapper, contents, breakToken);
-
-	    this.addListeners(contents);
-
-	    return breakToken;
-	  }
-
-	  append(contents, breakToken) {
-
-	    if (!this.layoutMethod) {
-	      return this.layout(contents, breakToken);
-	    }
-
-	    breakToken = this.layoutMethod.renderTo(this.wrapper, contents, breakToken);
-
-	    return breakToken;
-	  }
-
-	  getByParent(ref, entries) {
-	    let e;
-	    for (var i = 0; i < entries.length; i++) {
-	      e = entries[i];
-	      if(e.dataset.ref === ref) {
-	        return e;
-	        break;
-	      }
-	    }
-	  }
-
-	  onOverflow(func) {
-	    this._onOverflow = func;
-	  }
-
-	  onUnderflow(func) {
-	    this._onUnderflow = func;
-	  }
-
-	  clear() {
-	    this.removeListeners();
-	    this.wrapper && this.wrapper.remove();
-	    this.createWrapper();
-	  }
-
-	  addListeners(contents) {
-	    if (typeof ResizeObserver !== "undefined") {
-	      this.addResizeObserver(contents);
-	    } else {
-	      this.element.addEventListener("overflow", this.checkOverflowAfterResize.bind(this, contents), false);
-	      this.element.addEventListener("underflow", this.checkOverflowAfterResize.bind(this, contents), false);
-	    }
-	    // TODO: fall back to mutation observer?
-
-
-	    // Key scroll width from changing
-	    this.element.addEventListener("scroll", () => {
-	      if(this.listening) {
-	        this.element.scrollLeft = 0;
-	      }
-	    });
-
-	    this.listening = true;
-
-	    return true;
-	  }
-
-	  removeListeners() {
-	    this.listening = false;
-	    // clearTimeout(this.timeoutAfterResize);
-
-	    if (this.element) {
-	      this.element.removeEventListener("overflow", this.checkOverflowAfterResize.bind(this), false);
-	      this.element.removeEventListener("underflow", this.checkOverflowAfterResize.bind(this), false);
-	    }
-
-	    if (this.ro) {
-	      this.ro.disconnect();
-	    }
-	  }
-
-	  addResizeObserver(contents) {
-	    let wrapper = this.wrapper;
-	    let prevHeight = wrapper.getBoundingClientRect().height;
-	    this.ro = new ResizeObserver( entries => {
-
-	      if (!this.listening) {
-	        return;
-	      }
-
-	      for (let entry of entries) {
-	        const cr = entry.contentRect;
-
-	        if (cr.height > prevHeight) {
-	          this.checkOverflowAfterResize(contents);
-	          prevHeight = wrapper.getBoundingClientRect().height;
-	        } else if (cr.height < prevHeight ) { // TODO: calc line height && (prevHeight - cr.height) >= 22
-	          this.checkUnderflowAfterResize(contents);
-	          prevHeight = cr.height;
-	        }
-	      }
-	    });
-
-	    this.ro.observe(wrapper);
-	  }
-
-	  checkOverflowAfterResize(contents) {
-	    if (!this.listening || !this.layoutMethod) {
-	      return;
-	    }
-
-	    let newBreakToken = this.layoutMethod.findBreakToken(this.wrapper, contents);
-
-	    if (newBreakToken) {
-	      this._onOverflow && this._onOverflow(newBreakToken);
-	    }
-	  }
-
-	  checkUnderflowAfterResize(contents) {
-	    if (!this.listening || !this.layoutMethod) {
-	      return;
-	    }
-
-	    let endToken = this.layoutMethod.findEndToken(this.wrapper, contents);
-
-	    // let newBreakToken = this.layoutMethod.findBreakToken(this.wrapper, contents);
-
-	    if (endToken) {
-	      this._onUnderflow && this._onUnderflow(endToken);
-	    }
-	  }
-
-	  destroy() {
-	    this.removeListeners();
-
-	    this.element = undefined;
-	    this.wrapper = undefined;
-	  }
+		async layout(contents, breakToken, maxChars) {
+
+			this.clear();
+
+			this.startToken = breakToken;
+
+			this.layoutMethod = new Layout(this.area, this.hooks, maxChars);
+
+			let newBreakToken = await this.layoutMethod.renderTo(this.wrapper, contents, breakToken);
+
+			this.addListeners(contents);
+
+			this.endToken = newBreakToken;
+
+			return newBreakToken;
+		}
+
+		async append(contents, breakToken) {
+
+			if (!this.layoutMethod) {
+				return this.layout(contents, breakToken);
+			}
+
+			let newBreakToken = await this.layoutMethod.renderTo(this.wrapper, contents, breakToken);
+
+			this.endToken = newBreakToken;
+
+			return newBreakToken;
+		}
+
+		getByParent(ref, entries) {
+			let e;
+			for (var i = 0; i < entries.length; i++) {
+				e = entries[i];
+				if(e.dataset.ref === ref) {
+					return e;
+				}
+			}
+		}
+
+		onOverflow(func) {
+			this._onOverflow = func;
+		}
+
+		onUnderflow(func) {
+			this._onUnderflow = func;
+		}
+
+		clear() {
+			this.removeListeners();
+			this.wrapper && this.wrapper.remove();
+			this.createWrapper();
+		}
+
+		addListeners(contents) {
+			if (typeof ResizeObserver !== "undefined") {
+				this.addResizeObserver(contents);
+			} else {
+				this._checkOverflowAfterResize = this.checkOverflowAfterResize.bind(this, contents);
+				this.element.addEventListener("overflow", this._checkOverflowAfterResize, false);
+				this.element.addEventListener("underflow", this._checkOverflowAfterResize, false);
+			}
+			// TODO: fall back to mutation observer?
+
+			this._onScroll = function() {
+				if(this.listening) {
+					this.element.scrollLeft = 0;
+				}
+			}.bind(this);
+
+			// Keep scroll left from changing
+			this.element.addEventListener("scroll", this._onScroll);
+
+			this.listening = true;
+
+			return true;
+		}
+
+		removeListeners() {
+			this.listening = false;
+
+			if (typeof ResizeObserver !== "undefined" && this.ro) {
+				this.ro.disconnect();
+			} else if (this.element) {
+				this.element.removeEventListener("overflow", this._checkOverflowAfterResize, false);
+				this.element.removeEventListener("underflow", this._checkOverflowAfterResize, false);
+			}
+
+			this.element &&this.element.removeEventListener("scroll", this._onScroll);
+
+		}
+
+		addResizeObserver(contents) {
+			let wrapper = this.wrapper;
+			let prevHeight = wrapper.getBoundingClientRect().height;
+			this.ro = new ResizeObserver( entries => {
+
+				if (!this.listening) {
+					return;
+				}
+
+				for (let entry of entries) {
+					const cr = entry.contentRect;
+
+					if (cr.height > prevHeight) {
+						this.checkOverflowAfterResize(contents);
+						prevHeight = wrapper.getBoundingClientRect().height;
+					} else if (cr.height < prevHeight ) { // TODO: calc line height && (prevHeight - cr.height) >= 22
+						this.checkUnderflowAfterResize(contents);
+						prevHeight = cr.height;
+					}
+				}
+			});
+
+			this.ro.observe(wrapper);
+		}
+
+		checkOverflowAfterResize(contents) {
+			if (!this.listening || !this.layoutMethod) {
+				return;
+			}
+
+			let newBreakToken = this.layoutMethod.findBreakToken(this.wrapper, contents);
+
+			if (newBreakToken) {
+				this.endToken = newBreakToken;
+				this._onOverflow && this._onOverflow(newBreakToken);
+			}
+		}
+
+		checkUnderflowAfterResize(contents) {
+			if (!this.listening || !this.layoutMethod) {
+				return;
+			}
+
+			let endToken = this.layoutMethod.findEndToken(this.wrapper, contents);
+
+			// let newBreakToken = this.layoutMethod.findBreakToken(this.wrapper, contents);
+
+			if (endToken) {
+				this._onUnderflow && this._onUnderflow(endToken);
+			}
+		}
+
+
+		destroy() {
+			this.removeListeners();
+
+			this.element.remove();
+
+			this.element = undefined;
+			this.wrapper = undefined;
+		}
 	}
 
 	eventEmitter(Page.prototype);
@@ -1710,8 +1781,6 @@
 		}
 
 		parse(markup, mime) {
-			let parser = new DOMParser();
-
 			let range = document.createRange();
 			let fragment = range.createContextualFragment(markup);
 
@@ -1740,12 +1809,12 @@
 			var treeWalker = document.createTreeWalker(
 				content,
 				NodeFilter.SHOW_ELEMENT,
-			 	{ acceptNode: function(node) { return NodeFilter.FILTER_ACCEPT; } },
-			 	false
+				{ acceptNode: function(node) { return NodeFilter.FILTER_ACCEPT; } },
+				false
 			);
 
-			let node;
-			while(node = treeWalker.nextNode()) {
+			let node = treeWalker.nextNode();
+			while(node) {
 
 				if (!node.hasAttribute("data-ref")) {
 					let uuid = UUID();
@@ -1759,6 +1828,7 @@
 				// node.setAttribute("data-children", node.childNodes.length);
 
 				// node.setAttribute("data-text", node.textContent.trim().length);
+				node = treeWalker.nextNode();
 			}
 		}
 
@@ -1769,6 +1839,14 @@
 				{ acceptNode: function(node) {
 					// Only remove more than a single space
 					if (node.textContent.length > 1 && !node.textContent.trim()) {
+
+						// Don't touch whitespace if text is preformated
+						let parent = node.parentNode;
+						let pre = isElement(parent) && parent.closest("pre");
+						if (pre) {
+							return NodeFilter.FILTER_REJECT;
+						}
+
 						return NodeFilter.FILTER_ACCEPT;
 					} else {
 						return NodeFilter.FILTER_REJECT;
@@ -1816,6 +1894,211 @@
 		}
 	}
 
+	/**
+	 * Queue for handling tasks one at a time
+	 * @class
+	 * @param {scope} context what this will resolve to in the tasks
+	 */
+	class Queue {
+		constructor(context){
+			this._q = [];
+			this.context = context;
+			this.tick = requestAnimationFrame;
+			this.running = false;
+			this.paused = false;
+		}
+
+		/**
+		 * Add an item to the queue
+		 * @return {Promise} enqueued
+		 */
+		enqueue() {
+			var deferred, promise;
+			var queued;
+			var task = [].shift.call(arguments);
+			var args = arguments;
+
+			// Handle single args without context
+			// if(args && !Array.isArray(args)) {
+			//   args = [args];
+			// }
+			if(!task) {
+				throw new Error("No Task Provided");
+			}
+
+			if(typeof task === "function"){
+
+				deferred = new defer();
+				promise = deferred.promise;
+
+				queued = {
+					"task" : task,
+					"args"     : args,
+					//"context"  : context,
+					"deferred" : deferred,
+					"promise" : promise
+				};
+
+			} else {
+				// Task is a promise
+				queued = {
+					"promise" : task
+				};
+
+			}
+
+			this._q.push(queued);
+
+			// Wait to start queue flush
+			if (this.paused == false && !this.running) {
+				this.run();
+			}
+
+			return queued.promise;
+		}
+
+		/**
+		 * Run one item
+		 * @return {Promise} dequeued
+		 */
+		dequeue(){
+			var inwait, task, result;
+
+			if(this._q.length && !this.paused) {
+				inwait = this._q.shift();
+				task = inwait.task;
+				if(task){
+					// console.log(task)
+
+					result = task.apply(this.context, inwait.args);
+
+					if(result && typeof result["then"] === "function") {
+						// Task is a function that returns a promise
+						return result.then(function(){
+							inwait.deferred.resolve.apply(this.context, arguments);
+						}.bind(this), function() {
+							inwait.deferred.reject.apply(this.context, arguments);
+						}.bind(this));
+					} else {
+						// Task resolves immediately
+						inwait.deferred.resolve.apply(this.context, result);
+						return inwait.promise;
+					}
+
+
+
+				} else if(inwait.promise) {
+					// Task is a promise
+					return inwait.promise;
+				}
+
+			} else {
+				inwait = new defer();
+				inwait.deferred.resolve();
+				return inwait.promise;
+			}
+
+		}
+
+		// Run All Immediately
+		dump(){
+			while(this._q.length) {
+				this.dequeue();
+			}
+		}
+
+		/**
+		 * Run all tasks sequentially, at convince
+		 * @return {Promise} all run
+		 */
+		run(){
+
+			if(!this.running){
+				this.running = true;
+				this.defered = new defer();
+			}
+
+			this.tick.call(window, () => {
+
+				if(this._q.length) {
+
+					this.dequeue()
+						.then(function(){
+							this.run();
+						}.bind(this));
+
+				} else {
+					this.defered.resolve();
+					this.running = undefined;
+				}
+
+			});
+
+			// Unpause
+			if(this.paused == true) {
+				this.paused = false;
+			}
+
+			return this.defered.promise;
+		}
+
+		/**
+		 * Flush all, as quickly as possible
+		 * @return {Promise} ran
+		 */
+		flush(){
+
+			if(this.running){
+				return this.running;
+			}
+
+			if(this._q.length) {
+				this.running = this.dequeue()
+					.then(function(){
+						this.running = undefined;
+						return this.flush();
+					}.bind(this));
+
+				return this.running;
+			}
+
+		}
+
+		/**
+		 * Clear all items in wait
+		 * @return {void}
+		 */
+		clear(){
+			this._q = [];
+		}
+
+		/**
+		 * Get the number of tasks in the queue
+		 * @return {number} tasks
+		 */
+		length(){
+			return this._q.length;
+		}
+
+		/**
+		 * Pause a running queue
+		 * @return {void}
+		 */
+		pause(){
+			this.paused = true;
+		}
+
+		/**
+		 * End the queue
+		 * @return {void}
+		 */
+		stop(){
+			this._q = [];
+			this.running = false;
+			this.paused = true;
+		}
+	}
+
 	const TEMPLATE = `<div class="pagedjs_page">
 	<div class="pagedjs_margin-top-left-corner-holder">
 		<div class="pagedjs_margin pagedjs_margin-top-left-corner"><div class="pagedjs_margin-content"></div></div>
@@ -1856,8 +2139,6 @@
 	</div>
 </div>`;
 
-	const _requestIdleCallback$1 = 'requestIdleCallback' in window ? requestIdleCallback : requestAnimationFrame;
-
 	/**
 	 * Chop up text into flows
 	 * @class
@@ -1880,7 +2161,14 @@
 			this.pages = [];
 			this._total = 0;
 
+			this.q = new Queue(this);
+			this.stopped = false;
+			this.rendered = false;
+
 			this.content = content;
+
+			this.charsPerBreak = [];
+			this.maxChars;
 
 			if (content) {
 				this.flow(content, renderTo);
@@ -1899,6 +2187,7 @@
 
 			this.pageTemplate = document.createElement("template");
 			this.pageTemplate.innerHTML = TEMPLATE;
+
 		}
 
 		async flow(content, renderTo) {
@@ -1909,14 +2198,28 @@
 			parsed = new ContentParser(content);
 
 			this.source = parsed;
+			this.breakToken = undefined;
 
-			this.setup(renderTo);
+			if (this.pagesArea && this.pageTemplate) {
+				this.q.clear();
+				this.removePages();
+			} else {
+				this.setup(renderTo);
+			}
 
 			this.emit("rendering", content);
 
 			await this.hooks.afterParsed.trigger(parsed, this);
 
-			await this.render(parsed, renderTo);
+			await this.loadFonts();
+
+			let rendered = await this.render(parsed, this.breakToken);
+			while (rendered.canceled) {
+				this.start();
+				rendered = await this.render(parsed, this.breakToken);
+			}
+
+			this.rendered = true;
 
 			await this.hooks.afterRendered.trigger(this.pages, this);
 
@@ -1925,27 +2228,84 @@
 			return this;
 		}
 
-		async render(parsed, renderTo) {
-			let renderer = this.layout(parsed);
+		// oversetPages() {
+		// 	let overset = [];
+		// 	for (let i = 0; i < this.pages.length; i++) {
+		// 		let page = this.pages[i];
+		// 		if (page.overset) {
+		// 			overset.push(page);
+		// 			// page.overset = false;
+		// 		}
+		// 	}
+		// 	return overset;
+		// }
+		//
+		// async handleOverset(parsed) {
+		// 	let overset = this.oversetPages();
+		// 	if (overset.length) {
+		// 		console.log("overset", overset);
+		// 		let index = this.pages.indexOf(overset[0]) + 1;
+		// 		console.log("INDEX", index);
+		//
+		// 		// Remove pages
+		// 		// this.removePages(index);
+		//
+		// 		// await this.render(parsed, overset[0].overset);
+		//
+		// 		// return this.handleOverset(parsed);
+		// 	}
+		// }
+
+		async render(parsed, startAt) {
+			let renderer = this.layout(parsed, startAt);
 
 			let done = false;
 			let result;
 
 			while (!done) {
-				result = await this.renderOnIdle(renderer);
+				result = await this.q.enqueue(() => { return this.renderAsync(renderer); });
 				done = result.done;
 			}
 
-			return this;
+			return result;
+		}
+
+		start() {
+			this.rendered = false;
+			this.stopped = false;
+		}
+
+		stop() {
+			this.stopped = true;
+			// this.q.clear();
 		}
 
 		renderOnIdle(renderer) {
 			return new Promise(resolve => {
-				_requestIdleCallback$1(() => {
-					let result = renderer.next();
-					resolve(result);
+				requestIdleCallback(async () => {
+					if (this.stopped) {
+						return resolve({ done: true, canceled: true });
+					}
+					let result = await renderer.next();
+					if (this.stopped) {
+						resolve({ done: true, canceled: true });
+					} else {
+						resolve(result);
+					}
 				});
 			});
+		}
+
+		async renderAsync(renderer) {
+			if (this.stopped) {
+				return { done: true, canceled: true };
+			}
+			let result = await renderer.next();
+			if (this.stopped) {
+				return { done: true, canceled: true };
+			} else {
+				return result;
+			}
 		}
 
 		async handleBreaks(node) {
@@ -2000,8 +2360,8 @@
 			}
 		}
 
-		async *layout(content) {
-			let breakToken = false;
+		async *layout(content, startAt) {
+			let breakToken = startAt || false;
 
 			while (breakToken !== undefined && (true)) {
 
@@ -2017,26 +2377,58 @@
 				this.emit("page", page);
 
 				// Layout content in the page, starting from the breakToken
-				breakToken = page.layout(content, breakToken);
-
-				// await this.hooks.layout.trigger(page.element, page, breakToken, this);
+				breakToken = await page.layout(content, breakToken, this.maxChars);
 
 				await this.hooks.afterPageLayout.trigger(page.element, page, breakToken, this);
 				this.emit("renderedPage", page);
+
+				this.recoredCharLength(page.wrapper.textContent.length);
 
 				yield breakToken;
 
 				// Stop if we get undefined, showing we have reached the end of the content
 			}
+		}
 
-			this.rendered = true;
+		recoredCharLength(length) {
+			if (length === 0) {
+				return;
+			}
+
+			this.charsPerBreak.push(length);
+
+			// Keep the length of the last few breaks
+			if (this.charsPerBreak.length > 4) {
+				this.charsPerBreak.shift();
+			}
+
+			this.maxChars = this.charsPerBreak.reduce((a, b) => a + b, 0) / (this.charsPerBreak.length);
+		}
+
+		removePages(fromIndex=0) {
+
+			if (fromIndex >= this.pages.length) {
+				return;
+			}
+
+			// Remove pages
+			for (let i = fromIndex; i < this.pages.length; i++) {
+				this.pages[i].destroy();
+			}
+
+			if (fromIndex > 0) {
+				this.pages.splice(fromIndex);
+			} else {
+				this.pages = [];
+			}
 		}
 
 		addPage(blank) {
 			let lastPage = this.pages[this.pages.length - 1];
 			// Create a new page from the template
 			let page = new Page(this.pagesArea, this.pageTemplate, blank, this.hooks);
-			let total = this.pages.push(page);
+
+			this.pages.push(page);
 
 			// Create the pages
 			page.create(undefined, lastPage && lastPage.element);
@@ -2046,18 +2438,40 @@
 			if (!blank) {
 				// Listen for page overflow
 				page.onOverflow((overflowToken) => {
-					// console.log("overflow on", page.id, overflowToken);
-					let index = this.pages.indexOf(page) + 1;
-					if (index < this.pages.length &&
-							(this.pages[index].breakBefore || this.pages[index].previousBreakAfter)) {
-						let newPage = this.insertPage(index - 1);
-						newPage.layout(this.source, overflowToken);
-					} else if (index < this.pages.length) {
-						this.pages[index].layout(this.source, overflowToken);
-					} else {
-						let newPage = this.addPage();
-						newPage.layout(this.source, overflowToken);
+					console.warn("overflow on", page.id, overflowToken);
+
+					// Only reflow while rendering
+					if (this.rendered) {
+						return;
 					}
+
+					let index = this.pages.indexOf(page) + 1;
+
+					// Stop the rendering
+					this.stop();
+
+					// Set the breakToken to resume at
+					this.breakToken = overflowToken;
+
+					// Remove pages
+					this.removePages(index);
+
+					if (this.rendered === true) {
+						this.rendered = false;
+
+						this.q.enqueue(async () => {
+							console.log("start",page.id, this.rendered);
+
+							this.start();
+
+							await this.render(this.source, this.breakToken);
+
+							this.rendered = true;
+
+						});
+					}
+
+
 				});
 
 				page.onUnderflow((overflowToken) => {
@@ -2068,11 +2482,11 @@
 				});
 			}
 
-			this.total += 1;
+			this.total = this.pages.length;
 
 			return page;
 		}
-
+		/*
 		insertPage(index, blank) {
 			let lastPage = this.pages[index];
 			// Create a new page from the template
@@ -2109,14 +2523,33 @@
 
 			return page;
 		}
+		*/
 
 		get total() {
 			return this._total;
 		}
 
 		set total(num) {
-			this.pagesArea.style.setProperty('--page-count', num);
+			this.pagesArea.style.setProperty("--page-count", num);
 			this._total = num;
+		}
+
+		loadFonts() {
+			let fontPromises = [];
+			document.fonts.forEach((fontFace) => {
+				if (fontFace.status !== "loaded") {
+					let fontLoaded = fontFace.load().then((r) => {
+						return fontFace.family;
+					}, (r) => {
+						console.warn("Failed to preload font-family:", fontFace.family);
+						return fontFace.family;
+					});
+					fontPromises.push(fontLoaded);
+				}
+			});
+			return Promise.all(fontPromises).catch((err) => {
+				console.warn(err);
+			});
 		}
 
 		destroy() {
@@ -22886,7 +23319,7 @@
 
 		urls(ast) {
 			lib.walk(ast, {
-				visit: 'Url',
+				visit: "Url",
 				enter: (node, item, list) => {
 					this.hooks.onUrl.trigger(node, item, list);
 				}
@@ -22895,7 +23328,7 @@
 
 		atrules(ast) {
 			lib.walk(ast, {
-				visit: 'Atrule',
+				visit: "Atrule",
 				enter: (node, item, list) => {
 					const basename = lib.keyword(node.name).basename;
 
@@ -22915,7 +23348,7 @@
 
 		rules(ast) {
 			lib.walk(ast, {
-				visit: 'Rule',
+				visit: "Rule",
 				enter: (ruleNode, ruleItem, rulelist) => {
 					// console.log("rule", ruleNode);
 
@@ -22927,7 +23360,7 @@
 
 		declarations(ruleNode, ruleItem, rulelist) {
 			lib.walk(ruleNode, {
-				visit: 'Declaration',
+				visit: "Declaration",
 				enter: (declarationNode, dItem, dList) => {
 					// console.log(declarationNode);
 
@@ -22935,7 +23368,7 @@
 
 					if (declarationNode.property === "content") {
 						lib.walk(declarationNode, {
-							visit: 'Function',
+							visit: "Function",
 							enter: (funcNode, fItem, fList) => {
 								this.hooks.onContent.trigger(funcNode, fItem, fList, {declarationNode, dItem, dList}, {ruleNode, ruleItem, rulelist});
 							}
@@ -22948,9 +23381,9 @@
 
 		replaceUrls(ast) {
 			lib.walk(ast, {
-				visit: 'Url',
+				visit: "Url",
 				enter: (node, item, list) => {
-					let href = node.value.value.replace(/["|']/g, '');
+					let href = node.value.value.replace(/["']/g, "");
 					let url = new URL(href, this.url);
 					node.value.value = url.toString();
 				}
@@ -22961,15 +23394,15 @@
 			// Get all selector lists
 			// add an id
 			lib.walk(ast, {
-				visit: 'Selector',
+				visit: "Selector",
 				enter: (node, item, list) => {
 					let children = node.children;
 					children.prepend(children.createItem({
-						type: 'WhiteSpace',
+						type: "WhiteSpace",
 						value: " "
 					}));
 					children.prepend(children.createItem({
-						type: 'IdSelector',
+						type: "IdSelector",
 						name: id,
 						loc: null,
 						children: null
@@ -22981,10 +23414,10 @@
 		getNamedPageSelectors(ast) {
 			let namedPageSelectors = {};
 			lib.walk(ast, {
-				visit: 'Rule',
+				visit: "Rule",
 				enter: (node, item, list) => {
 					lib.walk(node, {
-						visit: 'Declaration',
+						visit: "Declaration",
 						enter: (declaration, dItem, dList) => {
 							if (declaration.property === "page") {
 								let value = declaration.value.children.first();
@@ -23012,11 +23445,11 @@
 
 		replaceIds(ast) {
 			lib.walk(ast, {
-				visit: 'Rule',
+				visit: "Rule",
 				enter: (node, item, list) => {
 
 					lib.walk(node, {
-						visit: 'IdSelector',
+						visit: "IdSelector",
 						enter: (idNode, idItem, idList) => {
 							let name = idNode.name;
 							idNode.flags = null;
@@ -23046,154 +23479,154 @@
 
 	var baseStyles = `
 :root {
-  --width: 8.5in;
-  --height: 11in;
-  --margin-top: 1in;
-  --margin-right: 1in;
-  --margin-bottom: 1in;
-  --margin-left: 1in;
-  --page-count: 0;
+	--width: 8.5in;
+	--height: 11in;
+	--margin-top: 1in;
+	--margin-right: 1in;
+	--margin-bottom: 1in;
+	--margin-left: 1in;
+	--page-count: 0;
 }
 
 @page {
-  size: letter;
-  margin: 0;
+	size: letter;
+	margin: 0;
 }
 
 .pagedjs_page {
-  box-sizing: border-box;
-  width: var(--width);
-  height: var(--height);
-  overflow: hidden;
-  position: relative;
-  display: grid;
-  grid-template-columns: [left] var(--margin-left) [center] calc(var(--width) - var(--margin-left) - var(--margin-right)) [right] var(--margin-right);
-  grid-template-rows: [header] var(--margin-top) [page] calc(var(--height) - var(--margin-top) - var(--margin-bottom)) [footer] var(--margin-bottom);
+	box-sizing: border-box;
+	width: var(--width);
+	height: var(--height);
+	overflow: hidden;
+	position: relative;
+	display: grid;
+	grid-template-columns: [left] var(--margin-left) [center] calc(var(--width) - var(--margin-left) - var(--margin-right)) [right] var(--margin-right);
+	grid-template-rows: [header] var(--margin-top) [page] calc(var(--height) - var(--margin-top) - var(--margin-bottom)) [footer] var(--margin-bottom);
 }
 
 .pagedjs_page * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .pagedjs_margin-top {
-  width: calc(var(--width) - var(--margin-left) - var(--margin-right));
-  height: var(--margin-top);
-  grid-column: center;
-  grid-row: header;
-  flex-wrap: nowrap;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: 100%;
+	width: calc(var(--width) - var(--margin-left) - var(--margin-right));
+	height: var(--margin-top);
+	grid-column: center;
+	grid-row: header;
+	flex-wrap: nowrap;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: 100%;
 }
 
 .pagedjs_margin-top-left-corner-holder {
-  width: var(--margin-left);
-  height: var(--margin-top);
-  display: flex;
-  grid-column: left;
-  grid-row: header;
+	width: var(--margin-left);
+	height: var(--margin-top);
+	display: flex;
+	grid-column: left;
+	grid-row: header;
 }
 
 .pagedjs_margin-top-right-corner-holder {
-  width: var(--margin-right);
-  height: var(--margin-top);
-  display: flex;
-  grid-column: right;
-  grid-row: header;
+	width: var(--margin-right);
+	height: var(--margin-top);
+	display: flex;
+	grid-column: right;
+	grid-row: header;
 }
 
 .pagedjs_margin-top-left-corner {
-  width: var(--margin-left);
+	width: var(--margin-left);
 }
 
 .pagedjs_margin-top-right-corner {
-  width: var(--margin-right);
+	width: var(--margin-right);
 }
 
 
 .pagedjs_margin-right {
-  height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
-  width: var(--margin-right);
-  right: 0;
-  grid-column: right;
-  grid-row: page;
-  display: grid;
-  grid-template-rows: repeat(3, 33.3333%);
-  grid-template-columns: 100%;
+	height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
+	width: var(--margin-right);
+	right: 0;
+	grid-column: right;
+	grid-row: page;
+	display: grid;
+	grid-template-rows: repeat(3, 33.3333%);
+	grid-template-columns: 100%;
 }
 
 
 
 .pagedjs_margin-bottom {
-  width: calc(var(--width) - var(--margin-left) - var(--margin-right));
-  height: var(--margin-bottom);
-  grid-column: center;
-  grid-row: footer;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: 100%;
+	width: calc(var(--width) - var(--margin-left) - var(--margin-right));
+	height: var(--margin-bottom);
+	grid-column: center;
+	grid-row: footer;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: 100%;
 }
 
 .pagedjs_margin-bottom-left-corner-holder {
-  width: var(--margin-left);
-  height: var(--margin-bottom);
-  display: flex;
-  grid-column: left;
-  grid-row: footer;
+	width: var(--margin-left);
+	height: var(--margin-bottom);
+	display: flex;
+	grid-column: left;
+	grid-row: footer;
 }
 
 .pagedjs_margin-bottom-right-corner-holder {
-  width: var(--margin-right);
-  height: var(--margin-bottom);
-  display: flex;
-  grid-column: right;
-  grid-row: footer;
+	width: var(--margin-right);
+	height: var(--margin-bottom);
+	display: flex;
+	grid-column: right;
+	grid-row: footer;
 }
 
 .pagedjs_margin-bottom-left-corner {
-  width: var(--margin-left);
+	width: var(--margin-left);
 }
 
 .pagedjs_margin-bottom-right-corner {
-  width: var(--margin-right);
+	width: var(--margin-right);
 }
 
 
 
 .pagedjs_margin-left {
-  height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
-  width: var(--margin-left);
-  grid-column: left;
-  grid-row: page;
-  display: grid;
-  grid-template-rows: repeat(3, 33.33333%);
-  grid-template-columns: 100%;
+	height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
+	width: var(--margin-left);
+	grid-column: left;
+	grid-row: page;
+	display: grid;
+	grid-template-rows: repeat(3, 33.33333%);
+	grid-template-columns: 100%;
 }
 
 .pagedjs_pages .pagedjs_page .pagedjs_margin:not(.hasContent) {
-  visibility: hidden;
+	visibility: hidden;
 }
 
 .pagedjs_page > .pagedjs_area {
-  grid-column: center;
-  grid-row: page;
-  width: 100%;
-  height: 100%;
+	grid-column: center;
+	grid-row: page;
+	width: 100%;
+	height: 100%;
 }
 
 .pagedjs_page > .pagedjs_area > .pagedjs_page_content {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  column-fill: auto;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	column-fill: auto;
 }
 
 .pagedjs_page {
-  counter-increment: page;
+	counter-increment: page;
 }
 
 .pagedjs_pages {
-  counter-reset: pages var(--page-count);
+	counter-reset: pages var(--page-count);
 }
 
 
@@ -23211,21 +23644,21 @@
 .pagedjs_page .pagedjs_margin-bottom-center,
 .pagedjs_margin-right-middle,
 .pagedjs_margin-left-middle  {
-  display: flex;
-  align-items: center;
+	display: flex;
+	align-items: center;
 }
 
 .pagedjs_margin-right-top,
 .pagedjs_margin-left-top  {
-  display: flex;
-  align-items: flex-top;
+	display: flex;
+	align-items: flex-top;
 }
 
 
 .pagedjs_margin-right-bottom,
 .pagedjs_margin-left-bottom  {
-  display: flex;
-  align-items: flex-end;
+	display: flex;
+	align-items: flex-end;
 }
 
 
@@ -23233,37 +23666,37 @@
 /*
 .pagedjs_page .pagedjs_margin-top-center,
 .pagedjs_page .pagedjs_margin-bottom-center {
-  height: 100%;
-  display: none;
-  align-items: center;
-  flex: 1 0 33%;
-  margin: 0 auto;
+	height: 100%;
+	display: none;
+	align-items: center;
+	flex: 1 0 33%;
+	margin: 0 auto;
 }
 
 .pagedjs_page .pagedjs_margin-top-left-corner,
 .pagedjs_page .pagedjs_margin-top-right-corner,
 .pagedjs_page .pagedjs_margin-bottom-right-corner,
 .pagedjs_page .pagedjs_margin-bottom-left-corner {
-  display: none;
-  align-items: center;
+	display: none;
+	align-items: center;
 }
 
 .pagedjs_page .pagedjs_margin-left-top,
 .pagedjs_page .pagedjs_margin-right-top {
-  display: none;
-  align-items: flex-start;
+	display: none;
+	align-items: flex-start;
 }
 
 .pagedjs_page .pagedjs_margin-right-middle,
 .pagedjs_page .pagedjs_margin-left-middle {
-  display: none;
-  align-items: center;
+	display: none;
+	align-items: center;
 }
 
 .pagedjs_page .pagedjs_margin-left-bottom,
 .pagedjs_page .pagedjs_margin-right-bottom {
-  display: none;
-  align-items: flex-end;
+	display: none;
+	align-items: flex-end;
 }
 */
 
@@ -23287,53 +23720,53 @@
 .pagedjs_page .pagedjs_margin-right-bottom { text-align: center; }
 
 .pagedjs_pages .pagedjs_margin .pagedjs_margin-content {
-  width: 100%;
+	width: 100%;
 }
 
 .pagedjs_pages .pagedjs_margin-left .pagedjs_margin-content::after,
 .pagedjs_pages .pagedjs_margin-top .pagedjs_margin-content::after,
 .pagedjs_pages .pagedjs_margin-right .pagedjs_margin-content::after,
 .pagedjs_pages .pagedjs_margin-bottom .pagedjs_margin-content::after {
-  display: block;
+	display: block;
 }
 
 .pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-to] {
-  margin-bottom: unset;
-  padding-bottom: unset;
+	margin-bottom: unset;
+	padding-bottom: unset;
 }
 
 .pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from] {
-  text-indent: unset;
-  margin-top: unset;
-  padding-top: unset;
-  initial-letter: unset;
+	text-indent: unset;
+	margin-top: unset;
+	padding-top: unset;
+	initial-letter: unset;
 }
 
 .pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from] > *::first-letter,
 .pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from]::first-letter {
-  color: unset;
-  font-size: unset;
-  font-weight: unset;
-  font-family: unset;
-  color: unset;
-  line-height: unset;
-  float: unset;
-  padding: unset;
-  margin: unset;
+	color: unset;
+	font-size: unset;
+	font-weight: unset;
+	font-family: unset;
+	color: unset;
+	line-height: unset;
+	float: unset;
+	padding: unset;
+	margin: unset;
 }
 
 .pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-to]:after,
 .pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-to]::after {
-  content: unset;
+	content: unset;
 }
 
 .pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from]:before,
 .pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from]::before {
-  content: unset;
+	content: unset;
 }
 
 .pagedjs_pages > .pagedjs_page > .pagedjs_area > div li[data-split-from]:first-of-type {
-  list-style: none;
+	list-style: none;
 }
 
 /*
@@ -23345,7 +23778,7 @@
 [data-break-before="recto"]:not([data-split-from]),
 [data-break-before="verso"]:not([data-split-from])
 {
-  break-before: column;
+	break-before: column;
 }
 
 [data-page]:not([data-split-to]),
@@ -23356,51 +23789,51 @@
 [data-break-after="recto"]:not([data-split-to]),
 [data-break-after="verso"]:not([data-split-to])
 {
-  break-after: column;
+	break-after: column;
 }
 */
 
 .pagedjs_clear-after::after {
-  content: none !important;
+	content: none !important;
 }
 
 img {
-  height: auto;
+	height: auto;
 }
 
 @media print {
-  html {
-    width: 100%;
-    height: 100%;
-  }
-  body {
-    margin: 0;
-    padding: 0;
-    width: 100% !important;
-    height: 100% !important;
-    min-width: 100%;
-    max-width: 100%;
-    min-height: 100%;
-    max-height: 100%;
-  }
-  .pagedjs_pages {
-    width: var(--width);
-    display: block !important;
-    transform: none !important;
-    height: 100% !important;
-    min-height: 100%;
-    max-height: 100%;
-    overflow: visible;
-  }
-  .pagedjs_page {
-    margin: 0;
-    padding: 0;
-    max-height: 100%;
-    min-height: 100%;
-    height: 100% !important;
-    page-break-after: always;
-    break-after: page;
-  }
+	html {
+		width: 100%;
+		height: 100%;
+	}
+	body {
+		margin: 0;
+		padding: 0;
+		width: 100% !important;
+		height: 100% !important;
+		min-width: 100%;
+		max-width: 100%;
+		min-height: 100%;
+		max-height: 100%;
+	}
+	.pagedjs_pages {
+		width: var(--width);
+		display: block !important;
+		transform: none !important;
+		height: 100% !important;
+		min-height: 100%;
+		max-height: 100%;
+		overflow: visible;
+	}
+	.pagedjs_page {
+		margin: 0;
+		padding: 0;
+		max-height: 100%;
+		min-height: 100%;
+		height: 100% !important;
+		page-break-after: always;
+		break-after: page;
+	}
 }
 `;
 
@@ -23725,7 +24158,7 @@ img {
 				},
 				block: {},
 				marks: undefined
-			}
+			};
 		}
 
 		// Find and Remove @page rules
@@ -23820,7 +24253,7 @@ img {
 				let orientation = this.pages["*"].orientation;
 
 				if ((width && height) &&
-				    (this.width !== width || this.height !== height)) {
+						(this.width !== width || this.height !== height)) {
 					this.width = width;
 					this.height = height;
 					this.format = format;
@@ -23884,7 +24317,7 @@ img {
 			let parsed = {};
 
 			lib.walk(ast.block, {
-				visit: 'Atrule',
+				visit: "Atrule",
 				enter: (node, item, list) => {
 					let name = node.name;
 					if (name === "top") {
@@ -23911,7 +24344,7 @@ img {
 			let parsed = {};
 
 			lib.walk(ast.block, {
-				visit: 'Declaration',
+				visit: "Declaration",
 				enter: (declaration, dItem, dList) => {
 					let prop = lib.property(declaration.property).name;
 					let value = declaration.value;
@@ -23949,7 +24382,7 @@ img {
 
 			// Get size: Xmm Ymm
 			lib.walk(declaration, {
-				visit: 'Dimension',
+				visit: "Dimension",
 				enter: (node, item, list) => {
 					let {value, unit} = node;
 					if (typeof width === "undefined") {
@@ -23960,11 +24393,11 @@ img {
 				}
 			});
 
-			// Get size: 'A4'
+			// Get size: "A4"
 			lib.walk(declaration, {
-				visit: 'String',
+				visit: "String",
 				enter: (node, item, list) => {
-					let name = node.value.replace(/["|']/g, '');
+					let name = node.value.replace(/["|']/g, "");
 					let s = pageSizes[name];
 					if (s) {
 						width = s.width;
@@ -23996,7 +24429,7 @@ img {
 				height,
 				orientation,
 				format
-			}
+			};
 		}
 
 		getMargins(declaration) {
@@ -24009,7 +24442,7 @@ img {
 			};
 
 			lib.walk(declaration, {
-				visit: 'Dimension',
+				visit: "Dimension",
 				enter: (node, item, list) => {
 					margins.push(node);
 				}
@@ -24093,9 +24526,9 @@ img {
 			let selectors = this.selectorsForPage(page);
 			let children = page.block.children.copy();
 			let block = {
-					type: 'Block',
-					loc: 0,
-					children: children
+				type: "Block",
+				loc: 0,
+				children: children
 			};
 			let rule = this.createRule(selectors, block);
 
@@ -24117,9 +24550,9 @@ img {
 			// variables for margins
 			for (let m in margin) {
 				if (typeof margin[m].value !== "undefined") {
-					let value = margin[m].value + (margin[m].unit || '');
+					let value = margin[m].value + (margin[m].unit || "");
 					let mVar = list.createItem({
-						type: 'Declaration',
+						type: "Declaration",
 						property: "--margin-" + m,
 						value: {
 							type: "Raw",
@@ -24143,11 +24576,11 @@ img {
 			}
 
 			// width variable
-			let wVar = this.createVariable("--width", outputWidth.value + (outputWidth.unit || ''));
+			let wVar = this.createVariable("--width", outputWidth.value + (outputWidth.unit || ""));
 			list.appendData(wVar);
 
 			// height variable
-			let hVar = this.createVariable("--height", outputHeight.value + (outputHeight.unit || ''));
+			let hVar = this.createVariable("--height", outputHeight.value + (outputHeight.unit || ""));
 			list.appendData(hVar);
 
 			// width dimension
@@ -24204,9 +24637,9 @@ img {
 							 loc === "bottom-left" ||
 							 loc === "bottom-center" ||
 							 loc === "bottom-right")) {
-								let c = lib.clone(node);
-								c.property = "max-width";
-								list.appendData(c);
+							let c = lib.clone(node);
+							c.property = "max-width";
+							list.appendData(c);
 						}
 
 						if (node.property === "height" &&
@@ -24216,9 +24649,9 @@ img {
 							 loc === "right-top" ||
 							 loc === "right-middle" ||
 							 loc === "right-bottom")) {
-								let c = lib.clone(node);
-								c.property = "max-height";
-								list.appendData(c);
+							let c = lib.clone(node);
+							c.property = "max-height";
+							list.appendData(c);
 						}
 					}
 				});
@@ -24229,7 +24662,7 @@ img {
 				list.appendData(marginRule);
 
 				let sel = lib.generate({
-					type: 'Selector',
+					type: "Selector",
 					children: marginSelectors
 				});
 
@@ -24269,22 +24702,22 @@ img {
 				let displayDeclaration;
 
 				displaySelectors.insertData({
-					type: 'Combinator',
+					type: "Combinator",
 					name: ">"
 				});
 
 				displaySelectors.insertData({
-					type: 'ClassSelector',
+					type: "ClassSelector",
 					name: "pagedjs_margin-content"
 				});
 
 				displaySelectors.insertData({
-					type: 'Combinator',
+					type: "Combinator",
 					name: ">"
 				});
 
 				displaySelectors.insertData({
-					type: 'TypeSelector',
+					type: "TypeSelector",
 					name: "*"
 				});
 
@@ -24301,17 +24734,17 @@ img {
 				let contentSelectors = this.selectorsForPageMargin(page, loc);
 
 				contentSelectors.insertData({
-					type: 'Combinator',
+					type: "Combinator",
 					name: ">"
 				});
 
 				contentSelectors.insertData({
-					type: 'ClassSelector',
+					type: "ClassSelector",
 					name: "pagedjs_margin-content"
 				});
 
 				contentSelectors.insertData({
-					type: 'PseudoElementSelector',
+					type: "PseudoElementSelector",
 					name: "after",
 					children: null
 				});
@@ -24334,11 +24767,11 @@ img {
 
 			let widthString, heightString;
 			if (!orientation || orientation === "portrait") {
-				widthString = width.value + (width.unit || '');
-				heightString = height.value + (height.unit || '');
+				widthString = width.value + (width.unit || "");
+				heightString = height.value + (height.unit || "");
 			} else {
-				widthString = height.value + (height.unit || '');
-				heightString = width.value + (width.unit || '');
+				widthString = height.value + (height.unit || "");
+				heightString = width.value + (width.unit || "");
 			}
 
 			let wVar = this.createVariable("--width", widthString);
@@ -24362,42 +24795,42 @@ img {
 
 			if (format) {
 				dimensions.appendData({
-					type: 'Identifier',
+					type: "Identifier",
 					name: format
 				});
 
 				if (orientation) {
 					dimensions.appendData({
-						type: 'WhiteSpace',
+						type: "WhiteSpace",
 						value: " "
 					});
 
 					dimensions.appendData({
-						type: 'Identifier',
+						type: "Identifier",
 						name: orientation
 					});
 				}
 			} else {
 				dimensions.appendData({
-					type: 'Dimension',
+					type: "Dimension",
 					unit: width.unit,
 					value: width.value
 				});
 
 				dimensions.appendData({
-					type: 'WhiteSpace',
+					type: "WhiteSpace",
 					value: " "
 				});
 
 				dimensions.appendData({
-					type: 'Dimension',
+					type: "Dimension",
 					unit: height.unit,
 					value: height.value
 				});
 			}
 
 			children.appendData({
-				type: 'Declaration',
+				type: "Declaration",
 				property: "size",
 				loc: null,
 				value: {
@@ -24407,28 +24840,28 @@ img {
 			});
 
 			children.appendData({
-				type: 'Declaration',
+				type: "Declaration",
 				property: "margin",
 				loc: null,
 				value: {
 					type: "Value",
 					children: [{
-						type: 'Dimension',
-						unit: 'px',
+						type: "Dimension",
+						unit: "px",
 						value: 0
 					}]
 				}
 			});
 
 			children.appendData({
-				type: 'Declaration',
+				type: "Declaration",
 				property: "padding",
 				loc: null,
 				value: {
 					type: "Value",
 					children: [{
-						type: 'Dimension',
-						unit: 'px',
+						type: "Dimension",
+						unit: "px",
 						value: 0
 					}]
 				}
@@ -24436,13 +24869,13 @@ img {
 
 
 			let rule = ast.children.createItem({
-				type: 'Atrule',
+				type: "Atrule",
 				prelude: null,
 				name: "page",
 				block: {
-						type: 'Block',
-						loc: null,
-						children: children
+					type: "Block",
+					loc: null,
+					children: children
 				}
 			});
 
@@ -24466,7 +24899,7 @@ img {
 			}
 
 			return {
-				type: 'Nth',
+				type: "Nth",
 				loc: null,
 				selector: null,
 				nth: {
@@ -24475,7 +24908,7 @@ img {
 					a: a,
 					b: b
 				}
-			}
+			};
 		}
 
 		addPageAttributes(page, start, pages) {
@@ -24551,19 +24984,18 @@ img {
 				let left = page.element.querySelector(".pagedjs_margin-" + loc + "-left");
 				let right = page.element.querySelector(".pagedjs_margin-" + loc + "-right");
 
-					let centerContent = center.classList.contains("hasContent");
-					let leftContent = left.classList.contains("hasContent");
-					let rightContent = right.classList.contains("hasContent");
-					let marginGroupWidth = marginGroup.offsetWidth;
-					let centerWidth, leftWidth, rightWidth;
+				let centerContent = center.classList.contains("hasContent");
+				let leftContent = left.classList.contains("hasContent");
+				let rightContent = right.classList.contains("hasContent");
+				let centerWidth, leftWidth, rightWidth;
 
-					if (leftContent) {
-						leftWidth = window.getComputedStyle(left)["max-width"];
-					}
+				if (leftContent) {
+					leftWidth = window.getComputedStyle(left)["max-width"];
+				}
 
-					if (rightContent) {
-						rightWidth = window.getComputedStyle(right)["max-width"];
-					}
+				if (rightContent) {
+					rightWidth = window.getComputedStyle(right)["max-width"];
+				}
 
 
 				if (centerContent) {
@@ -24785,20 +25217,19 @@ img {
 			let selectors = new lib.List();
 
 			selectors.insertData({
-				type: 'ClassSelector',
-				name: 'pagedjs_page'
+				type: "ClassSelector",
+				name: "pagedjs_page"
 			});
 
 			// Named page
 			if (page.name) {
 				selectors.insertData({
-					type: 'ClassSelector',
+					type: "ClassSelector",
 					name: "pagedjs_named_page"
 				});
 
-				name = page.name + "_page";
 				selectors.insertData({
-					type: 'ClassSelector',
+					type: "ClassSelector",
 					name: "pagedjs_" + page.name + "_page"
 				});
 			}
@@ -24806,14 +25237,14 @@ img {
 			// PsuedoSelector
 			if (page.psuedo && !(page.name && page.psuedo === "first")) {
 				selectors.insertData({
-					type: 'ClassSelector',
+					type: "ClassSelector",
 					name: "pagedjs_" + page.psuedo + "_page"
 				});
 			}
 
 			if (page.name && page.psuedo === "first") {
 				selectors.insertData({
-					type: 'ClassSelector',
+					type: "ClassSelector",
 					name: "pagedjs_" + page.name + "_" + page.psuedo + "_page"
 				});
 			}
@@ -24826,8 +25257,8 @@ img {
 				nthlist.insertData(nth);
 
 				selectors.insertData({
-					type: 'PseudoClassSelector',
-					name: 'nth-of-type',
+					type: "PseudoClassSelector",
+					name: "nth-of-type",
 					children: nthlist
 				});
 			}
@@ -24839,12 +25270,12 @@ img {
 			let selectors = this.selectorsForPage(page);
 
 			selectors.insertData({
-				type: 'Combinator',
+				type: "Combinator",
 				name: " "
 			});
 
 			selectors.insertData({
-				type: 'ClassSelector',
+				type: "ClassSelector",
 				name: "pagedjs_margin-" + margin
 			});
 
@@ -24870,7 +25301,7 @@ img {
 					loc: null,
 					children: children
 				}
-			}
+			};
 		}
 
 		createVariable(property, value) {
@@ -24882,7 +25313,7 @@ img {
 					type: "Raw",
 					value: value
 				}
-			}
+			};
 		}
 
 		createDimension(property, value, unit, important) {
@@ -24905,7 +25336,7 @@ img {
 					loc: null,
 					children: children
 				}
-			}
+			};
 		}
 
 		createBlock(declarations) {
@@ -24916,16 +25347,16 @@ img {
 			});
 
 			return {
-				type: 'Block',
+				type: "Block",
 				loc: null,
 				children: block
-			}
+			};
 		}
 
 		createRule(selectors, block) {
 			let selectorList = new lib.List();
 			selectorList.insertData({
-				type: 'Selector',
+				type: "Selector",
 				children: selectors
 			});
 
@@ -24934,9 +25365,9 @@ img {
 			}
 
 			return {
-				type: 'Rule',
+				type: "Rule",
 				prelude: {
-					type: 'SelectorList',
+					type: "SelectorList",
 					children: selectorList
 				},
 				block: block
@@ -25060,28 +25491,28 @@ img {
 			return pageBreaks;
 		}
 
-		addBreakAttributes(page) {
-			let before = page.wrapper.querySelector("[data-break-before]");
-			let after = page.wrapper.querySelector("[data-break-after]");
-			let previousBreakAfter = page.wrapper.querySelector("[data-previous-break-after]");
+		addBreakAttributes(pageElement, page) {
+			let before = pageElement.querySelector("[data-break-before]");
+			let after = pageElement.querySelector("[data-break-after]");
+			let previousBreakAfter = pageElement.querySelector("[data-previous-break-after]");
 
 			if (before) {
 				if (before.dataset.splitFrom) {
 					page.splitFrom = before.dataset.splitFrom;
-					page.element.setAttribute("data-split-from", before.dataset.splitFrom);
+					pageElement.setAttribute("data-split-from", before.dataset.splitFrom);
 				} else if (before.dataset.breakBefore && before.dataset.breakBefore !== "avoid") {
 					page.breakBefore = before.dataset.breakBefore;
-					page.element.setAttribute("data-break-before", before.dataset.breakBefore);
+					pageElement.setAttribute("data-break-before", before.dataset.breakBefore);
 				}
 			}
 
 			if (after && after.dataset) {
 				if (after.dataset.splitTo) {
 					page.splitTo = after.dataset.splitTo;
-					page.element.setAttribute("data-split-to", after.dataset.splitTo);
+					pageElement.setAttribute("data-split-to", after.dataset.splitTo);
 				} else if (after.dataset.breakAfter && after.dataset.breakAfter !== "avoid") {
 					page.breakAfter = after.dataset.breakAfter;
-					page.element.setAttribute("data-break-after", after.dataset.breakAfter);
+					pageElement.setAttribute("data-break-after", after.dataset.breakAfter);
 				}
 			}
 
@@ -25092,8 +25523,8 @@ img {
 			}
 		}
 
-		afterLayout(pageElement, page) {
-			this.addBreakAttributes(page);
+		afterPageLayout(pageElement, page) {
+			this.addBreakAttributes(pageElement, page);
 		}
 	}
 
@@ -25119,7 +25550,7 @@ img {
 		}
 
 		getMediaName(node) {
-			let media = '';
+			let media = "";
 
 			if (typeof node.prelude === "undefined" ||
 					node.prelude.type !== "AtrulePrelude" ) {
@@ -25127,7 +25558,7 @@ img {
 			}
 
 			lib.walk(node.prelude, {
-				visit: 'Identifier',
+				visit: "Identifier",
 				enter: (identNode, iItem, iList) => {
 					media = identNode.name;
 				}
@@ -25171,7 +25602,7 @@ img {
 			});
 		}
 
-	  handleAlignment(node) {
+		handleAlignment(node) {
 			let styles = window.getComputedStyle(node);
 			let align = styles["text-align"];
 			let alignLast = styles["text-align-last"];
@@ -25194,11 +25625,15 @@ img {
 			let property = declaration.property;
 
 			if (property === "counter-increment") {
-				this.handleIncrement(declaration, rule);
-				dList.remove(dItem);
+				let inc = this.handleIncrement(declaration, rule);
+				if (inc) {
+					dList.remove(dItem);
+				}
 			} else if (property === "counter-reset") {
-				this.handleReset(declaration, rule);
-				dList.remove(dItem);
+				let reset = this.handleReset(declaration, rule);
+				if (reset) {
+					dList.remove(dItem);
+				}
 			}
 		}
 
@@ -25229,6 +25664,11 @@ img {
 			let number = declaration.value.children.getSize() > 1
 								&& declaration.value.children.last().value;
 			let name = identifier && identifier.name;
+
+			if (name === "page" || name.indexOf("target-counter-") === 0) {
+				return;
+			}
+
 			let selector = lib.generate(rule.ruleNode.prelude);
 
 			let counter;
@@ -25238,7 +25678,7 @@ img {
 				counter = this.counters[name];
 			}
 
-			counter.increments[selector] = {
+			return counter.increments[selector] = {
 				selector: selector,
 				number: number || 1
 			};
@@ -25250,15 +25690,15 @@ img {
 								&& declaration.value.children.last().value;
 			let name = identifier && identifier.name;
 			let selector = lib.generate(rule.ruleNode.prelude);
-
 			let counter;
+
 			if (!(name in this.counters)) {
 				counter = this.addCounter(name);
 			} else {
 				counter = this.counters[name];
 			}
 
-			counter.resets[selector] = {
+			return counter.resets[selector] = {
 				selector: selector,
 				number: number || 0
 			};
@@ -25331,6 +25771,14 @@ img {
 			}
 		}
 
+		afterPageLayout(pageElement, page) {
+			let pgreset = pageElement.querySelectorAll("[data-counter-page-reset]");
+			pgreset.forEach((reset) => {
+				let value = reset.datasetCounterPageReset;
+				this.styleSheet.insertRule(`[data-page-number="${pageElement.dataset.pageNumber}"] { counter-reset: page ${value} }`, this.styleSheet.cssRules.length);
+			});
+		}
+
 	}
 
 	class Lists extends Handler {
@@ -25338,24 +25786,24 @@ img {
 			super(chunker, polisher, caller);
 		}
 		afterParsed(content) {
-	    const orderedLists = content.querySelectorAll('ol');
+			const orderedLists = content.querySelectorAll("ol");
 
-	    for (var list of orderedLists) {
-	      this.addDataNumbers(list);
-	    }
-	  }
+			for (var list of orderedLists) {
+				this.addDataNumbers(list);
+			}
+		}
 
 		afterPageLayout(pageElement, page, breakToken, chunker) {
-	    var orderedLists = pageElement.getElementsByTagName('ol');
-	    for (var list of orderedLists) {
-	      list.start = list.firstElementChild.dataset.itemNum;
-	    }
-	  }
+			var orderedLists = pageElement.getElementsByTagName("ol");
+			for (var list of orderedLists) {
+				list.start = list.firstElementChild.dataset.itemNum;
+			}
+		}
 
 		addDataNumbers(list) {
 			let items = list.children;
 			for (var i = 0; i < items.length; i++) {
-				items[i].setAttribute('data-item-num', i + 1);
+				items[i].setAttribute("data-item-num", i + 1);
 			}
 		}
 
@@ -25386,7 +25834,7 @@ img {
 				if (identifier === "running") {
 					let value;
 					lib.walk(declaration, {
-						visit: 'Function',
+						visit: "Function",
 						enter: (node, item, list) => {
 							value = node.children.first().name;
 						}
@@ -25403,7 +25851,7 @@ img {
 			if (declaration.property === "content") {
 
 				lib.walk(declaration, {
-					visit: 'Function',
+					visit: "Function",
 					enter: (funcNode, fItem, fList) => {
 
 						if (funcNode.name.indexOf("element") > -1) {
@@ -25458,13 +25906,14 @@ img {
 				let set = this.runningSelectors[name];
 				let selected = fragment.querySelector(set.selector);
 				if (selected) {
+					// let cssVar;
 					if (set.identifier === "running") {
 						// cssVar = selected.textContent.replace(/\\([\s\S])|(["|'])/g,"\\$1$2");
 						// this.styleSheet.insertRule(`:root { --string-${name}: "${cssVar}"; }`, this.styleSheet.cssRules.length);
 						// fragment.style.setProperty(`--string-${name}`, `"${cssVar}"`);
 						set.first = selected;
 					} else {
-						console.log(set.value + "needs css replacement");
+						console.warn(set.value + "needs css replacement");
 					}
 				}
 			}
@@ -25502,6 +25951,8 @@ img {
 		* 5) named page
 		* 6) named left & right
 		* 7) named first & nth
+		* @param {string} [s] selector string
+		* @return {int} weight
 		*/
 		pageWeight(s) {
 			let weight = 1;
@@ -25552,6 +26003,8 @@ img {
 		*
 		* Does not try to deduplicate base on specifity of the selector
 		* Previous matched selector will just be overwritten
+		* @param {obj} [obj] selectors object
+		* @return {Array} orderedSelectors
 		*/
 		orderSelectors(obj) {
 			let selectors = Object.keys(obj);
@@ -25581,7 +26034,7 @@ img {
 
 		beforeTreeParse(text, sheet) {
 			// element(x) is parsed as image element selector, so update element to element-ident
-			sheet.text = text.replace(/element[\s]*\(([^\|^#)]*)\)/g, "element-ident($1)");
+			sheet.text = text.replace(/element[\s]*\(([^|^#)]*)\)/g, "element-ident($1)");
 		}
 	}
 
@@ -25600,7 +26053,7 @@ img {
 
 				let value;
 				lib.walk(declaration, {
-					visit: 'Function',
+					visit: "Function",
 					enter: (node, item, list) => {
 						value = lib.generate(node);
 					}
@@ -25634,14 +26087,14 @@ img {
 				let selected = fragment.querySelector(set.selector);
 				if (selected) {
 					let cssVar;
-					if (set.value === "content" || set.value === "content(text)") {
+					if (set.value === "content" || set.value === "content()" || set.value === "content(text)") {
 						cssVar = selected.textContent.replace(/\\([\s\S])|(["|'])/g,"\\$1$2");
 						// this.styleSheet.insertRule(`:root { --string-${name}: "${cssVar}"; }`, this.styleSheet.cssRules.length);
 						// fragment.style.setProperty(`--string-${name}`, `"${cssVar}"`);
 						set.first = cssVar;
 						fragment.style.setProperty(`--string-${name}`, `"${set.first}"`);
 					} else {
-						console.log(set.value + "needs css replacement");
+						console.warn(set.value + "needs css replacement");
 					}
 				} else {
 					// Use the previous values
@@ -25666,7 +26119,6 @@ img {
 			if (funcNode.name === "target-counter") {
 				let selector = lib.generate(rule.ruleNode.prelude);
 				let first = funcNode.children.first();
-				let last = funcNode.children.last();
 				let func = first.name;
 
 				let value = lib.generate(funcNode);
@@ -25680,11 +26132,21 @@ img {
 				});
 
 				let counter;
-				if (last !== first) {
-					counter = last.name;
-				}
+				let style;
+				let styleIdentifier;
 
-				let variable = "--" + UUID();
+				funcNode.children.forEach((child) => {
+					if (child.type === "Identifier") {
+						if (!counter) {
+							counter = child.name;
+						} else if (!style) {
+							styleIdentifier = lib.clone(child);
+							style = child.name;
+						}
+					}
+				});
+
+				let variable = "target-counter-" + UUID();
 
 				selector.split(",").forEach((s) => {
 					this.counterTargets[s] = {
@@ -25692,29 +26154,35 @@ img {
 						args: args,
 						value: value,
 						counter: counter,
+						style: style,
 						selector: s,
 						fullSelector: selector,
 						variable: variable
 					};
 				});
 
-				// Replace with variable
-				funcNode.name = "var";
+				// Replace with counter
+				funcNode.name = "counter";
 				funcNode.children = new lib.List();
 				funcNode.children.appendData({
 					type: "Identifier",
 					loc: 0,
 					name: variable
 				});
+				if (styleIdentifier) {
+					funcNode.children.appendData({type: "Operator", loc: null, value: ","});
+					funcNode.children.appendData(styleIdentifier);
+				}
 			}
 		}
 
 		afterPageLayout(fragment, page, breakToken, chunker) {
-	 		Object.keys(this.counterTargets).forEach((name) => {
+			Object.keys(this.counterTargets).forEach((name) => {
 				let target = this.counterTargets[name];
 				let split = target.selector.split("::");
 				let query = split[0];
-				let queried = chunker.pagesArea.querySelectorAll(query + ":not([data-target-counter])");
+
+				let queried = chunker.pagesArea.querySelectorAll(query + ":not([data-" + target.variable + "])");
 
 				queried.forEach((selected, index) => {
 					// TODO: handle func other than attr
@@ -25726,25 +26194,36 @@ img {
 
 					if (element) {
 						let selector = UUID();
-						selected.setAttribute("data-target-counter", selector);
+						selected.setAttribute("data-" + target.variable, selector);
 						// TODO: handle other counter types (by query)
 						if (target.counter === "page") {
 							let pages = chunker.pagesArea.querySelectorAll(".pagedjs_page");
 							let pg = 0;
 							for (var i = 0; i < pages.length; i++) {
+								let styles = window.getComputedStyle(pages[i]);
+								let reset = styles["counter-reset"].replace("page", "").trim();
+
+								if (reset !== "none") {
+									pg = parseInt(reset);
+								}
 								pg += 1;
+
 								if (pages[i].contains( element )){
 									break;
 								}
 							}
 
-							let psuedo = "";
-							if (split.length > 1) {
-								psuedo += "::" + split[1];
-							}
+							// let psuedo = "";
+							// if (split.length > 1) {
+							// 	psuedo += "::" + split[1];
+							// }
 
-							// this.styleSheet.insertRule(`[data-target-counter="${selector}"]${psuedo} { content: "${pg}"; }`, this.styleSheet.cssRules.length);
-							this.styleSheet.insertRule(`[data-target-counter="${selector}"]${psuedo} { ${target.variable}: "${pg}" }`, this.styleSheet.cssRules.length);
+							this.styleSheet.insertRule(`[data-${target.variable}="${selector}"] { counter-reset: ${target.variable} ${pg}; }`, this.styleSheet.cssRules.length);
+						} else {
+							let value = element.getAttribute(`data-counter-${target.counter}-value`);
+							if (value) {
+								this.styleSheet.insertRule(`[data-${target.variable}="${selector}"] { counter-reset: ${target.variable} ${target.variable} ${parseInt(value)}; }`, this.styleSheet.cssRules.length);
+							}
 						}
 					}
 				});
@@ -25818,7 +26297,6 @@ img {
 					let element = fragment.querySelector(querySelectorEscape(val));
 					if (element) {
 						if (target.style === "content") {
-							let text = element.textContent;
 							let selector = UUID();
 							selected.setAttribute("data-target-text", selector);
 
@@ -25827,7 +26305,7 @@ img {
 								psuedo += "::" + split[1];
 							}
 
-							let textContent = element.textContent.trim().replace(/[\"\']/g, (match) => {
+							let textContent = element.textContent.trim().replace(/["']/g, (match) => {
 								return "\\" + match;
 							}).replace(/[\n]/g, (match) => {
 								return "\\00000A";
@@ -26350,6 +26828,7 @@ img {
 
 			handlers.on("size", (size) => {
 				this.size = size;
+				this.emit("size", size);
 			});
 
 			return handlers;
@@ -26384,7 +26863,7 @@ img {
 				// Otherwise create one
 				template = document.createElement("template");
 				template.innerHTML = body.innerHTML;
-				body.innerHTML = '';
+				body.innerHTML = "";
 				body.appendChild(template);
 			}
 
@@ -26423,9 +26902,9 @@ img {
 
 			this.polisher.setup();
 
-			let handlers = this.initializeHandlers();
+			this.handlers = this.initializeHandlers();
 
-			let styleText = await this.polisher.add(...stylesheets);
+			await this.polisher.add(...stylesheets);
 
 			let startTime = performance.now();
 
@@ -26434,6 +26913,9 @@ img {
 
 			let endTime = performance.now();
 			let msg = "Rendering " + flow.total + " pages took " + (endTime - startTime) + " milliseconds.";
+
+			flow.performance = (endTime - startTime);
+			flow.size = this.size;
 
 			this.emit("rendered", msg, this.size.width && this.size.width.value + this.size.width.unit, this.size.height && this.size.height.value + this.size.height.unit, this.size.orientation, this.size.format);
 			if (typeof window.onPagesRendered !== "undefined") {
