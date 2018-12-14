@@ -49,6 +49,8 @@ output:
 
 This format is based on paged.js. Some other formats in this package are extensions of `html_paged`, such as `html_letter` and `html_resume`. Please note that you need a web server to view the output pages of these formats, because paged.js requires a web server. The web server could be either a local server or a remote one. When you compile an R Markdown document to HTML in RStudio, RStudio will display the HTML page through a local web server, so paged.js will work in RStudio Viewer. However, when you view such pages in a real web browser, you will need a separate web server. The easiest way to preview these HTML pages in a web browser may be through the RStudio addin "Infinite Moon Reader", which requires the **xaringan** package [@R-xaringan]. Or equivalently, you can call the function `xaringan::inf_mr()`. This will launch a local web server via the **servr** package [@R-servr].
 
+Please note that the layout of the pages is very sensitive to the zoom level in your browser. Elements on a page are often not zoomed strictly linearly, e.g., as you zoom out, certainly elements may start to collapse into each other. The 100% zoom level usually gives the best result (press `Ctrl + 0` or `Command + 0`). You are strongly recommended to use this level when printing the page to PDF.
+
 ## The CSS overriding mechanism
 
 We have provided a few default CSS stylesheets in this output format:
