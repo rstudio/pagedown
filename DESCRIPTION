@@ -15,7 +15,7 @@ Description: Use the paged media properties in CSS and the JavaScript
   library 'paged.js' to split the content of an HTML document into discrete
   pages. Each page can have its page size, page numbers, margin boxes, and
   running headers, etc. Applications of this package include books, letters,
-  reports, papers, and posters.
+  reports, papers, business cards, resumes, and posters.
 Imports: rmarkdown (>= 1.11), bookdown (>= 0.8), htmltools, xfun
 Suggests: testit, xaringan
 License: MIT + file LICENSE
