@@ -200,6 +200,11 @@ $$(document).ready(function () {
 </script>
 $endif$
 
-
+<script>
+// when the page is about to reload via servr, remember the scroll position
+document.addEventListener('servr:reload', function(e) {
+  sessionStorage.setItem('pagedown-scroll', window.scrollY);
+});
+</script>
 </body>
 </html>

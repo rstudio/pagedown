@@ -105,5 +105,8 @@ Paged.registerHandlers(class extends Paged.Handler {
         paragraphSecondPage.parentElement.style.setProperty('list-style', 'inherit', 'important');
       }
     }
+
+    // scroll to the last position before the page is reloaded
+    window.scrollTo(0, sessionStorage.getItem('pagedown-scroll'));
   }
 });
