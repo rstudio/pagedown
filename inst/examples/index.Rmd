@@ -9,6 +9,7 @@ output:
     toc: true
     self_contained: false
 toc-title: Contents
+paged-footnotes: true
 bibliography: index.bib
 ---
 
@@ -18,27 +19,205 @@ When talking about PDF and printing, we often think of tools like LaTeX and Micr
 
 Can we print a book with HTML and CSS? W3C published [the first working draft](https://www.w3.org/1999/06/WD-css3-page-19990623) on "Paged Media Properties for CSS(3)", which was last updated in 2013. Although the working draft has been there for nearly two decades, it is still not common to see authors write or print books with HTML and CSS. The main reason is that the W3C specs are still in the draft mode, so most web browsers have not really implemented them.
 
-HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it comes to typesetting content under the constraint of "pages". However, they can be extremely powerful and flexible in other aspects, especially when combined with the power of JavaScript.
+HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it comes to typesetting content under the constraint of "pages". You may be disappointed by a lot of typesetting details on a paged HTML page. However, HTML and CSS can be extremely powerful and flexible in other aspects, especially when combined with the power of JavaScript. By the way, HTML works almost anywhere because it only requires a web browser.
+
+Although most web browsers have not implemented the W3C specs for Paged Media, a JavaScript polyfill library named ["paged.js"](https://www.pagedmedia.org/paged-js/) is currently being developed to fill the gap. This library is still experimental, but looks promising enough to us, so we created an R package **pagedown** [@R-pagedown] based on this JavaScript library to paginate the HTML output of R Markdown documents. You can install the package from Github:
 
 ```{r, eval=FALSE}
 remotes::install_github('rstudio/pagedown')
 ```
 
-## CSS for print
+To learn more about paged.js and CSS for Paged Media, you may check out [the cheatsheet of paged.js](https://www.pagedmedia.org/about-paged-media/pagedjs-cheatsheet/).
 
-## CSS frameworks
+The **pagedown** package contains output formats for paged HTML documents, letters, resumes, posters, business cards, and so on. Usually there is an R Markdown template for each output format, which you can access from RStudio's menu `File -> New File -> R Markdown -> From Template`.
 
-# Paged.js {#pagedjs}
 
-To create a paged HTML document, you can use the output format `pagedown::html_paged`.
+# Paged HTML documents {#pagedjs}
+
+To create a paged HTML document, you can use the output format `pagedown::html_paged`, e.g.,
+
+```yaml
+output:
+  pagedown::html_paged: 
+    toc: true
+    number_sections: false
+```
+
+## Preview paged HTML documents
+
+This format is based on paged.js. Some other formats in this package are extensions of `html_paged`, such as `html_letter` and `html_resume`. Please note that you need a web server to view the output pages of these formats, because paged.js requires a web server. The web server could be either a local server or a remote one. When you compile an R Markdown document to HTML in RStudio, RStudio will display the HTML page through a local web server, so paged.js will work in RStudio Viewer. However, when you view such pages in a real web browser, you will need a separate web server. The easiest way to preview these HTML pages in a web browser may be through the RStudio addin "Infinite Moon Reader", which requires the **xaringan** package [@R-xaringan]. Or equivalently, you can call the function `xaringan::inf_mr()`. This will launch a local web server via the **servr** package [@R-servr].
+
+## The CSS overriding mechanism
+
+We have provided a few default CSS stylesheets in this output format:
+
+```yaml
+output:
+  pagedown::html_paged: 
+    css: ["default-fonts", "default-page", "default"]
+```
+
+To find the actual CSS files behind these names, use `pagedown:::list_css()`. For example, `default-fonts` means the file `resources/css/default-fonts.css` in the installation directory of **pagedown**. The stylesheet `default-fonts` defines the typefaces of the document, `default-page` defines some page properties (such as the page size, running headers and footers, and rules for page breaks), and `default` defines the style of various elements (such as the table of contents).
+
+If you do not like any of these default stylesheets, you can use a subset of them, or override certain CSS rules. For example, if you do not like the default typeface, you may create a CSS file `my-fonts.css` (assuming it is under the same directory of your Rmd file):
+
+```css
+body {
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+}
+```
+
+Then include this CSS file via the `css` option:
+
+```yaml
+output:
+  pagedown::html_paged: 
+    css: ["my-fonts.css", "default-page", "default"]
+```
+
+## Print to PDF
+
+You can print HTML pages to PDF using Google Chrome or Chromium using the menu "Print" or by pressing `Ctrl + P` (or `Command + P` on macOS). Remember to allow background graphics to be printed. You may also consider using the function `pagedown::chrome_print()`, but currently it is experimental and you may get an incomplete PDF, so we recommend that you open the page in a real browser and print to PDF there instead.
+
 
 # Applications 
 
-You can print the following (HTML) applications to PDF using Google Chrome (remember to set margins to none, and allow background graphics to be printed). There are a few templates in the **pagedown** package, which you can access from RStudio's menu `File -> New File -> R Markdown -> From Template`.
 
 ## Resume
 
-Currently **pagedown** has one resume format: `pagedown::html_resume`. See https://pagedown.rbind.io/html-resume/ for an example. Note that when you print the resume to PDF in Google Chrome, you may want to remove the headers and footers (click "More Settings" and uncheck "Headers and footers").
+Currently **pagedown** has one resume format: `pagedown::html_resume`. See https://pagedown.rbind.io/html-resume/ for an example.
+
+```{r, resume-relaxed, echo=FALSE, fig.cap='The HTML resume in pagedown.'}
+knitr::include_graphics('https://user-images.githubusercontent.com/163582/49983676-c940a880-ff29-11e8-9487-3b4c94614fcc.png')
+```
+
+
+The R Markdown source document should contain two parts titled "Aside" (for the sidebar) and "Main" (for the main body), respectively. Each part can contain any numbers of sections (e.g., education background and working experience). Each section can contain any numbers of subsections, and you can write more content in a subsection.^[In case you are not very familiar with the Markdown syntax for section headings, a series of `=` under a heading is equivalent to `#` before a heading, and a series of `-` is equivalent to `##`. See Pandoc's manual for details: https://pandoc.org/MANUAL.html#headers.] Below is a quick example:
+
+```markdown
+---
+title: "Someone's resume"
+author: Your Name
+output: pagedown::html_resume
+---
+
+
+Aside
+====================================
+
+Picture, etc.
+
+Contact info
+------------------------------------
+
+Email, phone number, ...
+
+Skills
+------------------------------------
+
+- One
+- Two
+- Three
+
+Disclaimer
+------------------------------------
+
+A footer in the sidebar.
+
+
+Main
+====================================
+
+Your Name {#title}
+------------------------------------
+
+Arbitrary content.
+
+Education {data-icon=graduation-cap}
+------------------------------------
+
+### University One
+
+Title
+
+Location
+
+Year
+
+Arbitrary content
+
+### University Two
+
+...
+```
+
+The "Aside" part will be displayed in the right sidebar. This part can contain arbitrary content (not necessarily structured). For example, you can include a picture in the beginning. The "Disclaimer" section will be placed at the bottom of the first page. All icons for this resume template are from [Font Awesome](https://fontawesome.com). For example, `<i class="fa fa-envelope"></i>` will generate an envelope icon. You can look up all icon names on the Font Awesome website if you want to use other icons.
+
+For the "Main" part, all sections must follow a specific structure except the first section. The first section usually shows your name and information that you want to highlight. For the rest of sections, they should contain a title and a number of subsections. You can specify an icon for a section title via the attribute `data-icon`, e.g., `{data-icon=graduation-cap}` means an icon of a graduation cap (which can be used as a symbol for education). For each subsection, it should contain a title, followed by at least three paragraphs:
+
+- The first paragraph is a brief description of the subsection.
+
+- The second paragraph is the location. It can be `N/A` if you do not want to include a location.
+
+- The third paragraph is the time period. If this subsection has both a starting and ending time, separate them by a dash, e.g., `2014 - 2015` or `2014/07/27 - 2015/07/23`.
+
+You can write artibrary content after the third paragraph (e.g., more paragraphs, bullet lists, and so on). If you want to write content in two columns, you may use a "concise" block, e.g.,
+
+```markdown
+::: concise
+- Taught R language to beginners. 
+- Wrote Shiny app demos.
+- Converted statistical tutorials from SPSS to R language.
+:::
+```
+
+If you want to write a side note, use an "aside" block, e.g.,
+
+```markdown
+Section
+---------------
+
+### Subsection
+
+Title
+
+Location
+
+Year
+
+More info
+
+::: aside
+Some notes in the sidebar.
+:::
+```
+
+```{r, resume-sidenote, echo=FALSE, fig.cap='An example of side notes.'}
+knitr::include_graphics('https://user-images.githubusercontent.com/163582/50015125-654ecc00-ff8b-11e8-95be-fc6af8e4a66e.png')
+```
+
+There is a caveat about page breaks. By default, we allow page breaks within a subsection. Sometimes this may lead to odd output like the example in Figure \@ref(fig:break-yes). The first bullet should not be split into two columns, and the rest of bullets should have a larger left margin.
+
+```{r, break-yes, echo=FALSE, fig.cap='Allow page breaks in a subsection.'}
+knitr::include_graphics('https://user-images.githubusercontent.com/163582/49983264-520a1500-ff27-11e8-8537-66a642f617c3.png')
+```
+
+If you want to avoid layout problems like this, you may disallow page breaks via CSS:
+
+
+```css
+.blocks {
+  break-inside: avoid;
+}
+```
+
+However, this may lead to a new issue demonstrated in Figure \@ref(fig:break-no): there may be a large bottom margin on the previous page. At this point, you may start to miss your old friends, Word and LaTeX.
+
+```{r, break-no, echo=FALSE, fig.cap='Do not allow page breaks in a subsection.'}
+knitr::include_graphics('https://user-images.githubusercontent.com/163582/49983263-520a1500-ff27-11e8-8e71-cbc69ccfbc6e.png')
+```
+
+
 
 ## Poster
 
@@ -173,7 +352,7 @@ knitr::kable(head(iris[, -5]), caption = 'Test a table.')
 Cite @R-base and @R-pagedown.
 
 ```{r, include=FALSE}
-knitr::write_bib(c(.packages(), 'pagedown'), 'index.bib')
+knitr::write_bib(c(.packages(), 'pagedown', 'xaringan', 'servr'), 'index.bib')
 ```
 
 # Bibliography {-}
