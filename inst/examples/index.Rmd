@@ -23,7 +23,7 @@ Can we print a book with HTML and CSS? W3C published [the first working draft](h
 
 HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it comes to typesetting content under the constraint of "pages". You may be disappointed by a lot of typesetting details on a paged HTML page. However, HTML and CSS can be extremely powerful and flexible in other aspects, especially when combined with the power of JavaScript. By the way, HTML works almost anywhere because it only requires a web browser.
 
-Although most web browsers have not implemented the W3C specs for Paged Media, a JavaScript polyfill library named ["paged.js"](https://www.pagedmedia.org/paged-js/) is currently being developed to fill the gap. This library is still experimental, but looks promising enough to us, so we created an R package **pagedown** [@R-pagedown] based on this JavaScript library to paginate the HTML output of R Markdown documents. You can install the package from Github:
+Although most web browsers have not implemented the W3C specs for Paged Media, a JavaScript polyfill library named ["paged.js"](https://www.pagedmedia.org/paged-js/) is currently being developed to fill the gap. This library is still experimental and has many rough edges, but looks promising enough to us, so we created an R package **pagedown** [@R-pagedown] based on this JavaScript library to paginate the HTML output of R Markdown documents. You can install the package from Github:
 
 ```{r, eval=FALSE}
 remotes::install_github('rstudio/pagedown')
