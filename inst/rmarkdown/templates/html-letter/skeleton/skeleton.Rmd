@@ -1,7 +1,6 @@
 ---
 title: "A letter of recommendation for Emi Tanaka"
 author: "Yihui Xie"
-date: "2018-07-30"
 output:
   pagedown::html_letter:
     self_contained: false
@@ -11,19 +10,30 @@ paged-footnotes: true
 
 ![The RStudio logo](https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png){.logo}
 
-::: recipient
-Hiring Manager  
-School of Ninja, Hacker's University  
-404 Not Found Road, Undefined 0x1234, NA
+::: from
+Yihui Xie  
+In the Middle of Nowhere  
+Omaha, NE 68022  
+Email: xie@yihui.name  
+Homepage: https://yihui.name
 :::
 
 
+Hiring Manager  
+School of Ninja, Hacker's University  
+404 Not Found Road, Undefined 0x1234, NA
+
+::: date
+December 32, 2018
+:::
 
 Dear Hiring Manager,
 
-It is my honor to write a letter of recommendation for Dr. Emi Tanaka, a great hacker in my eyes. Emi said [it was heck of a praise](https://twitter.com/statsgen/status/1023118510745038848) when I said Earo was a very impressive hacker. Well, the fact is that I have been actually impressed many more times by Emi, which is probably because Earo is a relatively low-key hacker, and I have seen a lot of cool things Emi posted on Twitter this year. If I were to write a full letter about them, it would probably take me two whole days. Below is a one-hour attempt to show the many ways in which she can be so cool.
+It is my honor and pleasure to write a letter of recommendation^[Is this the first letter that contains GIFs ever in the history of human?] for Dr. Emi Tanaka, a great hacker in my eyes.
 
-![The kunoichi theme for xaringan, made by Emi](https://github.com/emitanaka/ninja-theme/raw/master/docs/images/kunoichi-showcase.gif){height=8.5cm}
+Emi said [it was heck of a praise](https://twitter.com/statsgen/status/1023118510745038848) when I said Earo was a very impressive hacker. Well, the fact is that I have been actually impressed many more times by Emi, which is probably because Earo is a relatively low-key hacker, and I have seen a lot of cool things Emi posted on Twitter this year. If I were to write a full letter about them, it would probably take me two whole days. Below is a one-hour attempt to show the many ways in which she can be so cool.
+
+![The kunoichi theme for xaringan, made by Emi](https://github.com/emitanaka/ninja-theme/raw/master/docs/images/kunoichi-showcase.gif)
 
 - She added the [ninja themes to **xaringan**](https://github.com/yihui/xaringan/pull/165).
 

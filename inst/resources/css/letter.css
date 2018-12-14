@@ -7,10 +7,10 @@ body {
   display: none;
 }
 
-.recipient {
+.from, .date {
   text-align: right;
 }
-.recipient p {
+.from p {
   text-align: left;
   display: inline-block;
 }
@@ -20,6 +20,9 @@ body {
   height: 1cm;
 }
 
+.date {
+  margin-top: 4em;
+}
 
 @page {
   size: letter;
