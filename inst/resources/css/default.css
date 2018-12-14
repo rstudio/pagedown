@@ -56,6 +56,23 @@ a[href^="http"]:not([class="uri"])::after {
 img {
   max-width: 100%;
 }
+pre {
+  padding: 1em;
+}
+pre[class] {
+  background: #f9f9f9;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+  border-bottom: 1px solid #666;
+}
+table thead th {
+  border-bottom: 1px solid #ddd;
+}
+thead, tfoot, tr:nth-child(even) {
+  background: #eee;
+}
 .footnotes {
   font-size: 90%;
 }
