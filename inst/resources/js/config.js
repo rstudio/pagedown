@@ -44,7 +44,9 @@
         var mainHeader = div.getElementsByTagName('h' + level)[0];
         if (!mainHeader) return;
         var mainTitle = mainHeader.textContent;
-        var runningTitle = 'shortTitle' in div.dataset ? div.dataset.shortTitle : mainTitle;
+        var spanSectionNumber = mainHeader.getElementsByClassName('header-section-number')[0];
+        var mainNumber = !!spanSectionNumber ? spanSectionNumber.textContent : '';
+        var runningTitle = 'shortTitle' in div.dataset ? mainNumber + ' ' + div.dataset.shortTitle : mainTitle;
         var span = document.createElement('span');
         span.className = 'shorttitle' + level;
         span.innerText = runningTitle;
