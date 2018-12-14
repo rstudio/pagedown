@@ -12,7 +12,7 @@ This package is still [very young](https://github.com/rstudio/pagedown/graphs/co
 remotes::install_github('rstudio/pagedown')
 ```
 
-This package requires a recent version of Pandoc (>= 2.2.3). If you use RStudio, you are recommended to install the [Preview version](https://www.rstudio.com/products/rstudio/download/preview/) (>= 1.2.1070), which has bundled Pandoc 2.3.1, otherwise you need to install Pandoc separately.
+This package requires a recent version of Pandoc (>= 2.2.3). If you use RStudio, you are recommended to install the [Preview version](https://www.rstudio.com/products/rstudio/download/preview/) (>= 1.2.1070), which has bundled Pandoc 2.x, otherwise you need to install Pandoc separately.
 
 Below are some existing R Markdown output formats and examples.
 
