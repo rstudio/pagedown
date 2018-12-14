@@ -226,6 +226,8 @@ knitr::include_graphics('https://user-images.githubusercontent.com/163582/499832
 
 You can create a poster with the output format `pagedown::poster_relaxed` or `pagedown::poster_jacobs`. See https://pagedown.rbind.io/poster-relaxed/ and https://pagedown.rbind.io/poster-jacobs/ for examples.
 
+We do not have time to document the poster formats yet, but here is a caveat: the layout of poster sections is hardcoded in CSS styleseets, which means you cannot add/delete sections unless you know CSS (in particular, CSS Grid Layout). If you are interested in learning CSS Grid Layout, you may take a look at [the CSS of `poster_jacobs`](https://github.com/rstudio/pagedown/blob/master/inst/resources/css/poster-jacobs.css).
+
 ### The ReLaXed style
 
 ### The Jacobs University style
