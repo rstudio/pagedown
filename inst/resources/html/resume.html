@@ -66,8 +66,7 @@ $body$
     var ps = el.querySelectorAll('p');
     // move the date paragraph to the date div
     if (ps.length >= 3) {
-      s = ps[2].innerText;
-      s = s.split(s.match(/-/g).length > 1 ? ' - ' : '-');
+      s = ps[2].innerText.split(' - ');
       el.removeChild(ps[2]);
       for (j = 0; j < s.length && j < 2; j++) {
         el.children[0].appendChild(create_el('span', false, s[j]))

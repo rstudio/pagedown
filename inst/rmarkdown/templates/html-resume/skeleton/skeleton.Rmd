@@ -90,7 +90,7 @@ Beijing Institute of Genomics, Chinese Academy of Sciences
 
 Beijing, China
 
-2011-2014
+2011 - 2014
 
 - Performed computational biology research towards understanding regulation of alternative splicing in human and mouse transcriptome.
 - Found EGFR pathway related mutations, aimed to understand the impacts of cancer mutations on EGFR signaling pathway.
@@ -101,7 +101,7 @@ My Health Gene Technology Co., Ltd.
 
 Beijing, China
 
-2015-2016
+2015 - 2016
 
 - Investigated how cancer cells spread to other parts of the body at the single cell level.
 
@@ -141,7 +141,7 @@ My Health Gene Technology Co., Ltd.
 
 Beijing, China
 
-2015-2016
+2015 - 2016
 
 ::: concise
 - Analyzed whole-exome sequencing data. 
@@ -168,7 +168,7 @@ Teaching assistant of GBS CB2-201 courses at UAB
 
 AL, USA
 
-2016-2017
+2016 - 2017
 
 
 Selected Publications and Posters {data-icon=file}
