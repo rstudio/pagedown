@@ -13,6 +13,15 @@
 
   var runMathJax = getBeforeAsync();
 
+  // This function put the LOT/LOF in the div.front-matter-content
+  async function moveToFrontMatter() {
+    let frontMatter = document.querySelector('.front-matter-content');
+    const items = document.querySelectorAll('.lof, .lot, .level1.front-matter');
+    for (const item of items) {
+      frontMatter.appendChild(item);
+    }
+  }
+
   // This function expands the links in the lists of figures or tables (loft)
   async function expandLinksInLoft() {
     var items = document.querySelectorAll('.lof li, .lot li');
@@ -72,6 +81,7 @@
 
   window.PagedConfig = {
     before: async () => {
+      await moveToFrontMatter();
       await expandLinksInLoft();
       await Promise.all([
         addLeadersSpans(),
