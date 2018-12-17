@@ -13,10 +13,10 @@
 
   var runMathJax = getBeforeAsync();
 
-  // This function put the LOT/LOF in the div.front-matter-content
+  // This function put the sections of class front-matter in the div.front-matter-content
   async function moveToFrontMatter() {
     let frontMatter = document.querySelector('.front-matter-content');
-    const items = document.querySelectorAll('.lof, .lot, .level1.front-matter');
+    const items = document.querySelectorAll('.level1.front-matter');
     for (const item of items) {
       frontMatter.appendChild(item);
     }
