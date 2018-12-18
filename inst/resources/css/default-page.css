@@ -26,7 +26,7 @@
   content: string(h1-text);
 }
 
-@page :left {
+@page chapter:left {
   @top-left {
     content: counter(page);
   }
@@ -49,7 +49,7 @@
   /* However, this is yet unsupported by Paged.js, see https://gitlab.pagedmedia.org/tools/pagedjs/issues/38 */
   content: string(h2-text);
 }
-@page :right {
+@page chapter:right {
   @top-right {
     content: counter(page);
   }
@@ -83,10 +83,44 @@
   }
 }
 
+/* Front matter*/
+@page frontmatter:left {
+  @top-left {
+    content: counter(page, lower-roman);
+  }
+  @top-right {
+    content: element(runningH1Title);
+    white-space: nowrap !important;
+  }
+}
+@page frontmatter:right {
+  @top-right {
+    content: counter(page, lower-roman);
+  }
+  @top-left {
+    content: element(runningH1Title);
+    white-space: nowrap !important;
+  }
+}
+@page frontmatter:first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: counter(page, lower-roman);
+  }
+}
+
 /* page breaks; aka CSS fragmentation */
 .level1 {
-  page: chapter;
   break-before: recto;
+  page: chapter;
+}
+.front-matter-container .level1 {
+  page: frontmatter;
 }
 h1, h2, h3, h4, h5, h6 {
   break-after: avoid;
@@ -97,4 +131,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 .figure {
   break-inside: avoid;
+}
+
+/* reset page numbering after front matter */
+.front-matter-container+.level1 h1 {
+  counter-reset: page;
 }

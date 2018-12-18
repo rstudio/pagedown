@@ -131,11 +131,11 @@ $if(theme)$
 <div class="container-fluid main-container">
 $endif$
 
-<div class="front-matter">
 $for(include-before)$
 $include-before$
 $endfor$
 
+<div class="front-page">
 $if(title)$
 <div id="$idprefix$header" class="title-page">
 $if(shorttitle)$
@@ -170,9 +170,11 @@ $abstract$
 </div>
 $endif$
 $endif$
+</div>
 
+<div class="front-matter-container">
 $if(toc)$
-<div id="$idprefix$TOC" class="level1 toc">
+<div id="$idprefix$TOC" class="level1 toc front-matter">
 $if(toc-title)$
 <h1 class="toc-title">$toc-title$</h1>
 $endif$
@@ -181,9 +183,7 @@ $table-of-contents$
 $endif$
 </div>
 
-<div class="main">
 $body$
-</div>
 
 $for(include-after)$
 $include-after$

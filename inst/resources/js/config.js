@@ -13,6 +13,27 @@
 
   var runMathJax = getBeforeAsync();
 
+  // This function puts the sections of class front-matter in the div.front-matter-container
+  async function moveToFrontMatter() {
+    let frontMatter = document.querySelector('.front-matter-container');
+    const items = document.querySelectorAll('.level1.front-matter');
+    for (const item of items) {
+      frontMatter.appendChild(item);
+    }
+  }
+
+  // This function adds the class front-matter-ref to any <a></a> element
+  // referring to an entry in the front matter
+  async function detectFrontMatterReferences() {
+    const frontMatter = document.querySelector('.front-matter-container');
+    let anchors = document.querySelectorAll('a[href^="#"]:not([href*=":"])');
+    for (let a of anchors) {
+      const ref = a.getAttribute('href');
+      const element = document.querySelector(ref);
+      if (frontMatter.contains(element)) a.classList.add('front-matter-ref');
+    }
+  }
+
   // This function expands the links in the lists of figures or tables (loft)
   async function expandLinksInLoft() {
     var items = document.querySelectorAll('.lof li, .lot li');
@@ -72,6 +93,8 @@
 
   window.PagedConfig = {
     before: async () => {
+      await moveToFrontMatter();
+      await detectFrontMatterReferences();
       await expandLinksInLoft();
       await Promise.all([
         addLeadersSpans(),
