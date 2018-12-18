@@ -262,6 +262,16 @@ lof-title: "Figures"
 ---
 ```
 
+## Front matter
+
+By default, the front matter is composed of the cover, the table of contents and the lists of figures and tables if any. The only difference between the front matter pages and the main content pages is the style of the page numbers.
+
+You can add extra sections to the front matter using the `front-matter` class. For instance, if you want to add a preface to the front matter, you need to write:
+
+```markdown
+# Preface {.front-matter .unnumbered}
+```
+
 ## Links
 
 In Markdown, the usual ways to insert links are _automatic_ and _inline_ links.
