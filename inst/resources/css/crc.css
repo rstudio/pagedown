@@ -109,6 +109,16 @@ a {
   font-style: italic;
 }
 
+/* abstract */
+.abstract {
+  text-align: center;
+  line-height: 1.8;
+}
+
+h3.abstract {
+  display: none;
+}
+
 /* viewer */
 @media screen {
   .pagedjs_page {
