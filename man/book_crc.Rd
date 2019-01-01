@@ -4,7 +4,7 @@
 \alias{book_crc}
 \title{Create a book for Chapman & Hall/CRC}
 \usage{
-book_crc(..., css = c("default-page", "default", "crc"))
+book_crc(..., css = c("crc-page", "default-page", "default", "crc"))
 }
 \arguments{
 \item{...}{Arguments passed to \code{\link{html_paged}()}.}

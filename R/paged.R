@@ -47,7 +47,7 @@ html_letter = function(..., css = c('default', 'letter')) {
 #' @inheritParams html_letter
 #' @return An R Markdown output format.
 #' @export
-book_crc = function(..., css = c('default-page', 'default', 'crc')) {
+book_crc = function(..., css = c('crc-page', 'default-page', 'default', 'crc')) { # see https://github.com/rstudio/pagedown/issues/41 that explains why we need a specific crc-page.css file
   html_paged(..., css = css)
 }
 
