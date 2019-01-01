@@ -70,11 +70,6 @@ a {
   margin-bottom: 7px;
 }
 
-.pagedjs_margin-bottom .pagedjs_margin-content {
-  margin-top: 7px;
-  margin-bottom: auto;
-}
-
 /* first page */
 .title {
   font-size: 20pt;
