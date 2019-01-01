@@ -248,6 +248,19 @@ h1 > .header-section-number {
   margin-right: 10px;
 }
 
+/* footnotes */
+.footnote-break {
+  width: 2in;
+}
+
+.footnote-area {
+  padding-left: 12pt;
+}
+
+.footnote a.uri, .footnote a.email{
+  font-size: inherit;
+}
+
 /* viewer */
 @media screen {
   .pagedjs_page {
