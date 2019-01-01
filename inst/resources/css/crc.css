@@ -164,6 +164,33 @@ h1 > .header-section-number {
   content: " ";
 }
 
+/* section headers */
+.level2 > h2 {
+  font-size: 10pt;
+  margin-top: 40pt;
+  padding-top: 16pt;
+  border-top: 1pt solid black;
+  position: relative;
+}
+
+.level2:first-child > h2 {
+  margin-top: 20pt;
+}
+
+.level2 > h2::after{
+  display: block;
+  content: " ";
+  width: 27mm;
+  height: 27pt;
+  position: absolute;
+  bottom: 0;
+  border-top: 4pt solid black;
+}
+
+.level2 .header-section-number {
+  margin-right: 10px;
+}
+
 /* viewer */
 @media screen {
   .pagedjs_page {
