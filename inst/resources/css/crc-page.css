@@ -2,3 +2,8 @@
   size: 6in 9in;
   margin: 4pc 4pc 7pc 4pc;
 }
+
+/* page breaks */
+div.abstract {
+  page-break-before: always;
+}
