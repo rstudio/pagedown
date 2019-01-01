@@ -75,6 +75,40 @@ a {
   margin-bottom: auto;
 }
 
+/* first page */
+.title {
+  font-size: 20pt;
+  font-style: italic;
+  font-weight: bold;
+  margin-top: 21pt;
+  border-top: 1pt solid black;
+  padding-top: 28pt;
+  position: relative;
+}
+
+.title::before{
+  display: block;
+  position: absolute;
+  top: 0;
+  border-top: 4pt solid black;
+  width: 27mm;
+  content: '';
+}
+
+.date {
+  display: none;
+}
+
+.author {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin:0;
+  font-size: 9pt;
+  font-weight: bold;
+  font-style: italic;
+}
+
 /* viewer */
 @media screen {
   .pagedjs_page {
