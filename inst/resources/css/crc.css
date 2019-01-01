@@ -114,6 +114,53 @@ h3.abstract {
   display: none;
 }
 
+/* table of contents, list of tables & list of figures */
+.toc * {
+  color: black !important;
+  white-space: nowrap;
+}
+
+.toc > ul > li > a {
+  font-weight: bold;
+}
+
+.toc > ul > li {
+  margin: 8pt 0;
+}
+
+.toc > ul > li > a > .leaders::before {
+  content: '';
+}
+
+.front-matter-ref + ul, .toc-section-unnumbered + ul {
+  display: none;
+}
+
+.toc a, .lof a, .lot a {
+  padding-right: 0.7em;
+}
+
+.toc a::after, .lof a::after, .lot a::after {
+  padding-left: 1em;
+}
+
+.lot ul, .lof ul {
+  padding-left: 1.55em;
+}
+
+.leaders::before {
+  word-spacing: 0.3em;
+}
+
+.toc li li {
+  padding-left: 2em;
+}
+
+.toc-section-number, .list-ref-number {
+  display: inline-block;
+  width: 2em;
+}
+
 /* chapter headers */
 .level1 > h1 {
   font-size: 16pt;
