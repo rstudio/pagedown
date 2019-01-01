@@ -1,5 +1,43 @@
+@import 'https://fonts.googleapis.com/css?family=Alegreya:400,400i,700,700i%7CAlegreya+SC%7CSource+Code+Pro:400,700';
+
 :root {
   --background: lightsteelblue;
+}
+
+/* fonts */
+body, blockquote {
+  font-family: 'Alegreya', STKaiti, "华文楷体", serif;
+  font-size: 11pt;
+  font-weight: 400;
+}
+
+code {
+  font-family: 'Source Code Pro', STKaiti, "华文楷体", monospace;
+  font-weight: 400;
+}
+
+pre, code {
+  font-size: 9pt;
+}
+
+.smallcaps {
+  font-family: 'Alegreya SC', 'AlegreyaSC', STKaiti, "华文楷体", serif;
+  font-variant: small-caps;
+}
+
+code .smallcaps, .abstract .smallcaps {
+  font-family: inherit;
+}
+
+a.uri, a.email {
+  font-family: 'Source Code Pro', monospace;
+  font-size: 9pt;
+  color: #2e3192;
+}
+
+a[href^="#"] {
+  font-family: 'Alegreya';
+  color: #ae2230;
 }
 
 /* viewer */
