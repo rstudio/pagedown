@@ -56,6 +56,25 @@ a {
   line-height: 0.75;
 }
 
+/* margins content */
+.pagedjs_margin {
+  font-size: 9pt;
+}
+
+.running-h1-title, .running-h2-title {
+  font-style: italic;
+}
+
+.pagedjs_margin-top .pagedjs_margin-content {
+  margin-top: auto;
+  margin-bottom: 7px;
+}
+
+.pagedjs_margin-bottom .pagedjs_margin-content {
+  margin-top: 7px;
+  margin-bottom: auto;
+}
+
 /* viewer */
 @media screen {
   .pagedjs_page {
