@@ -191,6 +191,16 @@ h1 > .header-section-number {
   margin-right: 10px;
 }
 
+/* subsection headers */
+.level3 > h3 {
+  font-size: 10pt;
+  margin-top: 16pt;
+}
+
+.level3 .header-section-number {
+  margin-right: 10px;
+}
+
 /* viewer */
 @media screen {
   .pagedjs_page {
