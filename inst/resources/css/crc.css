@@ -52,7 +52,7 @@ a {
   text-decoration: none;
 }
 
-.footnote-ref sup {
+.level1 sup, .level1 sub {
   line-height: 0.75;
 }
 
