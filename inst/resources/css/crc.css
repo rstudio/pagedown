@@ -40,6 +40,22 @@ a[href^="#"] {
   color: #ae2230;
 }
 
+/* main text content */
+.level1 p {
+  margin: 8pt 0;
+  text-align: justify;
+  line-height: 1.25;
+  hyphens: auto; /* don't work for Chrome on Windows and Linux */
+}
+
+a {
+  text-decoration: none;
+}
+
+.footnote-ref sup {
+  line-height: 0.75;
+}
+
 /* viewer */
 @media screen {
   .pagedjs_page {
