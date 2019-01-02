@@ -7,14 +7,12 @@
 book_crc(..., css = c("crc-page", "default-page", "default", "crc"))
 }
 \arguments{
-\item{...}{Arguments passed to \code{\link{html_paged}()}.}
-
-\item{css}{Arguments passed to \code{\link{html_paged}()}.}
+\item{..., css}{Arguments passed to \code{\link{html_paged}()}.}
 }
 \value{
 An R Markdown output format.
 }
 \description{
-This output format is similar to \code{html_paged}. The only difference is in
-the default stylesheets.
+This output format is similar to \code{\link{html_paged}}. The only
+difference is in the default stylesheets.
 }

@@ -42,12 +42,13 @@ html_letter = function(..., css = c('default', 'letter')) {
 
 #' Create a book for Chapman & Hall/CRC
 #'
-#' This output format is similar to \code{html_paged}. The only difference is in
-#' the default stylesheets.
-#' @inheritParams html_letter
+#' This output format is similar to \code{\link{html_paged}}. The only
+#' difference is in the default stylesheets.
+#' @param ...,css Arguments passed to \code{\link{html_paged}()}.
 #' @return An R Markdown output format.
 #' @export
-book_crc = function(..., css = c('crc-page', 'default-page', 'default', 'crc')) { # see https://github.com/rstudio/pagedown/issues/41 that explains why we need a specific crc-page.css file
+book_crc = function(..., css = c('crc-page', 'default-page', 'default', 'crc')) {
+  # see https://github.com/rstudio/pagedown/issues/41 that explains why we need a specific crc-page.css file
   html_paged(..., css = css)
 }
 
