@@ -1,0 +1,284 @@
+@import 'https://fonts.googleapis.com/css?family=Alegreya:400,400i,700,700i%7CAlegreya+SC%7CSource+Code+Pro:400,700';
+
+:root {
+  --background: lightsteelblue;
+}
+
+/* fonts */
+body, blockquote {
+  font-family: 'Alegreya', STKaiti, "华文楷体", serif;
+  font-size: 11pt;
+  font-weight: 400;
+}
+
+code {
+  font-family: 'Source Code Pro', STKaiti, "华文楷体", monospace;
+  font-weight: 400;
+}
+
+pre, code {
+  font-size: 9pt;
+}
+
+.smallcaps {
+  font-family: 'Alegreya SC', 'AlegreyaSC', STKaiti, "华文楷体", serif;
+  font-variant: small-caps;
+}
+
+code .smallcaps, .abstract .smallcaps {
+  font-family: inherit;
+}
+
+a.uri, a.email {
+  font-family: 'Source Code Pro', monospace;
+  font-size: 9pt;
+  color: #2e3192;
+}
+
+a[href^="#"] {
+  font-family: 'Alegreya';
+  color: #ae2230;
+}
+
+/* main text content */
+.level1 p {
+  margin: 8pt 0;
+  text-align: justify;
+  line-height: 1.25;
+  hyphens: auto; /* don't work for Chrome on Windows and Linux */
+}
+
+a {
+  text-decoration: none;
+}
+
+.level1 sup, .level1 sub {
+  line-height: 0.75;
+}
+
+/* margins content */
+.pagedjs_margin {
+  font-size: 9pt;
+}
+
+.running-h1-title, .running-h2-title {
+  font-style: italic;
+}
+
+.pagedjs_margin-top .pagedjs_margin-content {
+  margin-top: auto;
+  margin-bottom: 7px;
+}
+
+/* first page */
+.title {
+  font-size: 20pt;
+  font-style: italic;
+  font-weight: bold;
+  margin-top: 21pt;
+  border-top: 1pt solid black;
+  padding-top: 28pt;
+  position: relative;
+}
+
+.title::before{
+  display: block;
+  position: absolute;
+  top: 0;
+  border-top: 4pt solid black;
+  width: 27mm;
+  content: '';
+}
+
+.date {
+  display: none;
+}
+
+.author {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin:0;
+  font-size: 9pt;
+  font-weight: bold;
+  font-style: italic;
+}
+
+/* abstract */
+.abstract {
+  text-align: center;
+  line-height: 1.8;
+}
+
+h3.abstract {
+  display: none;
+}
+
+/* table of contents, list of tables & list of figures */
+.toc * {
+  color: black !important;
+  white-space: nowrap;
+}
+
+.toc > ul > li > a {
+  font-weight: bold;
+}
+
+.toc > ul > li {
+  margin: 8pt 0;
+}
+
+.toc > ul > li > a > .leaders::before {
+  content: '';
+}
+
+.front-matter-ref + ul, .toc-section-unnumbered + ul {
+  display: none;
+}
+
+.toc a, .lof a, .lot a {
+  padding-right: 0.7em;
+}
+
+.toc a::after, .lof a::after, .lot a::after {
+  padding-left: 1em;
+}
+
+.lot ul, .lof ul {
+  padding-left: 1.55em;
+}
+
+.leaders::before {
+  word-spacing: 0.3em;
+}
+
+.toc li li {
+  padding-left: 2em;
+}
+
+.toc-section-number, .list-ref-number {
+  display: inline-block;
+  width: 2em;
+}
+
+/* chapter headers */
+.level1 > h1 {
+  font-size: 16pt;
+  font-weight: normal;
+  font-style: italic;
+  white-space: pre-line;
+  position: relative;
+  line-height: 28pt;
+  margin-bottom: 54pt;
+}
+
+.level1 > h1::after {
+  display: block;
+  content: " ";
+  width: 27mm;
+  height: 28pt;
+  position: absolute;
+  bottom: 0;
+  border-top: 4pt solid black;
+  border-bottom: 1pt solid black;
+}
+
+h1 > .header-section-number::after {
+  content: "\000A";
+}
+
+h1 > .header-section-number {
+  font-style: normal;
+  font-weight: bold;
+  font-size: 20pt;
+  width: 100%;
+  display: inline-block;
+  border-bottom: 1pt solid black;
+  line-height: 30pt;
+  position: relative;
+  top: -5pt;
+}
+
+.toc > h1, .unnumbered > h1 {
+  font-weight: bold;
+}
+
+.toc > h1::before, .unnumbered > h1::before {
+  display: block;
+  height: 32pt;
+  position: relative;
+  top: -5pt;
+  content: " ";
+}
+
+/* section headers */
+.level2 > h2 {
+  font-size: 10pt;
+  margin-top: 40pt;
+  padding-top: 16pt;
+  border-top: 1pt solid black;
+  position: relative;
+}
+
+.level2:first-child > h2 {
+  margin-top: 20pt;
+}
+
+.level2 > h2::after{
+  display: block;
+  content: " ";
+  width: 27mm;
+  height: 27pt;
+  position: absolute;
+  bottom: 0;
+  border-top: 4pt solid black;
+}
+
+.level2 .header-section-number {
+  margin-right: 10px;
+}
+
+/* subsection headers */
+.level3 > h3 {
+  font-size: 10pt;
+  margin-top: 16pt;
+}
+
+.level3 .header-section-number {
+  margin-right: 10px;
+}
+
+/* footnotes */
+.footnote-break {
+  width: 2in;
+}
+
+.footnote-area {
+  padding-left: 12pt;
+}
+
+.footnote a.uri, .footnote a.email{
+  font-size: inherit;
+}
+
+/* viewer */
+@media screen {
+  .pagedjs_page {
+     box-shadow: 0 4px 10px rgb(0, 0, 0, 0.6), inset 0 0 3px rgb(0, 0, 0, 0.6);
+  }
+}
+
+@media screen and (min-width: 12.32in) {
+  .pagedjs_left_page {
+    box-shadow: -2px 4px 10px rgb(0, 0, 0, 0.6), inset -1px -1px 3px rgb(0, 0, 0, 0.6);
+  }
+  .pagedjs_right_page {
+    box-shadow: 2px 4px 10px rgb(0, 0, 0, 0.6), inset 1px -1px 3px rgb(0, 0, 0, 0.6);
+  }
+  .pagedjs_first_page {
+    box-shadow: 0 4px 10px rgb(0, 0, 0, 0.6), inset 0 0 3px rgb(0, 0, 0, 0.6);
+  }
+  .pagedjs_left_page:last-of-type {
+    box-shadow: 0 4px 10px rgb(0, 0, 0, 0.6), inset 0 0 3px rgb(0, 0, 0, 0.6);
+  }
+}
