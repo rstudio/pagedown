@@ -54,3 +54,7 @@ blockquote {
 code {
   font-family: MJMono, Courier, "Courier New", 'STKaiti', 'KaiTi', 'SimKai', monospace;
 }
+
+.pkg {
+  font-weight: bold;
+}

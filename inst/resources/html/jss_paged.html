@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="$if(lang)$$lang$$else$en$endif$" xml:lang="$if(lang)$$lang$$else$en$endif$">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta property="dc:format" content="text/html">
+<meta name="generator" content="pandoc" />
+<meta name="viewport" content="width=device-width">
+<meta property="dc:type" content="Text">
+<meta property="dc:language" content="$if(lang)$$lang$$else$en$endif$">
+<meta property="dc:title og:title" content="$pagetitle$" />
+$if(url)$<meta property="dc:identifier og:url" content="$url$" />$endif$
+$if(cover-image)$<meta property="og:image" content="$url$$cover-image$" />$endif$
+<meta name="description" property="dc:description og:description schema:description" content="$if(description)$$description$$else$$pagetitle$$endif$">
+$for(author-meta)$
+<meta name="author" content="$author-meta$" />
+$endfor$
+$if(date-meta)$<meta name="date" content="$date-meta$" />$endif$
+<meta name="keywords" property="dc:subject" content="$for(keywords)$$keywords$$sep$, $endfor$">
+
+<title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+
+$if(math)$
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  window.PagedConfig = {
+    before: () => {
+      return new Promise((resolve, reject) => {
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        var src = "true";
+        if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+        if (location.protocol !== "file:" && /^https?:/.test(src))
+          src = src.replace(/^https?:/, '');
+        script.src = src;
+        window.MathJax = {
+          AuthorInit: () => {
+            MathJax.Hub.Register.StartupHook("Begin", () => {
+              MathJax.Hub.Queue(resolve);
+            });
+          }
+        };
+        document.getElementsByTagName("head")[0].appendChild(script);
+      });
+    }
+  };
+</script>
+$endif$
+
+$for(header-includes)$
+$header-includes$
+$endfor$
+
+$if(highlightjs)$
+<link rel="stylesheet"
+      href="$highlightjs$/$if(highlightjs-theme)$$highlightjs-theme$$else$default$endif$.css"
+      $if(html5)$$else$type="text/css" $endif$/>
+<script src="$highlightjs$/highlight.js"></script>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+$endif$
+
+$if(highlighting-css)$
+<style type="text/css">
+$highlighting-css$
+</style>
+$endif$
+
+$for(css)$
+<link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
+$endfor$
+
+</head>
+
+<body>
+
+<div style="display:none" aria-hidden="true">
+\(
+  \let\proglang=\textsf
+  \let\code=\texttt
+  \newcommand{\E}{\mathsf{E}}
+  \newcommand{\VAR}{\mathsf{VAR}}
+  \newcommand{\COV}{\mathsf{COV}}
+  \newcommand{\Prob}{\mathsf{P}}
+\)
+</div>
+
+$for(include-before)$
+$include-before$
+$endfor$
+
+<article>
+$if(date)$
+<h2 class="date">$date$</h2>
+$endif$
+
+
+$if(title)$
+  <header id="$idprefix$header" class="title-page">
+      <h1 class="title">$title$</h1>
+      <span class="shorttitle" style="display: none;" aria-hidden="true">$if(shorttitle)$$shorttitle$$else$$title$$endif$</span>
+    $if(author)$
+    <div class="authors-container">
+      $for(author)$
+      <div class="author-item">
+        $if(author.name)$
+        <h2 class="author">$author.name$</h2>
+          $if(author.affiliation)$
+        <address class="author-afil">
+          $author.affiliation$
+            $if(author.email)$
+        <br/><a class="author-email" href="mailto:#">$author.email$</a>
+            $endif$
+        </address>
+          $endif$
+        $else$
+        <h2 class="author">$author$</h2>
+        $endif$
+      </div>
+      $endfor$
+    </div>
+    $endif$
+  </header>
+$endif$
+
+$if(abstract)$
+<section class="abstract" property="dc:abstract">
+<h3>Abstract</h3>
+$abstract$
+</section>
+$endif$
+
+$if(keywords)$
+<section class="keywords">
+<p><span class="keywords-title" aria-level="3" role="heading">Keywords:</span> $for(keywords)$$keywords$$sep$, $endfor$.</p>
+</section>
+$endif$
+
+<main role="main">
+$body$
+</main>
+</article>
+
+$for(include-after)$
+$include-after$
+$endfor$
+
+<script>
+// when the page is about to reload via servr, remember the scroll position
+document.addEventListener('servr:reload', function(e) {
+  sessionStorage.setItem('pagedown-scroll', window.scrollY);
+});
+</script>
+</body>
+</html>
