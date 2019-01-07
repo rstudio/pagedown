@@ -4,8 +4,8 @@
 \alias{jss_paged}
 \title{Create an article for the Journal of Statistical Software}
 \usage{
-jss_paged(..., css = c("jss-fonts", "jss-page", "default"), 
-    template = pkg_resource("html", "jss_paged.html"))
+jss_paged(..., css = c("jss-fonts", "jss-page", "jss"), template = pkg_resource("html", 
+    "jss_paged.html"))
 }
 \arguments{
 \item{..., css, template}{Arguments passed to \code{\link{html_paged}()}.}

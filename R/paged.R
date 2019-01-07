@@ -59,7 +59,7 @@ book_crc = function(..., css = c('crc-page', 'default-page', 'default', 'crc')) 
 #' @return An R Markdown output format.
 #' @export
 jss_paged = function(
-  ..., css = c('jss-fonts', 'jss-page', 'default'),
+  ..., css = c('jss-fonts', 'jss-page', 'jss'),
   template = pkg_resource('html', 'jss_paged.html')
 ) {
   html_paged(..., css = css, template = template)
