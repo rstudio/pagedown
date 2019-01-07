@@ -2,8 +2,8 @@
 author:
   - name: FirstName LastName
     affiliation: University/Company
-    address: >
-      First line
+    address: |
+      First line  
       Second line
     email: <name@company.com>
     url: <http://rstudio.com>
@@ -32,11 +32,11 @@ This template demonstrates some of the basic latex you'll need to know to create
 
 ## Code formatting
 
-You can use markdown or $\LaTeX$ commands:
+You should use markdown but you also can use $\LaTeX$ commands:
 
-* [Java]{.proglang} or $\proglang{Java}$ 
-* [plyr]{.pkg} or $\pkg{plyr}$
-* `print("abc")` or $\code{print("abc")}$
+* [Java]{.proglang} replaces $\proglang{Java}$ 
+* [plyr]{.pkg} replaces $\pkg{plyr}$
+* `print("abc")` replaces $\code{print("abc")}$
 
 # R code
 
