@@ -1,0 +1,48 @@
+---
+author:
+  - name: FirstName LastName
+    affiliation: University/Company
+    address: >
+      First line
+      Second line
+    email: <name@company.com>
+    url: <http://rstudio.com>
+  - name: Second Author
+    affiliation: Affiliation
+title: "A Capitalized Title: Something about a Package [foo]{.pkg}"
+shorttitle: "[foo]{.pkg}: A Package for Bar"
+abstract: >
+  The abstract of the article.
+# at least one keyword must be supplied
+keywords: [keywords, not capitalized, "[Java]{.proglang}"]
+month: June
+year: 2012
+volume: 50
+issue: 9
+submitdate: 2012-01-23
+acceptdate: 2012-10-31
+output: 
+  pagedown::jss_paged:
+    self_contained: false
+---
+
+# Introduction
+
+This template demonstrates some of the basic latex you'll need to know to create a JSS article.
+
+## Code formatting
+
+You can use markdown or $\LaTeX$ commands:
+
+* [Java]{.proglang} or $\proglang{Java}$ 
+* [plyr]{.pkg} or $\pkg{plyr}$
+* `print("abc")` or $\code{print("abc")}$
+
+# R code
+
+Can be inserted in regular R markdown blocks.
+
+```{r}
+x <- 1:10
+x
+```
