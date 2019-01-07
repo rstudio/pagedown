@@ -13,13 +13,13 @@
 <meta property="dc:language" content="$if(lang)$$lang$$else$en$endif$">
 <meta property="dc:title og:title" content="$pagetitle$" />
 $if(url)$<meta property="dc:identifier og:url" content="$url$" />$endif$
-$if(cover-image)$<meta property="og:image" content="$url$$cover-image$" />$endif$
+<meta property="og:image" content="https://www.jstatsoft.org/public/site/images/jstatsoft/jsslogo.jpg" />
 <meta name="description" property="dc:description og:description schema:description" content="$if(description)$$description$$else$$pagetitle$$endif$">
 $for(author-meta)$
 <meta name="author" content="$author-meta$" />
 $endfor$
 $if(date-meta)$<meta name="date" content="$date-meta$" />$endif$
-<meta name="keywords" property="dc:subject" content="$for(keywords)$$keywords$$sep$, $endfor$">
+$--<meta name="keywords" property="dc:subject" content="$for(keywords)$$keywords$$sep$, $endfor$">
 
 <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
 
@@ -84,6 +84,7 @@ $endfor$
 
 <div style="display:none" aria-hidden="true">
 \(
+  \let\pkg=\mathbf
   \let\proglang=\textsf
   \let\code=\texttt
   \newcommand{\E}{\mathsf{E}}
@@ -97,32 +98,38 @@ $for(include-before)$
 $include-before$
 $endfor$
 
-<article>
-$if(date)$
-<h2 class="date">$date$</h2>
+<header>
+<h1 class="journal-name">Journal of Statistical Software</h1>
+$if(month)$
+$if(year)$
+$if(volume)$
+$if(issue)$
+<p class="issue">$month$ $year$, Volume $volume$, Issue $issue$.</p>
 $endif$
+$endif$
+$endif$
+$endif$
+$if(url)$<a href="$url$" class="uri">$url$</a>$endif$
+</header>
 
-
+<article>
 $if(title)$
   <header id="$idprefix$header" class="title-page">
       <h1 class="title">$title$</h1>
       <span class="shorttitle" style="display: none;" aria-hidden="true">$if(shorttitle)$$shorttitle$$else$$title$$endif$</span>
-    $if(author)$
-    <div class="authors-container">
-      $for(author)$
-      <div class="author-item">
+$if(author)$
+    <div class="authors-container" role="list">
+$for(author)$
+      <div class="author-item" role="listitem">
         $if(author.name)$
-        <h2 class="author">$author.name$</h2>
+        <p class="author">$author.name$</p>
           $if(author.affiliation)$
-        <address class="author-afil">
+        <p class="author-afil">
           $author.affiliation$
-            $if(author.email)$
-        <br/><a class="author-email" href="mailto:#">$author.email$</a>
-            $endif$
-        </address>
+        </p>
           $endif$
         $else$
-        <h2 class="author">$author$</h2>
+        <p class="author">$author$</p>
         $endif$
       </div>
       $endfor$
@@ -133,21 +140,57 @@ $endif$
 
 $if(abstract)$
 <section class="abstract" property="dc:abstract">
-<h3>Abstract</h3>
+<h2>Abstract</h2>
 $abstract$
 </section>
 $endif$
 
 $if(keywords)$
-<section class="keywords">
-<p><span class="keywords-title" aria-level="3" role="heading">Keywords:</span> $for(keywords)$$keywords$$sep$, $endfor$.</p>
+<section class="keywords" role="list" aria-labelledby="$idprefix$keywords-header">
+<p><span id="$idprefix$keywords-header" class="keywords-heading" aria-level="3" role="heading">Keywords</span>: $for(keywords)$<span role="listitem">$keywords$</span>$sep$, $endfor$.</p>
 </section>
 $endif$
 
 <main role="main">
 $body$
 </main>
+
+<footer class="affiliation">
+<h3>Affiliation:</h3>
+$for(author)$
+$if(author.address)$
+<address>
+<p class="author">$author.name$</p>
+<p class="author-afil">$author.affiliation$</p>
+<p class="author-address">$author.address$</p>
+$if(author.email)$<p>E-mail: $author.email$</p>$endif$
+$if(author.url)$<p>URL: $author.url$</p>$endif$
+</address>
+$endif$
+$endfor$
+</footer>
 </article>
+
+<footer>
+<address>
+<p class="footer-jss"><span class="journal-name">Journal of Statistical Software</span><a class="uri" href="https://www.jstatsoft.org/">http://www.jstatsoft.org/</a></p>
+<p class="footer-foas">published by the Foundation for Open Access Statistics<a class="uri" href="http://www.foastat.org/">http://www.foastat.org/</a></p>
+</address>
+$if(url)$
+<p class="footer-issue">
+$if(month)$
+$if(year)$
+$month$ $year$, Volume $volume$, Issue $issue$<br>
+$endif$
+$endif$
+$url$
+</p>
+$endif$
+<p class="info-dates">
+$if(submitdate)$<em>Submitted:</em>$submitdate$$endif$<br>
+$if(acceptdate)$<em>Accepted:</em>$acceptdate$$endif$
+</p>
+</footer>
 
 $for(include-after)$
 $include-after$
