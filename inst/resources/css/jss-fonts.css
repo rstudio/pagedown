@@ -44,15 +44,15 @@
 }
 
 body {
-  font-family: 'MathJax_Main', MJSerif, Times, 'source-han-serif-sc', 'Source Han Serif SC', 'Source Han Serif CN', 'Source Han Serif TC', 'Source Han Serif TW', 'Source Han Serif', 'Songti SC', 'Microsoft YaHei', serif;
+  font-family: 'MathJax_Main', MJSerif, 'source-han-serif-sc', 'Source Han Serif SC', 'Source Han Serif CN', 'Source Han Serif TC', 'Source Han Serif TW', 'Source Han Serif', 'Songti SC', 'Microsoft YaHei', Times, serif;
 }
 
 blockquote {
-  font-family: 'MathJax_Main', MJSerif, Times, 'STKaiti', 'KaiTi', '楷体', 'SimKai', 'DFKai-SB', 'NSimSun', serif;
+  font-family: 'MathJax_Main', MJSerif, 'STKaiti', 'KaiTi', '楷体', 'SimKai', 'DFKai-SB', 'NSimSun', Times, serif;
 }
 
 code {
-  font-family: 'MathJax_Typewriter', MJMono, Courier, "Courier New", 'STKaiti', 'KaiTi', 'SimKai', monospace;
+  font-family: 'MathJax_Typewriter', MJMono, "Courier New", 'STKaiti', 'KaiTi', 'SimKai', Courier, monospace;
 }
 
 .pkg {
