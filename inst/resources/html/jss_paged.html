@@ -98,18 +98,18 @@ $for(include-before)$
 $include-before$
 $endfor$
 
-<header>
-<h1 class="journal-name">Journal of Statistical Software</h1>
+<header class="document-header">
+<img class="journal-name" alt="Journal of Statistical Software" src="https://www.jstatsoft.org/public/journals/1/homeHeaderTitleImage_en_US.png">
 $if(month)$
 $if(year)$
 $if(volume)$
 $if(issue)$
-<p class="issue">$month$ $year$, Volume $volume$, Issue $issue$.</p>
+<p class="header-meta"><span class="issue">$month$ $year$, Volume $volume$, Issue $issue$.</span>$if(url)$ <a href="$url$" class="uri">$url$</a>$endif$</p>
 $endif$
 $endif$
 $endif$
 $endif$
-$if(url)$<a href="$url$" class="uri">$url$</a>$endif$
+
 </header>
 
 <article>

@@ -3,6 +3,48 @@
   --width: 210mm;
   --color-paper: white;
   --screen-pages-spacing: 5mm;
+  --header-width: 462px;
+  --header-image-padding: 18px;
+}
+
+/* article header */
+.document-header {
+  border-width: 4px 0;
+  border-style: solid;
+  width: var(--header-width);
+  position: relative;
+  margin-left: auto;
+}
+
+.document-header::before {
+  content: "";
+  display: block;
+  position: absolute;
+  left: calc(var(--header-width) - var(--width) + var(--margin-left) + var(--margin-right));
+  border-width: 4px 0;
+  border-style: solid;
+  border-color: transparent;
+  top: -4px;
+  height: 100%;
+  width: calc(var(--width) - var(--margin-left) - var(--margin-right) - var(--header-width) - var(--header-image-padding));
+  background-clip: border-box;
+  background-image: url(https://www.jstatsoft.org/public/site/images/jstatsoft/jsslogo.jpg);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-origin: border-box;
+}
+
+.journal-name {
+  padding-top: 14px;
+  padding-left: 20px;
+  filter: invert(100%);
+  height: 50px;
+}
+
+.header-meta {
+  font-style: italic;
+  margin: 6px 0;
+  font-size: 14px;
 }
 
 /* viewer */

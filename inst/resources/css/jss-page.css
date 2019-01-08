@@ -3,6 +3,16 @@
   size: 210mm 297mm;
 }
 
+/* first page */
+@page :first {
+  @top-center {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+}
+
 /* left page */
 .shorttitle {
   position: running(runningTitle);
