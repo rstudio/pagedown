@@ -39,6 +39,18 @@ Meta = function(meta)
   end
   meta["keywords-plain"] = plainKeywords
 
+  ------------------------------------
+  --             Author             --
+  ------------------------------------
+  local author = meta.author
+  if author.t == "MetaInlines" then
+    meta.author = {data = author, rank = "1"}
+  else
+    for i, v in ipairs(author) do
+      meta.author[i] = {data = v, rank = tostring(i)}
+    end
+  end
+
   -------------------------------------
   -- Build DOI from volume and issue --
   -------------------------------------

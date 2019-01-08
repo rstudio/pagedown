@@ -123,16 +123,16 @@ $if(title)$
 $if(author)$
 <div class="authors-container" role="list">
 $for(author)$
-<div class="author-item" role="listitem">
-$if(author.name)$
-<p class="author">$author.name$</p>
-$if(author.affiliation)$
+<div class="author-item" role="listitem" style="--rank: $author.rank$;">
+$if(author.data.name)$
+<p class="author">$author.data.name$</p>
+$if(author.data.affiliation)$
 <p class="author-afil">
-$author.affiliation$
+$author.data.affiliation$
 </p>
 $endif$
 $else$
-<p class="author">$author$</p>
+<p class="author">$author.data$</p>
 $endif$
 </div>
 $endfor$
@@ -157,14 +157,14 @@ $body$
 
 <footer class="article-footer">
 $for(author)$
-$if(author.address)$
+$if(author.data.address)$
 <h3>Affiliation:</h3>
 <address>
-<p class="author">$author.name$</p>
-<p class="author-afil">$author.affiliation$</p>
-<p class="author-address">$author.address$</p>
-$if(author.email)$<p>E-mail: $author.email$</p>$endif$
-$if(author.url)$<p>URL: $author.url$</p>$endif$
+<p class="author">$author.data.name$</p>
+<p class="author-afil">$author.data.affiliation$</p>
+<p class="author-address">$author.data.address$</p>
+$if(author.data.email)$<p>E-mail: $author.data.email$</p>$endif$
+$if(author.data.url)$<p>URL: $author.data.url$</p>$endif$
 </address>
 $endif$
 $endfor$

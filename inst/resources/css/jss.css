@@ -69,6 +69,7 @@ h1.title {
   flex-shrink: 0;
   text-align: center;
   width: 33%;
+  order: calc(-1 * var(--rank));
 }
 .author {
   font-weight: bold;
