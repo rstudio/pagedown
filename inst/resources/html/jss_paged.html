@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml" lang="$if(lang)$$lang$$else$en$endif$" xml:lang="$if(lang)$$lang$$else$en$endif$">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="$if(lang)$$lang$$else$en-US$endif$" xml:lang="$if(lang)$$lang$$else$en-US$endif$">
 
 <head>
 
 <meta charset="utf-8">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta property="dc:format" content="text/html">
-<meta name="generator" content="pandoc" />
+<meta name="generator" content="pandoc">
 <meta name="viewport" content="width=device-width">
 <meta property="dc:type" content="Text">
 <meta property="dc:language" content="$if(lang)$$lang$$else$en$endif$">
-<meta property="dc:title og:title" content="$pagetitle$" />
-$if(url)$<meta property="dc:identifier og:url" content="$url$" />$endif$
-<meta property="og:image" content="https://www.jstatsoft.org/public/site/images/jstatsoft/jsslogo.jpg" />
+<meta property="dc:title og:title" content="$pagetitle$">
+$if(url)$<meta property="dc:identifier og:url" content="$url$">$endif$
+<meta property="og:image" content="https://www.jstatsoft.org/public/site/images/jstatsoft/jsslogo.jpg">
+<link rel="icon" href="https://www.jstatsoft.org/public/journals/1/journalFavicon_en_US.gif">
 <meta name="description" property="dc:description og:description schema:description" content="$if(description)$$description$$else$$pagetitle$$endif$">
-$for(author-meta)$
-<meta name="author" content="$author-meta$" />
-$endfor$
-$if(date-meta)$<meta name="date" content="$date-meta$" />$endif$
-$--<meta name="keywords" property="dc:subject" content="$for(keywords)$$keywords$$sep$, $endfor$">
+$for(author-meta)$<meta name="author" content="$author-meta$">$endfor$
+$if(date-meta)$<meta name="date" content="$date-meta$">$endif$
+<meta name="keywords" property="dc:subject" content="$for(keywords-plain)$$keywords-plain$$sep$, $endfor$">
 
 <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
 
@@ -81,18 +80,17 @@ $endfor$
 </head>
 
 <body>
-
-<div style="display:none" aria-hidden="true">
-\(
-  \let\pkg=\mathbf
-  \let\proglang=\textsf
-  \let\code=\texttt
-  \newcommand{\E}{\mathsf{E}}
-  \newcommand{\VAR}{\mathsf{VAR}}
-  \newcommand{\COV}{\mathsf{COV}}
-  \newcommand{\Prob}{\mathsf{P}}
-\)
-</div>
+  <div style="display:none" aria-hidden="true">
+  \(
+    \let\pkg=\mathbf
+    \let\proglang=\textsf
+    \let\code=\texttt
+    \newcommand{\E}{\mathsf{E}}
+    \newcommand{\VAR}{\mathsf{VAR}}
+    \newcommand{\COV}{\mathsf{COV}}
+    \newcommand{\Prob}{\mathsf{P}}
+  \)
+  </div>
 
 $for(include-before)$
 $include-before$
@@ -100,65 +98,67 @@ $endfor$
 
 <header class="document-header">
 <img class="journal-name" alt="Journal of Statistical Software" src="https://www.jstatsoft.org/public/journals/1/homeHeaderTitleImage_en_US.png">
+<p class="header-meta">
 $if(month)$
 $if(year)$
 $if(volume)$
 $if(issue)$
-<p class="header-meta"><span class="issue">$month$ $year$, Volume $volume$, Issue $issue$.</span>$if(url)$ <a href="$url$" class="uri">$url$</a>$endif$</p>
+  <span class="issue">$month$ $year$, Volume $volume$, Issue $issue$.</span>
 $endif$
 $endif$
 $endif$
 $endif$
-
+$if(doi)$
+  <a href="https://doi.org/$doi$" class="doi">doi: $doi$</a>
+$endif$
+</p>
 </header>
 
 <article>
+
 $if(title)$
-  <header id="$idprefix$header" class="title-page">
-      <h1 class="title">$title$</h1>
-      <span class="shorttitle" style="display: none;" aria-hidden="true">$if(shorttitle)$$shorttitle$$else$$title$$endif$</span>
+<header id="$idprefix$header" class="title-page">
+<h1 class="title">$title$</h1>
+<span class="shorttitle" style="display: none;" aria-hidden="true">$if(shorttitle)$$shorttitle$$else$$title$$endif$</span>
 $if(author)$
-    <div class="authors-container" role="list">
+<div class="authors-container" role="list">
 $for(author)$
-      <div class="author-item" role="listitem">
-        $if(author.name)$
-        <p class="author">$author.name$</p>
-          $if(author.affiliation)$
-        <p class="author-afil">
-          $author.affiliation$
-        </p>
-          $endif$
-        $else$
-        <p class="author">$author$</p>
-        $endif$
-      </div>
-      $endfor$
-    </div>
-    $endif$
-  </header>
+<div class="author-item" role="listitem">
+$if(author.name)$
+<p class="author">$author.name$</p>
+$if(author.affiliation)$
+<p class="author-afil">
+$author.affiliation$
+</p>
+$endif$
+$else$
+<p class="author">$author$</p>
+$endif$
+</div>
+$endfor$
+</div>
+$endif$
+</header>
 $endif$
 
-$if(abstract)$
 <section class="abstract" property="dc:abstract">
+$if(abstract)$
 <h2>Abstract</h2>
 $abstract$
-</section>
 $endif$
-
-$if(keywords)$
 <section class="keywords" role="list" aria-labelledby="$idprefix$keywords-header">
 <p><span id="$idprefix$keywords-header" class="keywords-heading" aria-level="3" role="heading">Keywords</span>: $for(keywords)$<span role="listitem">$keywords$</span>$sep$, $endfor$.</p>
 </section>
-$endif$
+</section>
 
 <main role="main">
 $body$
 </main>
 
-<footer class="affiliation">
-<h3>Affiliation:</h3>
+<footer class="article-footer">
 $for(author)$
 $if(author.address)$
+<h3>Affiliation:</h3>
 <address>
 <p class="author">$author.name$</p>
 <p class="author-afil">$author.affiliation$</p>
@@ -168,29 +168,32 @@ $if(author.url)$<p>URL: $author.url$</p>$endif$
 </address>
 $endif$
 $endfor$
-</footer>
-</article>
-
-<footer>
-<address>
-<p class="footer-jss"><span class="journal-name">Journal of Statistical Software</span> <a class="uri" href="https://www.jstatsoft.org/">http://www.jstatsoft.org/</a></p>
-<p class="footer-foas">published by the Foundation for Open Access Statistics <a class="uri" href="http://www.foastat.org/">http://www.foastat.org/</a></p>
-</address>
-$if(url)$
+<div class="last-page-footer">
+<p class="jss-meta">
+<img class="journal-name" alt="Journal of Statistical Software" src="https://www.jstatsoft.org/public/journals/1/homeHeaderTitleImage_en_US.png"> <a class="uri" href="https://www.jstatsoft.org/">http://www.jstatsoft.org/</a><br>
+published by the Foundation for Open Access Statistics <a class="uri" href="http://www.foastat.org/">http://www.foastat.org/</a>
+</p>
 <p class="footer-issue">
 $if(month)$
 $if(year)$
-$month$ $year$, Volume $volume$, Issue $issue$<br>
+$if(volume)$
+$if(issue)$
+$month$ $year$, Volume $volume$, Issue $issue$
 $endif$
 $endif$
-$url$
+$endif$
+$endif$
+$if(doi)$
+<br><a href="https://doi.org/$doi$" class="doi">doi: $doi$</a>
+$endif$
 </p>
-$endif$
 <p class="info-dates">
 $if(submitdate)$<em>Submitted:</em> $submitdate$$endif$<br>
 $if(acceptdate)$<em>Accepted:</em> $acceptdate$$endif$
 </p>
+</div>
 </footer>
+</article>
 
 $for(include-after)$
 $include-after$
