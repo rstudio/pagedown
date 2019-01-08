@@ -14,7 +14,7 @@
   width: var(--header-width);
   position: relative;
   margin-left: auto;
-  margin-bottom: 90px;
+  margin-bottom: 110px;
 }
 
 .document-header::before {
@@ -48,12 +48,28 @@
   font-size: 14px;
 }
 
+.header-meta .doi {
+  float: right;
+}
+
 /* title */
 h1.title {
   text-align: center;
 }
 
 /* authors block */
+.authors-container {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: space-around;
+  flex-direction: row-reverse;
+}
+.author-item {
+  flex-grow: 1;
+  flex-shrink: 0;
+  text-align: center;
+  width: 33%;
+}
 .author {
   font-weight: bold;
 }
