@@ -53,6 +53,11 @@ h1.title {
   text-align: center;
 }
 
+/* authors block */
+.author {
+  font-weight: bold;
+}
+
 /* viewer */
 @media screen {
   body {
