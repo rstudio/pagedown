@@ -14,6 +14,7 @@
   width: var(--header-width);
   position: relative;
   margin-left: auto;
+  margin-bottom: 90px;
 }
 
 .document-header::before {
@@ -45,6 +46,11 @@
   font-style: italic;
   margin: 6px 0;
   font-size: 14px;
+}
+
+/* title */
+h1.title {
+  text-align: center;
 }
 
 /* viewer */
