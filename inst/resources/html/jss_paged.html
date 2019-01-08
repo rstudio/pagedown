@@ -123,18 +123,18 @@ $if(title)$
 $if(author)$
 <div class="authors-container" role="list">
 $for(author)$
-<div class="author-item" role="listitem" style="--rank: $author.rank$;">
+<p class="author-item" role="listitem" style="--rank: $author.rank$;">
 $if(author.data.name)$
-<p class="author">$author.data.name$</p>
+<span class="author">$author.data.name$</span>
 $if(author.data.affiliation)$
-<p class="author-afil">
+<br><span class="author-afil">
 $author.data.affiliation$
-</p>
+</span>
 $endif$
 $else$
-<p class="author">$author.data$</p>
+<span class="author">$author.data$</span>
 $endif$
-</div>
+</p>
 $endfor$
 </div>
 $endif$

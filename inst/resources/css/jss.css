@@ -65,10 +65,9 @@ h1.title {
   flex-direction: row-reverse;
 }
 .author-item {
-  flex-grow: 1;
-  flex-shrink: 0;
   text-align: center;
-  width: 33%;
+  padding: 0 6px;
+  flex: 1 1 33%;
   order: calc(-1 * var(--rank));
 }
 .author {
