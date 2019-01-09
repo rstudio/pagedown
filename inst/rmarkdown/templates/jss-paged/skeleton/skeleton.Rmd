@@ -21,6 +21,8 @@ volume: 50
 issue: 9
 submitdate: 2012-01-23
 acceptdate: 2012-10-31
+links-to-footnotes: true
+paged-footnotes: true
 output: 
   pagedown::jss_paged:
     self_contained: false
