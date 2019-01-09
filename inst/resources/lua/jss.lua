@@ -92,6 +92,8 @@ Meta = function(meta)
   if not meta.year then meta.year = "YYYY" end
   if not meta.volume then meta.volume = "VV" end
   if not meta.issue then meta.issue = "II" end
+  if not meta.submitdate then meta.submitdate = "yyyy-mm-dd" end
+  if not meta.acceptdate then meta.acceptdate = "yyyy-mm-dd" end
 
   return meta
 end
