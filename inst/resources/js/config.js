@@ -26,6 +26,7 @@
   // referring to an entry in the front matter
   async function detectFrontMatterReferences() {
     const frontMatter = document.querySelector('.front-matter-container');
+    if (!frontMatter) return;
     let anchors = document.querySelectorAll('a[href^="#"]:not([href*=":"])');
     for (let a of anchors) {
       const ref = a.getAttribute('href');
