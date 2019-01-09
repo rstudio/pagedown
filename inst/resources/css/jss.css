@@ -142,9 +142,15 @@ p {
   font-style: italic;
 }
 
+li {
+  padding: 7px 0;
+}
+
 /* footer */
 .article-footer {
   page-break-inside: avoid;
+}
+.article-footer:not(:first-child) {
   margin-top: 50px;
 }
 .affil-header {
