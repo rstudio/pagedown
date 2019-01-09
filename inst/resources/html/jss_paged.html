@@ -143,8 +143,10 @@ $endif$
 
 <section class="abstract" property="dc:abstract">
 $if(abstract)$
-<h2>Abstract</h2>
+<h2 class="abstract-header">Abstract</h2>
+<div class="abstract-content">
 $abstract$
+</div>
 $endif$
 <section class="keywords" role="list" aria-labelledby="$idprefix$keywords-header">
 <p><span id="$idprefix$keywords-header" class="keywords-heading" aria-level="3" role="heading">Keywords</span>: $for(keywords)$<span role="listitem">$keywords$</span>$sep$, $endfor$.</p>
