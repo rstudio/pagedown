@@ -55,27 +55,42 @@ book_crc = function(..., css = c('crc-page', 'default-page', 'default', 'crc')) 
 #' Create an article for the Journal of Statistical Software
 #'
 #' This output format is similar to \code{\link{html_paged}}.
-#' @param ...,css,template,highlight,pandoc_args,base_format Arguments passed to \code{\link{html_paged}()}.
+#' @param ...,css,template,highlight,pandoc_args Arguments passed to \code{\link{html_paged}()}.
 #' @return An R Markdown output format.
 #' @export
 jss_paged = function(
   ..., css = c('jss-fonts', 'jss-page', 'jss'),
   template = pkg_resource('html', 'jss_paged.html'),
-  highlight = NULL, pandoc_args = NULL, base_format = rmarkdown::html_document
+  highlight = NULL, pandoc_args = NULL
 ) {
-  jss_format = function(...) {
-    base = base_format(...)
-    base$knitr$opts_chunk$prompt = TRUE
-    base$knitr$opts_chunk$comment = NA
-    base$knitr$opts_chunk$fig.align = 'center'
-    base$knitr$opts_chunk$fig.width = 4.9
-    base$knitr$opts_chunk$fig.height = 3.675
-    base
-  }
-  html_paged(
+  jss_format = html_paged(
     ..., template = template, highlight = highlight, css = css,
-    pandoc_args = c(lua_filters('jss.lua'), pandoc_args), base_format = jss_format
+    pandoc_args = c(lua_filters('jss.lua'), pandoc_args)
   )
+
+  base_pre_knit = jss_format$pre_knit
+  base_on_exit = jss_format$on_exit
+
+  prev_config = NULL
+
+  jss_format$pre_knit = function(input, ...) {
+    base_pre_knit(input, ...)
+    prev_config <<- options(prompt = "R> ", continue = "R+ ")
+  }
+
+  jss_format$on_exit = function() {
+    base_on_exit()
+    options(prev_config)
+  }
+
+  jss_format$knitr$opts_chunk$prompt = TRUE
+  jss_format$knitr$opts_chunk$comment = NA
+  jss_format$knitr$opts_chunk$fig.align = 'center'
+  jss_format$knitr$opts_chunk$fig.width = 4.9
+  jss_format$knitr$opts_chunk$fig.height = 3.675
+  jss_format$knitr$opts_chunk$class.source = 'r-chunk-code'
+
+  jss_format
 }
 
 pagedown_dependency = function(css = NULL, js = FALSE) {

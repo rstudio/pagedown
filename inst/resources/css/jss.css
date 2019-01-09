@@ -7,6 +7,10 @@
   --header-image-padding: 18px;
 }
 
+html {
+  font-size: 14px;
+}
+
 /* article header */
 .document-header {
   border-width: 4px 0;
@@ -132,6 +136,10 @@ p {
 .uri, .email, .doi {
   text-decoration: none;
   color: #800000;
+}
+
+.r-chunk-code {
+  font-style: italic;
 }
 
 /* footer */
