@@ -55,15 +55,18 @@ book_crc = function(..., css = c('crc-page', 'default-page', 'default', 'crc')) 
 #' Create an article for the Journal of Statistical Software
 #'
 #' This output format is similar to \code{\link{html_paged}}.
-#' @param ...,css,template,pandoc_args Arguments passed to \code{\link{html_paged}()}.
+#' @param ...,css,template,highlight,pandoc_args Arguments passed to \code{\link{html_paged}()}.
 #' @return An R Markdown output format.
 #' @export
 jss_paged = function(
   ..., css = c('jss-fonts', 'jss-page', 'jss'),
   template = pkg_resource('html', 'jss_paged.html'),
-  pandoc_args = NULL
+  highlight = NULL, pandoc_args = NULL
 ) {
-  html_paged(..., pandoc_args = c(lua_filters('jss.lua'), pandoc_args), css = css, template = template)
+  html_paged(
+    ..., template = template, highlight = highlight, css = css,
+    pandoc_args = c(lua_filters('jss.lua'), pandoc_args)
+  )
 }
 
 pagedown_dependency = function(css = NULL, js = FALSE) {
