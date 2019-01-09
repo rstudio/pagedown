@@ -5,10 +5,11 @@
 \title{Create an article for the Journal of Statistical Software}
 \usage{
 jss_paged(..., css = c("jss-fonts", "jss-page", "jss"), template = pkg_resource("html", 
-    "jss_paged.html"), highlight = NULL, pandoc_args = NULL)
+    "jss_paged.html"), highlight = NULL, pandoc_args = NULL, 
+    base_format = rmarkdown::html_document)
 }
 \arguments{
-\item{..., css, template, highlight, pandoc_args}{Arguments passed to \code{\link{html_paged}()}.}
+\item{..., css, template, highlight, pandoc_args, base_format}{Arguments passed to \code{\link{html_paged}()}.}
 }
 \value{
 An R Markdown output format.
