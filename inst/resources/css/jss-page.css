@@ -25,6 +25,7 @@
   @top-center {
     content: element(runningTitle);
     width: 150mm;
+    font-style: italic;
   }
 }
 
