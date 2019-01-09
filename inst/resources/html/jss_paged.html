@@ -127,7 +127,7 @@ $for(author)$
 $if(author.data.name)$
 <span class="author">$author.data.name$</span>
 $if(author.data.affiliation)$
-<br><span class="author-afil">
+<br><span class="author-affil">
 $author.data.affiliation$
 </span>
 $endif$
@@ -160,10 +160,10 @@ $body$
 <footer class="article-footer">
 $for(author)$
 $if(author.data.address)$
-<h3>Affiliation:</h3>
+<h3 class="affil-header">Affiliation:</h3>
 <address>
 <p class="author">$author.data.name$</p>
-<p class="author-afil">$author.data.affiliation$</p>
+<p class="author-affil">$author.data.affiliation$</p>
 <p class="author-address">$author.data.address$</p>
 $if(author.data.email)$<p>E-mail: $author.data.email$</p>$endif$
 $if(author.data.url)$<p>URL: $author.data.url$</p>$endif$

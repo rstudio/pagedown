@@ -137,8 +137,21 @@ p {
 /* footer */
 .article-footer {
   page-break-inside: avoid;
+  margin-top: 50px;
 }
-
+.affil-header {
+  font-size: 16px;
+  margin: 8px 0;
+}
+.article-footer address {
+  font-style: normal;
+}
+.article-footer address p {
+  margin: 0;
+}
+.article-footer .author {
+  font-weight: normal;
+}
 .last-page-footer {
   border-width: 1px 0;
   border-style: solid;
@@ -148,21 +161,17 @@ p {
   font-size: 16px;
   margin-bottom: 40px;
 }
-
 .jss-meta {
   margin: 8px 0 4px 0;
 }
-
 .jss-meta .journal-name {
   padding: 0;
   margin: 0;
   height: 17px;
 }
-
 .last-page-footer .uri {
   float: right;
 }
-
 .footer-issue, .info-dates {
   display: inline-block;
   margin: 4px 0;
@@ -172,6 +181,7 @@ p {
   float: right;
   text-align: right;
 }
+
 /* viewer */
 @media screen {
   body {
