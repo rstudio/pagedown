@@ -51,7 +51,7 @@ blockquote {
   font-family: 'MathJax_Main', MJSerif, 'STKaiti', 'KaiTi', '楷体', 'SimKai', 'DFKai-SB', 'NSimSun', Times, serif;
 }
 
-code {
+code, .uri, .email, .doi {
   font-family: 'MathJax_Typewriter', MJMono, "Courier New", 'STKaiti', 'KaiTi', 'SimKai', Courier, monospace;
 }
 
