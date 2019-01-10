@@ -78,6 +78,7 @@ jss_paged = function(
     csl = csl, highlight = highlight,
     pandoc_args = c(
       lua_filters('jss.lua'),
+      '--metadata', 'link-citations=true',
       pandoc_args
     )
   )
