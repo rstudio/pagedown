@@ -240,6 +240,10 @@ To create a simple business card, you can use the `pagedown::business_card` form
 
 You can write a letter with the `pagedown::html_letter` format. See https://pagedown.rbind.io/html-letter/ for an example.
 
+## A Journal of Statistical Software article
+
+You can write an article for the [Journal of Statistical Sofware](https://jstatsoft.org/). See https://pagedown.rbind.io/jss-paged/ for an example. 
+
 # Miscellaneous features
 
 ## Lists of tables and figures
