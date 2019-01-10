@@ -20,7 +20,6 @@ html {
   margin-left: auto;
   margin-bottom: 110px;
 }
-
 .document-header::before {
   content: "";
   display: block;
@@ -38,20 +37,17 @@ html {
   background-repeat: no-repeat;
   background-origin: border-box;
 }
-
 .journal-name {
   padding-top: 14px;
   padding-left: 20px;
   filter: invert(100%);
   height: 50px;
 }
-
 .header-meta {
   font-style: italic;
   margin: 6px 0;
   font-size: 14px;
 }
-
 .header-meta .doi {
   float: right;
 }
@@ -111,12 +107,10 @@ h2.abstract-header {
   content: ".";
   padding-right: 6px;
 }
-
 .level1 h1 {
   text-align: center;
   font-size: 20px;
 }
-
 .level2 h2 {
   font-size: 16px;
 }
@@ -131,19 +125,53 @@ p {
   orphans: 3;
   text-align: justify;
   font-size: 14px;
+  line-height: 16px;
+  margin: 7px 0;
 }
-
-.uri, .email, .doi {
+a {
   text-decoration: none;
+  color: #000080;
+}
+.uri, .email, .doi, a[href^="http"] {
   color: #800000;
 }
-
+pre, code {
+  white-space: pre;
+}
 .r-chunk-code {
   font-style: italic;
 }
+.smallcaps {
+  font-variant: smallcaps;
+}
+main img {
+  max-width: 100%;
+  max-height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
+}
+.caption, caption {
+  text-align: center;
+  font-weight: bold;
+}
+.footnote-break {
+  width: 40%;
+  border-color: black;
+  border-width: 0.5px;
+}
+sub, sup {
+  line-height: 0.75;
+}
+table {
+  page-break-inside: avoid;
+  margin: auto;
+}
 
-li {
-  padding: 7px 0;
+/* bibliography */
+#references {
+  margin-top: 28px;
+}
+.references p {
+  text-indent: -12px;
+  padding: 7px 0 7px 12px;
 }
 
 /* footer */
