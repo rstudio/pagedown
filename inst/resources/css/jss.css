@@ -110,6 +110,8 @@ h2.abstract-header {
 .level1 h1 {
   text-align: center;
   font-size: 20px;
+  margin-top: 30px;
+  margin-bottom: 16px;
 }
 .level2 h2 {
   font-size: 16px;
@@ -142,15 +144,18 @@ pre, code {
   font-style: italic;
 }
 .smallcaps {
-  font-variant: smallcaps;
+  font-variant: small-caps;
 }
 main img {
   max-width: 100%;
   max-height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
 }
-.caption, caption {
-  text-align: center;
-  font-weight: bold;
+.figure {
+  break-inside: avoid;
+}
+.caption {
+  text-align: justify;
+  margin: 14px 0;
 }
 .footnote-break {
   width: 40%;
@@ -160,14 +165,16 @@ main img {
 sub, sup {
   line-height: 0.75;
 }
+.table-container {
+  break-inside: avoid;
+}
 table {
-  page-break-inside: avoid;
   margin: auto;
 }
 
 /* bibliography */
 #references {
-  margin-top: 28px;
+  margin: 30px 0;
 }
 .references p {
   text-indent: -12px;
@@ -176,7 +183,7 @@ table {
 
 /* footer */
 .article-footer {
-  page-break-inside: avoid;
+  break-inside: avoid;
 }
 .article-footer:not(:first-child) {
   margin-top: 50px;

@@ -23,26 +23,51 @@ $if(date-meta)$<meta name="date" content="$date-meta$">$endif$
 <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
 
 <script>
-// Expand the citations links
 window.PagedConfig = {
-    before: async () => {
-      let citations = document.querySelectorAll('.citation');
-      for (let citation of citations) {
-        let anchor = citation.querySelector('a');
-        if (!anchor) continue;
-        let span = document.createElement('span');
-        span.innerHTML = anchor.innerHTML
-        anchor.insertAdjacentElement('afterend', span)
-        let href = anchor.getAttribute('href')
-        anchor.remove();
+  before: async () => {
+    // Expand the citations links
+    let citations = document.querySelectorAll('.citation');
+    for (let citation of citations) {
+      let anchor = citation.querySelector('a');
+      if (!anchor) continue;
+      let span = document.createElement('span');
+      span.innerHTML = anchor.innerHTML
+      anchor.insertAdjacentElement('afterend', span)
+      let href = anchor.getAttribute('href')
+      anchor.remove();
 
-        let newAnchor = document.createElement('a');
-        newAnchor.setAttribute('href', href);
-        citation.insertAdjacentElement('beforebegin', newAnchor);
-        newAnchor.appendChild(citation);
+      let newAnchor = document.createElement('a');
+      newAnchor.setAttribute('href', href);
+      citation.insertAdjacentElement('beforebegin', newAnchor);
+      newAnchor.appendChild(citation);
+    }
+
+    // For the table captions, we would want to write this CSS rule:
+    //     caption {caption-side: bottom-outside;}
+    // However, the bottom-outside value is not standard and not implemented in Chrome.
+    // So, we need to modify the DOM.
+    let tables = document.querySelectorAll('table');
+    for (let table of tables) {
+      let caption = table.querySelector('caption');
+      if (!caption) continue;
+      let tableContainer = document.createElement('div');
+      tableContainer.className = 'table-container';
+      table.insertAdjacentElement('beforebegin', tableContainer);
+      tableContainer.appendChild(table);
+      let bookdownIdentifier = caption.querySelector('span[id^="tab\\:"]');
+      if (!!bookdownIdentifier) {
+        let tableId = bookdownIdentifier.id;
+        bookdownIdentifier.removeAttribute('id');
+        table.id = tableId;
       }
+      let newCaption = document.createElement('p');
+      newCaption.className = 'caption';
+      newCaption.innerHTML = caption.innerHTML;
+      caption.remove();
+      tableContainer.appendChild(newCaption);
     }
   }
+}
 </script>
 
 $if(math)$
