@@ -14,17 +14,26 @@
 #'   built-in CSS files, run \code{pagedown:::list_css()}.
 #' @param theme The Bootstrap theme. By default, Bootstrap is not used.
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
+#' @param csl The path of the Citation Style Language (CSL) file used to format
+#'   citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).
+#'   If the path does not contain the \file{.csl} extension, it is assumed to
+#'   be a built-in CSL file. For example, \code{journal-of-statistical-software}
+#'   means the file \code{pagedown:::pkg_resource('csl', 'journal-of-statistical-software.csl')}.
+#'   To see all built-in CSL files, run \code{pagedown:::list_csl()}.
 #' @references \url{https://pagedown.rbind.io}
 #' @return An R Markdown output format.
 #' @import stats utils
 #' @export
 html_paged = function(
   ..., css = c('default-fonts', 'default-page', 'default'), theme = NULL,
-  template = pkg_resource('html', 'paged.html')
+  template = pkg_resource('html', 'paged.html'), csl = NULL
 ) {
   html_format(
     ..., css = css, theme = theme, template = template, .pagedjs = TRUE,
-    .pandoc_args = lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua') # uri-to-fn.lua must come before footnotes.lua
+    .pandoc_args = c(
+      lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua'), # uri-to-fn.lua must come before footnotes.lua
+      csl_style(csl)
+    )
   )
 }
 
@@ -55,19 +64,20 @@ book_crc = function(..., css = c('crc-page', 'default-page', 'default', 'crc')) 
 #' Create an article for the Journal of Statistical Software
 #'
 #' This output format is similar to \code{\link{html_paged}}.
-#' @param ...,css,template,highlight,pandoc_args Arguments passed to \code{\link{html_paged}()}.
+#' @param ...,css,template,csl,highlight,pandoc_args Arguments passed to \code{\link{html_paged}()}.
 #' @return An R Markdown output format.
 #' @export
 jss_paged = function(
   ..., css = c('jss-fonts', 'jss-page', 'jss'),
   template = pkg_resource('html', 'jss_paged.html'),
+  csl = 'journal-of-statistical-software',
   highlight = NULL, pandoc_args = NULL
 ) {
   jss_format = html_paged(
-    ..., template = template, highlight = highlight, css = css,
+    ..., template = template, css = css,
+    csl = csl, highlight = highlight,
     pandoc_args = c(
       lua_filters('jss.lua'),
-      c('--csl', pkg_resource('csl', 'journal-of-statistical-software.csl')),
       pandoc_args
     )
   )
