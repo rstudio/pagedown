@@ -43,7 +43,7 @@ local getDOI = function(volume, issue)
   if not isInteger(volumeNumber) or not isInteger(issueNumber) then return fallback end
 
   -- build the DOI
-  return "10.18637/jss.v" .. padVolume(volume) .. ".i" .. padIssue(issue)
+  return "10.18637/jss.v" .. padVolume(volumeNumber) .. ".i" .. padIssue(issueNumber)
 end
 
 
