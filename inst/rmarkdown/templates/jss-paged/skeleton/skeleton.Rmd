@@ -1,26 +1,20 @@
 ---
 author:
-  - name: FirstName LastName
-    affiliation: University/Company
+  - name: Yihui Xie
+    affiliation: RStudio
     address: |
       First line  
       Second line
     email: <name@company.com>
-    url: <http://rstudio.com>
-  - name: Second Author
+    url: <https://rstudio.com>
+  - name: Romain Lesur
     affiliation: Affiliation
 title: "A Capitalized Title: Something about a Package [foo]{.pkg}"
-shorttitle: "[foo]{.pkg}: A Package for Bar"
-abstract: >
+shorttitle: "[foo]{.pkg}:  A Capitalized Title"
+abstract: |
   The abstract of the article.
 # at least one keyword must be supplied
 keywords: [keywords, not capitalized, "[Java]{.proglang}"]
-month: June
-year: 2012
-volume: 50
-issue: 9
-submitdate: 2012-01-23
-acceptdate: 2012-10-31
 links-to-footnotes: true
 paged-footnotes: true
 output: 
@@ -30,21 +24,25 @@ output:
 
 # Introduction
 
-This template demonstrates some of the basic latex you'll need to know to create a JSS article.
+This template demonstrates some of the basic [markdown]{.proglang} you'll need to know to create a JSS article.
 
 ## Code formatting
 
-You should use markdown but you also can use $\LaTeX$ commands:
+You should use [Pandoc]{.pkg}'s [markdown]{.proglang} bracketed spans but you also can use $\LaTeX$ commands:
 
-* [Java]{.proglang} replaces $\proglang{Java}$ 
-* [plyr]{.pkg} replaces $\pkg{plyr}$
-* `print("abc")` replaces $\code{print("abc")}$
+* [Java]{.proglang} or $\proglang{Java}$ 
+* [plyr]{.pkg} or $\pkg{plyr}$
+* `print("abc")` or $\code{print("abc")}$
 
-# R code
+# [R]{.proglang} code
 
-Can be inserted in regular R markdown blocks.
+Can be inserted in regular [R Markdown]{.proglang} blocks.
 
 ```{r}
 x <- 1:10
 x
 ```
+
+# Render the document
+
+If you use the option `self_contained: false` (see line \#22 of this `Rmd` file), don't click on the `Knit` button in RStudio. Use instead the [xaringan]{.pkg} RStudio add-in _Infinite Moon Reader_.
