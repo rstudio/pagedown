@@ -22,12 +22,39 @@ $if(date-meta)$<meta name="date" content="$date-meta$">$endif$
 
 <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
 
+<script>
+// Expand the citations links
+window.PagedConfig = {
+    before: async () => {
+      let citations = document.querySelectorAll('.citation');
+      for (let citation of citations) {
+        let anchor = citation.querySelector('a');
+        if (!anchor) continue;
+        let span = document.createElement('span');
+        span.innerHTML = anchor.innerHTML
+        anchor.insertAdjacentElement('afterend', span)
+        let href = anchor.getAttribute('href')
+        anchor.remove();
+
+        let newAnchor = document.createElement('a');
+        newAnchor.setAttribute('href', href);
+        citation.insertAdjacentElement('beforebegin', newAnchor);
+        newAnchor.appendChild(citation);
+      }
+    }
+  }
+</script>
+
 $if(math)$
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
+(function() {
+  previousBefore = PagedConfig.before;
+
   window.PagedConfig = {
-    before: () => {
-      return new Promise((resolve, reject) => {
+    before: async () => {
+      await previousBefore();
+      await new Promise((resolve, reject) => {
         var script = document.createElement("script");
         script.type = "text/javascript";
         var src = "true";
@@ -46,6 +73,7 @@ $if(math)$
       });
     }
   };
+})();
 </script>
 $endif$
 
