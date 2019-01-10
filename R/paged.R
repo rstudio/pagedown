@@ -65,7 +65,11 @@ jss_paged = function(
 ) {
   jss_format = html_paged(
     ..., template = template, highlight = highlight, css = css,
-    pandoc_args = c(lua_filters('jss.lua'), pandoc_args)
+    pandoc_args = c(
+      lua_filters('jss.lua'),
+      c('--csl', pkg_resource('csl', 'journal-of-statistical-software.csl')),
+      pandoc_args
+    )
   )
 
   base_pre_knit = jss_format$pre_knit
