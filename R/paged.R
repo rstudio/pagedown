@@ -16,10 +16,6 @@
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
 #' @param csl The path of the Citation Style Language (CSL) file used to format
 #'   citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).
-#'   If the path does not contain the \file{.csl} extension, it is assumed to
-#'   be a built-in CSL file. For example, \code{journal-of-statistical-software}
-#'   means the file \code{pagedown:::pkg_resource('csl', 'journal-of-statistical-software.csl')}.
-#'   To see all built-in CSL files, run \code{pagedown:::list_csl()}.
 #' @references \url{https://pagedown.rbind.io}
 #' @return An R Markdown output format.
 #' @import stats utils
@@ -32,7 +28,7 @@ html_paged = function(
     ..., css = css, theme = theme, template = template, .pagedjs = TRUE,
     .pandoc_args = c(
       lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua'), # uri-to-fn.lua must come before footnotes.lua
-      csl_style(csl)
+      if (!is.null(csl)) c('--csl', csl)
     )
   )
 }
@@ -70,7 +66,7 @@ book_crc = function(..., css = c('crc-page', 'default-page', 'default', 'crc')) 
 jss_paged = function(
   ..., css = c('jss-fonts', 'jss-page', 'jss'),
   template = pkg_resource('html', 'jss_paged.html'),
-  csl = 'journal-of-statistical-software',
+  csl = pkg_resource('csl', 'journal-of-statistical-software.csl'),
   highlight = NULL, pandoc_args = NULL
 ) {
   jss_format = html_paged(

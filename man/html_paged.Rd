@@ -22,11 +22,7 @@ built-in CSS files, run \code{pagedown:::list_css()}.}
 \item{template}{The path to the Pandoc template to convert Markdown to HTML.}
 
 \item{csl}{The path of the Citation Style Language (CSL) file used to format
-citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).
-If the path does not contain the \file{.csl} extension, it is assumed to
-be a built-in CSL file. For example, \code{journal-of-statistical-software}
-means the file \code{pagedown:::pkg_resource('csl', 'journal-of-statistical-software.csl')}.
-To see all built-in CSL files, run \code{pagedown:::list_csl()}.}
+citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).}
 }
 \value{
 An R Markdown output format.
