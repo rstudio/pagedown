@@ -79,23 +79,9 @@ jss_paged = function(
     )
   )
 
-  base_pre_knit = jss_format$pre_knit
-  base_on_exit = jss_format$on_exit
-
-  prev_config = NULL
-
-  jss_format$pre_knit = function(input, ...) {
-    base_pre_knit(input, ...)
-    prev_config <<- options(prompt = "R> ", continue = "R+ ")
-  }
-
-  jss_format$on_exit = function() {
-    base_on_exit()
-    options(prev_config)
-  }
-
   jss_format$knitr$opts_chunk$prompt = TRUE
   jss_format$knitr$opts_chunk$comment = NA
+  jss_format$knitr$opts_chunk$R.options = list(prompt ='R> ', continue = 'R+ ')
   jss_format$knitr$opts_chunk$fig.align = 'center'
   jss_format$knitr$opts_chunk$fig.width = 4.9
   jss_format$knitr$opts_chunk$fig.height = 3.675
