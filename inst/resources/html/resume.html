@@ -29,16 +29,18 @@ $body$
 <script>
 (function() {
   var i, s, j, el, els;
-  var create_el = function(type, className, content) {
+  var create_el = function(type, className, content, isHTML) {
     var el = document.createElement(type);
     if (className) el.className = className;
-    if (content) el.innerText = content;
+    if (content) {
+      if (isHTML) {el.innerHTML = content;} else {el.innerText = content;}
+    }
     return el;
   }
 
   // replace h2 title with h1
   var title = document.getElementById('title').querySelector('h2');
-  title.parentNode.replaceChild(create_el('h1', false, title.innerText), title);
+  title.parentNode.replaceChild(create_el('h1', false, title.innerHTML, true), title);
 
   // add the class .aside to #aside
   el = document.getElementById('aside');
@@ -76,14 +78,14 @@ $body$
     // move title, description, location to the details div
     (function(h) {
       h.appendChild(el.children[3]);
-      var p = el.children[3], s = p.innerText;  // description
-      if (s !== 'N/A') {
-        h.appendChild(create_el('span', 'place', s));
+      var p = el.children[3];  // description
+      if (p.innerText !== 'N/A') {
+        h.appendChild(create_el('span', 'place', p.innerHTML, true));
       }
       el.removeChild(p);
-      p = el.children[3], s = p.innerText;  // location
-      if (s !== 'N/A') {
-        s = create_el('span', 'location', s);
+      p = el.children[3];  // location
+      if (p.innerText !== 'N/A') {
+        s = create_el('span', 'location', p.innerHTML, true);
         s.innerHTML = '<i class="fa fa-map-marker-alt"></i> ' + s.innerHTML;
         h.appendChild(s);
       }
