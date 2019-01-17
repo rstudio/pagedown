@@ -162,9 +162,11 @@ For the "Main" part, all sections must follow a specific structure except the fi
 
 - The first paragraph is a brief description of the subsection.
 
-- The second paragraph is the location. It can be `N/A` if you do not want to include a location.
+- The second paragraph is the location.
 
 - The third paragraph is the time period. If this subsection has both a starting and ending time, separate them by a dash, e.g., `2014 - 2015` or `2014/07/27 - 2015/07/23`.
+
+The description, location, and time period can each be `N/A` if the relevant information is not available.
 
 You can write artibrary content after the third paragraph (e.g., more paragraphs, bullet lists, and so on). If you want to write content in two columns, you may use a "concise" block, e.g.,
 
