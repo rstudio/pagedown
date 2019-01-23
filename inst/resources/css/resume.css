@@ -16,7 +16,7 @@
   --sidebar-width: 15rem;
   --sidebar-background-color: #f2f2f2;
   --main-width: calc(var(--content-width) - var(--sidebar-width));
-  --decorator-horizontal-margin: 0.2in;
+  --decorator-horizontal-margin: 0.1in;
 
   --sidebar-horizontal-padding: 0.2in;
 
@@ -198,16 +198,18 @@ h1, h2{
   font-size: 0.7rem;
   text-align: right;
   line-height: 1;
+  max-width: var(--date-block-width);
 }
 
 .date span{
   display: block;
+  text-align: center;
 }
 
 .date span:nth-child(2)::before{
   position: relative;
   top: 0.1rem;
-  right: 0.55rem;
+  right: 0;
   display: block;
   height: 1rem;
   content: '|';
