@@ -16,7 +16,7 @@
   --sidebar-width: 15rem;
   --sidebar-background-color: #f2f2f2;
   --main-width: calc(var(--content-width) - var(--sidebar-width));
-  --decorator-horizontal-margin: 0.1in;
+  --decorator-horizontal-margin: 0.2in;
 
   --sidebar-horizontal-padding: 0.2in;
 
@@ -28,7 +28,7 @@
   --decorator-border: 1px solid #ccc;
 
   --row-blocks-padding-top: 0.5rem;
-  --date-block-width: 0.6in;
+  --date-block-width: 0.7in;
 
   --main-blocks-title-icon-offset-left: calc(-17pt - 0.25 * var(--root-font-size));
 
