@@ -22,6 +22,14 @@ output:
     # googlefonts: "Righteous" # feel free to try other fonts at https://fonts.google.com
 ---
 
+<!-- if you prefer you can create cards in markdown instead of YAML declaration -->
+
+::: {.wrapper data-repeat="12"}
+[Another Name]{slot="name"}
+[Another Title]{slot="title"}
+[someone@rstudio.com]{slot="email"}
+:::
+
 
 <!-- if you prefer black text on white background, set eval=TRUE on the chunk below -->
 

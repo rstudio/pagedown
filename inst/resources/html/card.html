@@ -108,15 +108,23 @@
   </div>
   $endfor$
 
-  <div class="extra-content">
   $body$
-  </div>
 
   <script>
     (() => {
+      // when a card is created in markdown, spans are embedded in paragraphs
+      // we need to move these spans outside paragraph to be detected by the template
+      let paragraphs = document.querySelectorAll('.wrapper > p');
+      for (let paragraph of paragraphs) {
+        let wrapper = paragraph.parentElement;
+        for (let element of paragraph.childNodes) {
+          wrapper.appendChild(element);
+        }
+      }
+
+      // repeat cards
       const maxItemsPerGrid = $ncols$ * $nrows$;
       let cards = document.querySelectorAll('.wrapper');
-      // repeat cards
       for (const card of cards) {
         for (let i = 1; i < card.dataset.repeat; i++) {
           document.body.insertBefore(card.cloneNode(true), card);
@@ -139,7 +147,7 @@
 
       // build the shadow DOM for each card
       let templateContent = document.getElementById('card-template').content;
-      let styles = document.querySelectorAll('.extra-content style');
+      let styles = document.querySelectorAll('body > style');
       for (let card of cards) {
         let shadowDOM = card.attachShadow({  mode: 'open' });
         shadowDOM.appendChild(templateContent.cloneNode(true));
