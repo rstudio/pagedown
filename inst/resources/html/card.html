@@ -112,8 +112,8 @@
 
   <script>
     (() => {
-      // when a card is created in markdown, spans are embedded in paragraphs
-      // we need to move these spans outside paragraph to be detected by the template
+      // when a card is created using markdown, Pandoc embeds spans in paragraphs
+      // we need to move these spans outside paragraphs to be detected by the template
       let paragraphs = document.querySelectorAll('.wrapper > p');
       for (let paragraph of paragraphs) {
         let wrapper = paragraph.parentElement;
