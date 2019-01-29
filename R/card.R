@@ -15,8 +15,8 @@
 #' @examples pagedown::business_card(googlefonts = 'Lato')
 business_card = function(
   logo = NULL, width = '2in', height = '3in',
-  paperwidth = '8.5in', paperheight = '11in',
-  cols = 4, rows = 3,
+  paperwidth = '2in', paperheight = '3in',
+  cols = 1, rows = 1,
   googlefonts = 'Montserrat', mainfont = googlefonts
 ) {
   rmarkdown::output_format(

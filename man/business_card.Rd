@@ -4,8 +4,8 @@
 \alias{business_card}
 \title{Create business cards}
 \usage{
-business_card(logo = NULL, width = "2in", height = "3in", paperwidth = "8.5in", 
-    paperheight = "11in", cols = 4, rows = 3, googlefonts = "Montserrat", 
+business_card(logo = NULL, width = "2in", height = "3in", paperwidth = "2in", 
+    paperheight = "3in", cols = 1, rows = 1, googlefonts = "Montserrat", 
     mainfont = googlefonts)
 }
 \arguments{

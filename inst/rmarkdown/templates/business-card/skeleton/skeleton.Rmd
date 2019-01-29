@@ -7,9 +7,9 @@ email: "info@rstudio.com"
 url: www.rstudio.com
 address: |
   @rstudio
-person: 
-  - name: Yihui Xie
-    title: Responsible for `r grep('(?<!shut)down$', rownames(installed.packages()), value=T, perl=T)`
+#person: 
+#  - name: Yihui Xie
+#    title: Responsible for `r grep('(?<!shut)down$', rownames(installed.packages()), value=T, perl=T)`
 output:
   pagedown::business_card: default
     # googlefonts: "Righteous" # feel free to try other fonts at https://fonts.google.com
@@ -22,7 +22,6 @@ output:
 .wrapper {
   color: black;
   background-color: white;
-  border: 1px solid black;
 }
 .coordinates {
   color: #333;
