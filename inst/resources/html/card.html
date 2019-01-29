@@ -9,7 +9,7 @@
   <meta name="author" content="$author-meta$" />
   <title>$if(title-prefix)$$title-prefix$ - $endif$$author-meta$: $pagetitle$</title>
   $if(googlefonts)$
-  <link href="https://fonts.googleapis.com/css?family=$googlefonts$" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=$googlefonts$" rel="stylesheet" />
   $endif$
   <style>
   @page {
@@ -89,13 +89,12 @@
   </template>
 
   $if(name)$
-  <div class="wrapper">
+  <div class="wrapper" data-repeat="$if(repeat)$$repeat$$else$1$endif$">
   </div>
   $endif$
 
   $for(person)$
-
-  <div class="wrapper">
+  <div class="wrapper" data-repeat="$if(person.repeat)$$person.repeat$$else$1$endif$">
     $if(person.name)$
     <span slot="name">$person.name$</span>
     $else$
@@ -107,7 +106,6 @@
     $if(person.url)$<span slot="url">$person.url$</span>$endif$
     $if(person.address)$<div slot="address">$person.address$</div>$endif$
   </div>
-
   $endfor$
 
   <div class="extra-content">
@@ -117,34 +115,39 @@
   <script>
     (() => {
       const maxItemsPerGrid = $ncols$ * $nrows$;
-      let wrappers = document.querySelectorAll('.wrapper');
-      let wrappersArray = Array.from(wrappers);
-
-      // split the cards into grids
-      while (wrappersArray.length > 0) {
-        const numberOfItemsToInsertInGrid = Math.min(maxItemsPerGrid, wrappersArray.length);
-        let container = document.createElement('div');
-        container.className = 'grid';
-        document.body.insertBefore(container, wrappersArray[0]);
-        for (let wrapper of wrappersArray.slice(0, numberOfItemsToInsertInGrid)) {
-          container.appendChild(wrapper);
+      let cards = document.querySelectorAll('.wrapper');
+      // repeat cards
+      for (const card of cards) {
+        for (let i = 1; i < card.dataset.repeat; i++) {
+          document.body.insertBefore(card.cloneNode(true), card);
         }
-        wrappersArray.splice(0, numberOfItemsToInsertInGrid);
       }
 
-      // build the shadow DOM for each wrapper
+      // spread the cards in grids
+      cards = document.querySelectorAll('.wrapper');
+      let cardsArray = Array.from(cards);
+      while (cardsArray.length > 0) {
+        const numberOfItemsToInsertInGrid = Math.min(maxItemsPerGrid, cardsArray.length);
+        let grid = document.createElement('div');
+        grid.className = 'grid';
+        document.body.insertBefore(grid, cardsArray[0]);
+        for (let card of cardsArray.slice(0, numberOfItemsToInsertInGrid)) {
+          grid.appendChild(card);
+        }
+        cardsArray.splice(0, numberOfItemsToInsertInGrid);
+      }
+
+      // build the shadow DOM for each card
       let templateContent = document.getElementById('card-template').content;
       let styles = document.querySelectorAll('.extra-content style');
-      for (let wrapper of wrappers) {
-        let shadowDOM = wrapper.attachShadow({  mode: 'open' });
+      for (let card of cards) {
+        let shadowDOM = card.attachShadow({  mode: 'open' });
         shadowDOM.appendChild(templateContent.cloneNode(true));
         for (let style of styles) {
           shadowDOM.innerHTML += '<style>' + style.innerHTML + '</style>';
         }
       }
-
     })();
   </script>
-
 </body>
 </html>

@@ -1,17 +1,24 @@
 ---
 logo: "https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png"
-name: "Tareef Kawaf"
-title: "President of RStudio, Inc."
 phone: "+1 844-448-1212"
 email: "info@rstudio.com"
 url: www.rstudio.com
 address: |
   @rstudio
-#person: 
-#  - name: Yihui Xie
-#    title: Responsible for `r grep('(?<!shut)down$', rownames(installed.packages()), value=T, perl=T)`
+person: 
+  - name: Tareef Kawaf
+    title: President of RStudio, Inc.
+    repeat: 6
+  - name: Yihui Xie
+    title: Responsible for `r grep('(?<!shut)down$', unique(rownames(installed.packages())), value=T, perl=T)`
+    repeat: 6
+  - Jane Doe
 output:
-  pagedown::business_card: default
+  pagedown::business_card: 
+    cols: 4
+    rows: 3
+    paperwidth: 8.5in
+    paperheight: 11in
     # googlefonts: "Righteous" # feel free to try other fonts at https://fonts.google.com
 ---
 
