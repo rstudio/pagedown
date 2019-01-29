@@ -4,7 +4,6 @@
 #' \url{https://github.com/RelaxedJS/ReLaXed-examples}. See
 #' \url{https://pagedown.rbind.io/business-card/} for an example.
 #'
-#' @param logo Path or URL to a logo.
 #' @param width,height Width and height of the card.
 #' @param paperwidth,paperheight Width and height of the paper.
 #' @param cols,rows Number of columns and rows per page.
@@ -14,7 +13,7 @@
 #' @export
 #' @examples pagedown::business_card(googlefonts = 'Lato')
 business_card = function(
-  logo = NULL, width = '2in', height = '3in',
+  width = '2in', height = '3in',
   paperwidth = '2in', paperheight = '3in',
   cols = 1, rows = 1,
   googlefonts = 'Montserrat', mainfont = googlefonts

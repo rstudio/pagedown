@@ -4,13 +4,10 @@
 \alias{business_card}
 \title{Create business cards}
 \usage{
-business_card(logo = NULL, width = "2in", height = "3in", paperwidth = "2in", 
-    paperheight = "3in", cols = 1, rows = 1, googlefonts = "Montserrat", 
-    mainfont = googlefonts)
+business_card(width = "2in", height = "3in", paperwidth = "2in", paperheight = "3in", 
+    cols = 1, rows = 1, googlefonts = "Montserrat", mainfont = googlefonts)
 }
 \arguments{
-\item{logo}{Path or URL to a logo.}
-
 \item{width, height}{Width and height of the card.}
 
 \item{paperwidth, paperheight}{Width and height of the paper.}
