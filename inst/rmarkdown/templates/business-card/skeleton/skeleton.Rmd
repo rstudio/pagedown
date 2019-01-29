@@ -29,6 +29,7 @@ output:
 .wrapper {
   color: black;
   background-color: white;
+  border: 1px dotted black;
 }
 .coordinates {
   color: #333;
