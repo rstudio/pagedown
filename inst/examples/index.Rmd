@@ -238,6 +238,98 @@ We do not have time to document the poster formats yet, but here is a caveat: th
 
 To create a simple business card, you can use the `pagedown::business_card` format. See https://pagedown.rbind.io/business-card/ for an example.
 
+### Single card
+
+A single business card can be created with the following YAML header.
+
+```yaml
+---
+name: Jane Doe
+title: Miss Nobody
+phone: "+1 123-456-7890"
+email: "jane.doe@example.com"
+url: www.example.com
+address: |
+  2020 South Street
+  Sunshine, CA 90000
+logo: "logo.png"
+output: pagedown::business_card
+---
+```
+
+You can repeat the card on multiple pages using the `repeat` variable. The following example produces as many pages as cards (12).
+
+```yaml
+---
+name: Jane Doe
+title: Miss Nobody
+phone: "+1 123-456-7890"
+email: "jane.doe@example.com"
+url: www.example.com
+address: |
+  2020 South Street
+  Sunshine, CA 90000
+logo: "logo.png"
+repeat: 12
+output: pagedown::business_card
+---
+```
+
+In order to print the cards, you may prefer a layout with several cards on the same page: you can adjust the paper size with the `paperwidth` and `paperheight` variables and define a grid layout with the `cols` and `rows` variables.
+
+```yaml
+---
+name: Jane Doe
+title: Miss Nobody
+phone: "+1 123-456-7890"
+email: "jane.doe@example.com"
+url: www.example.com
+address: |
+  2020 South Street
+  Sunshine, CA 90000
+logo: "logo.png"
+repeat: 12
+output: 
+  pagedown::business_card:
+    cols: 4
+    rows: 3
+    paperwidth: 8.5in
+    paperheight: 11in
+---
+```
+
+### Different cards with shared informations
+
+You can produce business cards for members of an organization sharing some informations (address, website...).  
+Common informations are declared as top level variables in the YAML header. Custom cards are defined using the `person` variable.
+
+```yaml
+---
+url: www.example.com
+address: |
+  2020 South Street
+  Sunshine, CA 90000
+logo: "logo.png"
+person:
+  - name: Jane Doe
+    title: Miss Nobody
+    phone: "+1 123-456-7890"
+    email: "jane.doe@example.com"
+    repeat: 6
+  - name: John Doe
+    title: Mister Nobody
+    phone: "+1 777-777-7777"
+    email: "john.doe@example.com"
+    repeat: 6
+output: 
+  pagedown::business_card:
+    cols: 4
+    rows: 3
+    paperwidth: 8.5in
+    paperheight: 11in
+---
+```
+
 ## Letter
 
 You can write a letter with the `pagedown::html_letter` format. See https://pagedown.rbind.io/html-letter/ for an example.

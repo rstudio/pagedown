@@ -8,11 +8,11 @@ address: |
 person: 
   - name: Tareef Kawaf
     title: President of RStudio, Inc.
-    repeat: 6
+    repeat: 12
   - name: Yihui Xie
     title: Responsible for `r grep('(?<!shut)down$', unique(rownames(installed.packages())), value=T, perl=T)`
-    repeat: 6
-  - Jane Doe
+    email: xie@yihui.name
+    repeat: 12
 output:
   pagedown::business_card: 
     cols: 4
