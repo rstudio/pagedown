@@ -20,7 +20,6 @@ business_card = function(
     rmarkdown::pandoc_options('html', 'markdown', args = c(
       '--template', rmarkdown::pandoc_path_arg(pkg_resource('html', 'card.html')),
       c(rbind('--variable', c(
-        paste0('logo=', logo),
         paste0('googlefonts=', paste(googlefonts, collapse = '|')),
         paste0('mainfont=', paste(mainfont, collapse = ', ')),
         paste0('pagewidth=', width), paste0('pageheight=', height)

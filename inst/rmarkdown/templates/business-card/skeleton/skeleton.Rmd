@@ -1,20 +1,19 @@
 ---
-author: "Tareef Kawaf"
+logo: "https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png"
+name: "Tareef Kawaf"
 title: "President of RStudio, Inc."
+phone: "+1 844-448-1212"
+email: "info@rstudio.com"
+url: www.rstudio.com
+address: |
+  @rstudio
+person: 
+  - name: Yihui Xie
+    title: Responsible of `r grep('(?<!shut)down$', rownames(installed.packages()), value=T, perl=T)`
 output:
-  pagedown::business_card:
-    logo: "https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png"
+  pagedown::business_card: default
     # googlefonts: "Righteous" # feel free to try other fonts at https://fonts.google.com
 ---
-
-+1 844-448-1212
-
-info@rstudio.com
-
-www.rstudio.com
-
-@rstudio
-
 
 
 <!-- if you prefer black text on white background, set eval=TRUE on the chunk below -->
