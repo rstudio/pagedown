@@ -20,12 +20,19 @@
     margin: 0;
     padding: 0;
   }
+  .wrapper {
+    font-family: $if(mainfont)$$mainfont$, $endif$sans-serif;
+    color: white;
+    background-color: black;
+    width: $pagewidth$;
+    height: $pageheight$;
+    margin: auto;
+  }
   </style>
 </head>
 
 <body>
   <template id="card-template">
-  <div class="wrapper">
   $if(logo)$<img class="logo" src="$logo$" alt="Logo" />$endif$
   <div class="me">
     <div class="name"><slot name="name">$name$</slot></div>
@@ -37,16 +44,7 @@
       <slot name="address">$address$</slot>
     </div>
   </div>
-  </div>
   <style>
-  .wrapper {
-    font-family: $if(mainfont)$$mainfont$, $endif$sans-serif;
-    color: white;
-    background-color: black;
-    width: $pagewidth$;
-    height: $pageheight$;
-    margin: auto;
-  }
   .logo {
     display: block;
     width: 75%;
@@ -70,41 +68,47 @@
   </style>
   </template>
 
-  $if(name)$
-  <div class="card">
-    <span slot="name">$name$</span>
-    $if(title)$<span slot="title">$title$</span>$endif$
-    $if(phone)$<span slot="phone">$phone$</span>$endif$
-    $if(email)$<span slot="email">$email$</span>$endif$
-    $if(url)$<span slot="url">$url$</span>$endif$
-    $if(address)$<div slot="address">$address$</div>$endif$
-  </div>
-  $endif$
-
-  $for(person)$
-  <div class="card">
-    $if(person.name)$
-    <span slot="name">$person.name$</span>
-    $else$
-    <span slot="name">$person$</span>
+  <div class="wrapper">
+    $if(name)$
+    <div class="card">
+      <span slot="name">$name$</span>
+      $if(title)$<span slot="title">$title$</span>$endif$
+      $if(phone)$<span slot="phone">$phone$</span>$endif$
+      $if(email)$<span slot="email">$email$</span>$endif$
+      $if(url)$<span slot="url">$url$</span>$endif$
+      $if(address)$<div slot="address">$address$</div>$endif$
+    </div>
     $endif$
-    $if(person.title)$<span slot="title">$person.title$</span>$endif$
-    $if(person.phone)$<span slot="phone">$person.phone$</span>$endif$
-    $if(person.email)$<span slot="email">$person.email$</span>$endif$
-    $if(person.url)$<span slot="url">$person.url$</span>$endif$
-    $if(person.address)$<div slot="address">$person.address$</div>$endif$
-  </div>
-  $endfor$
+
+    $for(person)$
+    <div class="card">
+      $if(person.name)$
+      <span slot="name">$person.name$</span>
+      $else$
+      <span slot="name">$person$</span>
+      $endif$
+      $if(person.title)$<span slot="title">$person.title$</span>$endif$
+      $if(person.phone)$<span slot="phone">$person.phone$</span>$endif$
+      $if(person.email)$<span slot="email">$person.email$</span>$endif$
+      $if(person.url)$<span slot="url">$person.url$</span>$endif$
+      $if(person.address)$<div slot="address">$person.address$</div>$endif$
+    </div>
+    $endfor$
 
   $body$
+  </div>
 
   <script>
     (() => {
       let templateContent = document.getElementById('card-template').content;
       let cards = document.querySelectorAll('.card');
+      let styles = document.querySelectorAll('.wrapper style');
       for (let card of cards) {
-        card.attachShadow({  mode: 'open' })
-            .appendChild(templateContent.cloneNode(true))
+        let shadow = card.attachShadow({  mode: 'open' });
+        shadow.appendChild(templateContent.cloneNode(true));
+        for (let style of styles) {
+          shadow.innerHTML += '<style>' + style.innerHTML + '</style>';
+        }
       }
     })();
   </script>
