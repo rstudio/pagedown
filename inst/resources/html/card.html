@@ -20,13 +20,21 @@
     margin: 0;
     padding: 0;
   }
-  .wrapper {
-    font-family: $if(mainfont)$$mainfont$, $endif$sans-serif;
-    color: white;
-    background-color: black;
+  body {
     width: $pagewidth$;
     height: $pageheight$;
-    margin: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-content: space-around;
+  }
+  .wrapper {
+    box-sizing: border-box;
+    width: $cardwidth$;
+    height: $cardheight$;
+    color: white;
+    background-color: black;
+    flex-shrink: 0;
   }
   </style>
 </head>
@@ -35,13 +43,13 @@
   <template id="card-template">
   $if(logo)$<img class="logo" src="$logo$" alt="Logo" />$endif$
   <div class="me">
-    <div class="name"><slot name="name">$name$</slot></div>
-    <div class="title"><slot name="title">$title$</slot></div>
+    <div class="name"><slot name="name"><span>$name$</span></slot></div>
+    <div class="title"><slot name="title"><span>$title$</span></slot></div>
     <div class="coordinates">
-      <p><slot name="phone">$phone$</slot></p>
-      <p><slot name="email">$email$</slot></p>
-      <p><slot name="url">$url$</slot></p>
-      <slot name="address">$address$</slot>
+      <p><slot name="phone"><span>$phone$</span></slot></p>
+      <p><slot name="email"><span>$email$</span></slot></p>
+      <p><slot name="url"><span>$url$</span></slot></p>
+      <slot name="address"><div>$address$</div></slot>
     </div>
   </div>
   <style>
@@ -52,6 +60,7 @@
     padding: .3in 0 0;
   }
   .me {
+    font-family: $if(mainfont)$$mainfont$, $endif$sans-serif;
     font-size: 11px;
     letter-spacing: 0.8px;
     line-height: 1.7em;
@@ -68,46 +77,42 @@
   </style>
   </template>
 
+  $if(name)$
   <div class="wrapper">
-    $if(name)$
-    <div class="card">
-      <span slot="name">$name$</span>
-      $if(title)$<span slot="title">$title$</span>$endif$
-      $if(phone)$<span slot="phone">$phone$</span>$endif$
-      $if(email)$<span slot="email">$email$</span>$endif$
-      $if(url)$<span slot="url">$url$</span>$endif$
-      $if(address)$<div slot="address">$address$</div>$endif$
-    </div>
+  </div>
+  $endif$
+
+  $for(person)$
+
+  <div class="wrapper">
+    $if(person.name)$
+    <span slot="name">$person.name$</span>
+    $else$
+    <span slot="name">$person$</span>
     $endif$
+    $if(person.title)$<span slot="title">$person.title$</span>$endif$
+    $if(person.phone)$<span slot="phone">$person.phone$</span>$endif$
+    $if(person.email)$<span slot="email">$person.email$</span>$endif$
+    $if(person.url)$<span slot="url">$person.url$</span>$endif$
+    $if(person.address)$<div slot="address">$person.address$</div>$endif$
+  </div>
 
-    $for(person)$
-    <div class="card">
-      $if(person.name)$
-      <span slot="name">$person.name$</span>
-      $else$
-      <span slot="name">$person$</span>
-      $endif$
-      $if(person.title)$<span slot="title">$person.title$</span>$endif$
-      $if(person.phone)$<span slot="phone">$person.phone$</span>$endif$
-      $if(person.email)$<span slot="email">$person.email$</span>$endif$
-      $if(person.url)$<span slot="url">$person.url$</span>$endif$
-      $if(person.address)$<div slot="address">$person.address$</div>$endif$
-    </div>
-    $endfor$
+  $endfor$
 
+  <div class="extra-content">
   $body$
   </div>
 
   <script>
     (() => {
       let templateContent = document.getElementById('card-template').content;
-      let cards = document.querySelectorAll('.card');
-      let styles = document.querySelectorAll('.wrapper style');
-      for (let card of cards) {
-        let shadow = card.attachShadow({  mode: 'open' });
-        shadow.appendChild(templateContent.cloneNode(true));
+      let wrappers = document.querySelectorAll('.wrapper');
+      let styles = document.querySelectorAll('.extra-content style');
+      for (let wrapper of wrappers) {
+        let shadowDOM = wrapper.attachShadow({  mode: 'open' });
+        shadowDOM.appendChild(templateContent.cloneNode(true));
         for (let style of styles) {
-          shadow.innerHTML += '<style>' + style.innerHTML + '</style>';
+          shadowDOM.innerHTML += '<style>' + style.innerHTML + '</style>';
         }
       }
     })();

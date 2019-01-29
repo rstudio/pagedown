@@ -6,6 +6,7 @@
 #'
 #' @param logo Path or URL to a logo.
 #' @param width,height Width and height of the card.
+#' @param paperwidth,paperheight Width and height of the paper.
 #' @param googlefonts Names of Google fonts to be loaded on the card page.
 #' @param mainfont Names of fonts to be used for the body text of the card.
 #' @return An R Markdown output format.
@@ -13,6 +14,7 @@
 #' @examples pagedown::business_card(googlefonts = 'Lato')
 business_card = function(
   logo = NULL, width = '2in', height = '3in',
+  paperwidth = '8.5in', paperheight = '11in',
   googlefonts = 'Montserrat', mainfont = googlefonts
 ) {
   rmarkdown::output_format(
@@ -22,7 +24,8 @@ business_card = function(
       c(rbind('--variable', c(
         paste0('googlefonts=', paste(googlefonts, collapse = '|')),
         paste0('mainfont=', paste(mainfont, collapse = ', ')),
-        paste0('pagewidth=', width), paste0('pageheight=', height)
+        paste0('cardwidth=', width), paste0('cardheight=', height),
+        paste0('pagewidth=', paperwidth), paste0('pageheight=', paperheight)
       )))
     ))
   )

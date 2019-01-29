@@ -4,13 +4,15 @@
 \alias{business_card}
 \title{Create business cards}
 \usage{
-business_card(logo = NULL, width = "2in", height = "3in", googlefonts = "Montserrat", 
-    mainfont = googlefonts)
+business_card(logo = NULL, width = "2in", height = "3in", paperwidth = "8.5in", 
+    paperheight = "11in", googlefonts = "Montserrat", mainfont = googlefonts)
 }
 \arguments{
 \item{logo}{Path or URL to a logo.}
 
 \item{width, height}{Width and height of the card.}
+
+\item{paperwidth, paperheight}{Width and height of the paper.}
 
 \item{googlefonts}{Names of Google fonts to be loaded on the card page.}
 
