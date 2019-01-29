@@ -19,14 +19,17 @@
   html, body {
     margin: 0;
     padding: 0;
-  }
-  body {
     width: $pagewidth$;
     height: $pageheight$;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-content: space-around;
+  }
+  .grid {
+    display: grid;
+    width: $pagewidth$;
+    height: $pageheight$;
+    grid-template-columns: repeat($ncols$, calc(100% / $ncols$));
+    grid-template-rows: repeat($nrows$, calc(100% / $nrows$));
+    justify-items: center;
+    align-items: center;
   }
   .wrapper {
     box-sizing: border-box;
@@ -34,7 +37,6 @@
     height: $cardheight$;
     color: white;
     background-color: black;
-    flex-shrink: 0;
   }
   </style>
 </head>
@@ -105,8 +107,24 @@
 
   <script>
     (() => {
-      let templateContent = document.getElementById('card-template').content;
+      const maxItemsPerGrid = $ncols$ * $nrows$;
       let wrappers = document.querySelectorAll('.wrapper');
+      let wrappersArray = Array.from(wrappers);
+
+      // split the cards into grids
+      while (wrappersArray.length > 0) {
+        const numberOfItemsToInsertInGrid = Math.min(maxItemsPerGrid, wrappersArray.length);
+        let container = document.createElement('div');
+        container.className = 'grid';
+        document.body.insertBefore(container, wrappersArray[0]);
+        for (let wrapper of wrappersArray.slice(0, numberOfItemsToInsertInGrid)) {
+          container.appendChild(wrapper);
+        }
+        wrappersArray.splice(0, numberOfItemsToInsertInGrid);
+      }
+
+      // build the shadow DOM for each wrapper
+      let templateContent = document.getElementById('card-template').content;
       let styles = document.querySelectorAll('.extra-content style');
       for (let wrapper of wrappers) {
         let shadowDOM = wrapper.attachShadow({  mode: 'open' });
@@ -115,6 +133,7 @@
           shadowDOM.innerHTML += '<style>' + style.innerHTML + '</style>';
         }
       }
+
     })();
   </script>
 

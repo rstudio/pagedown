@@ -7,6 +7,7 @@
 #' @param logo Path or URL to a logo.
 #' @param width,height Width and height of the card.
 #' @param paperwidth,paperheight Width and height of the paper.
+#' @param cols,rows Number of columns and rows per page.
 #' @param googlefonts Names of Google fonts to be loaded on the card page.
 #' @param mainfont Names of fonts to be used for the body text of the card.
 #' @return An R Markdown output format.
@@ -15,6 +16,7 @@
 business_card = function(
   logo = NULL, width = '2in', height = '3in',
   paperwidth = '8.5in', paperheight = '11in',
+  cols = 4, rows = 3,
   googlefonts = 'Montserrat', mainfont = googlefonts
 ) {
   rmarkdown::output_format(
@@ -25,7 +27,8 @@ business_card = function(
         paste0('googlefonts=', paste(googlefonts, collapse = '|')),
         paste0('mainfont=', paste(mainfont, collapse = ', ')),
         paste0('cardwidth=', width), paste0('cardheight=', height),
-        paste0('pagewidth=', paperwidth), paste0('pageheight=', paperheight)
+        paste0('pagewidth=', paperwidth), paste0('pageheight=', paperheight),
+        paste0('ncols=', cols), paste0('nrows=', rows)
       )))
     ))
   )
