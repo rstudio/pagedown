@@ -330,6 +330,17 @@ output:
 ---
 ```
 
+If you prefer, you can use markdown to create a card as follows.
+
+```markdown
+::: {.wrapper data-repeat="6"}
+[John Doe]{slot="name"}
+[Mister Nobody]{slot="title"}
+[john.doe@example.com]{slot="email"}
+[+1 777-777-7777]{slot="phone"}
+:::
+```
+
 ## Letter
 
 You can write a letter with the `pagedown::html_letter` format. See https://pagedown.rbind.io/html-letter/ for an example.
