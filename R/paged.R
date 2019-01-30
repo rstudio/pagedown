@@ -79,13 +79,14 @@ jss_paged = function(
     )
   )
 
-  jss_format$knitr$opts_chunk$prompt = TRUE
-  jss_format$knitr$opts_chunk$comment = NA
-  jss_format$knitr$opts_chunk$R.options = list(prompt ='R> ', continue = 'R+ ')
-  jss_format$knitr$opts_chunk$fig.align = 'center'
-  jss_format$knitr$opts_chunk$fig.width = 4.9
-  jss_format$knitr$opts_chunk$fig.height = 3.675
-  jss_format$knitr$opts_chunk$class.source = 'r-chunk-code'
+  opts_jss = list(
+    prompt = TRUE, comment = NA, R.options = list(prompt ='R> ', continue = 'R+ '),
+    fig.align = 'center', fig.width = 4.9, fig.height = 3.675,
+    class.source = 'r-chunk-code'
+  )
+  for (i in names(opts_jss)) {
+    jss_format$knitr$opts_chunk[[i]] = opts_jss[[i]]
+  }
 
   jss_format
 }
