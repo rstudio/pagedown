@@ -21,6 +21,7 @@ Below are some existing R Markdown output formats and examples.
 [![A paged HTML document](https://user-images.githubusercontent.com/163582/47673682-58b11880-db83-11e8-87fd-b5e753af7288.png)](https://pagedown.rbind.io)
 
 ### Journal of Statistical Software article (`pagedown::jss_paged`)
+
 [![A JSS article](https://user-images.githubusercontent.com/19177171/51005498-5b46cb80-153f-11e9-9026-4b50a9f3d3f1.png)](https://pagedown.rbind.io/jss-paged/)
 
 ## Resume (`pagedown::html_resume`)
