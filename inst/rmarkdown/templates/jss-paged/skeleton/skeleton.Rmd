@@ -1,0 +1,55 @@
+---
+author:
+  - name: Yihui Xie
+    affiliation: RStudio
+    address: |
+      First line  
+      Second line
+    email: <name@company.com>
+    url: <https://rstudio.com>
+  - name: Romain Lesur
+    affiliation: Affiliation
+title: "A Capitalized Title: Something about a Package **foo**"
+shorttitle: "**foo**:  A Capitalized Title"
+abstract: |
+  The abstract of the article.
+# at least one keyword must be supplied
+keywords: [keywords, not capitalized, "[Java]{.proglang}"]
+links-to-footnotes: true
+paged-footnotes: true
+bibliography: index.bib
+output: 
+  pagedown::jss_paged:
+    self_contained: false
+---
+
+# Introduction
+
+This template demonstrates some of the basic [markdown]{.proglang} you'll need to know to create a JSS article with **pagedown** [@R-pagedown].
+
+## Code formatting
+
+You should use **Pandoc**'s [markdown]{.proglang} but you also can use $\LaTeX$ commands:
+
+* [Java]{.proglang} or $\proglang{Java}$ 
+* **plyr**, [plyr]{.pkg} or $\pkg{plyr}$
+* `print("abc")` or $\code{print("abc")}$
+
+# [R]{.proglang} code
+
+Can be inserted in regular [R Markdown]{.proglang} blocks.
+
+```{r}
+x <- 1:10
+x
+```
+
+# Render the document
+
+If you use the option `self_contained: false` (see line \#22 of this `Rmd` file), don't click on the `Knit` button in RStudio. Use instead the **xaringan** [@R-xaringan] RStudio add-in _Infinite Moon Reader_.
+
+# References {-}
+
+```{r, include=FALSE}
+knitr::write_bib(c(.packages(), 'pagedown', 'xaringan'), 'index.bib')
+```

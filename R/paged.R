@@ -14,17 +14,22 @@
 #'   built-in CSS files, run \code{pagedown:::list_css()}.
 #' @param theme The Bootstrap theme. By default, Bootstrap is not used.
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
+#' @param csl The path of the Citation Style Language (CSL) file used to format
+#'   citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).
 #' @references \url{https://pagedown.rbind.io}
 #' @return An R Markdown output format.
 #' @import stats utils
 #' @export
 html_paged = function(
   ..., css = c('default-fonts', 'default-page', 'default'), theme = NULL,
-  template = pkg_resource('html', 'paged.html')
+  template = pkg_resource('html', 'paged.html'), csl = NULL
 ) {
   html_format(
     ..., css = css, theme = theme, template = template, .pagedjs = TRUE,
-    .pandoc_args = lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua') # uri-to-fn.lua must come before footnotes.lua
+    .pandoc_args = c(
+      lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua'), # uri-to-fn.lua must come before footnotes.lua
+      if (!is.null(csl)) c('--csl', csl)
+    )
   )
 }
 
@@ -50,6 +55,40 @@ html_letter = function(..., css = c('default', 'letter')) {
 book_crc = function(..., css = c('crc-page', 'default-page', 'default', 'crc')) {
   # see https://github.com/rstudio/pagedown/issues/41 that explains why we need a specific crc-page.css file
   html_paged(..., css = css)
+}
+
+#' Create an article for the Journal of Statistical Software
+#'
+#' This output format is similar to \code{\link{html_paged}}.
+#' @param ...,css,template,csl,highlight,pandoc_args Arguments passed to \code{\link{html_paged}()}.
+#' @return An R Markdown output format.
+#' @export
+jss_paged = function(
+  ..., css = c('jss-fonts', 'jss-page', 'jss'),
+  template = pkg_resource('html', 'jss_paged.html'),
+  csl = pkg_resource('csl', 'journal-of-statistical-software.csl'),
+  highlight = NULL, pandoc_args = NULL
+) {
+  jss_format = html_paged(
+    ..., template = template, css = css,
+    csl = csl, highlight = highlight,
+    pandoc_args = c(
+      lua_filters('jss.lua'),
+      '--metadata', 'link-citations=true',
+      pandoc_args
+    )
+  )
+
+  opts_jss = list(
+    prompt = TRUE, comment = NA, R.options = list(prompt ='R> ', continue = 'R+ '),
+    fig.align = 'center', fig.width = 4.9, fig.height = 3.675,
+    class.source = 'r-chunk-code'
+  )
+  for (i in names(opts_jss)) {
+    jss_format$knitr$opts_chunk[[i]] = opts_jss[[i]]
+  }
+
+  jss_format
 }
 
 pagedown_dependency = function(css = NULL, js = FALSE) {
