@@ -6,7 +6,7 @@
 #'
 #' @return An R Markdown output format.
 #' @export
-#' @examples pagedown::business_card(googlefonts = 'Lato')
+#' @examples pagedown::business_card()
 business_card = function() {
   rmarkdown::output_format(
     list(opts_chunk = list(echo = FALSE)),
