@@ -7,34 +7,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="author" content="$author-meta$" />
-  <title>$if(title-prefix)$$title-prefix$ - $endif$$author-meta$: $pagetitle$</title>
-  $if(googlefonts)$
-  <link href="https://fonts.googleapis.com/css?family=$googlefonts$" rel="stylesheet" />
-  $endif$
+  <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+  <link href="https://fonts.googleapis.com/css?family=$if(googlefonts)$$for(googlefonts)$$googlefonts$$sep$|$endfor$$else$Montserrat$endif$" rel="stylesheet" />
   <style>
   @page {
     margin: 0;
-    size: $pagewidth$ $pageheight$;
+    size: $if(paperwidth)$$paperwidth$$else$$if(cardwidth)$$cardwidth$$else$2in$endif$$endif$ $if(paperheight)$$paperheight$$else$$if(cardheight)$$cardheight$$else$3in$endif$$endif$;
   }
   html, body {
     margin: 0;
     padding: 0;
-    width: $pagewidth$;
-    height: $pageheight$;
+    width: $if(paperwidth)$$paperwidth$$else$$if(cardwidth)$$cardwidth$$else$2in$endif$$endif$;
+    height: $if(paperheight)$$paperheight$$else$$if(cardheight)$$cardheight$$else$3in$endif$$endif$;
   }
   .grid {
     display: grid;
-    width: $pagewidth$;
-    height: $pageheight$;
-    grid-template-columns: repeat($ncols$, calc(100% / $ncols$));
-    grid-template-rows: repeat($nrows$, calc(100% / $nrows$));
+    width: $if(paperwidth)$$paperwidth$$else$$if(cardwidth)$$cardwidth$$else$2in$endif$$endif$;
+    height: $if(paperheight)$$paperheight$$else$$if(cardheight)$$cardheight$$else$3in$endif$$endif$;
+    grid-template-columns: repeat($if(cols)$$cols$$else$1$endif$, calc(100% / $if(cols)$$cols$$else$1$endif$));
+    grid-template-rows: repeat($if(rows)$$rows$$else$1$endif$, calc(100% / $if(rows)$$rows$$else$1$endif$));
     justify-items: center;
     align-items: center;
   }
   .wrapper {
     box-sizing: border-box;
-    width: $cardwidth$;
-    height: $cardheight$;
+    width: $if(cardwidth)$$cardwidth$$else$2in$endif$;
+    height: $if(cardheight)$$cardheight$$else$3in$endif$;
     color: white;
     background-color: black;
   }
@@ -57,21 +55,21 @@
     <div class="name"><slot name="name"><span>$name$</span></slot></div>
     <div class="title"><slot name="title"><span>$title$</span></slot></div>
     <div class="coordinates">
-      <p><slot name="phone"><span>$phone$</span></slot></p>
-      <p><slot name="email"><span>$email$</span></slot></p>
-      <p><slot name="url"><span>$url$</span></slot></p>
-      <slot name="address"><div>$address$</div></slot>
+      <p class="phone"><slot name="phone"><span>$phone$</span></slot></p>
+      <p class="contact-email"><slot name="email"><span>$email$</span></slot></p>
+      <p class="website"><slot name="url"><span>$url$</span></slot></p>
+      <slot name="address"><div class="address">$address$</div></slot>
     </div>
   </div>
   <style>
   .logo {
     display: block;
-    width: 75%;
+    max-width: 75%;
     margin: auto;
     padding: .3in 0 0;
   }
   .me {
-    font-family: $if(mainfont)$$mainfont$, $endif$sans-serif;
+    font-family: $if(mainfont)$$for(mainfont)$'$mainfont$'$sep$, $endfor$, $else$$if(googlefonts)$$for(googlefonts)$'$googlefonts$'$sep$, $endfor$, $else$'Montserrat', $endif$$endif$sans-serif;
     font-size: 11px;
     letter-spacing: 0.8px;
     line-height: 1.7em;
@@ -104,7 +102,7 @@
     $if(person.phone)$<span slot="phone">$person.phone$</span>$endif$
     $if(person.email)$<span slot="email">$person.email$</span>$endif$
     $if(person.url)$<span slot="url">$person.url$</span>$endif$
-    $if(person.address)$<div slot="address">$person.address$</div>$endif$
+    $if(person.address)$<div slot="address" class="address">$person.address$</div>$endif$
   </div>
   $endfor$
 
@@ -123,7 +121,7 @@
       }
 
       // repeat cards
-      const maxItemsPerGrid = $ncols$ * $nrows$;
+      const maxItemsPerGrid = $if(cols)$$cols$$else$1$endif$ * $if(rows)$$rows$$else$1$endif$;
       let cards = document.querySelectorAll('.wrapper');
       for (const card of cards) {
         for (let i = 1; i < card.dataset.repeat; i++) {

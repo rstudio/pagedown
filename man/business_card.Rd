@@ -4,19 +4,7 @@
 \alias{business_card}
 \title{Create business cards}
 \usage{
-business_card(width = "2in", height = "3in", paperwidth = "2in", paperheight = "3in", 
-    cols = 1, rows = 1, googlefonts = "Montserrat", mainfont = googlefonts)
-}
-\arguments{
-\item{width, height}{Width and height of the card.}
-
-\item{paperwidth, paperheight}{Width and height of the paper.}
-
-\item{cols, rows}{Number of columns and rows per page.}
-
-\item{googlefonts}{Names of Google fonts to be loaded on the card page.}
-
-\item{mainfont}{Names of fonts to be used for the body text of the card.}
+business_card()
 }
 \value{
 An R Markdown output format.

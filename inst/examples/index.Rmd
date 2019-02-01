@@ -240,7 +240,7 @@ To create a simple business card, you can use the `pagedown::business_card` form
 
 ### Single card
 
-A single business card can be created with the following YAML header.
+A single business card can be created with the following R Markdown file (this file contains only a YAML header).
 
 ```yaml
 ---
@@ -275,7 +275,7 @@ output: pagedown::business_card
 ---
 ```
 
-In order to print the cards, you may prefer a layout with several cards on the same page: you can adjust the paper size with the `paperwidth` and `paperheight` variables and define a grid layout with the `cols` and `rows` variables.
+In order to print the cards, you may prefer a layout with several cards on the same page: you can adjust the paper size with the `paperwidth` and `paperheight` variables and define a grid layout with the `cols` and `rows` variables (you may test some combinations of these parameters to find the most appropriate one).
 
 ```yaml
 ---
@@ -289,22 +289,48 @@ address: |
   Sunshine, CA 90000
 logo: "logo.png"
 repeat: 12
-output: 
-  pagedown::business_card:
-    cols: 4
-    rows: 3
-    paperwidth: 8.5in
-    paperheight: 11in
+paperwidth: 8.5in
+paperheight: 11in
+cols: 4
+rows: 3
+output: pagedown::business_card
 ---
+```
+
+You also can use markdown to define a card. Be aware to use the `slot` attributes as follows.
+
+```markdown
+---
+logo: "logo.png"
+paperwidth: 8.5in
+paperheight: 11in
+cols: 4
+rows: 3
+output: pagedown::business_card
+---
+
+::::: {.wrapper data-repeat="12"}
+[Jane Doe]{slot="name"}
+[Miss Nobody]{slot="title"}
+[+1 123-456-7890]{slot="phone"}
+[jane.doe@example.com]{slot="email"}
+[www.example.com]{slot="url"}
+
+::: {.address slot="address"}
+2020 South Street
+Sunshine, CA 90000
+:::
+:::::
 ```
 
 ### Different cards with shared informations
 
 You can produce business cards for members of an organization sharing some informations (address, website...).  
-Common informations are declared as top level variables in the YAML header. Custom cards are defined using the `person` variable.
+Common informations are declared as top level variables in the YAML header. Custom cards are defined using the `person` variable: each `key: value` pair of a `person` block overrides the corresponding top level pair.
 
 ```yaml
 ---
+phone: "+1 123-456-7890"
 url: www.example.com
 address: |
   2020 South Street
@@ -313,33 +339,167 @@ logo: "logo.png"
 person:
   - name: Jane Doe
     title: Miss Nobody
-    phone: "+1 123-456-7890"
     email: "jane.doe@example.com"
     repeat: 6
   - name: John Doe
     title: Mister Nobody
-    phone: "+1 777-777-7777"
+    phone: "+1 777-777-7777" # overrides the default phone
     email: "john.doe@example.com"
     repeat: 6
-output: 
-  pagedown::business_card:
-    cols: 4
-    rows: 3
-    paperwidth: 8.5in
-    paperheight: 11in
+paperwidth: 8.5in
+paperheight: 11in
+cols: 4
+rows: 3
+output: pagedown::business_card
 ---
 ```
 
 If you prefer, you can use markdown to create a card as follows.
 
 ```markdown
+---
+name: Jane Doe
+title: Miss Nobody
+phone: "+1 123-456-7890"
+email: "jane.doe@example.com"
+url: www.example.com
+address: |
+  2020 South Street
+  Sunshine, CA 90000
+logo: "logo.png"
+repeat: 6
+paperwidth: 8.5in
+paperheight: 11in
+cols: 4
+rows: 3
+output: pagedown::business_card
+---
+
 ::: {.wrapper data-repeat="6"}
 [John Doe]{slot="name"}
 [Mister Nobody]{slot="title"}
-[john.doe@example.com]{slot="email"}
 [+1 777-777-7777]{slot="phone"}
+[john.doe@example.com]{slot="email"}
+[my.domain.com]{slot="url"}
 :::
 ```
+
+### Styling business cards
+
+#### Fonts
+
+You can change the text font with the `mainfont` and/or `googlefonts` top level YAML variables:
+
+- `mainfont` will use the local font installed on your computer, e.g.
+  ```yaml
+  ---
+  name: Jane Doe
+  title: Miss Nobody
+  phone: "+1 123-456-7890"
+  email: "jane.doe@example.com"
+  url: www.example.com
+  address: |
+    2020 South Street
+    Sunshine, CA 90000
+  logo: "logo.png"
+  mainfont: Arial
+  output: pagedown::business_card
+  ---
+  ```
+
+- `googlefonts` to use fonts from https://fonts.google.com, e.g.
+  ```yaml
+  ---
+  name: Jane Doe
+  title: Miss Nobody
+  phone: "+1 123-456-7890"
+  email: "jane.doe@example.com"
+  url: www.example.com
+  address: |
+    2020 South Street
+    Sunshine, CA 90000
+  logo: "logo.png"
+  googlefonts: ["Roboto Condensed", "Raleway"]
+  output: pagedown::business_card
+  ---
+  ```
+
+#### Card sizing
+
+You can modify the card size with the `cardwidth` and `cardheight` variables. You can get a landscape card with:
+
+```yaml
+---
+name: Jane Doe
+title: Miss Nobody
+phone: "+1 123-456-7890"
+email: "jane.doe@example.com"
+url: www.example.com
+address: |
+  2020 South Street
+  Sunshine, CA 90000
+logo: "logo.png"
+cardwidth: 3.5in
+cardheight: 2in
+output: pagedown::business_card
+---
+```
+
+If you render this card, you will see that the default style does not suit well with a landscape card. Read the next section to find an example of a landscape card with a better style.
+
+#### CSS
+
+Finally, you can modify the style of the card using CSS rules.  
+The markup of a card can be represented as follows^[This is technically incorrect since the card template use a shadow DOM.]:
+
+```html
+<div class="wrapper" data-repeat="1">
+  <img class="logo" src="logo.png" alt="Logo" />
+  <div class="me">
+    <div class="name"><span>Jane Doe</span></div>
+    <div class="title"><span>Miss Nobody</span></div>
+    <div class="coordinates">
+      <p class="phone"><span>+1 123-456-7890</span></p>
+      <p class="contact-email"><span>jane.doe@example.com</span></p>
+      <p class="website"><span>www.example.com</span></p>
+      <div class="address">2020 South Street Sunshine, CA 90000</div>
+    </div>
+  </div>
+</div>
+```
+
+You can use these built-in classes to style your card with CSS.  
+A landscape card could be styled like this:
+
+~~~markdown
+---
+name: Jane Doe
+title: Miss Nobody
+phone: "+1 123-456-7890"
+email: "jane.doe@example.com"
+url: www.example.com
+address: |
+  2020 South Street
+  Sunshine, CA 90000
+logo: "logo.png"
+cardwidth: 3.5in
+cardheight: 2in
+output: pagedown::business_card
+---
+
+`r ''````{css}
+.logo {
+  display: block;
+  height: 20%;
+  margin-right: .3in;
+  padding: .3in 0 0;
+  float: right;
+}
+.name {
+  margin-top: .1in;
+}
+```
+~~~
 
 ## Letter
 

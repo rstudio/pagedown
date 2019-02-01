@@ -1,25 +1,25 @@
 ---
-logo: "https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png"
 phone: "+1 844-448-1212"
 email: "info@rstudio.com"
 url: www.rstudio.com
 address: |
   @rstudio
+logo: "https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png"
 person: 
   - name: Tareef Kawaf
     title: President of RStudio, Inc.
     repeat: 12
   - name: Yihui Xie
-    title: Responsible for `r grep('(?<!shut)down$', unique(rownames(installed.packages())), value=T, perl=T)`
+    title: Responsible for `r head(grep('(?<!shut)down$', unique(.packages(T)), value=T, perl=T), 2)`
     email: xie@yihui.name
+    url: https://yihui.name
     repeat: 12
-output:
-  pagedown::business_card: 
-    cols: 4
-    rows: 3
-    paperwidth: 8.5in
-    paperheight: 11in
-    # googlefonts: "Righteous" # feel free to try other fonts at https://fonts.google.com
+# googlefonts: "Righteous" # feel free to try other fonts at https://fonts.google.com
+paperwidth: 8.5in
+paperheight: 11in
+cols: 4
+rows: 3
+output: pagedown::business_card
 ---
 
 <!-- if you prefer you can create cards in markdown instead of YAML declaration -->
