@@ -24,3 +24,6 @@ This output format is based on an example in the Github repo
 \url{https://github.com/RelaxedJS/ReLaXed-examples}. See
 \url{https://pagedown.rbind.io/business-card/} for an example.
 }
+\examples{
+pagedown::business_card(googlefonts = "Lato")
+}

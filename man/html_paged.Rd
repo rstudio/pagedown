@@ -5,7 +5,7 @@
 \title{Create a paged HTML document suitable for printing}
 \usage{
 html_paged(..., css = c("default-fonts", "default-page", "default"), theme = NULL, 
-    template = pkg_resource("html", "paged.html"))
+    template = pkg_resource("html", "paged.html"), csl = NULL)
 }
 \arguments{
 \item{...}{Arguments passed to
@@ -20,6 +20,9 @@ built-in CSS files, run \code{pagedown:::list_css()}.}
 \item{theme}{The Bootstrap theme. By default, Bootstrap is not used.}
 
 \item{template}{The path to the Pandoc template to convert Markdown to HTML.}
+
+\item{csl}{The path of the Citation Style Language (CSL) file used to format
+citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).}
 }
 \value{
 An R Markdown output format.

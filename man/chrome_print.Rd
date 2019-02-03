@@ -2,7 +2,7 @@
 % Please edit documentation in R/chrome.R
 \name{chrome_print}
 \alias{chrome_print}
-\title{Print a web page to PDF using the headless Chrome}
+\title{Print a web page to PDF using the headless Chrome (experimental)}
 \usage{
 chrome_print(url, output = xfun::with_ext(url, "pdf"), browser = "google-chrome", 
     work_dir, timeout = 60, extra_args = c("--disable-gpu"), verbose = FALSE, 
@@ -17,7 +17,8 @@ remote URL \file{https://www.example.org/foo/bar.html}, the default output
 will be \file{bar.pdf} under the current working directory.}
 
 \item{browser}{Path to Google Chrome or Chromium. This function will try to
-find it automatically if the path is not explicitly provided.}
+find it automatically via \code{\link{find_chrome}()} if the path is not
+explicitly provided.}
 
 \item{work_dir}{Name of headless Chrome working directory. In order to avoid
 Chrome to fail, it is recommended to use a subdirectory of your home
@@ -28,7 +29,8 @@ generation. Use a larger value if the document takes longer to build.}
 
 \item{extra_args}{Extra command-line arguments to be passed to Chrome.}
 
-\item{verbose}{Whether to show verbose command-line output.}
+\item{verbose}{Whether to show verbose websocket connexion to headless
+Chrome.}
 
 \item{debug_port}{Headless Chrome remote debugging port.}
 }

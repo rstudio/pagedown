@@ -9,40 +9,230 @@ output:
     toc: true
     self_contained: false
 toc-title: Contents
+paged-footnotes: true
+lot: true
+lof: true
 bibliography: index.bib
 ---
 
 # Introduction
 
-When talking about PDF and printing, we often think of tools like LaTeX and Microsoft Word. When talking about HTML and CSS, we may have never imagined their possible off-screen, use such as printing to PDF.
+When talking about PDF and printing, we often think of tools like LaTeX and Microsoft Word. When talking about HTML and CSS, we may have never imagined their possible off-screen use such as printing to PDF.
 
 Can we print a book with HTML and CSS? W3C published [the first working draft](https://www.w3.org/1999/06/WD-css3-page-19990623) on "Paged Media Properties for CSS(3)", which was last updated in 2013. Although the working draft has been there for nearly two decades, it is still not common to see authors write or print books with HTML and CSS. The main reason is that the W3C specs are still in the draft mode, so most web browsers have not really implemented them.
 
-HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it comes to typesetting content under the constraint of "pages". However, they can be extremely powerful and flexible in other aspects, especially when combined with the power of JavaScript.
+HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it comes to typesetting content under the constraint of "pages". You may be disappointed by a lot of typesetting details on a paged HTML page. However, HTML and CSS can be extremely powerful and flexible in other aspects, especially when combined with the power of JavaScript. By the way, HTML works almost anywhere because it only requires a web browser.
+
+Although most web browsers have not implemented the W3C specs for Paged Media, a JavaScript polyfill library named ["paged.js"](https://www.pagedmedia.org/paged-js/) is currently being developed to fill the gap. This library is still experimental and has many rough edges, but looks promising enough to us, so we created an R package **pagedown** [@R-pagedown] based on this JavaScript library to paginate the HTML output of R Markdown documents. You can install the package [from Github](https://github.com/rstudio/pagedown):
 
 ```{r, eval=FALSE}
 remotes::install_github('rstudio/pagedown')
 ```
 
-## CSS for print
+To learn more about paged.js and CSS for Paged Media, you may check out [the cheatsheet of paged.js](https://www.pagedmedia.org/about-paged-media/pagedjs-cheatsheet/).
 
-## CSS frameworks
+The **pagedown** package contains output formats for paged HTML documents, letters, resumes, posters, business cards, and so on. Usually there is an R Markdown template for each output format, which you can access from RStudio's menu `File -> New File -> R Markdown -> From Template`.
 
-# Paged.js {#pagedjs}
 
-To create a paged HTML document, you can use the output format `pagedown::html_paged`.
+# Paged HTML documents {#pagedjs data-short-title="Paged documents"}
+
+To create a paged HTML document, you can use the output format `pagedown::html_paged`, e.g.,
+
+```yaml
+output:
+  pagedown::html_paged: 
+    toc: true
+    number_sections: false
+```
+
+## Preview paged HTML documents
+
+This format is based on paged.js. Some other formats in this package are extensions of `html_paged`, such as `html_letter` and `html_resume`. Please note that you need a web server to view the output pages of these formats, because paged.js requires a web server. The web server could be either a local server or a remote one. When you compile an R Markdown document to HTML in RStudio, RStudio will display the HTML page through a local web server, so paged.js will work in RStudio Viewer. However, when you view such pages in a real web browser, you will need a separate web server. The easiest way to preview these HTML pages in a web browser may be through the RStudio addin "Infinite Moon Reader", which requires the **xaringan** package [@R-xaringan]. Or equivalently, you can call the function `xaringan::inf_mr()`. This will launch a local web server via the **servr** package [@R-servr].
+
+Please note that the layout of the pages is very sensitive to the zoom level in your browser. Elements on a page are often not zoomed strictly linearly, e.g., as you zoom out, certainly elements may start to collapse into each other. The 100% zoom level usually gives the best result (press `Ctrl + 0` or `Command + 0`). You are strongly recommended to use this level when printing the page to PDF.
+
+## The CSS overriding mechanism
+
+We have provided a few default CSS stylesheets in this output format:
+
+```yaml
+output:
+  pagedown::html_paged: 
+    css: ["default-fonts", "default-page", "default"]
+```
+
+To find the actual CSS files behind these names, use `pagedown:::list_css()`. For example, `default-fonts` means the file `resources/css/default-fonts.css` in the installation directory of **pagedown**. The stylesheet `default-fonts` defines the typefaces of the document, `default-page` defines some page properties (such as the page size, running headers and footers, and rules for page breaks), and `default` defines the style of various elements (such as the table of contents).
+
+If you do not like any of these default stylesheets, you can use a subset of them, or override certain CSS rules. For example, if you do not like the default typeface, you may create a CSS file `my-fonts.css` (assuming it is under the same directory of your Rmd file):
+
+```css
+body {
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+}
+```
+
+Then include this CSS file via the `css` option:
+
+```yaml
+output:
+  pagedown::html_paged: 
+    css: ["my-fonts.css", "default-page", "default"]
+```
+
+Note that this overriding mechanism also works for other output formats in **pagedown**.
+
+## Print to PDF
+
+You can print HTML pages to PDF using Google Chrome or Chromium using the menu "Print" or by pressing `Ctrl + P` (or `Command + P` on macOS). Remember to allow background graphics to be printed. You may also consider using the function `pagedown::chrome_print()`, but currently it is experimental and you may get an incomplete PDF, so we recommend that you open the page in a real browser and print to PDF there instead.
+
 
 # Applications 
 
-You can print the following (HTML) applications to PDF using Google Chrome (remember to set margins to none, and allow background graphics to be printed). There are a few templates in the **pagedown** package, which you can access from RStudio's menu `File -> New File -> R Markdown -> From Template`.
-
 ## Resume
 
-Currently **pagedown** has one resume format: `pagedown::html_resume`. See https://pagedown.rbind.io/html-resume/ for an example. Note that when you print the resume to PDF in Google Chrome, you may want to remove the headers and footers (click "More Settings" and uncheck "Headers and footers").
+Currently **pagedown** has one resume format: `pagedown::html_resume`. See https://pagedown.rbind.io/html-resume/ for an example.
+
+```{r, resume-relaxed, echo=FALSE, fig.cap='The HTML resume in pagedown.'}
+knitr::include_graphics('https://user-images.githubusercontent.com/163582/49983676-c940a880-ff29-11e8-9487-3b4c94614fcc.png')
+```
+
+
+The R Markdown source document should contain two parts titled "Aside" (for the sidebar) and "Main" (for the main body), respectively. Each part can contain any numbers of sections (e.g., education background and working experience). Each section can contain any numbers of subsections, and you can write more content in a subsection.^[In case you are not very familiar with the Markdown syntax for section headings, a series of `=` under a heading is equivalent to `#` before a heading, and a series of `-` is equivalent to `##`. See Pandoc's manual for details: https://pandoc.org/MANUAL.html#headers.] Below is a quick example:
+
+```markdown
+---
+title: "Someone's resume"
+author: Your Name
+output: pagedown::html_resume
+---
+
+
+Aside
+====================================
+
+Picture, etc.
+
+Contact info
+------------------------------------
+
+Email, phone number, ...
+
+Skills
+------------------------------------
+
+- One
+- Two
+- Three
+
+Disclaimer
+------------------------------------
+
+A footer in the sidebar.
+
+
+Main
+====================================
+
+Your Name {#title}
+------------------------------------
+
+Arbitrary content.
+
+Education {data-icon=graduation-cap}
+------------------------------------
+
+### University One
+
+Title
+
+Location
+
+Year
+
+Arbitrary content
+
+### University Two
+
+...
+```
+
+The "Aside" part will be displayed in the right sidebar. This part can contain arbitrary content (not necessarily structured). For example, you can include a picture in the beginning. The "Disclaimer" section will be placed at the bottom of the first page. All icons for this resume template are from [Font Awesome](https://fontawesome.com). For example, `<i class="fa fa-envelope"></i>` will generate an envelope icon. You can look up all icon names on the Font Awesome website if you want to use other icons.
+
+For the "Main" part, all sections must follow a specific structure except the first section. The first section usually shows your name and information that you want to highlight. For the rest of sections, they should contain a title and a number of subsections. You can specify an icon for a section title via the attribute `data-icon`, e.g., `{data-icon=graduation-cap}` means an icon of a graduation cap (which can be used as a symbol for education). For each subsection, it should contain a title, followed by at least three paragraphs:
+
+- The first paragraph is a brief description of the subsection.
+
+- The second paragraph is the location.
+
+- The third paragraph is the time period. If this subsection has both a starting and ending time, separate them by a dash, e.g., `2014 - 2015` or `2014/07/27 - 2015/07/23`.
+
+The description, location, and time period can each be `N/A` if the relevant information is not available.
+
+You can write artibrary content after the third paragraph (e.g., more paragraphs, bullet lists, and so on). If you want to write content in two columns, you may use a "concise" block, e.g.,
+
+```markdown
+::: concise
+- Taught R language to beginners. 
+- Wrote Shiny app demos.
+- Converted statistical tutorials from SPSS to R language.
+:::
+```
+
+If you want to write a side note, use an "aside" block, e.g.,
+
+```markdown
+Section
+---------------
+
+### Subsection
+
+Title
+
+Location
+
+Year
+
+More info
+
+::: aside
+Some notes in the sidebar.
+:::
+```
+
+```{r, resume-sidenote, echo=FALSE, fig.cap='An example of side notes.'}
+knitr::include_graphics('https://user-images.githubusercontent.com/163582/50015125-654ecc00-ff8b-11e8-95be-fc6af8e4a66e.png')
+```
+
+There is a caveat about page breaks. By default, we allow page breaks within a subsection. Sometimes this may lead to odd output like the example in Figure \@ref(fig:break-yes). The first bullet should not be split into two columns, and the rest of bullets should have a larger left margin.
+
+```{r, break-yes, echo=FALSE, fig.cap='Allow page breaks in a subsection.'}
+knitr::include_graphics('https://user-images.githubusercontent.com/163582/49983264-520a1500-ff27-11e8-8537-66a642f617c3.png')
+```
+
+If you want to avoid layout problems like this, you may disallow page breaks via CSS:
+
+
+```css
+.blocks {
+  break-inside: avoid;
+}
+```
+
+However, this may lead to a new issue demonstrated in Figure \@ref(fig:break-no): there may be a large bottom margin on the previous page. At this point, you may start to miss your old friends, Word and LaTeX.
+
+```{r, break-no, echo=FALSE, fig.cap='Do not allow page breaks in a subsection.'}
+knitr::include_graphics('https://user-images.githubusercontent.com/163582/49983263-520a1500-ff27-11e8-8e71-cbc69ccfbc6e.png')
+```
 
 ## Poster
 
-You can create a poster with the `pagedown::poster_relaxed` format. See https://pagedown.rbind.io/poster-relaxed/ for an example.
+You can create a poster with the output format `pagedown::poster_relaxed` or `pagedown::poster_jacobs`. See https://pagedown.rbind.io/poster-relaxed/ and https://pagedown.rbind.io/poster-jacobs/ for examples.
+
+We do not have time to document the poster formats yet, but here is a caveat: the layout of poster sections is hardcoded in CSS styleseets, which means you cannot add/delete sections unless you know CSS (in particular, CSS Grid Layout). If you are interested in learning CSS Grid Layout, you may take a look at [the CSS of `poster_jacobs`](https://github.com/rstudio/pagedown/blob/master/inst/resources/css/poster-jacobs.css).
+
+### The ReLaXed style
+
+### The Jacobs University style
 
 ## Business card
 
@@ -52,86 +242,89 @@ To create a simple business card, you can use the `pagedown::business_card` form
 
 You can write a letter with the `pagedown::html_letter` format. See https://pagedown.rbind.io/html-letter/ for an example.
 
-# Supported features
+## A Journal of Statistical Software article
 
-## Lists of Tables and Figures
+You can write an article for the [Journal of Statistical Sofware](https://jstatsoft.org/). See https://pagedown.rbind.io/jss-paged/ for an example. 
 
-Lists of tables and/or figures can be inserted in the document using the `lot` and `lof` variables.  
-You also can customize their titles with the `lot-title` and `lof-title` variables in the YAML header, for instance:
+# Miscellaneous features
+
+## Lists of tables and figures
+
+Lists of tables and/or figures can be inserted in the document using the `lot` and `lof` variables in the YAML metadata. You also can customize their titles with the `lot-title` and `lof-title` variables. For instance:
 
 ```yaml
 ---
 title: "A document with lists of tables and figures"
 output: pagedown::html_paged
 toc-title: Contents
-bibliography: index.bib
+
 lot: true
+# default: "List of Tables"
 lot-title: "Tables"
+
 lof: true
+# default: "List of Figures"
 lof-title: "Figures"
 ---
 ```
 
+## Front matter
+
+By default, the front matter is composed of the cover, the table of contents and the lists of figures and tables if any. The only difference between the front matter pages and the main content pages is the style of the page numbers.
+
+You can add extra sections to the front matter using the `front-matter` class. For instance, if you want to add a preface to the front matter, you need to write:
+
+```markdown
+# Preface {.front-matter .unnumbered}
+```
+
 ## Links
 
-In markdown, the usual ways to insert links are _automatic_ and _inline_ links.
+In Markdown, the usual ways to insert links are _automatic_ and _inline_ links.
 
 ### Automatic links
 
-_Automatic links_ are created using pointy brackets, e.g. `<https://bookdown.org/>`.  
-The full URL is then inserted in the final document <https://bookdown.org/>.  
-This is convenient for a short and meaningful URL.
+Automatic links are created using pointy brackets, e.g., `<https://bookdown.org>`. The full URL is then inserted in the final document <https://bookdown.org>. This is convenient for a short and meaningful URL.
 
 ### Inline links
 
-_Inline links_ are useful when you do not want to show the full URL but an alternative text (because most of the URLs are ugly). In markdown, the link text is inserted in square brackets and the URL in parentheses, e.g. `[bookdown website](https://bookdown.org/)`. On a website, the URL is hidden and replaced by the link text: [bookdown website](). The user can interactively access to the URL by clicking on the link. 
+Inline links are useful when you do not want to show the full URL but an alternative text (because URLs are usually long and ugly). In Markdown, the link text is inserted in square brackets and the URL in parentheses, e.g. `[bookdown website](https://bookdown.org)`. On a website, the URL is hidden and replaced by the link text: [bookdown website](). The user can interactively access the URL by clicking on the link. 
 
-When printing a document, we lose interactivity. So, we need to show the hidden URLs. By default, the `html_paged` format adds the URLs after the link text in parentheses, for instance `[bookdown website](https://bookdown.org/)` is rendered as [bookdown website](https://bookdown.org/).
+When printing a document, we lose interactivity. So we need to show the hidden URLs. By default, the `html_paged` format adds the URLs after the link text in parentheses, for instance `[bookdown website](https://bookdown.org)` is rendered as [bookdown website](https://bookdown.org).
 
-You also can use the `links-to-footnotes` top-level YAML parameter: it transforms all the URLs as footnotes. You will get the same result as `bookdown website^[https://bookdown.org/]`.  
-To activate the `links-to-footnotes` option, insert `links-to-footnotes: true` in the YAML header. For instance:
+You also can use the `links-to-footnotes` top-level YAML parameter: it transforms all the URLs to footnotes. You will get the same result as `bookdown website^[https://bookdown.org]`. To activate the `links-to-footnotes` option, insert `links-to-footnotes: true` in the YAML header. For instance:
 
 ```yaml
 ---
 title: "A paged HTML document"
 output: pagedown::html_paged
-toc-title: Contents
-bibliography: index.bib
 links-to-footnotes: true
 ---
 ```
 
 ## Footnotes
 
-The default behavior of pagedown is to render notes as endnotes because Paged.js does not natively support footnotes for now. However, we introduced an experimental support for footnotes. You can test it including `paged-footnotes: true` in the YAML header of your document. If you get any trouble with this experimental feature, please open an issue on GitHub.
+The default behavior of pagedown is to render notes as endnotes because Paged.js does not natively support footnotes for now. However, we introduced an experimental support for footnotes. You can test it by including `paged-footnotes: true` in the YAML header of your document. If you get any trouble with this experimental feature, please open an issue in the **pagedown** repository on GitHub.
 
-## Tests {data-short-title="Some tests"}
+## Custom running headers {data-short-title="Running headers"}
 
-### A list {data-short-title="An ordered list"}
+Sometimes a section title may be too long to fit the header or footer area. In this case, you can specify a shorter title for the running headers/footers via the attribute `data-short-title` after a title, e.g.,
 
-1. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec rhoncus dolor in risus tempor iaculis. Vivamus id euismod leo. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Proin pretium turpis eget orci iaculis, et euismod arcu commodo. Nulla maximus turpis elit, volutpat volutpat mauris fringilla non. Aenean rutrum vitae tortor egestas viverra. Sed malesuada lectus ac efficitur posuere. Nullam euismod odio dolor, id porttitor nulla sodales at. Nunc hendrerit dictum pulvinar. Nunc consequat ante ac urna posuere tincidunt. In ornare ligula ac aliquet tempor. Nunc eros nunc, vehicula vel efficitur quis, mattis ac massa.
+```markdown
+## The actual long long long title {data-short-title="An alternative title"}
+```
 
-1. Etiam mollis nunc ex, ut molestie nisl convallis id. Sed et tellus lacus. Suspendisse ultricies nibh ut malesuada commodo. Mauris venenatis odio at quam interdum semper. Nulla semper, mi sed laoreet efficitur, nulla ipsum elementum ex, in blandit orci massa non lectus. Nullam ac rutrum mauris, ut aliquet orci. Nulla porttitor sit amet erat in lobortis. Praesent cursus sagittis urna eget vestibulum. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-
-1. Quisque a vulputate metus. Vestibulum id odio sed sem rhoncus rutrum ut egestas arcu. Donec tempor purus gravida nibh ultrices euismod. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nunc facilisis luctus tortor, sed maximus arcu condimentum ut. Aliquam erat volutpat. Pellentesque maximus leo erat, at sagittis magna rutrum ac. Mauris pulvinar purus vitae dapibus mollis. Aenean euismod, erat quis tempus elementum, lorem sem tristique justo, sed commodo enim augue at dolor. Etiam lacus nunc, mollis non dui non, vulputate elementum lacus. Aenean ac sem a mi facilisis sollicitudin. Phasellus congue nec massa et laoreet. Quisque dapibus velit nibh, id mattis augue convallis eget. Pellentesque sagittis, neque id maximus hendrerit, eros arcu scelerisque quam, non vestibulum magna dui eget sapien. Etiam rhoncus mattis tortor at tincidunt. Nam interdum, ante et malesuada vestibulum, leo sapien blandit risus, nec sodales dolor lorem eget ex.
-
-1. Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse et imperdiet turpis. Sed nulla massa, lobortis dictum imperdiet et, euismod nec urna. Fusce in nunc sit amet velit tincidunt sodales vitae in augue. Fusce et justo quis arcu ultrices maximus vitae ac massa. Praesent eleifend aliquet aliquam. Ut arcu libero, vehicula et elementum ut, lobortis eu lacus. Duis mollis nisi ut eros tristique, a pharetra neque iaculis. Integer a lorem volutpat, interdum massa ac, viverra tortor.
-
-1. Etiam cursus mauris mi, in pellentesque nulla imperdiet non. Nullam ut condimentum leo. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Integer tempor enim maximus enim tincidunt, id maximus nulla malesuada. Praesent sed lectus dapibus, laoreet dui eu, ultricies ex. Proin dignissim tellus dolor, ac vulputate metus porta a. Proin in libero ut ligula varius scelerisque nec eget sem. Duis ullamcorper risus massa, quis euismod enim sagittis nec. Phasellus justo magna, mollis ac erat vitae, porta pharetra massa. In ornare posuere ipsum at posuere. Sed metus lacus, rutrum sed laoreet ut, porta vitae augue. Suspendisse vel odio nunc. Nulla et tellus in justo aliquet efficitur. Aliquam erat volutpat.
-
-1. Cras ipsum metus, mollis eu ultrices ut, lobortis nec nisl. Donec egestas mollis faucibus. Vestibulum lobortis dictum arcu a egestas. Nunc posuere molestie ante, iaculis ultrices urna porttitor et. Nullam nec ligula non purus tincidunt sollicitudin. Fusce eu cursus erat. Sed dapibus, urna et auctor dignissim, magna dui pulvinar quam, vel mattis felis justo at eros. Integer commodo vitae arcu sed dignissim. In porttitor nibh sapien, eget dignissim nulla malesuada et. Vestibulum non justo eros. Duis venenatis tortor tincidunt tortor pretium molestie. Donec efficitur mattis porta.
-
-### Test MathJax
+## MathJax
 
 The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
 
-How about some RBM stuff first:
+Some RBM stuff:
 
 $$
   E(\mathbf{v}, \mathbf{h}) = -\sum_{i,j}w_{ij}v_i h_j - \sum_i b_i v_i - \sum_j c_j h_j
 $$
 
-It works! Multiline equations?
+Multiline equations:
 
 $$
   \begin{align}
@@ -139,41 +332,25 @@ $$
     p(h_j=1|\mathbf{v}) & = \sigma\left(\sum_i w_{ij}v_i + c_j\right)
   \end{align}
 $$
-It also works. Inline equations? Here is an example: $p(x|y) = \frac{p(y|x)p(x)}{p(y)}$. It still works perfectly well.
 
-### Miscellaneous tests used during pagedown development
+Here is an example of an inline expression: $p(x|y) = \frac{p(y|x)p(x)}{p(y)}$.
 
-Test cross-references of pages: [Paged.js](#pagedjs).
+## Page references
 
-A footnote.^[This is a footnote.]
+Internal links will be followed by page numbers by default. For example, you can refer to another section using either `[Section Title]` or `[Link Text](#section-id)` (where `section-id` is the ID of the section header).
 
-R code chunks:
+Do you still remember [Paged.js](#pagedjs) that we mentioned earlier?
 
-```{r}
-isFALSE = function(x) {
-  identical(x, FALSE)
-}
-isFALSE(F)
-```
+## Figures and tables
 
-R plots (Figure \@ref(fig:test-plot)):
-
-```{r, test-plot, fig.dim=c(5, 3.5), fig.cap='Test a plot.'}
-par(mar = c(4, 4, .5, .1))
-plot(cars, pch = 19)
-```
-
-Tables (Table \@ref(tab:test-table)):
+Table \@ref(tab:test-table):
 
 ```{r, test-table}
-knitr::kable(head(iris[, -5]), caption = 'Test a table.')
-```
-
-
-Cite @R-base and @R-pagedown.
-
-```{r, include=FALSE}
-knitr::write_bib(c(.packages(), 'pagedown'), 'index.bib')
+knitr::kable(head(iris[, -5]), caption = 'An example table.')
 ```
 
 # Bibliography {-}
+
+```{r, include=FALSE}
+knitr::write_bib(c(.packages(), 'pagedown', 'xaringan', 'servr'), 'index.bib')
+```

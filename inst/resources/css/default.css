@@ -21,6 +21,9 @@ a[href^="http"]:not([class="uri"])::after {
 .main a[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
   content: " (page " target-counter(attr(href), page) ")";
 }
+.main a.front-matter-ref[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
+  content: " (page " target-counter(attr(href), page, lower-roman) ")";
+}
 
 /* TOC, LOT, LOF */
 .toc ul, .lot ul, .lof ul {
@@ -42,6 +45,10 @@ a[href^="http"]:not([class="uri"])::after {
   float: right;
   background: white;
 }
+.toc a.front-matter-ref::after, .lot a.front-matter-ref::after, .lof a.front-matter-ref::after {
+  /* content: leader(dotted) target-counter(attr(href), page, lower-roman); */
+  content: target-counter(attr(href), page, lower-roman);
+}
 .toc .leaders::before, .lot .leaders::before, .lof .leaders::before {
   float: left;
   width: 0;
@@ -55,6 +62,23 @@ a[href^="http"]:not([class="uri"])::after {
 }
 img {
   max-width: 100%;
+}
+pre {
+  padding: 1em;
+}
+pre[class] {
+  background: #f9f9f9;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+  border-bottom: 1px solid #666;
+}
+table thead th {
+  border-bottom: 1px solid #ddd;
+}
+thead, tfoot, tr:nth-child(even) {
+  background: #eee;
 }
 .footnotes {
   font-size: 90%;

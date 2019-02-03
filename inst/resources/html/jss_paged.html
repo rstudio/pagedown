@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="$if(lang)$$lang$$else$en-US$endif$" xml:lang="$if(lang)$$lang$$else$en-US$endif$">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta property="dc:format" content="text/html">
+<meta name="generator" content="pandoc">
+<meta name="viewport" content="width=device-width">
+<meta property="dc:type" content="Text">
+<meta property="dc:language" content="$if(lang)$$lang$$else$en$endif$">
+<meta property="dc:title og:title" content="$pagetitle$">
+$if(url)$<meta property="dc:identifier og:url" content="$url$">$endif$
+<meta property="og:image" content="https://www.jstatsoft.org/public/site/images/jstatsoft/jsslogo.jpg">
+<link rel="icon" href="https://www.jstatsoft.org/public/journals/1/journalFavicon_en_US.gif">
+<meta name="description" property="dc:description og:description schema:description" content="$if(description)$$description$$else$$pagetitle$$endif$">
+$for(author-meta)$<meta name="author" content="$author-meta$">$endfor$
+$if(date-meta)$<meta name="date" content="$date-meta$">$endif$
+<meta name="keywords" property="dc:subject" content="$for(keywords-plain)$$keywords-plain$$sep$, $endfor$">
+
+<title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+
+<script>
+window.PagedConfig = {
+  before: async () => {
+    // Expand the citations links
+    let citations = document.querySelectorAll('.citation');
+    for (let citation of citations) {
+      let anchor = citation.querySelector('a');
+      if (!anchor) continue;
+      let span = document.createElement('span');
+      span.innerHTML = anchor.innerHTML
+      anchor.insertAdjacentElement('afterend', span)
+      let href = anchor.getAttribute('href')
+      anchor.remove();
+
+      let newAnchor = document.createElement('a');
+      newAnchor.setAttribute('href', href);
+      citation.insertAdjacentElement('beforebegin', newAnchor);
+      newAnchor.appendChild(citation);
+    }
+
+    // For the table captions, we would want to write this CSS rule:
+    //     caption {caption-side: bottom-outside;}
+    // However, the bottom-outside value is not standard and not implemented in Chrome.
+    // So, we need to modify the DOM.
+    let tables = document.querySelectorAll('table');
+    for (let table of tables) {
+      let caption = table.querySelector('caption');
+      if (!caption) continue;
+      let tableContainer = document.createElement('div');
+      tableContainer.className = 'table-container';
+      table.insertAdjacentElement('beforebegin', tableContainer);
+      tableContainer.appendChild(table);
+      let bookdownIdentifier = caption.querySelector('span[id^="tab\\:"]');
+      if (!!bookdownIdentifier) {
+        let tableId = bookdownIdentifier.id;
+        bookdownIdentifier.removeAttribute('id');
+        table.id = tableId;
+      }
+      let newCaption = document.createElement('p');
+      newCaption.className = 'caption';
+      newCaption.innerHTML = caption.innerHTML;
+      caption.remove();
+      tableContainer.appendChild(newCaption);
+    }
+  }
+}
+</script>
+
+$if(math)$
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function() {
+  previousBefore = PagedConfig.before;
+
+  window.PagedConfig = {
+    before: async () => {
+      await previousBefore();
+      await new Promise((resolve, reject) => {
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        var src = "true";
+        if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+        if (location.protocol !== "file:" && /^https?:/.test(src))
+          src = src.replace(/^https?:/, '');
+        script.src = src;
+        window.MathJax = {
+          AuthorInit: () => {
+            MathJax.Hub.Register.StartupHook("Begin", () => {
+              MathJax.Hub.Queue(resolve);
+            });
+          }
+        };
+        document.getElementsByTagName("head")[0].appendChild(script);
+      });
+    }
+  };
+})();
+</script>
+$endif$
+
+$for(header-includes)$
+$header-includes$
+$endfor$
+
+$if(highlightjs)$
+<link rel="stylesheet"
+      href="$highlightjs$/$if(highlightjs-theme)$$highlightjs-theme$$else$default$endif$.css"
+      $if(html5)$$else$type="text/css" $endif$/>
+<script src="$highlightjs$/highlight.js"></script>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+$endif$
+
+$if(highlighting-css)$
+<style type="text/css">
+$highlighting-css$
+</style>
+$endif$
+
+$for(css)$
+<link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
+$endfor$
+
+</head>
+
+<body>
+  <div style="display:none" aria-hidden="true">
+  \(
+    \let\pkg=\mathbf
+    \let\proglang=\textsf
+    \let\code=\texttt
+    \newcommand{\E}{\mathsf{E}}
+    \newcommand{\VAR}{\mathsf{VAR}}
+    \newcommand{\COV}{\mathsf{COV}}
+    \newcommand{\Prob}{\mathsf{P}}
+  \)
+  </div>
+
+$for(include-before)$
+$include-before$
+$endfor$
+
+<header class="document-header">
+<img class="journal-name" alt="Journal of Statistical Software" src="https://www.jstatsoft.org/public/journals/1/homeHeaderTitleImage_en_US.png">
+<p class="header-meta">
+$if(month)$
+$if(year)$
+$if(volume)$
+$if(issue)$
+  <span class="issue">$month$ $year$, Volume $volume$, Issue $issue$.</span>
+$endif$
+$endif$
+$endif$
+$endif$
+$if(doi)$
+  <a href="https://doi.org/$doi$" class="doi">doi: $doi$</a>
+$endif$
+</p>
+</header>
+
+<article>
+
+$if(title)$
+<header id="$idprefix$header" class="title-page">
+<h1 class="title">$title$</h1>
+<span class="shorttitle" style="display: none;" aria-hidden="true">$if(shorttitle)$$shorttitle$$else$$title$$endif$</span>
+$if(author)$
+<div class="authors-container" role="list">
+$for(author)$
+<p class="author-item" role="listitem" style="--rank: $author.rank$;">
+$if(author.data.name)$
+<span class="author">$author.data.name$</span>
+$if(author.data.affiliation)$
+<br><span class="author-affil">
+$author.data.affiliation$
+</span>
+$endif$
+$else$
+<span class="author">$author.data$</span>
+$endif$
+</p>
+$endfor$
+</div>
+$endif$
+</header>
+$endif$
+
+<section class="abstract" property="dc:abstract">
+$if(abstract)$
+<h2 class="abstract-header">Abstract</h2>
+<div class="abstract-content">
+$abstract$
+</div>
+$endif$
+<section class="keywords" role="list" aria-labelledby="$idprefix$keywords-header">
+<p><span id="$idprefix$keywords-header" class="keywords-heading" aria-level="3" role="heading">Keywords</span>: $for(keywords)$<span role="listitem">$keywords$</span>$sep$, $endfor$.</p>
+</section>
+</section>
+
+<main role="main">
+$body$
+</main>
+
+<footer class="article-footer">
+$for(author)$
+$if(author.data.address)$
+<h3 class="affil-header">Affiliation:</h3>
+<address>
+<p class="author">$author.data.name$</p>
+<p class="author-affil">$author.data.affiliation$</p>
+<p class="author-address">$author.data.address$</p>
+$if(author.data.email)$<p>E-mail: $author.data.email$</p>$endif$
+$if(author.data.url)$<p>URL: $author.data.url$</p>$endif$
+</address>
+$endif$
+$endfor$
+<div class="last-page-footer">
+<p class="jss-meta">
+<img class="journal-name" alt="Journal of Statistical Software" src="https://www.jstatsoft.org/public/journals/1/homeHeaderTitleImage_en_US.png"> <a class="uri" href="https://www.jstatsoft.org/">http://www.jstatsoft.org/</a><br>
+published by the Foundation for Open Access Statistics <a class="uri" href="http://www.foastat.org/">http://www.foastat.org/</a>
+</p>
+<p class="footer-issue">
+$if(month)$
+$if(year)$
+$if(volume)$
+$if(issue)$
+$month$ $year$, Volume $volume$, Issue $issue$
+$endif$
+$endif$
+$endif$
+$endif$
+$if(doi)$
+<br><a href="https://doi.org/$doi$" class="doi">doi: $doi$</a>
+$endif$
+</p>
+<p class="info-dates">
+$if(submitdate)$<em>Submitted:</em> $submitdate$$endif$<br>
+$if(acceptdate)$<em>Accepted:</em> $acceptdate$$endif$
+</p>
+</div>
+</footer>
+</article>
+
+$for(include-after)$
+$include-after$
+$endfor$
+
+<script>
+// when the page is about to reload via servr, remember the scroll position
+document.addEventListener('servr:reload', function(e) {
+  sessionStorage.setItem('pagedown-scroll', window.scrollY);
+});
+</script>
+</body>
+</html>

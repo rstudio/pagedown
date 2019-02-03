@@ -9,11 +9,6 @@
     $for(author-meta)$<meta name="author" content="$author-meta$" />$endfor$
     $if(date-meta)$<meta name="date" content="$date-meta$" />$endif$
     <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
-    <style type="text/css">
-    #main > h1, #aside > h1, #disclaimer > h2 {
-      display: none;
-    }
-    </style>
 
     $for(header-includes)$
     $header-includes$
@@ -34,16 +29,22 @@ $body$
 <script>
 (function() {
   var i, s, j, el, els;
-  var create_el = function(type, className, content) {
+  var create_el = function(type, className, content, isHTML) {
     var el = document.createElement(type);
     if (className) el.className = className;
-    if (content) el.innerText = content;
+    if (content) {
+      if (isHTML) {el.innerHTML = content;} else {el.innerText = content;}
+    }
     return el;
   }
 
   // replace h2 title with h1
   var title = document.getElementById('title').querySelector('h2');
-  title.parentNode.replaceChild(create_el('h1', false, title.innerText), title);
+  title.parentNode.replaceChild(create_el('h1', false, title.innerHTML, true), title);
+
+  // add the class .aside to #aside
+  el = document.getElementById('aside');
+  if (el) el.className += ' aside';
 
   // tweak class names of sections, and add icons
   els = document.getElementById('main').querySelectorAll('.level2');
@@ -67,38 +68,42 @@ $body$
     var ps = el.querySelectorAll('p');
     // move the date paragraph to the date div
     if (ps.length >= 3) {
-      s = ps[2].innerText.split('-');
+      s = ps[2].innerText;
+      s = s === 'N/A' ? [] : s.split(' - ');
       el.removeChild(ps[2]);
-      for (j = 0; j < s.length; j++) {
+      for (j = 0; j < s.length && j < 2; j++) {
         el.children[0].appendChild(create_el('span', false, s[j]))
       }
     }
     // move title, description, location to the details div
     (function(h) {
       h.appendChild(el.children[3]);
-      var p = el.children[3], s = p.innerText;  // description
-      if (s !== 'N/A') {
-        h.appendChild(create_el('span', 'place', s));
+      var p = el.children[3];  // description
+      if (p.innerText !== 'N/A') {
+        h.appendChild(create_el('span', 'place', p.innerHTML, true));
       }
       el.removeChild(p);
-      p = el.children[3], s = p.innerText;  // location
-      if (s !== 'N/A') {
-        s = create_el('span', 'location', s);
+      p = el.children[3];  // location
+      if (p.innerText !== 'N/A') {
+        s = create_el('span', 'location', p.innerHTML, true);
         s.innerHTML = '<i class="fa fa-map-marker-alt"></i> ' + s.innerHTML;
         h.appendChild(s);
       }
       el.removeChild(p);
     })(el.children[2].firstElementChild);
     // move the rest of content in a block into the last div of the details div
-    while (el.children[2].nextSibling) {
-      el.children[2].lastElementChild.append(el.children[2].nextSibling);
+    s = el.children[2];
+    while (j = s.nextSibling) {
+      if (j.className === 'aside') { s = j; continue; }
+      el.children[2].lastElementChild.append(j);
     }
   }
 })();
 </script>
-    $for(include-after)$
-    $include-after$
-    $endfor$
+
+$for(include-after)$
+$include-after$
+$endfor$
 
   </body>
 </html>

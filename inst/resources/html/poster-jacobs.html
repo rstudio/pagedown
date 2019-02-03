@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"$if(lang)$ lang="$lang$" xml:lang="$lang$"$endif$>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="generator" content="pandoc" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    $for(author-meta)$<meta name="author" content="$author-meta$" />$endfor$
+    $if(date-meta)$<meta name="date" content="$date-meta$" />$endif$
+    <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+
+    $for(header-includes)$
+    $header-includes$
+    $endfor$
+
+    $if(highlightjs)$
+    <link rel="stylesheet" href="$highlightjs$/$if(highlightjs-theme)$$highlightjs-theme$$else$default$endif$.css" $if(html5)$$else$type="text/css" $endif$/>
+    <script src="$highlightjs$/highlight.js"></script>
+    <script type="text/javascript">hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+    $endif$
+
+    $if(highlighting-css)$<style type="text/css">$highlighting-css$</style>$endif$
+
+    $for(css)$
+    <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
+    $endfor$
+
+  </head>
+  <body>
+
+$for(include-before)$
+$include-before$
+$endfor$
+
+<div class="poster-title">
+  <h1 class="title">$title$</h1>
+  <h2 class="author">$for(author)$$author$$sep$, $endfor$</h2>
+  <h2 class="institute">$institute$</h2>
+</div>
+
+$body$
+
+<script type="text/javascript">
+(function() {
+  // add appropriate classes to h1 and its parent div
+  var i, d, p, s, el, els = document.getElementsByTagName('h1');
+  for (i = 0; i < els.length; i++) {
+    el = els[i]; p = el.parentNode;
+    if (p.className === 'section level1') {
+      el.append(document.createElement('hr'));
+    }
+    p.className += ' section-' + (i + 1);
+    s = p.dataset['color'];
+    if (s) el.style.color = s;
+    s = p.dataset['backgroundColor'];
+    if (s) p.style.backgroundColor = s;
+    s = p.dataset['borderColor'];
+    if (s) {
+      el.style.backgroundColor = s;
+      p.style.borderColor = s;
+    }
+    d = document.createElement('div');
+    d.className = 'content';
+    while (el.nextSibling) {
+      d.append(el.nextSibling);
+    }
+    p.append(d);
+  }
+})();
+</script>
+
+$if(math)$
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "$if(mathjax)$$mathjax$$endif$";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:" && /^https?:/.test(src))
+      src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+$endif$
+
+$for(include-after)$
+$include-after$
+$endfor$
+
+  </body>
+</html>

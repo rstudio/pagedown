@@ -1,0 +1,181 @@
+---
+title: "Unnecessarily Complicated Research Title"
+author: "John Smith^1^, James Smith^1,2^, and Jane Smith^3^"
+institute: "1. Department and University One; 2. Department and University Two; 3. Department and University Three"
+date: "2018-11-30"
+references:
+  - id: R-base
+    author:
+    - family: "R Core Team"
+      given: ""
+    title: 'R: A Language and Environment for Statistical Computing'
+    issued:
+      year: 2018
+    URL: https://www.r-project.org
+  - id: R-pagedown
+    author:
+    - family: Xie
+      given: Yihui
+    - family: Lesur
+      given: Romain
+    title: 'Paginate the HTML Output of R Markdown with CSS for Print'
+    issued:
+      year: 2018
+    URL: https://github.com/rstudio/pagedown
+output:
+  pagedown::poster_jacobs:
+    self_contained: false
+    pandoc_args: --mathjax
+---
+
+Objectives {.block}
+================================================================================
+
+Lorem ipsum dolor sit amet, consectetur, nunc tellus pulvinar tortor, commodo eleifend risus arcu sed odio:
+
+- Mollis dignissim, magna augue tincidunt dolor, interdum vestibulum urna
+- Sed aliquet luctus lectus, eget aliquet leo ullamcorper consequat. Vivamus eros sem, iaculis ut euismod non, sollicitudin vel orci.
+- Nascetur ridiculus mus.  
+- Euismod non erat. Nam ultricies pellentesque nunc, ultrices volutpat nisl ultrices a.
+- Euismod non erat. Nam ultricies pellentesque nunc, ultrices volutpat nisl ultrices a.
+- Euismod non erat. Nam ultricies pellentesque nunc, ultrices volutpat nisl ultrices a.
+- Euismod non erat. Nam ultricies pellentesque nunc, ultrices volutpat nisl ultrices a.
+
+
+
+Introduction
+================================================================================
+
+Lorem ipsum dolor **sit amet**, consectetur adipiscing elit. Donec ut volutpat elit. Sed laoreet accumsan mattis. Integer sapien tellus, auctor ac blandit eget, sollicitudin vitae lorem. Praesent dictum tempor pulvinar. Suspendisse potenti. Sed tincidunt varius ipsum, et porta nulla suscipit et. Etiam congue bibendum felis, ac dictum augue cursus a. **Donec** magna eros, iaculis sit amet placerat quis, laoreet id est.
+
+```{r, cars-plot, fig.width=6, fig.height=3, dev='svg', out.width='100%', fig.cap='Figure Caption.', echo=FALSE}
+par(mar = c(4, 4, .1, .1), las = 1)
+boxplot(
+  Sepal.Length ~ Species, data = iris, horizontal = TRUE,
+  col = c('limegreen', 'steelblue', 'orange'), notch = TRUE
+)
+```
+
+Test citations @R-base @R-pagedown. See Figure \@ref(fig:cars-plot).
+
+
+
+
+Materials
+================================================================================
+
+The following materials were required to complete the research:
+
+
+- Curabitur pellentesque dignissim
+- Eu facilisis est tempus quis
+- Duis porta consequat lorem
+- Eu facilisis est tempus quis
+
+
+The materials were prepared according to the steps outlined below:
+
+1. Curabitur pellentesque dignissim
+1. Eu facilisis est tempus quis
+1. Duis porta consequat lorem
+1. Curabitur pellentesque dignissim
+
+
+
+
+Methods
+================================================================================
+
+Lorem ipsum dolor **sit amet**, consectetur adipiscing elit. Sed laoreet accumsan mattis. Integer sapien tellus, auctor ac blandit eget, sollicitudin vitae lorem. Praesent dictum tempor pulvinar. Suspendisse potenti. Sed tincidunt varius ipsum, et porta nulla suscipit et. Etiam congue bibendum felis, ac dictum augue cursus a. **Donec** magna eros, iaculis sit amet placerat quis, laoreet id est. In ut orci purus, interdum ornare nibh. Pellentesque pulvinar, nibh ac malesuada accumsan, urna nunc convallis tortor, ac vehicula nulla tellus eget nulla. Nullam lectus tortor, _consequat tempor hendrerit_ quis, vestibulum in diam. Maecenas sed diam augue.
+
+Important Result {.block}
+================================================================================
+
+Lorem ipsum dolor **sit amet**, consectetur adipiscing elit. Sed commodo molestie porta. Sed ultrices scelerisque sapien ac commodo. Donec ut volutpat elit.
+
+
+
+Mathematical Section
+================================================================================
+
+Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin. Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin.
+  
+\begin{equation}
+E = mc^{2}
+(\#eq:Einstein)
+\end{equation}
+
+Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin. Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin.
+
+\begin{equation}
+\cos^3 \theta =\frac{1}{4}\cos\theta+\frac{3}{4}\cos 3\theta
+(\#eq:refname)
+\end{equation}
+
+Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin. Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin.
+
+\begin{equation}
+\kappa =\frac{\xi}{E_{\mathrm{max}}}
+\end{equation}
+
+Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin. Nam quis odio enim, in molestie libero. Vivamus cursus mi at nulla elementum sollicitudin.
+
+
+Results
+================================================================================
+
+::: {.figure-example}
+Placeholder  
+~~~~~~~  
+Image
+
+Figure 2: Figure caption.
+:::
+
+Nunc tempus venenatis facilisis. Curabitur suscipit consequat eros non porttitor. Sed a massa dolor, id ornare enim:
+
+```{r echo=FALSE}
+knitr::kable(iris[1:5, 1:4], caption = 'Table caption.')
+```
+
+
+Conclusion
+================================================================================
+
+Nunc tempus venenatis facilisis. **Curabitur suscipit** consequat eros non porttitor. Sed a massa dolor, id ornare enim. Fusce quis massa dictum tortor **tincidunt mattis**. Donec quam est, lobortis quis pretium at, laoreet scelerisque lacus. Nam quis odio enim, in molestie libero. Vivamus cursus mi at _nulla elementum sollicitudin_.
+
+Nunc tempus venenatis facilisis. **Curabitur suscipit** consequat eros non porttitor. Sed a massa dolor, id ornare enim. Fusce quis massa dictum tortor **tincidunt mattis**. Donec quam est, lobortis quis pretium at, laoreet scelerisque lacus. Nam quis odio enim, in molestie libero. Vivamus cursus mi at _nulla elementum sollicitudin_.
+
+
+
+
+References
+================================================================================
+
+<div id="refs"></div>
+
+
+
+
+Acknowledgements {data-color=red}
+================================================================================
+
+Nam mollis tristique neque eu luctus. Suspendisse rutrum congue nisi sed convallis. Aenean id neque dolor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+
+::: {.logo-example}
+Placeholder Logo
+
+Placeholder Logo
+
+Placeholder Logo
+:::
+
+Nam mollis tristique neque eu luctus. Suspendisse rutrum congue nisi sed convallis. Aenean id neque dolor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+
+
+Contact Information {.block data-color=black data-border-color=orange data-background-color=white}
+================================================================================
+
+- Web: https://www.example.org/smithlab
+- Email: john@example.org
+- Phone: +1 (000) 111 1111

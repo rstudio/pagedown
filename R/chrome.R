@@ -1,4 +1,4 @@
-#' Print a web page to PDF using the headless Chrome
+#' Print a web page to PDF using the headless Chrome (experimental)
 #'
 #' This is a wrapper function to execute the command \command{chrome --headless
 #' --print-to-pdf url}. Google Chrome (or Chromium on Linux) must be installed
@@ -9,14 +9,16 @@
 #'   remote URL \file{https://www.example.org/foo/bar.html}, the default output
 #'   will be \file{bar.pdf} under the current working directory.
 #' @param browser Path to Google Chrome or Chromium. This function will try to
-#'   find it automatically if the path is not explicitly provided.
+#'   find it automatically via \code{\link{find_chrome}()} if the path is not
+#'   explicitly provided.
 #' @param work_dir Name of headless Chrome working directory. In order to avoid
 #'   Chrome to fail, it is recommended to use a subdirectory of your home
 #'   directory.
 #' @param timeout The number of seconds before canceling the document
 #'   generation. Use a larger value if the document takes longer to build.
 #' @param extra_args Extra command-line arguments to be passed to Chrome.
-#' @param verbose Whether to show verbose command-line output.
+#' @param verbose Whether to show verbose websocket connexion to headless
+#'   Chrome.
 #' @param debug_port Headless Chrome remote debugging port.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
@@ -26,7 +28,61 @@ chrome_print = function(
   url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', work_dir,
   timeout = 60, extra_args = c('--disable-gpu'), verbose = FALSE, debug_port = 9222
 ) {
-  if (missing(browser)) browser = switch(
+  if (missing(browser)) browser = find_chrome() else {
+    if (!file.exists(browser)) browser = Sys.which(browser)
+  }
+  if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
+
+  # remove hash/query parameters in url
+  if (missing(output) && !file.exists(url))
+    output = xfun::with_ext(basename(gsub('[#?].*', '', url)), 'pdf')
+  output2 = normalizePath(output, mustWork = FALSE)
+  if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
+    'Cannot create the directory for the output file: ', d
+  )
+
+  # proxy settings
+  extra_args = c(proxy_args(), extra_args)
+
+  if (isTRUE(verbose)) verbose = ''
+
+  # check that work_dir does not exist because it will be deleted at the end
+  work_dir2 = normalizePath(work_dir, mustWork = FALSE)
+  if (isTRUE(dir.exists(work_dir2))) stop(
+    paste('The directory', work_dir, 'already exists.')
+  )
+
+  # for windows, use the --no-sandbox option
+  if (.Platform$OS.type == 'windows')
+    extra_args = unique(c(extra_args, '--no-sandbox'))
+
+  headless_ps = processx::process$new(browser, c(
+    paste0('--remote-debugging-port=', debug_port),
+    paste0('--user-data-dir=', work_dir2),
+    extra_args, '--headless', '--no-first-run', '--no-default-browser-check'
+  ))
+
+  if (!is_remote_protocol_ok(debug_port, headless_ps, work_dir2)) {
+    on.exit(close_chrome(headless_ps, work_dir2))
+    stop('A more recent version of Chrome is required. ')
+  }
+
+  ws = websocket::WebSocket$new(get_entrypoint(debug_port, headless_ps, work_dir2))
+  print_pdf(headless_ps, ws, work_dir2, url, output2, !nzchar(verbose), timeout)
+
+  invisible(output)
+}
+
+#' Find Google Chrome or Chromium in the system
+#'
+#' On Windows, this function tries to find Chrome from the registry. On macOS,
+#' it returns a hard-coded path of Chrome under \file{/Applications}. On Linux,
+#' it searches for \command{chromium-browser} and \command{google-chrome} from
+#' the system's \var{PATH} variable.
+#' @return A character string.
+#' @export
+find_chrome = function() {
+  switch(
     .Platform$OS.type,
     windows = {
       res = tryCatch({
@@ -50,85 +106,24 @@ chrome_print = function(
       res
     },
     stop('Your platform is not supported')
-  ) else if (!file.exists(browser)) browser = Sys.which(browser)
-
-  if (.Platform$OS.type == 'windows')
-    extra_args = c(extra_args, '--no-sandbox')
-
-  if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
-
-  # remove hash/query parameters in url
-  if (missing(output) && !file.exists(url))
-    output = xfun::with_ext(basename(gsub('[#?].*', '', url)), 'pdf')
-  output2 = normalizePath(output, mustWork = FALSE)
-  if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
-    'Cannot create the directory for the output file: ', d
   )
+}
 
-  # check that work_dir does not exist because it will be deleted at the end
-  work_dir2 = normalizePath(work_dir, mustWork = FALSE)
-  if (isTRUE(dir.exists(work_dir2))) stop(
-    paste('The directory', work_dir, 'already exists.')
+proxy_args = function() {
+  # the order of the variables is important because the first non-empty variable is kept
+  val = Sys.getenv(c('https_proxy', 'HTTPS_PROXY', 'http_proxy', 'HTTP_PROXY'))
+  val = val[val != '']
+  if (length(val) == 0) return()
+  c(
+    paste0('--proxy-server=', val[1]),
+    paste0('--proxy-bypass-list=', paste(no_proxy_urls(), collapse = ';'))
   )
-
-  # proxy settings
-  proxy = get_proxy()
-  behind_proxy = nzchar(proxy)
-  if (behind_proxy)
-    extra_args = c(chrome_proxy_args(proxy), extra_args)
-
-  if (isTRUE(verbose)) verbose = ''
-
-  headless_ps = processx::process$new(browser, c(
-    paste0('--remote-debugging-port=', debug_port),
-    paste0('--user-data-dir=', work_dir2),
-    extra_args, '--headless', '--no-first-run', '--no-default-browser-check'
-  ))
-
-  if (!is_remote_protocol_ok(debug_port, headless_ps, work_dir2)) {
-    on.exit(close_chrome(headless_ps, work_dir2))
-    stop('A more recent version of Chrome is required. ')
-  }
-
-  ws = websocket::WebSocket$new(get_entrypoint(debug_port, headless_ps, work_dir2))
-  print_pdf(headless_ps, ws, work_dir2, url, output2, !nzchar(verbose), timeout)
-
-  invisible(output)
 }
 
-get_proxy = function() {
-  # the order of the variables is important
-  # because the first non empty variable is kept
-  env_var = c('https_proxy', 'HTTPS_PROXY', 'http_proxy', 'HTTP_PROXY')
-  values = Sys.getenv(env_var)
-  values = values[nzchar(values)]
-  if (length(values) > 0)
-    values[1]
-  else
-    ''
-}
-
-chrome_proxy_args = function(
-  proxy
-) {
-  proxy_arg = paste0('--proxy-server=', proxy)
-
-  no_proxy_urls = get_no_proxy_urls()
-  no_proxy_string = paste(no_proxy_urls, collapse = ';')
-  no_proxy_arg = paste0('--proxy-bypass-list=', no_proxy_string)
-
-  c(proxy_arg, no_proxy_arg)
-}
-
-get_no_proxy_urls = function() {
-  env_var = Sys.getenv(c('no_proxy', 'NO_PROXY'))
-  no_proxy = do.call(c, strsplit(env_var, '[,;]'))
-  no_proxy = c(default_no_proxy_urls(), no_proxy)
-  unique(no_proxy)
-}
-
-default_no_proxy_urls = function() {
-  c('localhost', '127.0.0.1')
+no_proxy_urls = function() {
+  x = do.call(c, strsplit(Sys.getenv(c('no_proxy', 'NO_PROXY')), '[,;]'))
+  x = c('localhost', '127.0.0.1', x)
+  unique(x)
 }
 
 is_remote_protocol_ok = function(
@@ -189,7 +184,7 @@ get_entrypoint = function(
   page
 }
 
-print_pdf <- function(
+print_pdf = function(
   headless_ps, ws, work_dir, url, output, verbose, timeout
 ) {
   later::later(function() if (ws$readyState() < 2) ws$close(), delay = timeout)
@@ -212,7 +207,7 @@ print_pdf <- function(
 
     if (!is.null(id)) switch(
       id,
-      # Command #1 received -> calback: command #2 Page.enable
+      # Command #1 received -> callback: command #2 Page.enable
       ws$send('{"id":2,"method":"Page.enable"}'),
       # Command #2 received -> callback: command #3 Runtime.addBinding
       ws$send('{"id":3,"method":"Runtime.addBinding","params":{"name":"pagedownListener"}}'),
@@ -220,7 +215,7 @@ print_pdf <- function(
       ws$send(sprintf('{"id":4,"method":"Page.navigate","params":{"url":"%s"}}', url)),
       # Command #4 received - No callback
       NULL, {
-      # Command #5 received - Test if the html document use the paged.js polyfill
+      # Command #5 received - Test if the html document uses the paged.js polyfill
         if (!isTRUE(msg$result$result$value))
           ws$send('{"id":6,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
       }, {

@@ -2,10 +2,14 @@
 % Please edit documentation in R/poster.R
 \name{poster_relaxed}
 \alias{poster_relaxed}
+\alias{poster_jacobs}
 \title{Create posters in HTML}
 \usage{
 poster_relaxed(..., css = "poster-relaxed", template = pkg_resource("html", 
     "poster-relaxed.html"), number_sections = FALSE)
+
+poster_jacobs(..., css = "poster-jacobs", template = pkg_resource("html", 
+    "poster-jacobs.html"))
 }
 \arguments{
 \item{..., css, template, number_sections}{See \code{\link{html_paged}()}.}
@@ -17,4 +21,9 @@ An R Markdown output format.
 The output format \code{poster_relaxed()} is based on an example in the
 Github repo \url{https://github.com/RelaxedJS/ReLaXed-examples}. See
 \url{https://pagedown.rbind.io/poster-relaxed/} for an example.
+
+The output format \code{poster_jacobs()} mimics the style of the
+  \dQuote{Jacobs Landscape Poster LaTeX Template Version 1.0} at
+  \url{https://www.overleaf.com/gallery/tagged/poster}. See
+  \url{https://pagedown.rbind.io/poster-jacobs/} for an example.
 }

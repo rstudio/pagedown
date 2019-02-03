@@ -10,6 +10,7 @@
 #' @param mainfont Names of fonts to be used for the body text of the card.
 #' @return An R Markdown output format.
 #' @export
+#' @examples pagedown::business_card(googlefonts = 'Lato')
 business_card = function(
   logo = NULL, width = '2in', height = '3in',
   googlefonts = 'Montserrat', mainfont = googlefonts

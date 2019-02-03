@@ -101,7 +101,7 @@ local function appendLoft(doc)
     lofHeader =
       pandoc.Header(1,
                     {table.unpack(options["lof-title"])},
-                    pandoc.Attr(idprefix .. "LOF", {"lof", "unnumbered"}, {})
+                    pandoc.Attr(idprefix .. "LOF", {"lof", "unnumbered", "front-matter"}, {})
       )
     table.insert(doc.blocks, 1, lofHeader)
   end
@@ -111,7 +111,7 @@ local function appendLoft(doc)
     lotHeader =
       pandoc.Header(1,
                     {table.unpack(options["lot-title"])},
-                    pandoc.Attr(idprefix .. "LOT", {"lot", "unnumbered"}, {})
+                    pandoc.Attr(idprefix .. "LOT", {"lot", "unnumbered", "front-matter"}, {})
       )
     table.insert(doc.blocks, 1, lotHeader)
   end

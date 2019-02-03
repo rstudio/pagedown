@@ -12,6 +12,7 @@ html_resume = function(
 ) {
   html_format(
     ..., css = css, template = template, theme = NULL, number_sections = number_sections,
+    fig_caption = FALSE, .pagedjs = TRUE,
     .dependencies = list(rmarkdown::html_dependency_font_awesome())
   )
 }

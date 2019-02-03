@@ -1,0 +1,4 @@
+name: HTML Poster (Jacobs University)
+description: >
+   A poster mimicking the LaTeX style created by the Computational Physics and Biophysics Group, Jacobs University.
+create_dir: FALSE

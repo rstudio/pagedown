@@ -1,0 +1,4 @@
+name: Paged HTML Document
+description: >
+   Create a paged HTML document based on Paged.js.
+create_dir: FALSE
