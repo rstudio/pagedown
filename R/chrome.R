@@ -216,10 +216,13 @@ print_pdf = function(
       # Command #4 received - No callback
       NULL, {
       # Command #5 received - Test if the html document uses the paged.js polyfill
+      # if not, call the binding when fonts are ready
         if (!isTRUE(msg$result$result$value))
-          ws$send('{"id":6,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
-      }, {
-      # Command #6 received (printToPDF) -> callback: save to PDF file & close Chrome
+          ws$send('{"id":6,"method":"Runtime.evaluate","params":{"expression":"document.fonts.ready.then(() => {pagedownListener(\'\');})"}}')
+      },
+      # Command #6 received - No callback
+      NULL, {
+      # Command #7 received (printToPDF) -> callback: save to PDF file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
         later::later(function() ws$close(), delay = 0.2)
       }
@@ -229,7 +232,7 @@ print_pdf = function(
         ws$send('{"id":5,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
       }
       if (method == "Runtime.bindingCalled")
-        ws$send('{"id":6,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
+        ws$send('{"id":7,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
     }
   })
 
