@@ -4,17 +4,7 @@
 \alias{business_card}
 \title{Create business cards}
 \usage{
-business_card(logo = NULL, width = "2in", height = "3in", googlefonts = "Montserrat", 
-    mainfont = googlefonts)
-}
-\arguments{
-\item{logo}{Path or URL to a logo.}
-
-\item{width, height}{Width and height of the card.}
-
-\item{googlefonts}{Names of Google fonts to be loaded on the card page.}
-
-\item{mainfont}{Names of fonts to be used for the body text of the card.}
+business_card()
 }
 \value{
 An R Markdown output format.
@@ -25,5 +15,5 @@ This output format is based on an example in the Github repo
 \url{https://pagedown.rbind.io/business-card/} for an example.
 }
 \examples{
-pagedown::business_card(googlefonts = "Lato")
+pagedown::business_card()
 }

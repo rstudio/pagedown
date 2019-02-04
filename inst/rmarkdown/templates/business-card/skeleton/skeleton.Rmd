@@ -1,20 +1,34 @@
 ---
-author: "Tareef Kawaf"
-title: "President of RStudio, Inc."
-output:
-  pagedown::business_card:
-    logo: "https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png"
-    # googlefonts: "Righteous" # feel free to try other fonts at https://fonts.google.com
+phone: "+1 844-448-1212"
+email: "info@rstudio.com"
+url: www.rstudio.com
+address: |
+  @rstudio
+logo: "https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png"
+person: 
+  - name: Tareef Kawaf
+    title: President of RStudio, Inc.
+    repeat: 12
+  - name: Yihui Xie
+    title: Responsible for `r head(grep('(?<!shut)down$', unique(.packages(T)), value=T, perl=T), 2)`
+    email: xie@yihui.name
+    url: https://yihui.name
+    repeat: 12
+# googlefonts: "Righteous" # feel free to try other fonts at https://fonts.google.com
+paperwidth: 8.5in
+paperheight: 11in
+cols: 4
+rows: 3
+output: pagedown::business_card
 ---
 
-+1 844-448-1212
+<!-- if you prefer you can create cards in markdown instead of YAML declaration -->
 
-info@rstudio.com
-
-www.rstudio.com
-
-@rstudio
-
+::: {.wrapper data-repeat="12"}
+[Another Name]{slot="name"}
+[Another Title]{slot="title"}
+[someone@rstudio.com]{slot="email"}
+:::
 
 
 <!-- if you prefer black text on white background, set eval=TRUE on the chunk below -->
@@ -23,6 +37,7 @@ www.rstudio.com
 .wrapper {
   color: black;
   background-color: white;
+  border: 1px dotted black;
 }
 .coordinates {
   color: #333;
