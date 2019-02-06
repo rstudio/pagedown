@@ -64,7 +64,7 @@ chrome_print = function(
   }
 
   ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps))
-  print_pdf(ps, ws, url, output2, verbose, timeout)
+  print_pdf(ps, ws, work_dir, url, output2, verbose, timeout)
 
   invisible(output)
 }
@@ -181,7 +181,7 @@ get_entrypoint = function(debug_port, ps) {
   page
 }
 
-print_pdf = function(ps, ws, url, output, verbose, timeout) {
+print_pdf = function(ps, ws, work_dir, url, output, verbose, timeout) {
   later::later(function() if (ws$readyState() < 2) ws$close(), delay = timeout)
 
   ws$onOpen(function(event) {
