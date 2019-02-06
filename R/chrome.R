@@ -64,7 +64,7 @@ chrome_print = function(
 
   Sys.sleep(1)  # wait for a second before Chrome is ready
   if (!is_remote_protocol_ok(debug_port, headless_ps, work_dir2)) {
-    on.exit(close_chrome(headless_ps, work_dir2))
+    close_chrome(headless_ps, work_dir2)
     stop('A more recent version of Chrome is required. ')
   }
 
@@ -127,21 +127,16 @@ no_proxy_urls = function() {
   unique(x)
 }
 
-is_remote_protocol_ok = function(
-  debug_port, headless_ps, work_dir, retry_delay = 0.2, max_attempts = 15
-) {
+is_remote_protocol_ok = function(debug_port, headless_ps, work_dir, max_attempts = 15) {
   url = sprintf('http://127.0.0.1:%s/json/protocol', debug_port)
   for (i in 1:max_attempts) {
     remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
-    if (!is.null(remote_protocol))
-      break
-    else
-      if (i < max_attempts)
-        Sys.sleep(retry_delay)
-      else {
-        on.exit(close_chrome(headless_ps, work_dir))
-        stop('Cannot connect to headless Chrome. ')
-      }
+    if (!is.null(remote_protocol)) break
+    if (i == max_attempts) {
+      close_chrome(headless_ps, work_dir)
+      stop('Cannot connect to headless Chrome. ')
+    }
+    Sys.sleep(0.2)
   }
 
   remote_domains = sapply(remote_protocol$domains, function(x) x$domain)
@@ -167,27 +162,21 @@ is_remote_protocol_ok = function(
   )
 }
 
-get_entrypoint = function(
-  debug_port, headless_ps, work_dir
-) {
-  open_debuggers =
-    jsonlite::read_json(sprintf('http://127.0.0.1:%s/json', debug_port), simplifyVector = TRUE)
+get_entrypoint = function(debug_port, headless_ps, work_dir) {
+  open_debuggers = jsonlite::read_json(
+    sprintf('http://127.0.0.1:%s/json', debug_port), simplifyVector = TRUE
+  )
   page = open_debuggers$webSocketDebuggerUrl[open_debuggers$type == 'page']
 
   if (length(page) == 0) {
-    on.exit(close_chrome(headless_ps, work_dir))
-    stop(
-      'Cannot connect R to Chrome. ',
-      'Please retry.'
-    )
+    close_chrome(headless_ps, work_dir)
+    stop('Cannot connect R to Chrome. Please retry.')
   }
 
   page
 }
 
-print_pdf = function(
-  headless_ps, ws, work_dir, url, output, verbose, timeout
-) {
+print_pdf = function(headless_ps, ws, work_dir, url, output, verbose, timeout) {
   later::later(function() if (ws$readyState() < 2) ws$close(), delay = timeout)
 
   ws$onOpen(function(event) {
@@ -243,8 +232,7 @@ print_pdf = function(
 }
 
 close_chrome = function(headless_ps, work_dir) {
-  if (headless_ps$is_alive())
-    killed <- headless_ps$kill()
+  if (headless_ps$is_alive()) headless_ps$kill()
   later::later(function() unlink(work_dir, recursive = TRUE), delay = 0.2)
 }
 
