@@ -48,7 +48,7 @@ chrome_print = function(
 
   # check that work_dir does not exist because it will be deleted at the end
   work_dir2 = normalizePath(work_dir, mustWork = FALSE)
-  if (isTRUE(dir.exists(work_dir2))) stop(
+  if (isTRUE(dir.exists(work_dir2))) warning(
     paste('The directory', work_dir, 'already exists.')
   )
 
@@ -62,6 +62,7 @@ chrome_print = function(
     extra_args, '--headless', '--no-first-run', '--no-default-browser-check'
   ))
 
+  Sys.sleep(1)  # wait for a second before Chrome is ready
   if (!is_remote_protocol_ok(debug_port, headless_ps, work_dir2)) {
     on.exit(close_chrome(headless_ps, work_dir2))
     stop('A more recent version of Chrome is required. ')
@@ -131,7 +132,7 @@ is_remote_protocol_ok = function(
 ) {
   url = sprintf('http://127.0.0.1:%s/json/protocol', debug_port)
   for (i in 1:max_attempts) {
-    remote_protocol = tryCatch(jsonlite::read_json(url), error = function(e) NULL)
+    remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
     if (!is.null(remote_protocol))
       break
     else
