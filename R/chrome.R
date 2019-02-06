@@ -58,7 +58,6 @@ chrome_print = function(
     extra_args, '--headless', '--no-first-run', '--no-default-browser-check'
   ))
 
-  Sys.sleep(1)  # wait for a second before Chrome is ready
   if (!is_remote_protocol_ok(debug_port, ps)) {
     close_chrome(ps)
     stop('A more recent version of Chrome is required. ')
