@@ -129,7 +129,7 @@ no_proxy_urls = function() {
 is_remote_protocol_ok = function(
   debug_port, headless_ps, work_dir, retry_delay = 0.2, max_attempts = 15
 ) {
-  url = sprintf('http://localhost:%s/json/protocol', debug_port)
+  url = sprintf('http://127.0.0.1:%s/json/protocol', debug_port)
   for (i in 1:max_attempts) {
     remote_protocol = tryCatch(jsonlite::read_json(url), error = function(e) NULL)
     if (!is.null(remote_protocol))
@@ -170,7 +170,7 @@ get_entrypoint = function(
   debug_port, headless_ps, work_dir
 ) {
   open_debuggers =
-    jsonlite::read_json(sprintf('http://localhost:%s/json', debug_port), simplifyVector = TRUE)
+    jsonlite::read_json(sprintf('http://127.0.0.1:%s/json', debug_port), simplifyVector = TRUE)
   page = open_debuggers$webSocketDebuggerUrl[open_debuggers$type == 'page']
 
   if (length(page) == 0) {
