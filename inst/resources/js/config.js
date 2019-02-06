@@ -105,8 +105,16 @@
       await runMathJax();
     },
     after: () => {
-      // scroll to the last position before the page is reloaded
-      window.scrollTo(0, sessionStorage.getItem('pagedown-scroll'));
+      // pagedownListener is a binder added by the chrome_print function
+      // this binder exists only when chrome_print opens the html file
+      if (window.pagedownListener) {
+        // the html file is opened for printing
+        // call the binder to signal to the R session that Paged.js has finished
+        pagedownListener('');
+      } else {
+        // scroll to the last position before the page is reloaded
+        window.scrollTo(0, sessionStorage.getItem('pagedown-scroll'));
+      }
     }
   };
 })();

@@ -5,7 +5,8 @@
 \title{Print a web page to PDF using the headless Chrome (experimental)}
 \usage{
 chrome_print(url, output = xfun::with_ext(url, "pdf"), browser = "google-chrome", 
-    extra_args = c("--disable-gpu"), verbose = FALSE)
+    work_dir = tempfile(), timeout = 60, extra_args = c("--disable-gpu"), 
+    verbose = FALSE)
 }
 \arguments{
 \item{url}{A URL or local file path to a web page.}
@@ -19,9 +20,17 @@ will be \file{bar.pdf} under the current working directory.}
 find it automatically via \code{\link{find_chrome}()} if the path is not
 explicitly provided.}
 
+\item{work_dir}{Name of headless Chrome working directory. If the default
+temporary directory doesn't work, you may try to use a subdirectory of your
+home directory.}
+
+\item{timeout}{The number of seconds before canceling the document
+generation. Use a larger value if the document takes longer to build.}
+
 \item{extra_args}{Extra command-line arguments to be passed to Chrome.}
 
-\item{verbose}{Whether to show verbose command-line output.}
+\item{verbose}{Whether to show verbose websocket connexion to headless
+Chrome.}
 }
 \value{
 Path of the output file (invisibly).
@@ -30,13 +39,6 @@ Path of the output file (invisibly).
 This is a wrapper function to execute the command \command{chrome --headless
 --print-to-pdf url}. Google Chrome (or Chromium on Linux) must be installed
 prior to using this function.
-}
-\note{
-Currently this function is very likely to print the page too early,
-  i.e., before the page is practically ready (all JavaScript code has
-  finished processing the DOM). You are recommended to open the page in a
-  Chrome browser and print it to PDF manually if this function does not work
-  well. We will improve it in the future.
 }
 \references{
 \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
