@@ -5,8 +5,8 @@
 \title{Print a web page to PDF using the headless Chrome (experimental)}
 \usage{
 chrome_print(url, output = xfun::with_ext(url, "pdf"), browser = "google-chrome", 
-    work_dir, timeout = 60, extra_args = c("--disable-gpu"), verbose = FALSE, 
-    debug_port = 9222)
+    work_dir = tempfile(), timeout = 60, extra_args = c("--disable-gpu"), 
+    verbose = FALSE, debug_port = 9222)
 }
 \arguments{
 \item{url}{A URL or local file path to a web page.}
@@ -20,9 +20,9 @@ will be \file{bar.pdf} under the current working directory.}
 find it automatically via \code{\link{find_chrome}()} if the path is not
 explicitly provided.}
 
-\item{work_dir}{Name of headless Chrome working directory. In order to avoid
-Chrome to fail, it is recommended to use a subdirectory of your home
-directory.}
+\item{work_dir}{Name of headless Chrome working directory. If the default
+temporary directory doesn't work, you may try to use a subdirectory of your
+home directory.}
 
 \item{timeout}{The number of seconds before canceling the document
 generation. Use a larger value if the document takes longer to build.}

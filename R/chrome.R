@@ -11,9 +11,9 @@
 #' @param browser Path to Google Chrome or Chromium. This function will try to
 #'   find it automatically via \code{\link{find_chrome}()} if the path is not
 #'   explicitly provided.
-#' @param work_dir Name of headless Chrome working directory. In order to avoid
-#'   Chrome to fail, it is recommended to use a subdirectory of your home
-#'   directory.
+#' @param work_dir Name of headless Chrome working directory. If the default
+#'   temporary directory doesn't work, you may try to use a subdirectory of your
+#'   home directory.
 #' @param timeout The number of seconds before canceling the document
 #'   generation. Use a larger value if the document takes longer to build.
 #' @param extra_args Extra command-line arguments to be passed to Chrome.
@@ -25,7 +25,7 @@
 #' @return Path of the output file (invisibly).
 #' @export
 chrome_print = function(
-  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', work_dir,
+  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', work_dir = tempfile(),
   timeout = 60, extra_args = c('--disable-gpu'), verbose = FALSE, debug_port = 9222
 ) {
   if (missing(browser)) browser = find_chrome() else {
