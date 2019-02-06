@@ -19,14 +19,13 @@
 #' @param extra_args Extra command-line arguments to be passed to Chrome.
 #' @param verbose Whether to show verbose websocket connexion to headless
 #'   Chrome.
-#' @param debug_port Headless Chrome remote debugging port.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
 #' @return Path of the output file (invisibly).
 #' @export
 chrome_print = function(
   url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', work_dir = tempfile(),
-  timeout = 60, extra_args = c('--disable-gpu'), verbose = FALSE, debug_port = 9222
+  timeout = 60, extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
     if (!file.exists(browser)) browser = Sys.which(browser)
@@ -51,6 +50,7 @@ chrome_print = function(
   # for windows, use the --no-sandbox option
   if (.Platform$OS.type == 'windows') extra_args = unique(c(extra_args, '--no-sandbox'))
 
+  debug_port = servr:::random_port()
   ps = processx::process$new(browser, c(
     paste0('--remote-debugging-port=', debug_port),
     paste0('--user-data-dir=', work_dir2),

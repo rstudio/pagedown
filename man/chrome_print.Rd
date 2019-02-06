@@ -6,7 +6,7 @@
 \usage{
 chrome_print(url, output = xfun::with_ext(url, "pdf"), browser = "google-chrome", 
     work_dir = tempfile(), timeout = 60, extra_args = c("--disable-gpu"), 
-    verbose = FALSE, debug_port = 9222)
+    verbose = FALSE)
 }
 \arguments{
 \item{url}{A URL or local file path to a web page.}
@@ -31,8 +31,6 @@ generation. Use a larger value if the document takes longer to build.}
 
 \item{verbose}{Whether to show verbose websocket connexion to headless
 Chrome.}
-
-\item{debug_port}{Headless Chrome remote debugging port.}
 }
 \value{
 Path of the output file (invisibly).
