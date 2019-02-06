@@ -51,20 +51,20 @@ chrome_print = function(
   # for windows, use the --no-sandbox option
   if (.Platform$OS.type == 'windows') extra_args = unique(c(extra_args, '--no-sandbox'))
 
-  headless_ps = processx::process$new(browser, c(
+  ps = processx::process$new(browser, c(
     paste0('--remote-debugging-port=', debug_port),
     paste0('--user-data-dir=', work_dir2),
     extra_args, '--headless', '--no-first-run', '--no-default-browser-check'
   ))
 
   Sys.sleep(1)  # wait for a second before Chrome is ready
-  if (!is_remote_protocol_ok(debug_port, headless_ps, work_dir2)) {
-    close_chrome(headless_ps, work_dir2)
+  if (!is_remote_protocol_ok(debug_port, ps, work_dir2)) {
+    close_chrome(ps, work_dir2)
     stop('A more recent version of Chrome is required. ')
   }
 
-  ws = websocket::WebSocket$new(get_entrypoint(debug_port, headless_ps, work_dir2))
-  print_pdf(headless_ps, ws, work_dir2, url, output2, verbose, timeout)
+  ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps, work_dir2))
+  print_pdf(ps, ws, work_dir2, url, output2, verbose, timeout)
 
   invisible(output)
 }
@@ -122,13 +122,13 @@ no_proxy_urls = function() {
   unique(x)
 }
 
-is_remote_protocol_ok = function(debug_port, headless_ps, work_dir, max_attempts = 15) {
+is_remote_protocol_ok = function(debug_port, ps, work_dir, max_attempts = 15) {
   url = sprintf('http://127.0.0.1:%s/json/protocol', debug_port)
   for (i in 1:max_attempts) {
     remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
     if (!is.null(remote_protocol)) break
     if (i == max_attempts) {
-      close_chrome(headless_ps, work_dir)
+      close_chrome(ps, work_dir)
       stop('Cannot connect to headless Chrome. ')
     }
     Sys.sleep(0.2)
@@ -157,21 +157,21 @@ is_remote_protocol_ok = function(debug_port, headless_ps, work_dir, max_attempts
   )
 }
 
-get_entrypoint = function(debug_port, headless_ps, work_dir) {
+get_entrypoint = function(debug_port, ps, work_dir) {
   open_debuggers = jsonlite::read_json(
     sprintf('http://127.0.0.1:%s/json', debug_port), simplifyVector = TRUE
   )
   page = open_debuggers$webSocketDebuggerUrl[open_debuggers$type == 'page']
 
   if (length(page) == 0) {
-    close_chrome(headless_ps, work_dir)
+    close_chrome(ps, work_dir)
     stop('Cannot connect R to Chrome. Please retry.')
   }
 
   page
 }
 
-print_pdf = function(headless_ps, ws, work_dir, url, output, verbose, timeout) {
+print_pdf = function(ps, ws, work_dir, url, output, verbose, timeout) {
   later::later(function() if (ws$readyState() < 2) ws$close(), delay = timeout)
 
   ws$onOpen(function(event) {
@@ -222,12 +222,12 @@ print_pdf = function(headless_ps, ws, work_dir, url, output, verbose, timeout) {
   })
 
   ws$onClose(function(event) {
-    later::later(function() close_chrome(headless_ps, work_dir), delay = 0.2)
+    later::later(function() close_chrome(ps, work_dir), delay = 0.2)
   })
 }
 
-close_chrome = function(headless_ps, work_dir) {
-  if (headless_ps$is_alive()) headless_ps$kill()
+close_chrome = function(ps, work_dir) {
+  if (ps$is_alive()) ps$kill()
   later::later(function() unlink(work_dir, recursive = TRUE), delay = 0.2)
 }
 
