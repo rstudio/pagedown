@@ -134,21 +134,21 @@ is_remote_protocol_ok = function(debug_port, ps, work_dir, max_attempts = 15) {
     Sys.sleep(0.2)
   }
 
-  remote_domains = sapply(remote_protocol$domains, function(x) x$domain)
+  remote_domains = sapply(remote_protocol$domains, `[[`, 'domain')
   if (!all(names(required_commands()) %in% remote_domains))
     return(FALSE)
 
   remote_commands = sapply(names(required_commands()), function(domain) {
     sapply(
       remote_protocol$domains[remote_domains %in% domain][[1]]$commands,
-      function(x) x$name
+      `[[`, 'name'
     )
   })
 
   remote_events =  sapply(names(required_events()), function(domain) {
     sapply(
       remote_protocol$domains[remote_domains %in% domain][[1]]$events,
-      function(x) x$name
+      `[[`, 'name'
     )
   })
 
