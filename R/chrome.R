@@ -135,26 +135,36 @@ is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
     Sys.sleep(0.2)
   }
 
+  required_commands = list(
+    Page = c('enable', 'navigate', 'printToPDF'),
+    Runtime = c('enable', 'addBinding', 'evaluate')
+  )
+
   remote_domains = sapply(remote_protocol$domains, `[[`, 'domain')
-  if (!all(names(required_commands()) %in% remote_domains))
+  if (!all(names(required_commands) %in% remote_domains))
     return(FALSE)
 
-  remote_commands = sapply(names(required_commands()), function(domain) {
+  required_events = list(
+    Page = c('domContentEventFired'),
+    Runtime = c('bindingCalled')
+  )
+
+  remote_commands = sapply(names(required_commands), function(domain) {
     sapply(
       remote_protocol$domains[remote_domains %in% domain][[1]]$commands,
       `[[`, 'name'
     )
   })
 
-  remote_events =  sapply(names(required_events()), function(domain) {
+  remote_events =  sapply(names(required_events), function(domain) {
     sapply(
       remote_protocol$domains[remote_domains %in% domain][[1]]$events,
       `[[`, 'name'
     )
   })
 
-  all(mapply(function(x, table) all(x %in% table), required_commands(), remote_commands),
-      mapply(function(x, table) all(x %in% table), required_events(), remote_events)
+  all(mapply(function(x, table) all(x %in% table), required_commands, remote_commands),
+      mapply(function(x, table) all(x %in% table), required_events, remote_events)
   )
 }
 
@@ -228,18 +238,3 @@ print_pdf = function(ps, ws, work_dir, url, output, verbose, timeout) {
 }
 
 close_chrome = function(ps) if (ps$is_alive()) ps$kill()
-
-required_commands = function() {
-  list(
-    Page = c('enable', 'navigate', 'printToPDF'),
-    Runtime = c('enable', 'addBinding', 'evaluate')
-  )
-}
-
-required_events = function() {
-  list(
-    Page = c('domContentEventFired'),
-    Runtime = c('bindingCalled')
-  )
-}
-
