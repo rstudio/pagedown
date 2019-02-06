@@ -45,7 +45,7 @@ chrome_print = function(
 
   # check that work_dir does not exist because it will be deleted at the end
   if (dir.exists(work_dir)) stop('The directory ', work_dir, ' already exists.')
-  work_dir = normalizePath(work_dir)
+  work_dir = normalizePath(work_dir, mustWork = FALSE)
   on.exit(unlink(work_dir, recursive = TRUE), add = TRUE)
 
   # for windows, use the --no-sandbox option
