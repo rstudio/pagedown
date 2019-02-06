@@ -46,13 +46,10 @@ chrome_print = function(
 
   # check that work_dir does not exist because it will be deleted at the end
   work_dir2 = normalizePath(work_dir, mustWork = FALSE)
-  if (isTRUE(dir.exists(work_dir2))) warning(
-    paste('The directory', work_dir, 'already exists.')
-  )
+  if (dir.exists(work_dir2)) stop('The directory ', work_dir, ' already exists.')
 
   # for windows, use the --no-sandbox option
-  if (.Platform$OS.type == 'windows')
-    extra_args = unique(c(extra_args, '--no-sandbox'))
+  if (.Platform$OS.type == 'windows') extra_args = unique(c(extra_args, '--no-sandbox'))
 
   headless_ps = processx::process$new(browser, c(
     paste0('--remote-debugging-port=', debug_port),
