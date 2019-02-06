@@ -44,8 +44,8 @@ chrome_print = function(
   extra_args = c(proxy_args(), extra_args)
 
   # check that work_dir does not exist because it will be deleted at the end
-  work_dir2 = normalizePath(work_dir, mustWork = FALSE)
-  if (dir.exists(work_dir2)) stop('The directory ', work_dir, ' already exists.')
+  if (dir.exists(work_dir)) stop('The directory ', work_dir, ' already exists.')
+  work_dir = normalizePath(work_dir)
 
   # for windows, use the --no-sandbox option
   if (.Platform$OS.type == 'windows') extra_args = unique(c(extra_args, '--no-sandbox'))
@@ -53,18 +53,18 @@ chrome_print = function(
   debug_port = servr:::random_port()
   ps = processx::process$new(browser, c(
     paste0('--remote-debugging-port=', debug_port),
-    paste0('--user-data-dir=', work_dir2),
+    paste0('--user-data-dir=', work_dir),
     extra_args, '--headless', '--no-first-run', '--no-default-browser-check'
   ))
 
   Sys.sleep(1)  # wait for a second before Chrome is ready
-  if (!is_remote_protocol_ok(debug_port, ps, work_dir2)) {
-    close_chrome(ps, work_dir2)
+  if (!is_remote_protocol_ok(debug_port, ps, work_dir)) {
+    close_chrome(ps, work_dir)
     stop('A more recent version of Chrome is required. ')
   }
 
-  ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps, work_dir2))
-  print_pdf(ps, ws, work_dir2, url, output2, verbose, timeout)
+  ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps, work_dir))
+  print_pdf(ps, ws, work_dir, url, output2, verbose, timeout)
 
   invisible(output)
 }
