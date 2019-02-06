@@ -44,8 +44,6 @@ chrome_print = function(
   # proxy settings
   extra_args = c(proxy_args(), extra_args)
 
-  if (isTRUE(verbose)) verbose = ''
-
   # check that work_dir does not exist because it will be deleted at the end
   work_dir2 = normalizePath(work_dir, mustWork = FALSE)
   if (isTRUE(dir.exists(work_dir2))) warning(
@@ -69,7 +67,7 @@ chrome_print = function(
   }
 
   ws = websocket::WebSocket$new(get_entrypoint(debug_port, headless_ps, work_dir2))
-  print_pdf(headless_ps, ws, work_dir2, url, output2, !nzchar(verbose), timeout)
+  print_pdf(headless_ps, ws, work_dir2, url, output2, verbose, timeout)
 
   invisible(output)
 }
