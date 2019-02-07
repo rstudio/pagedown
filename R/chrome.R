@@ -44,16 +44,13 @@ chrome_print = function(
     'Cannot create the directory for the output file: ', d
   )
 
-  # proxy settings
-  extra_args = c(proxy_args(), extra_args)
-
   # check that work_dir does not exist because it will be deleted at the end
   if (dir.exists(work_dir)) stop('The directory ', work_dir, ' already exists.')
   work_dir = normalizePath(work_dir, mustWork = FALSE)
 
   # for windows, use the --no-sandbox option
   extra_args = unique(c(
-    extra_args, if (xfun::is_windows()) '--no-sandbox',
+    extra_args, proxy_args(), if (xfun::is_windows()) '--no-sandbox',
     '--headless', '--no-first-run', '--no-default-browser-check'
   ))
 
