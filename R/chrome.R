@@ -52,13 +52,15 @@ chrome_print = function(
   work_dir = normalizePath(work_dir, mustWork = FALSE)
 
   # for windows, use the --no-sandbox option
-  if (.Platform$OS.type == 'windows') extra_args = unique(c(extra_args, '--no-sandbox'))
+  extra_args = unique(c(
+    extra_args, if (xfun::is_windows()) '--no-sandbox',
+    '--headless', '--no-first-run', '--no-default-browser-check'
+  ))
 
   debug_port = servr::random_port()
   ps = processx::process$new(browser, c(
     paste0('--remote-debugging-port=', debug_port),
-    paste0('--user-data-dir=', work_dir),
-    extra_args, '--headless', '--no-first-run', '--no-default-browser-check'
+    paste0('--user-data-dir=', work_dir), extra_args
   ))
 
   if (!is_remote_protocol_ok(debug_port, ps, work_dir)) {
