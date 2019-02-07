@@ -54,7 +54,7 @@ chrome_print = function(
   # for windows, use the --no-sandbox option
   if (.Platform$OS.type == 'windows') extra_args = unique(c(extra_args, '--no-sandbox'))
 
-  debug_port = servr:::random_port()
+  debug_port = servr::random_port()
   ps = processx::process$new(browser, c(
     paste0('--remote-debugging-port=', debug_port),
     paste0('--user-data-dir=', work_dir),
