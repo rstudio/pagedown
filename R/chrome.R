@@ -8,6 +8,10 @@
 #'   \file{foo/bar.html}, the default PDF output is \file{foo/bar.pdf}; for a
 #'   remote URL \file{https://www.example.org/foo/bar.html}, the default output
 #'   will be \file{bar.pdf} under the current working directory.
+#' @param wait The number of seconds to wait for the page to load before
+#'   printing to PDF (in certain cases, the page may not be immediately ready
+#'   for printing, especially there are JavaScript applications on the page, so
+#'   you may need to wait for a longer time).
 #' @param browser Path to Google Chrome or Chromium. This function will try to
 #'   find it automatically via \code{\link{find_chrome}()} if the path is not
 #'   explicitly provided.
@@ -24,8 +28,8 @@
 #' @return Path of the output file (invisibly).
 #' @export
 chrome_print = function(
-  url, output = xfun::with_ext(url, 'pdf'), browser = 'google-chrome', work_dir = tempfile(),
-  timeout = 60, extra_args = c('--disable-gpu'), verbose = FALSE
+  url, output = xfun::with_ext(url, 'pdf'), wait = 2, browser = 'google-chrome',
+  work_dir = tempfile(), timeout = 60, extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
     if (!file.exists(browser)) browser = Sys.which(browser)
@@ -63,7 +67,7 @@ chrome_print = function(
   }
 
   ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps, work_dir))
-  print_pdf(ps, ws, work_dir, url, output2, verbose, timeout)
+  print_pdf(ps, ws, work_dir, url, output2, wait, verbose, timeout)
 
   invisible(output)
 }
@@ -180,7 +184,7 @@ get_entrypoint = function(debug_port, ps, work_dir) {
   page
 }
 
-print_pdf = function(ps, ws, work_dir, url, output, verbose, timeout) {
+print_pdf = function(ps, ws, work_dir, url, output, wait, verbose, timeout) {
   later::later(function() if (ws$readyState() < 2) ws$close(), delay = timeout)
 
   ws$onOpen(function(event) {
@@ -225,8 +229,10 @@ print_pdf = function(ps, ws, work_dir, url, output, verbose, timeout) {
       if (method == "Page.domContentEventFired") {
         ws$send('{"id":5,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
       }
-      if (method == "Runtime.bindingCalled")
+      if (method == "Runtime.bindingCalled") {
+        Sys.sleep(wait)
         ws$send('{"id":7,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
+      }
     }
   })
 
