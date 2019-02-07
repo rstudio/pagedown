@@ -29,7 +29,7 @@
 #' @export
 chrome_print = function(
   url, output = xfun::with_ext(url, 'pdf'), wait = 2, browser = 'google-chrome',
-  work_dir = tempfile(), timeout = 60, extra_args = c('--disable-gpu'), verbose = FALSE
+  work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
     if (!file.exists(browser)) browser = Sys.which(browser)

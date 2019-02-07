@@ -5,7 +5,7 @@
 \title{Print a web page to PDF using the headless Chrome (experimental)}
 \usage{
 chrome_print(url, output = xfun::with_ext(url, "pdf"), wait = 2, 
-    browser = "google-chrome", work_dir = tempfile(), timeout = 60, 
+    browser = "google-chrome", work_dir = tempfile(), timeout = 30, 
     extra_args = c("--disable-gpu"), verbose = FALSE)
 }
 \arguments{
