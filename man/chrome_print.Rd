@@ -4,9 +4,9 @@
 \alias{chrome_print}
 \title{Print a web page to PDF using the headless Chrome (experimental)}
 \usage{
-chrome_print(url, output = xfun::with_ext(url, "pdf"), browser = "google-chrome", 
-    work_dir = tempfile(), timeout = 60, extra_args = c("--disable-gpu"), 
-    verbose = FALSE)
+chrome_print(url, output = xfun::with_ext(url, "pdf"), wait = 2, 
+    browser = "google-chrome", work_dir = tempfile(), timeout = 60, 
+    extra_args = c("--disable-gpu"), verbose = FALSE)
 }
 \arguments{
 \item{url}{A URL or local file path to a web page.}
@@ -15,6 +15,11 @@ chrome_print(url, output = xfun::with_ext(url, "pdf"), browser = "google-chrome"
 \file{foo/bar.html}, the default PDF output is \file{foo/bar.pdf}; for a
 remote URL \file{https://www.example.org/foo/bar.html}, the default output
 will be \file{bar.pdf} under the current working directory.}
+
+\item{wait}{The number of seconds to wait for the page to load before
+printing to PDF (in certain cases, the page may not be immediately ready
+for printing, especially there are JavaScript applications on the page, so
+you may need to wait for a longer time).}
 
 \item{browser}{Path to Google Chrome or Chromium. This function will try to
 find it automatically via \code{\link{find_chrome}()} if the path is not
