@@ -59,14 +59,17 @@ chrome_print = function(
     paste0('--remote-debugging-port=', debug_port),
     paste0('--user-data-dir=', work_dir), extra_args
   ))
+  on.exit({
+    if (ps$is_alive()) ps$kill()
+    unlink(work_dir, recursive = TRUE)
+  }, add = TRUE)
 
-  if (!is_remote_protocol_ok(debug_port, ps, work_dir)) {
-    close_chrome(ps, work_dir)
+  if (!is_remote_protocol_ok(debug_port, ps)) {
     stop('A more recent version of Chrome is required. ')
   }
 
-  ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps, work_dir))
-  print_pdf(ps, ws, work_dir, url, output2, wait, verbose, timeout)
+  ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps))
+  print_pdf(ps, ws, url, output2, wait, verbose, timeout)
 
   invisible(output)
 }
@@ -124,15 +127,12 @@ no_proxy_urls = function() {
   unique(x)
 }
 
-is_remote_protocol_ok = function(debug_port, ps, work_dir, max_attempts = 15) {
+is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
   url = sprintf('http://127.0.0.1:%s/json/protocol', debug_port)
   for (i in 1:max_attempts) {
     remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
     if (!is.null(remote_protocol)) break
-    if (i == max_attempts) {
-      close_chrome(ps, work_dir)
-      stop('Cannot connect to headless Chrome. ')
-    }
+    if (i == max_attempts) stop('Cannot connect to headless Chrome. ')
     Sys.sleep(0.2)
   }
 
@@ -169,38 +169,31 @@ is_remote_protocol_ok = function(debug_port, ps, work_dir, max_attempts = 15) {
   )
 }
 
-get_entrypoint = function(debug_port, ps, work_dir) {
+get_entrypoint = function(debug_port, ps) {
   open_debuggers = jsonlite::read_json(
     sprintf('http://127.0.0.1:%s/json', debug_port), simplifyVector = TRUE
   )
   page = open_debuggers$webSocketDebuggerUrl[open_debuggers$type == 'page']
-
-  if (length(page) == 0) {
-    close_chrome(ps, work_dir)
-    stop('Cannot connect R to Chrome. Please retry.')
-  }
-
+  if (length(page) == 0) stop('Cannot connect R to Chrome. Please retry.')
   page
 }
 
-print_pdf = function(ps, ws, work_dir, url, output, wait, verbose, timeout) {
-  later::later(function() if (ws$readyState() < 2) ws$close(), delay = timeout)
+print_pdf = function(ps, ws, url, output, wait, verbose, timeout) {
+
+  on.exit(ws$close(), add = TRUE)
+  error = NULL
 
   ws$onOpen(function(event) {
     ws$send('{"id":1,"method":"Runtime.enable"}')
   })
 
   ws$onMessage(function(event) {
-    if (isTRUE(verbose))
-      cat('Message received from headless Chrome:', event$data, '\n')
+    if (verbose) message('Message received from headless Chrome: ', event$data)
     msg = jsonlite::fromJSON(event$data)
     id = msg$id
     method = msg$method
 
-    if (!is.null(msg$error)) {
-      cat('Chrome error while rendering the PDF:', event$data, '\n')
-      later::later(function() ws$close(), delay = 0.2)
-    }
+    if (!is.null(error <<- msg$error)) return()
 
     if (!is.null(id)) switch(
       id,
@@ -221,7 +214,7 @@ print_pdf = function(ps, ws, work_dir, url, output, wait, verbose, timeout) {
       NULL, {
       # Command #7 received (printToPDF) -> callback: save to PDF file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
-        later::later(function() ws$close(), delay = 0.2)
+        error <<- FALSE
       }
     )
     if (!is.null(method)) {
@@ -235,12 +228,14 @@ print_pdf = function(ps, ws, work_dir, url, output, wait, verbose, timeout) {
     }
   })
 
-  ws$onClose(function(event) {
-    later::later(function() close_chrome(ps, work_dir), delay = 0.2)
-  })
-}
+  s = Sys.time()
+  while (TRUE) {
+    if (xfun::isFALSE(error)) break
+    if (!is.null(error)) stop('Failed to generate PDF. Reason: ', error)
+    if (as.numeric(difftime(Sys.time(), s, units = 'secs')) > timeout) stop(
+      'Failed to generate PDF in ', timeout, ' seconds (timeout).'
+    )
+    Sys.sleep(.05)
+  }
 
-close_chrome = function(ps, work_dir) {
-  if (ps$is_alive()) ps$kill()
-  unlink(work_dir, recursive = TRUE)
 }
