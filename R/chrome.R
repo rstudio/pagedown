@@ -69,7 +69,19 @@ chrome_print = function(
   }
 
   ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps))
-  print_pdf(ps, ws, url, output2, wait, verbose, timeout)
+  on.exit(if (ws$readyState() < 2) ws$close(), add = TRUE)
+
+  t0 = Sys.time(); error = tempfile(); unlink(token <- tempfile())
+  print_pdf(ps, ws, url, output2, wait, verbose, error, token)
+  while (!file.exists(token)) {
+    if (file.exists(error) && length(e <- xfun::read_utf8(error))) {
+      unlink(error); stop('Failed to generate PDF. Reason: ', e)
+    }
+    if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
+      'Failed to generate PDF in ', timeout, ' seconds (timeout).'
+    )
+    later::run_now()
+  }
 
   invisible(output)
 }
@@ -178,10 +190,7 @@ get_entrypoint = function(debug_port, ps) {
   page
 }
 
-print_pdf = function(ps, ws, url, output, wait, verbose, timeout) {
-
-  on.exit(ws$close(), add = TRUE)
-  error = NULL
+print_pdf = function(ps, ws, url, output, wait, verbose, error, token) {
 
   ws$onOpen(function(event) {
     ws$send('{"id":1,"method":"Runtime.enable"}')
@@ -193,7 +202,9 @@ print_pdf = function(ps, ws, url, output, wait, verbose, timeout) {
     id = msg$id
     method = msg$method
 
-    if (!is.null(error <<- msg$error)) return()
+    if (!is.null(msg$error)) {
+      xfun::write_utf8(msg$error, error); return()
+    }
 
     if (!is.null(id)) switch(
       id,
@@ -214,7 +225,7 @@ print_pdf = function(ps, ws, url, output, wait, verbose, timeout) {
       NULL, {
       # Command #7 received (printToPDF) -> callback: save to PDF file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
-        error <<- FALSE
+        file.create(token)
       }
     )
     if (!is.null(method)) {
@@ -227,15 +238,5 @@ print_pdf = function(ps, ws, url, output, wait, verbose, timeout) {
       }
     }
   })
-
-  s = Sys.time()
-  while (TRUE) {
-    if (xfun::isFALSE(error)) break
-    if (!is.null(error)) stop('Failed to generate PDF. Reason: ', error)
-    if (as.numeric(difftime(Sys.time(), s, units = 'secs')) > timeout) stop(
-      'Failed to generate PDF in ', timeout, ' seconds (timeout).'
-    )
-    Sys.sleep(.05)
-  }
 
 }
