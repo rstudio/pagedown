@@ -208,30 +208,38 @@ print_pdf = function(ps, ws, url, output, wait, verbose, token) {
       ws$send('{"id":2,"method":"Page.enable"}'),
       # Command #2 received -> callback: command #3 Runtime.addBinding
       ws$send('{"id":3,"method":"Runtime.addBinding","params":{"name":"pagedownListener"}}'),
-      # Command #3 received -> callback: command #4 Page.navigate
-      ws$send(sprintf('{"id":4,"method":"Page.navigate","params":{"url":"%s"}}', url)),
-      # Command #4 received - check if there is an error when navigating to url
+      # Command #3 received -> callback: command #4 Network.Enable
+      ws$send('{"id":4,"method":"Network.enable"}'),
+      # Command #4 received - callback: command #4 Page.Navigate
+      ws$send(sprintf('{"id":5,"method":"Page.navigate","params":{"url":"%s"}}', url)),
+      # Command #5 received - check if there is an error when navigating to url
       token$error <- msg$result$errorText,
       {
-      # Command #5 received - Test if the html document uses the paged.js polyfill
+      # Command #6 received - Test if the html document uses the paged.js polyfill
       # if not, call the binding when fonts are ready
         if (!isTRUE(msg$result$result$value))
           ws$send('{"id":6,"method":"Runtime.evaluate","params":{"expression":"document.fonts.ready.then(() => {pagedownListener(\'\');})"}}')
       },
-      # Command #6 received - No callback
+      # Command #7 received - No callback
       NULL, {
-      # Command #7 received (printToPDF) -> callback: save to PDF file & close Chrome
+      # Command #8 received (printToPDF) -> callback: save to PDF file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
         token$done = TRUE
       }
     )
     if (!is.null(method)) {
+      if (method == "Network.responseReceived") {
+        status_code = as.numeric(msg$params$response$status)
+        if (status_code >= 300) {
+          stop(sprintf("Erreur on http status code: %s returned", status_code))
+        }
+      }
       if (method == "Page.loadEventFired") {
-        ws$send('{"id":5,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
+        ws$send('{"id":6,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
       }
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
-        ws$send('{"id":7,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
+        ws$send('{"id":8,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
       }
     }
   })
