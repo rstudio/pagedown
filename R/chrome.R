@@ -156,7 +156,7 @@ is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
     return(FALSE)
 
   required_events = list(
-    Page = c('domContentEventFired'),
+    Page = c('loadEventFired'),
     Runtime = c('bindingCalled')
   )
 
@@ -225,7 +225,7 @@ print_pdf = function(ps, ws, url, output, wait, verbose, token) {
       }
     )
     if (!is.null(method)) {
-      if (method == "Page.domContentEventFired") {
+      if (method == "Page.loadEventFired") {
         ws$send('{"id":5,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
       }
       if (method == "Runtime.bindingCalled") {
