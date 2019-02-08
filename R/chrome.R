@@ -210,8 +210,9 @@ print_pdf = function(ps, ws, url, output, wait, verbose, token) {
       ws$send('{"id":3,"method":"Runtime.addBinding","params":{"name":"pagedownListener"}}'),
       # Command #3 received -> callback: command #4 Page.navigate
       ws$send(sprintf('{"id":4,"method":"Page.navigate","params":{"url":"%s"}}', url)),
-      # Command #4 received - No callback
-      NULL, {
+      # Command #4 received - check if there is an error when navigating to url
+      token$error <- msg$result$errorText,
+      {
       # Command #5 received - Test if the html document uses the paged.js polyfill
       # if not, call the binding when fonts are ready
         if (!isTRUE(msg$result$result$value))
