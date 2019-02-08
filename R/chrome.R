@@ -231,7 +231,7 @@ print_pdf = function(ps, ws, url, output, wait, verbose, token) {
       if (method == "Network.responseReceived") {
         status = as.numeric(msg$params$response$status)
         if (status >= 400) token$error = sprintf(
-          "Failed to open %s (HTTP status code: %s)", url, status
+          "Failed to open %s (HTTP status code: %s)", msg$params$response$url, status
         )
       }
       if (method == "Page.loadEventFired") {
