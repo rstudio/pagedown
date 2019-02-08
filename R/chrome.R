@@ -229,10 +229,10 @@ print_pdf = function(ps, ws, url, output, wait, verbose, token) {
     )
     if (!is.null(method)) {
       if (method == "Network.responseReceived") {
-        status_code = as.numeric(msg$params$response$status)
-        if (status_code >= 300) {
-          stop(sprintf("Erreur on http status code: %s returned", status_code))
-        }
+        status = as.numeric(msg$params$response$status)
+        if (status >= 400) token$error = sprintf(
+          "Failed to open %s (HTTP status code: %s)", url, status
+        )
       }
       if (method == "Page.loadEventFired") {
         ws$send('{"id":6,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
