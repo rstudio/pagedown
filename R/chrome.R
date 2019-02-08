@@ -219,7 +219,7 @@ print_pdf = function(ps, ws, url, output, wait, verbose, token) {
       # Command #6 received - Test if the html document uses the paged.js polyfill
       # if not, call the binding when fonts are ready
         if (!isTRUE(msg$result$result$value))
-          ws$send('{"id":6,"method":"Runtime.evaluate","params":{"expression":"document.fonts.ready.then(() => {pagedownListener(\'\');})"}}')
+          ws$send('{"id":7,"method":"Runtime.evaluate","params":{"expression":"document.fonts.ready.then(() => {pagedownListener(\'\');})"}}')
       },
       # Command #7 received - No callback
       NULL, {
