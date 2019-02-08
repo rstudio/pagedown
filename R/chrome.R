@@ -74,7 +74,7 @@ chrome_print = function(
   t0 = Sys.time(); token = new.env(parent = emptyenv())
   print_pdf(ps, ws, url, output2, wait, verbose, token)
   while (!isTRUE(token$done)) {
-    if (!is.null(e <- token$error) stop('Failed to generate PDF. Reason: ', e)
+    if (!is.null(e <- token$error)) stop('Failed to generate PDF. Reason: ', e)
     if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
       'Failed to generate PDF in ', timeout, ' seconds (timeout).'
     )
