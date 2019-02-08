@@ -201,7 +201,7 @@ print_pdf = function(ps, ws, url, output, wait, verbose, token) {
     id = msg$id
     method = msg$method
 
-    if (!is.null(token$error <- msg$error)) return(ws$close())
+    if (!is.null(token$error <- msg$error$message)) return(ws$close())
 
     if (!is.null(id)) switch(
       id,
