@@ -71,9 +71,9 @@ chrome_print = function(
   ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps))
   on.exit(if (ws$readyState() < 2) ws$close(), add = TRUE)
 
-  t0 = Sys.time(); error = tempfile(); unlink(token <- tempfile())
+  t0 = Sys.time(); error = tempfile(); token = new.env(parent = emptyenv())
   print_pdf(ps, ws, url, output2, wait, verbose, error, token)
-  while (!file.exists(token)) {
+  while (!isTRUE(token$done)) {
     if (file.exists(error) && length(e <- xfun::read_utf8(error))) {
       unlink(error); stop('Failed to generate PDF. Reason: ', e)
     }
@@ -225,7 +225,7 @@ print_pdf = function(ps, ws, url, output, wait, verbose, error, token) {
       NULL, {
       # Command #7 received (printToPDF) -> callback: save to PDF file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
-        file.create(token)
+        token$done = TRUE
       }
     )
     if (!is.null(method)) {
