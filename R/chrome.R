@@ -195,12 +195,13 @@ print_pdf = function(ps, ws, url, output, wait, verbose, token) {
   })
 
   ws$onMessage(function(event) {
+    if (!is.null(token$error)) return()
     if (verbose) message('Message received from headless Chrome: ', event$data)
     msg = jsonlite::fromJSON(event$data)
     id = msg$id
     method = msg$method
 
-    if (!is.null(token$error) || !is.null(token$error <- msg$error)) return()
+    if (!is.null(token$error <- msg$error)) return()
 
     if (!is.null(id)) switch(
       id,
