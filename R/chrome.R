@@ -71,12 +71,10 @@ chrome_print = function(
   ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps))
   on.exit(if (ws$readyState() < 2) ws$close(), add = TRUE)
 
-  t0 = Sys.time(); error = tempfile(); token = new.env(parent = emptyenv())
-  print_pdf(ps, ws, url, output2, wait, verbose, error, token)
+  t0 = Sys.time(); token = new.env(parent = emptyenv())
+  print_pdf(ps, ws, url, output2, wait, verbose, token)
   while (!isTRUE(token$done)) {
-    if (file.exists(error) && length(e <- xfun::read_utf8(error))) {
-      unlink(error); stop('Failed to generate PDF. Reason: ', e)
-    }
+    if (!is.null(e <- token$error) stop('Failed to generate PDF. Reason: ', e)
     if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
       'Failed to generate PDF in ', timeout, ' seconds (timeout).'
     )
@@ -190,7 +188,7 @@ get_entrypoint = function(debug_port, ps) {
   page
 }
 
-print_pdf = function(ps, ws, url, output, wait, verbose, error, token) {
+print_pdf = function(ps, ws, url, output, wait, verbose, token) {
 
   ws$onOpen(function(event) {
     ws$send('{"id":1,"method":"Runtime.enable"}')
@@ -202,9 +200,7 @@ print_pdf = function(ps, ws, url, output, wait, verbose, error, token) {
     id = msg$id
     method = msg$method
 
-    if (!is.null(msg$error)) {
-      xfun::write_utf8(msg$error, error); return()
-    }
+    if (!is.null(token$error <- msg$error)) return()
 
     if (!is.null(id)) switch(
       id,
