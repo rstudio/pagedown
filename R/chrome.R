@@ -148,6 +148,7 @@ is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
 
   required_commands = list(
     Page = c('enable', 'navigate', 'printToPDF'),
+    Network = c('enable'),
     Runtime = c('enable', 'addBinding', 'evaluate')
   )
 
@@ -157,6 +158,7 @@ is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
 
   required_events = list(
     Page = c('loadEventFired'),
+    Network = c('responseReceived'),
     Runtime = c('bindingCalled')
   )
 
@@ -211,7 +213,7 @@ print_pdf = function(ps, ws, url, output, wait, verbose, token) {
       ws$send('{"id":3,"method":"Runtime.addBinding","params":{"name":"pagedownListener"}}'),
       # Command #3 received -> callback: command #4 Network.Enable
       ws$send('{"id":4,"method":"Network.enable"}'),
-      # Command #4 received - callback: command #4 Page.Navigate
+      # Command #4 received -> callback: command #5 Page.Navigate
       ws$send(sprintf('{"id":5,"method":"Page.navigate","params":{"url":"%s"}}', url)),
       # Command #5 received - check if there is an error when navigating to url
       token$error <- msg$result$errorText,
@@ -244,5 +246,4 @@ print_pdf = function(ps, ws, url, output, wait, verbose, token) {
       }
     }
   })
-
 }
