@@ -5,7 +5,8 @@
 \title{Print a web page to PDF using the headless Chrome (experimental)}
 \usage{
 chrome_print(url, output = xfun::with_ext(url, "pdf"), wait = 2, 
-    browser = "google-chrome", work_dir = tempfile(), timeout = 30, 
+    browser = "google-chrome", options = list(printBackground = TRUE, 
+        preferCSSPageSize = TRUE), work_dir = tempfile(), timeout = 30, 
     extra_args = c("--disable-gpu"), verbose = FALSE)
 }
 \arguments{
@@ -24,6 +25,11 @@ you may need to wait for a longer time).}
 \item{browser}{Path to Google Chrome or Chromium. This function will try to
 find it automatically via \code{\link{find_chrome}()} if the path is not
 explicitly provided.}
+
+\item{options}{A list of page options. See
+\url{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-printToPDF}
+ for the full list of options. Note that we have changed the defaults of
+\code{printBackground} and \code{preferCSSPageSize} in this function.}
 
 \item{work_dir}{Name of headless Chrome working directory. If the default
 temporary directory doesn't work, you may try to use a subdirectory of your

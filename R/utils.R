@@ -22,3 +22,8 @@ check_css = function(css) {
     " Use `pagedown:::list_css()` to view all built-in CSS filenames.", call. = FALSE
   )
 }
+
+merge_list = function(x, y) {
+  x[names(y)] = y
+  x
+}

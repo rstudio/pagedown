@@ -15,6 +15,10 @@
 #' @param browser Path to Google Chrome or Chromium. This function will try to
 #'   find it automatically via \code{\link{find_chrome}()} if the path is not
 #'   explicitly provided.
+#' @param options A list of page options. See
+#'   \url{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-printToPDF}
+#'    for the full list of options. Note that we have changed the defaults of
+#'   \code{printBackground} and \code{preferCSSPageSize} in this function.
 #' @param work_dir Name of headless Chrome working directory. If the default
 #'   temporary directory doesn't work, you may try to use a subdirectory of your
 #'   home directory.
@@ -29,6 +33,7 @@
 #' @export
 chrome_print = function(
   url, output = xfun::with_ext(url, 'pdf'), wait = 2, browser = 'google-chrome',
+  options = list(printBackground = TRUE, preferCSSPageSize = TRUE),
   work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
@@ -72,7 +77,7 @@ chrome_print = function(
   on.exit(if (ws$readyState() < 2) ws$close(), add = TRUE)
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
-  print_pdf(ws, url, output2, wait, verbose, token)
+  print_pdf(ws, url, output2, wait, verbose, token, options)
   while (!isTRUE(token$done)) {
     if (!is.null(e <- token$error)) stop('Failed to generate PDF. Reason: ', e)
     if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
@@ -190,7 +195,7 @@ get_entrypoint = function(debug_port, ps) {
   page
 }
 
-print_pdf = function(ws, url, output, wait, verbose, token) {
+print_pdf = function(ws, url, output, wait, verbose, token, options = list()) {
 
   ws$onOpen(function(event) {
     ws$send('{"id":1,"method":"Runtime.enable"}')
@@ -242,7 +247,11 @@ print_pdf = function(ws, url, output, wait, verbose, token) {
       }
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
-        ws$send('{"id":8,"method":"Page.printToPDF","params":{"printBackground":true,"preferCSSPageSize":true}}')
+        opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), options)
+        ws$send(sprintf(
+          '{"id":8,"method":"Page.printToPDF","params":%s}',
+          jsonlite::toJSON(opts, auto_unbox = TRUE)
+        ))
       }
     }
   })
