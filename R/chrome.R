@@ -1,9 +1,10 @@
-#' Print a web page to PDF using the headless Chrome (experimental)
+#' Print a web page to PDF using the headless Chrome
 #'
-#' This is a wrapper function to execute the command \command{chrome --headless
-#' --print-to-pdf url}. Google Chrome (or Chromium on Linux) must be installed
-#' prior to using this function.
-#' @param url A URL or local file path to a web page.
+#' Print an HTML page to PDF through the Chrome DevTools Protocol. Google Chrome
+#' (or Chromium on Linux) must be installed prior to using this function.
+#' @param input A URL or local file path to an HTML page, or a path to a local
+#'   file that can be rendered to HTML via \code{rmarkdown::\link{render}()}
+#'   (e.g., an R Markdown document or an R script).
 #' @param output The (PDF) output filename. For a local web page
 #'   \file{foo/bar.html}, the default PDF output is \file{foo/bar.pdf}; for a
 #'   remote URL \file{https://www.example.org/foo/bar.html}, the default output
@@ -32,7 +33,7 @@
 #' @return Path of the output file (invisibly).
 #' @export
 chrome_print = function(
-  url, output = xfun::with_ext(url, 'pdf'), wait = 2, browser = 'google-chrome',
+  input, output = xfun::with_ext(input, 'pdf'), wait = 2, browser = 'google-chrome',
   options = list(printBackground = TRUE, preferCSSPageSize = TRUE),
   work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
@@ -41,8 +42,22 @@ chrome_print = function(
   }
   if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
 
+  if (file.exists(input)) {
+    is_html = function(x) grepl('[.]html?$', x)
+    url = if (is_html(input)) input else rmarkdown::render(input)
+    if (!is_html(url)) stop(
+      "The file '", url, "' should have the '.html' or '.htm' extension."
+    )
+    sv = servr::httd(
+      dirname(url), daemon = TRUE, browser = FALSE, verbose = FALSE,
+      initpath = httpuv::encodeURIComponent(basename(url))
+    )
+    on.exit(sv$stop_server(), add = TRUE)
+    url = sv$url
+  } else url = input  # the input is not a local file; assume it is just a URL
+
   # remove hash/query parameters in url
-  if (missing(output) && !file.exists(url))
+  if (missing(output) && !file.exists(input))
     output = xfun::with_ext(basename(gsub('[#?].*', '', url)), 'pdf')
   output2 = normalizePath(output, mustWork = FALSE)
   if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
