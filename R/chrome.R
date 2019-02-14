@@ -50,7 +50,7 @@ chrome_print = function(
     )
     sv = servr::httd(
       dirname(url), daemon = TRUE, browser = FALSE, verbose = FALSE,
-      initpath = httpuv::encodeURIComponent(basename(url))
+      port = random_port(), initpath = httpuv::encodeURIComponent(basename(url))
     )
     on.exit(sv$stop_server(), add = TRUE)
     url = sv$url
@@ -74,7 +74,7 @@ chrome_print = function(
     '--headless', '--no-first-run', '--no-default-browser-check'
   ))
 
-  debug_port = servr::random_port()
+  debug_port = random_port()
   ps = processx::process$new(browser, c(
     paste0('--remote-debugging-port=', debug_port),
     paste0('--user-data-dir=', work_dir), extra_args

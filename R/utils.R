@@ -27,3 +27,7 @@ merge_list = function(x, y) {
   x[names(y)] = y
   x
 }
+
+# don't prefer the port 4321 (otherwise we may see the meaningless error message
+# "createTcpServer: address already in use" too often)
+random_port = function() servr::random_port(NULL)
