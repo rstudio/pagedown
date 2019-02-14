@@ -72,7 +72,7 @@ chrome_print = function(
   on.exit(if (ws$readyState() < 2) ws$close(), add = TRUE)
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
-  print_pdf(ps, ws, url, output2, wait, verbose, token)
+  print_pdf(ws, url, output2, wait, verbose, token)
   while (!isTRUE(token$done)) {
     if (!is.null(e <- token$error)) stop('Failed to generate PDF. Reason: ', e)
     if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
@@ -190,7 +190,7 @@ get_entrypoint = function(debug_port, ps) {
   page
 }
 
-print_pdf = function(ps, ws, url, output, wait, verbose, token) {
+print_pdf = function(ws, url, output, wait, verbose, token) {
 
   ws$onOpen(function(event) {
     ws$send('{"id":1,"method":"Runtime.enable"}')
