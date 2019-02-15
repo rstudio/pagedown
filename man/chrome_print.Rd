@@ -2,15 +2,17 @@
 % Please edit documentation in R/chrome.R
 \name{chrome_print}
 \alias{chrome_print}
-\title{Print a web page to PDF using the headless Chrome (experimental)}
+\title{Print a web page to PDF using the headless Chrome}
 \usage{
-chrome_print(url, output = xfun::with_ext(url, "pdf"), wait = 2, 
+chrome_print(input, output = xfun::with_ext(input, "pdf"), wait = 2, 
     browser = "google-chrome", options = list(printBackground = TRUE, 
         preferCSSPageSize = TRUE), work_dir = tempfile(), timeout = 30, 
     extra_args = c("--disable-gpu"), verbose = FALSE)
 }
 \arguments{
-\item{url}{A URL or local file path to a web page.}
+\item{input}{A URL or local file path to an HTML page, or a path to a local
+file that can be rendered to HTML via \code{rmarkdown::\link{render}()}
+(e.g., an R Markdown document or an R script).}
 
 \item{output}{The (PDF) output filename. For a local web page
 \file{foo/bar.html}, the default PDF output is \file{foo/bar.pdf}; for a
@@ -47,9 +49,8 @@ Chrome.}
 Path of the output file (invisibly).
 }
 \description{
-This is a wrapper function to execute the command \command{chrome --headless
---print-to-pdf url}. Google Chrome (or Chromium on Linux) must be installed
-prior to using this function.
+Print an HTML page to PDF through the Chrome DevTools Protocol. Google Chrome
+(or Chromium on Linux) must be installed prior to using this function.
 }
 \references{
 \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
