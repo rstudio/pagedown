@@ -48,12 +48,12 @@ chrome_print = function(
     if (!is_html(url)) stop(
       "The file '", url, "' should have the '.html' or '.htm' extension."
     )
-    sv = servr::httd(
+    svr = servr::httd(
       dirname(url), daemon = TRUE, browser = FALSE, verbose = FALSE,
       port = random_port(), initpath = httpuv::encodeURIComponent(basename(url))
     )
-    on.exit(sv$stop_server(), add = TRUE)
-    url = sv$url
+    on.exit(svr$stop_server(), add = TRUE)
+    url = svr$url
   } else url = input  # the input is not a local file; assume it is just a URL
 
   # remove hash/query parameters in url
