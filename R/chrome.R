@@ -88,7 +88,7 @@ chrome_print = function(
     stop('A more recent version of Chrome is required. ')
   }
 
-  ws = websocket::WebSocket$new(get_entrypoint(debug_port, ps))
+  ws = websocket::WebSocket$new(get_entrypoint(debug_port))
   on.exit(if (ws$readyState() < 2) ws$close(), add = TRUE)
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
@@ -201,7 +201,7 @@ is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
   )
 }
 
-get_entrypoint = function(debug_port, ps) {
+get_entrypoint = function(debug_port) {
   open_debuggers = jsonlite::read_json(
     sprintf('http://127.0.0.1:%s/json', debug_port), simplifyVector = TRUE
   )
