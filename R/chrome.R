@@ -174,8 +174,8 @@ is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
   }
 
   required_commands = list(
-    Page = c('enable', 'navigate', 'printToPDF'),
     Network = c('enable'),
+    Page = c('captureScreenshot', 'enable', 'navigate', 'printToPDF'),
     Runtime = c('enable', 'addBinding', 'evaluate')
   )
 
@@ -184,8 +184,8 @@ is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
     return(FALSE)
 
   required_events = list(
-    Page = c('loadEventFired'),
     Network = c('responseReceived'),
+    Page = c('loadEventFired'),
     Runtime = c('bindingCalled')
   )
 
