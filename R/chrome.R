@@ -252,7 +252,7 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
       },
       # Command #7 received - No callback
       NULL, {
-      # Command #8 received (printToPDF) -> callback: save to PDF file & close Chrome
+      # Command #8 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
         token$done = TRUE
       }
