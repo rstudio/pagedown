@@ -1,40 +1,46 @@
-#' Print a web page to PDF using the headless Chrome
+#' Print a web page to PDF or capture a screenshot using the headless Chrome
 #'
-#' Print an HTML page to PDF through the Chrome DevTools Protocol. Google Chrome
-#' (or Chromium on Linux) must be installed prior to using this function.
+#' Print an HTML page to PDF or capture a PNG/JPEG screenshot through the Chrome
+#' DevTools Protocol. Google Chrome (or Chromium on Linux) must be installed
+#' prior to using this function.
 #' @param input A URL or local file path to an HTML page, or a path to a local
 #'   file that can be rendered to HTML via \code{rmarkdown::\link{render}()}
 #'   (e.g., an R Markdown document or an R script).
-#' @param output The (PDF) output filename. For a local web page
-#'   \file{foo/bar.html}, the default PDF output is \file{foo/bar.pdf}; for a
-#'   remote URL \file{https://www.example.org/foo/bar.html}, the default output
-#'   will be \file{bar.pdf} under the current working directory.
+#' @param output The output filename. For a local web page \file{foo/bar.html},
+#'   the default PDF output is \file{foo/bar.pdf}; for a remote URL
+#'   \file{https://www.example.org/foo/bar.html}, the default output will be
+#'   \file{bar.pdf} under the current working directory. The same rules apply
+#'   for screenshots.
 #' @param wait The number of seconds to wait for the page to load before
-#'   printing to PDF (in certain cases, the page may not be immediately ready
-#'   for printing, especially there are JavaScript applications on the page, so
-#'   you may need to wait for a longer time).
+#'   printing (in certain cases, the page may not be immediately ready for
+#'   printing, especially there are JavaScript applications on the page, so you
+#'   may need to wait for a longer time).
 #' @param browser Path to Google Chrome or Chromium. This function will try to
 #'   find it automatically via \code{\link{find_chrome}()} if the path is not
 #'   explicitly provided.
+#' @param format The output format.
 #' @param options A list of page options. See
 #'   \url{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-printToPDF}
-#'    for the full list of options. Note that we have changed the defaults of
-#'   \code{printBackground} and \code{preferCSSPageSize} in this function.
+#'    for the full list of options for PDF output, and
+#'   \url{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-captureScreenshot}
+#'    for options for screenshots. Note that for PDF output, we have changed the
+#'   defaults of \code{printBackground} (\code{TRUE}) and
+#'   \code{preferCSSPageSize} (\code{TRUE}) in this function.
 #' @param work_dir Name of headless Chrome working directory. If the default
 #'   temporary directory doesn't work, you may try to use a subdirectory of your
 #'   home directory.
 #' @param timeout The number of seconds before canceling the document
 #'   generation. Use a larger value if the document takes longer to build.
 #' @param extra_args Extra command-line arguments to be passed to Chrome.
-#' @param verbose Whether to show verbose websocket connexion to headless
+#' @param verbose Whether to show verbose websocket connection to headless
 #'   Chrome.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
 #' @return Path of the output file (invisibly).
 #' @export
 chrome_print = function(
-  input, output = xfun::with_ext(input, 'pdf'), wait = 2, browser = 'google-chrome',
-  options = list(printBackground = TRUE, preferCSSPageSize = TRUE),
+  input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
+  format = c('pdf', 'png', 'jpeg'), options = list(),
   work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
@@ -56,9 +62,10 @@ chrome_print = function(
     url = svr$url
   } else url = input  # the input is not a local file; assume it is just a URL
 
+  format = match.arg(format)
   # remove hash/query parameters in url
   if (missing(output) && !file.exists(input))
-    output = xfun::with_ext(basename(gsub('[#?].*', '', url)), 'pdf')
+    output = xfun::with_ext(basename(gsub('[#?].*', '', url)), format)
   output2 = normalizePath(output, mustWork = FALSE)
   if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
     'Cannot create the directory for the output file: ', d
@@ -71,7 +78,7 @@ chrome_print = function(
   # for windows, use the --no-sandbox option
   extra_args = unique(c(
     extra_args, proxy_args(), if (xfun::is_windows()) '--no-sandbox',
-    '--headless', '--no-first-run', '--no-default-browser-check'
+    '--headless', '--no-first-run', '--no-default-browser-check', '--hide-scrollbars'
   ))
 
   debug_port = random_port()
@@ -92,11 +99,11 @@ chrome_print = function(
   on.exit(if (ws$readyState() < 2) ws$close(), add = TRUE)
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
-  print_pdf(ws, url, output2, wait, verbose, token, options)
+  print_page(ws, url, output2, wait, verbose, token, format, options)
   while (!isTRUE(token$done)) {
-    if (!is.null(e <- token$error)) stop('Failed to generate PDF. Reason: ', e)
+    if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
     if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
-      'Failed to generate PDF in ', timeout, ' seconds (timeout).'
+      'Failed to generate output in ', timeout, ' seconds (timeout).'
     )
     later::run_now()
   }
@@ -167,8 +174,8 @@ is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
   }
 
   required_commands = list(
-    Page = c('enable', 'navigate', 'printToPDF'),
     Network = c('enable'),
+    Page = c('captureScreenshot', 'enable', 'navigate', 'printToPDF'),
     Runtime = c('enable', 'addBinding', 'evaluate')
   )
 
@@ -177,8 +184,8 @@ is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
     return(FALSE)
 
   required_events = list(
-    Page = c('loadEventFired'),
     Network = c('responseReceived'),
+    Page = c('loadEventFired'),
     Runtime = c('bindingCalled')
   )
 
@@ -210,7 +217,7 @@ get_entrypoint = function(debug_port) {
   page
 }
 
-print_pdf = function(ws, url, output, wait, verbose, token, options = list()) {
+print_page = function(ws, url, output, wait, verbose, token, format, options = list()) {
 
   ws$onOpen(function(event) {
     ws$send('{"id":1,"method":"Runtime.enable"}')
@@ -245,7 +252,7 @@ print_pdf = function(ws, url, output, wait, verbose, token, options = list()) {
       },
       # Command #7 received - No callback
       NULL, {
-      # Command #8 received (printToPDF) -> callback: save to PDF file & close Chrome
+      # Command #8 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
         token$done = TRUE
       }
@@ -262,11 +269,14 @@ print_pdf = function(ws, url, output, wait, verbose, token, options = list()) {
       }
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
-        opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), options)
-        ws$send(sprintf(
-          '{"id":8,"method":"Page.printToPDF","params":%s}',
-          jsonlite::toJSON(opts, auto_unbox = TRUE)
-        ))
+        opts = as.list(options)
+        if (format == 'pdf')
+          opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), opts)
+        if (format == 'jpeg') opts$format = 'jpeg'
+        ws$send(jsonlite::toJSON(list(
+          id = 8, params = if (length(opts)) opts,
+          method = if (format == 'pdf') 'Page.printToPDF' else 'Page.captureScreenshot'
+        ), auto_unbox = TRUE, null = 'null'))
       }
     }
   })
