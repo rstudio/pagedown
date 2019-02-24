@@ -94,9 +94,10 @@ chrome_print = function(
   if (!is_remote_protocol_ok(debug_port, ps)) {
     stop('A more recent version of Chrome is required. ')
   }
+  httpuv_app = start_ws_server(get_entrypoint(debug_port), verbose = verbose)
+  on.exit(httpuv::stopServer(httpuv_app$server), add = TRUE)
 
-  ws = websocket::WebSocket$new(get_entrypoint(debug_port))
-  on.exit(if (ws$readyState() < 2) ws$close(), add = TRUE)
+  ws = httpuv_app$ws
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
   print_page(ws, url, output2, wait, verbose, token, format, options)
@@ -219,14 +220,10 @@ get_entrypoint = function(debug_port) {
 
 print_page = function(ws, url, output, wait, verbose, token, format, options = list()) {
 
-  ws$onOpen(function(event) {
-    ws$send('{"id":1,"method":"Runtime.enable"}')
-  })
-
-  ws$onMessage(function(event) {
+  ws$onMessage(function(binary, text) {
     if (!is.null(token$error)) return(ws$close())
-    if (verbose) message('Message received from headless Chrome: ', event$data)
-    msg = jsonlite::fromJSON(event$data)
+    if (verbose) message('Message received from headless Chrome: ', text)
+    msg = jsonlite::fromJSON(text)
     id = msg$id
     method = msg$method
 
@@ -280,10 +277,13 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
       }
     }
   })
+
+  ws$send('{"id":1,"method":"Runtime.enable"}')
+
 }
 
 
-start_ws_server <- function(url, headless_address = get_entrypoint(debug_port), verbose = TRUE) {
+start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), verbose = TRUE) {
   # Build a JS script to populate this log
   write_log <- c(
     "function writeMessage(msg) {",
@@ -323,11 +323,11 @@ start_ws_server <- function(url, headless_address = get_entrypoint(debug_port), 
                           # Create the connection to the httpuv server:
                           sprintf("var httpuv = new WebSocket(%s);", wsUrl),
                           # Create the connection to headless Chrome:
-                          sprintf('var chromeConnection = new WebSocket("%s");', headless_address),
+                          sprintf('var chromeConnection = new WebSocket("%s");', cdp_ws_url),
                           # Configure the connection with headless Chrome:
                           "chromeConnection.onmessage = function(event) {",
                           # log event for debug
-                            if (verbose) "  writeMessage(event.data);",
+                            if (verbose) '  writeMessage("<< "+event.data);',
                             # send chrome message to R
                             "   httpuv.send(event.data)",
                             "   var data = JSON.parse(event.data);",
@@ -350,5 +350,6 @@ start_ws_server <- function(url, headless_address = get_entrypoint(debug_port), 
   )
   ws_con <- NULL
   server <- httpuv::startServer("0.0.0.0", 9454, app)
+  while (is.null(ws_con)) httpuv::service()
   list(server = server, ws = ws_con)
 }
