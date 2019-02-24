@@ -288,7 +288,7 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
 
 
 start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), browser) {
-  app <- list(
+  app = list(
     call = function(req) {
       list(
         status = 200L,
@@ -328,10 +328,10 @@ start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), browser) {
       ws_con <<- ws
     }
   )
-  ws_con <- NULL
+  ws_con = NULL
   httpuv_port = random_port()
-  server <- httpuv::startServer("0.0.0.0", httpuv_port, app)
-  workdir <-  tempfile()
+  server = httpuv::startServer("0.0.0.0", httpuv_port, app)
+  workdir =  tempfile()
   debug_port = random_port()
   ps = processx::process$new(
     command = browser,
