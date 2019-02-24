@@ -344,15 +344,11 @@ start_ws_server <- function(url, headless_address = get_entrypoint(debug_port), 
     },
     # Configure the server-side websocket connection
     onWSOpen = function(ws) {
+      # return websocket object when created
       ws_con <<- ws
-      # In this POC, the only message received by the httpuv server is the pdf
-      ws$onMessage(function(binary, message) {
-        # ws$send('{mgs: "Received from server")')
-        message("Message Received")
-      })
     }
   )
   ws_con <- NULL
   server <- httpuv::startServer("0.0.0.0", 9454, app)
-  return(ws_con)
+  list(server = server, ws = ws_con)
 }
