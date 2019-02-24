@@ -94,8 +94,11 @@ chrome_print = function(
   if (!is_remote_protocol_ok(debug_port, ps)) {
     stop('A more recent version of Chrome is required. ')
   }
-  httpuv_app = start_ws_server(get_entrypoint(debug_port), verbose = verbose)
-  on.exit(httpuv::stopServer(httpuv_app$server), add = TRUE)
+  httpuv_app = start_ws_server(get_entrypoint(debug_port), verbose = verbose, browser = browser)
+  on.exit({
+    if (httpuv_app$ps$is_alive()) httpuv_app$ps$kill()
+    httpuv::stopServer(httpuv_app$server)
+  }, add = TRUE)
 
   ws = httpuv_app$ws
 
@@ -283,7 +286,7 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
 }
 
 
-start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), verbose = TRUE) {
+start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), verbose = TRUE, browser) {
   # Build a JS script to populate this log
   write_log <- c(
     "function writeMessage(msg) {",
@@ -350,6 +353,16 @@ start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), verbose = T
   )
   ws_con <- NULL
   server <- httpuv::startServer("0.0.0.0", 9454, app)
+  ps = processx::process$new(
+    command = browser,
+    args = c(
+      paste0('--user-data-dir=', tempfile()),
+      '--disable-gpu', "--no-sandbox",
+      # '--headless',
+      '--no-first-run',
+      '--no-default-browser-check', '--hide-scrollbars',
+      "http://localhost:9454"
+  ))
   while (is.null(ws_con)) httpuv::service()
-  list(server = server, ws = ws_con)
+  list(server = server, ws = ws_con, ps = ps)
 }
