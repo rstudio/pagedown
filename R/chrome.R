@@ -105,6 +105,7 @@ chrome_print = function(
   t0 = Sys.time(); token = new.env(parent = emptyenv())
   print_page(ws, url, output2, wait, verbose, token, format, options)
   while (!isTRUE(token$done)) {
+    if (!httpuv_app$ps$is_alive()) stop("httpuv chrome crashed")
     if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
     if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
       'Failed to generate output in ', timeout, ' seconds (timeout).'
@@ -358,11 +359,18 @@ start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), verbose = T
     args = c(
       paste0('--user-data-dir=', tempfile()),
       '--disable-gpu', "--no-sandbox",
-      # '--headless',
+      '--headless',
       '--no-first-run',
       '--no-default-browser-check', '--hide-scrollbars',
       "http://localhost:9454"
   ))
-  while (is.null(ws_con)) httpuv::service()
+  while (is.null(ws_con)) {
+    if (!ps$is_alive()) {
+      # something went wrong with chrome while creating the websocket.
+      httpuv::stopServer(server)
+      stop("httpuv chrome crashed before creating websocket")
+    }
+    httpuv::service()
+  }
   list(server = server, ws = ws_con, ps = ps)
 }
