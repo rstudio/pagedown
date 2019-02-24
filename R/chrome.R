@@ -304,7 +304,7 @@ start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), browser) {
                         "</body>",
                         '<script type="text/javascript">',
                           # Create the connection to the httpuv server:
-                          'var httpuv = new WebSocket("ws://"+location.host);',
+                          'var httpuv = new WebSocket("ws://" + window.location.host);',
                           # Create the connection to headless Chrome:
                           sprintf('var chromeConnection = new WebSocket("%s");', cdp_ws_url),
                           # Configure the connection with headless Chrome:
