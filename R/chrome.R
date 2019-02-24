@@ -304,11 +304,6 @@ start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), verbose = T
   )
   app <- list(
     call = function(req) {
-      wsUrl = paste(sep='',
-                    '"',
-                    "ws://",
-                    ifelse(is.null(req$HTTP_HOST), req$SERVER_NAME, req$HTTP_HOST),
-                    '"')
       list(
         status = 200L,
         headers = list(
@@ -326,6 +321,7 @@ start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), verbose = T
                           if (verbose) write_log,
                           # Create the connection to the httpuv server:
                           sprintf("var httpuv = new WebSocket(%s);", wsUrl),
+                          'var httpuv = new WebSocket("ws://"+location.host);',
                           # Create the connection to headless Chrome:
                           sprintf('var chromeConnection = new WebSocket("%s");', cdp_ws_url),
                           # Configure the connection with headless Chrome:
