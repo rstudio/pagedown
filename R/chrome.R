@@ -354,10 +354,14 @@ start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), verbose = T
   )
   ws_con <- NULL
   server <- httpuv::startServer("0.0.0.0", 9454, app)
+  workdir <-  tempfile()
+  message(workdir)
+  debug_port = random_port()
   ps = processx::process$new(
     command = browser,
     args = c(
-      paste0('--user-data-dir=', tempfile()),
+      paste0('--user-data-dir=', workdir),
+      paste0('--remote-debugging-port=', debug_port),
       '--disable-gpu', "--no-sandbox",
       '--headless',
       '--no-first-run',
