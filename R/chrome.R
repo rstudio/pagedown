@@ -343,7 +343,7 @@ start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), browser) {
       '--headless',
       '--no-first-run',
       '--no-default-browser-check',
-      paste0("http://localhost:", httpuv_port)
+      paste0("http://127.0.0.1:", httpuv_port)
   ))
   while (is.null(ws_con)) {
     if (!ps$is_alive()) {
