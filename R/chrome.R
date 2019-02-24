@@ -281,3 +281,78 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
     }
   })
 }
+
+
+start_ws_server <- function(url, headless_address = get_entrypoint(debug_port), verbose = TRUE) {
+  # Build a JS script to populate this log
+  write_log <- c(
+    "function writeMessage(msg) {",
+    "  var log = document.getElementById('log');",
+    "  var li = document.createElement('li');",
+    "  li.innerText = msg;",
+    "  log.appendChild(li);",
+    "}"
+  )
+  html_body <- c(
+    '<h2>DevTools log</h2>',
+    '<ol id="log">',
+    '</ol>'
+  )
+  app <- list(
+    call = function(req) {
+      wsUrl = paste(sep='',
+                    '"',
+                    "ws://",
+                    ifelse(is.null(req$HTTP_HOST), req$SERVER_NAME, req$HTTP_HOST),
+                    '"')
+      list(
+        status = 200L,
+        headers = list(
+          'Content-Type' = 'text/html'
+        ),
+        body = paste0(collapse = "\r\n",
+                      c("<!DOCTYPE html>",
+                        "<html>",
+                        "<head>",
+                        "</head>",
+                        "<body>",
+                        html_body,
+                        "</body>",
+                        '<script type="text/javascript">',
+                          if (verbose) write_log,
+                          # Create the connection to the httpuv server:
+                          sprintf("var httpuv = new WebSocket(%s);", wsUrl),
+                          # Create the connection to headless Chrome:
+                          sprintf('var chromeConnection = new WebSocket("%s");', headless_address),
+                          # Configure the connection with headless Chrome:
+                          "chromeConnection.onmessage = function(event) {",
+                          # log event for debug
+                            if (verbose) "  writeMessage(event.data);",
+                            # send chrome message to R
+                            "   httpuv.send(event.data)",
+                            "   var data = JSON.parse(event.data);",
+                          "};",
+                          "httpuv.onmessage = function(event) {",
+                            if (verbose) '  writeMessage(">> "+event.data);',
+                            "  chromeConnection.send(event.data);",
+                          "};",
+                        "</script>",
+                        "</html>"
+                      )
+        )
+      )
+    },
+    # Configure the server-side websocket connection
+    onWSOpen = function(ws) {
+      ws_con <<- ws
+      # In this POC, the only message received by the httpuv server is the pdf
+      ws$onMessage(function(binary, message) {
+        # ws$send('{mgs: "Received from server")')
+        message("Message Received")
+      })
+    }
+  )
+  ws_con <- NULL
+  server <- httpuv::startServer("0.0.0.0", 9454, app)
+  return(ws_con)
+}
