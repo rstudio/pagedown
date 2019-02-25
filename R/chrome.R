@@ -91,7 +91,7 @@ chrome_print = function(
     unlink(work_dir, recursive = TRUE)
   }, add = TRUE)
 
-  if (!is_remote_protocol_ok(debug_port, ps))
+  if (!is_remote_protocol_ok(debug_port))
     stop('A more recent version of Chrome is required. ')
 
   # a middleman app to send messages from R to the app's websocket, then from
@@ -170,7 +170,7 @@ no_proxy_urls = function() {
   unique(x)
 }
 
-is_remote_protocol_ok = function(debug_port, ps, max_attempts = 15) {
+is_remote_protocol_ok = function(debug_port, max_attempts = 15) {
   url = sprintf('http://127.0.0.1:%s/json/protocol', debug_port)
   for (i in 1:max_attempts) {
     remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
