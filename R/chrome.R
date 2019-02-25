@@ -98,11 +98,8 @@ chrome_print = function(
   # there to the above Chrome process (messages come back in the same way); this
   # is mainly to unblock newer CRAN releases of pagedown because the websocket
   # package is not on CRAN (yet)
-  app = ws_server(debug_port, browser = browser)
-  on.exit({
-    if (app$ps$is_alive()) app$ps$kill()
-    httpuv::stopServer(app$server)
-  }, add = TRUE)
+  app = ws_server(debug_port, browser)
+  on.exit(app$cleanup(), add = TRUE)
 
   ws = app$ws
 
@@ -300,7 +297,6 @@ ws_server = function(port, browser) {
         xfun::file_string(pkg_resource('html', 'ws-server.html')), ws_url
       ))
     },
-    # Configure the server-side websocket connection
     onWSOpen = function(ws) {
       # return websocket object when created
       ws_con <<- ws
@@ -330,5 +326,9 @@ ws_server = function(port, browser) {
     }
     httpuv::service()
   }
-  list(server = server, ws = ws_con, ps = ps)
+  list(ws = ws_con, ps = ps, cleanup = function() {
+    if (ps$is_alive()) ps$kill()
+    httpuv::stopServer(server)
+    unlink(workdir, recursive = TRUE)
+  })
 }
