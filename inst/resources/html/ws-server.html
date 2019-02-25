@@ -7,8 +7,7 @@
 var httpuv = new WebSocket("ws://" + window.location.host);
 var chromeConnection = new WebSocket("%s");
 chromeConnection.onmessage = function(event) {
-   httpuv.send(event.data)
-   var data = JSON.parse(event.data);
+  httpuv.send(event.data)
 };
 httpuv.onmessage = function(event) {
   chromeConnection.send(event.data);
