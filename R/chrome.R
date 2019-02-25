@@ -94,7 +94,7 @@ chrome_print = function(
   if (!is_remote_protocol_ok(debug_port, ps)) {
     stop('A more recent version of Chrome is required. ')
   }
-  httpuv_app = start_ws_server(get_entrypoint(debug_port), browser = browser)
+  httpuv_app = ws_server(get_entrypoint(debug_port), browser = browser)
   on.exit({
     if (httpuv_app$ps$is_alive()) httpuv_app$ps$kill()
     httpuv::stopServer(httpuv_app$server)
@@ -287,7 +287,7 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
 }
 
 
-start_ws_server <- function(cdp_ws_url = get_entrypoint(debug_port), browser) {
+ws_server = function(cdp_ws_url, browser) {
   app = list(
     call = function(req) {
       list(
