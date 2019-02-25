@@ -98,7 +98,7 @@ chrome_print = function(
   # there to the above Chrome process (messages come back in the same way); this
   # is mainly to unblock newer CRAN releases of pagedown because the websocket
   # package is not on CRAN (yet)
-  app = ws_server(get_entrypoint(debug_port), browser = browser)
+  app = ws_server(debug_port, browser = browser)
   on.exit({
     if (app$ps$is_alive()) app$ps$kill()
     httpuv::stopServer(app$server)
@@ -291,7 +291,8 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
 }
 
 
-ws_server = function(ws_url, browser) {
+ws_server = function(port, browser) {
+  ws_url = get_entrypoint(port)
   app = list(
     call = function(req) {
       list(status = 200L, headers = list('Content-Type' = 'text/html'), body = sprintf(
