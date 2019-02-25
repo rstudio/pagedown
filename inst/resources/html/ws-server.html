@@ -3,7 +3,6 @@
 <head>
 </head>
 <body>
-</body>
 <script type="text/javascript">
 var httpuv = new WebSocket("ws://" + window.location.host);
 var chromeConnection = new WebSocket("%s");
@@ -15,4 +14,5 @@ httpuv.onmessage = function(event) {
   chromeConnection.send(event.data);
 };
 </script>
+</body>
 </html>
