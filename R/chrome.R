@@ -91,16 +91,22 @@ chrome_print = function(
     unlink(work_dir, recursive = TRUE)
   }, add = TRUE)
 
-  if (!is_remote_protocol_ok(debug_port, ps)) {
+  if (!is_remote_protocol_ok(debug_port, ps))
     stop('A more recent version of Chrome is required. ')
-  }
 
-  ws = websocket::WebSocket$new(get_entrypoint(debug_port))
-  on.exit(if (ws$readyState() < 2) ws$close(), add = TRUE)
+  # a middleman app to send messages from R to the app's websocket, then from
+  # there to the above Chrome process (messages come back in the same way); this
+  # is mainly to unblock newer CRAN releases of pagedown because the websocket
+  # package is not on CRAN (yet)
+  app = ws_server(debug_port, browser)
+  on.exit(app$cleanup(), add = TRUE)
+
+  ws = app$ws
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
   print_page(ws, url, output2, wait, verbose, token, format, options)
   while (!isTRUE(token$done)) {
+    if (!app$ps$is_alive()) stop('Chrome launched via httpuv crashed')
     if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
     if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
       'Failed to generate output in ', timeout, ' seconds (timeout).'
@@ -219,14 +225,10 @@ get_entrypoint = function(debug_port) {
 
 print_page = function(ws, url, output, wait, verbose, token, format, options = list()) {
 
-  ws$onOpen(function(event) {
-    ws$send('{"id":1,"method":"Runtime.enable"}')
-  })
-
-  ws$onMessage(function(event) {
+  ws$onMessage(function(binary, text) {
     if (!is.null(token$error)) return(ws$close())
-    if (verbose) message('Message received from headless Chrome: ', event$data)
-    msg = jsonlite::fromJSON(event$data)
+    if (verbose) message('Message received from headless Chrome: ', text)
+    msg = jsonlite::fromJSON(text)
     id = msg$id
     method = msg$method
 
@@ -279,5 +281,52 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
         ), auto_unbox = TRUE, null = 'null'))
       }
     }
+  })
+
+  ws$send('{"id":1,"method":"Runtime.enable"}')
+
+}
+
+
+ws_server = function(port, browser) {
+  ws_url = get_entrypoint(port)
+  ws_con = NULL
+  app = list(
+    call = function(req) {
+      list(status = 200L, headers = list('Content-Type' = 'text/html'), body = sprintf(
+        xfun::file_string(pkg_resource('html', 'ws-server.html')), ws_url
+      ))
+    },
+    onWSOpen = function(ws) {
+      # return websocket object when created
+      ws_con <<- ws
+    }
+  )
+  httpuv_port = random_port()
+  server = httpuv::startServer('127.0.0.1', httpuv_port, app)
+  ps = processx::process$new(
+    command = browser,
+    args = c(
+      paste0('--user-data-dir=', workdir <- tempfile()),
+      paste0('--remote-debugging-port=', random_port()),
+      '--disable-gpu',
+      if (xfun::is_windows()) '--no-sandbox',
+      '--headless',
+      '--no-first-run',
+      '--no-default-browser-check',
+      paste0('http://127.0.0.1:', httpuv_port)
+  ))
+  while (is.null(ws_con)) {
+    if (!ps$is_alive()) {
+      # something went wrong with chrome while creating the websocket.
+      httpuv::stopServer(server)
+      stop('Chrome launched via httpuv crashed before creating websocket')
+    }
+    httpuv::service()
+  }
+  list(ws = ws_con, ps = ps, cleanup = function() {
+    if (ps$is_alive()) ps$kill()
+    httpuv::stopServer(server)
+    unlink(workdir, recursive = TRUE)
   })
 }
