@@ -106,7 +106,7 @@ chrome_print = function(
   t0 = Sys.time(); token = new.env(parent = emptyenv())
   print_page(ws, url, output2, wait, verbose, token, format, options)
   while (!isTRUE(token$done)) {
-    if (!app$ps$is_alive()) stop("httpuv chrome crashed")
+    if (!app$ps$is_alive()) stop('Chrome launched via httpuv crashed')
     if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
     if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
       'Failed to generate output in ', timeout, ' seconds (timeout).'
@@ -303,26 +303,24 @@ ws_server = function(port, browser) {
     }
   )
   httpuv_port = random_port()
-  server = httpuv::startServer("0.0.0.0", httpuv_port, app)
-  workdir =  tempfile()
-  debug_port = random_port()
+  server = httpuv::startServer('127.0.0.1', httpuv_port, app)
   ps = processx::process$new(
     command = browser,
     args = c(
-      paste0('--user-data-dir=', workdir),
-      paste0('--remote-debugging-port=', debug_port),
+      paste0('--user-data-dir=', workdir <- tempfile()),
+      paste0('--remote-debugging-port=', random_port()),
       '--disable-gpu',
       if (xfun::is_windows()) '--no-sandbox',
       '--headless',
       '--no-first-run',
       '--no-default-browser-check',
-      paste0("http://127.0.0.1:", httpuv_port)
+      paste0('http://127.0.0.1:', httpuv_port)
   ))
   while (is.null(ws_con)) {
     if (!ps$is_alive()) {
       # something went wrong with chrome while creating the websocket.
       httpuv::stopServer(server)
-      stop("httpuv chrome crashed before creating websocket")
+      stop('Chrome launched via httpuv crashed before creating websocket')
     }
     httpuv::service()
   }
