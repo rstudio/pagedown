@@ -91,21 +91,25 @@ chrome_print = function(
     unlink(work_dir, recursive = TRUE)
   }, add = TRUE)
 
-  if (!is_remote_protocol_ok(debug_port, ps)) {
+  if (!is_remote_protocol_ok(debug_port, ps))
     stop('A more recent version of Chrome is required. ')
-  }
-  httpuv_app = ws_server(get_entrypoint(debug_port), browser = browser)
+
+  # a middleman app to send messages from R to the app's websocket, then from
+  # there to the above Chrome process (messages come back in the same way); this
+  # is mainly to unblock newer CRAN releases of pagedown because the websocket
+  # package is not on CRAN (yet)
+  app = ws_server(get_entrypoint(debug_port), browser = browser)
   on.exit({
-    if (httpuv_app$ps$is_alive()) httpuv_app$ps$kill()
-    httpuv::stopServer(httpuv_app$server)
+    if (app$ps$is_alive()) app$ps$kill()
+    httpuv::stopServer(app$server)
   }, add = TRUE)
 
-  ws = httpuv_app$ws
+  ws = app$ws
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
   print_page(ws, url, output2, wait, verbose, token, format, options)
   while (!isTRUE(token$done)) {
-    if (!httpuv_app$ps$is_alive()) stop("httpuv chrome crashed")
+    if (!app$ps$is_alive()) stop("httpuv chrome crashed")
     if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
     if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
       'Failed to generate output in ', timeout, ' seconds (timeout).'
@@ -287,11 +291,11 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
 }
 
 
-ws_server = function(cdp_ws_url, browser) {
+ws_server = function(ws_url, browser) {
   app = list(
     call = function(req) {
       list(status = 200L, headers = list('Content-Type' = 'text/html'), body = sprintf(
-        xfun::file_string(pkg_resource('html', 'ws-server.html')), cdp_ws_url
+        xfun::file_string(pkg_resource('html', 'ws-server.html')), ws_url
       ))
     },
     # Configure the server-side websocket connection
