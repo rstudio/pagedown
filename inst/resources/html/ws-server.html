@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+</body>
+<script type="text/javascript">
+var httpuv = new WebSocket("ws://" + window.location.host);
+var chromeConnection = new WebSocket("%s");
+chromeConnection.onmessage = function(event) {
+   httpuv.send(event.data)
+   var data = JSON.parse(event.data);
+};
+httpuv.onmessage = function(event) {
+  chromeConnection.send(event.data);
+};
+</script>
+</html>

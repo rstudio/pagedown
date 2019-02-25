@@ -290,37 +290,9 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
 ws_server = function(cdp_ws_url, browser) {
   app = list(
     call = function(req) {
-      list(
-        status = 200L,
-        headers = list(
-          'Content-Type' = 'text/html'
-        ),
-        body = paste0(collapse = "\r\n",
-                      c("<!DOCTYPE html>",
-                        "<html>",
-                        "<head>",
-                        "</head>",
-                        "<body>",
-                        "</body>",
-                        '<script type="text/javascript">',
-                          # Create the connection to the httpuv server:
-                          'var httpuv = new WebSocket("ws://" + window.location.host);',
-                          # Create the connection to headless Chrome:
-                          sprintf('var chromeConnection = new WebSocket("%s");', cdp_ws_url),
-                          # Configure the connection with headless Chrome:
-                          "chromeConnection.onmessage = function(event) {",
-                            # send chrome message to R
-                            "   httpuv.send(event.data)",
-                            "   var data = JSON.parse(event.data);",
-                          "};",
-                          "httpuv.onmessage = function(event) {",
-                            "  chromeConnection.send(event.data);",
-                          "};",
-                        "</script>",
-                        "</html>"
-                      )
-        )
-      )
+      list(status = 200L, headers = list('Content-Type' = 'text/html'), body = sprintf(
+        xfun::file_string(pkg_resource('html', 'ws-server.html')), cdp_ws_url
+      ))
     },
     # Configure the server-side websocket connection
     onWSOpen = function(ws) {
