@@ -293,6 +293,7 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
 
 ws_server = function(port, browser) {
   ws_url = get_entrypoint(port)
+  ws_con = NULL
   app = list(
     call = function(req) {
       list(status = 200L, headers = list('Content-Type' = 'text/html'), body = sprintf(
@@ -305,7 +306,6 @@ ws_server = function(port, browser) {
       ws_con <<- ws
     }
   )
-  ws_con = NULL
   httpuv_port = random_port()
   server = httpuv::startServer("0.0.0.0", httpuv_port, app)
   workdir =  tempfile()
