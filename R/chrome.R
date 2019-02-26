@@ -54,7 +54,9 @@ chrome_print = function(
 
   if (file.exists(input)) {
     is_html = function(x) grepl('[.]html?$', x)
-    url = if (is_html(input)) input else rmarkdown::render(input)
+    url = if (is_html(input)) input else rmarkdown::render(
+      input, envir = parent.frame(), encoding = 'UTF-8'
+    )
     if (!is_html(url)) stop(
       "The file '", url, "' should have the '.html' or '.htm' extension."
     )
