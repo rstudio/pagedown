@@ -181,7 +181,12 @@ is_remote_protocol_ok = function(debug_port, max_attempts = 15) {
 
   required_commands = list(
     Network = c('enable'),
-    Page = c('captureScreenshot', 'enable', 'navigate', 'printToPDF'),
+    Page = c('addScriptToEvaluateOnNewDocument',
+             'captureScreenshot',
+             'enable',
+             'navigate',
+             'printToPDF'
+    ),
     Runtime = c('enable', 'addBinding', 'evaluate')
   )
 
@@ -242,19 +247,24 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
       ws$send('{"id":3,"method":"Runtime.addBinding","params":{"name":"pagedownListener"}}'),
       # Command #3 received -> callback: command #4 Network.Enable
       ws$send('{"id":4,"method":"Network.enable"}'),
-      # Command #4 received -> callback: command #5 Page.Navigate
-      ws$send(sprintf('{"id":5,"method":"Page.navigate","params":{"url":"%s"}}', url)),
-      # Command #5 received - check if there is an error when navigating to url
+      # Command #4 received -> callback: command #5 Page.addScriptToEvaluateOnNewDocument
+      ws$send(
+        sprintf('{"id":5,"method":"Page.addScriptToEvaluateOnNewDocument","params":{"source":"%s"}}',
+                paste0(readLines(pkg_resource('js', 'chrome_print.js')), collapse = ""))
+      ),
+      # Command #5 received -> callback: command #6 Page.Navigate
+      ws$send(sprintf('{"id":6,"method":"Page.navigate","params":{"url":"%s"}}', url)),
+      # Command #6 received - check if there is an error when navigating to url
       token$error <- msg$result$errorText,
       {
-      # Command #6 received - Test if the html document uses the paged.js polyfill
+      # Command #7 received - Test if the html document uses the paged.js polyfill
       # if not, call the binding when fonts are ready
         if (!isTRUE(msg$result$result$value))
-          ws$send('{"id":7,"method":"Runtime.evaluate","params":{"expression":"document.fonts.ready.then(() => {pagedownListener(\'\');})"}}')
+          ws$send('{"id":8,"method":"Runtime.evaluate","params":{"expression":"pagedownReady.then(() => {pagedownListener(\'\');})"}}')
       },
-      # Command #7 received - No callback
+      # Command #8 received - No callback
       NULL, {
-      # Command #8 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
+      # Command #9 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
         token$done = TRUE
       }
@@ -267,7 +277,7 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
         )
       }
       if (method == "Page.loadEventFired") {
-        ws$send('{"id":6,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
+        ws$send('{"id":7,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
       }
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
@@ -276,7 +286,7 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
           opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), opts)
         if (format == 'jpeg') opts$format = 'jpeg'
         ws$send(jsonlite::toJSON(list(
-          id = 8, params = if (length(opts)) opts,
+          id = 9, params = if (length(opts)) opts,
           method = if (format == 'pdf') 'Page.printToPDF' else 'Page.captureScreenshot'
         ), auto_unbox = TRUE, null = 'null'))
       }
