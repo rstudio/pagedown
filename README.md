@@ -53,6 +53,8 @@ Below are some existing R Markdown output formats and examples.
 
 - "Template of Exec Summaries with pagedown" by Joshua David Barillas: https://github.com/jdbarillas/executive_summary
 
+- Deepak Kumar Tanwar's CV: https://dktanwar.github.io/CV/ds.html
+
 ## Authors and contributors
 
 The main authors of this package are Yihui Xie (RStudio) and Romain Lesur. Romain has received a grant from the Shuttleworth Foundation for his work on both Paged.js and **pagedown**.
