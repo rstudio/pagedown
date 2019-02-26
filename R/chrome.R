@@ -146,7 +146,7 @@ find_chrome = function() {
       for (i in c('google-chrome', 'chromium-browser', 'chromium')) {
         if ((res <- Sys.which(i)) != '') break
       }
-      if (res == '') stop('Cannot find chromium-browser or google-chrome')
+      if (res == '') stop('Cannot find Chromium or Google Chrome')
       res
     },
     stop('Your platform is not supported')
