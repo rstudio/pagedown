@@ -47,6 +47,7 @@ chrome_print = function(
     if (!file.exists(browser)) browser = Sys.which(browser)
   }
   if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
+  if (verbose) message('Using the browser "', browser, '"')
 
   if (file.exists(input)) {
     is_html = function(x) grepl('[.]html?$', x)
