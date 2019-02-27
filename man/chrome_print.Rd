@@ -46,15 +46,12 @@ home directory.}
 \item{timeout}{The number of seconds before canceling the document
 generation. Use a larger value if the document takes longer to build.}
 
-\item{extra_args}{Extra command-line arguments to be passed to Chrome. Note
-that when using this function in a (Docker) container, you should add the
-\code{--no-sandbox} option, e.g., \code{extra_args = c('--disable-gpu',
-'--no-sandbox')}.}
+\item{extra_args}{Extra command-line arguments to be passed to Chrome.}
 
 \item{verbose}{Whether to show verbose websocket connection to headless
 Chrome.}
 
-\item{containerized}{Whether the function is run in a container.}
+\item{containerized}{Whether the function is run in a (Docker) container.}
 }
 \value{
 Path of the output file (invisibly).
