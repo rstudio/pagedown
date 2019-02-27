@@ -37,6 +37,7 @@
 #'   '--no-sandbox')}.
 #' @param verbose Whether to show verbose websocket connection to headless
 #'   Chrome.
+#' @param containerized Whether the function is run in a container.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
 #' @return Path of the output file (invisibly).
@@ -44,7 +45,8 @@
 chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
   format = c('pdf', 'png', 'jpeg'), options = list(),
-  work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = FALSE
+  work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = FALSE,
+  containerized = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
     if (!file.exists(browser)) browser = Sys.which(browser)
@@ -83,7 +85,8 @@ chrome_print = function(
 
   # for windows, use the --no-sandbox option
   extra_args = unique(c(
-    extra_args, proxy_args(), if (xfun::is_windows()) '--no-sandbox',
+    extra_args, proxy_args(),
+    if (xfun::is_windows() | isTRUE(containerized)) '--no-sandbox',
     '--headless', '--no-first-run', '--no-default-browser-check', '--hide-scrollbars'
   ))
 
@@ -104,7 +107,7 @@ chrome_print = function(
   # there to the above Chrome process (messages come back in the same way); this
   # is mainly to unblock newer CRAN releases of pagedown because the websocket
   # package is not on CRAN (yet)
-  app = ws_server(debug_port, browser)
+  app = ws_server(debug_port, browser, containerized)
   on.exit(app$cleanup(), add = TRUE)
 
   ws = app$ws
@@ -304,7 +307,7 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
 }
 
 
-ws_server = function(port, browser) {
+ws_server = function(port, browser, containerized) {
   ws_url = get_entrypoint(port)
   ws_con = NULL
   app = list(
@@ -325,8 +328,8 @@ ws_server = function(port, browser) {
     args = c(
       paste0('--user-data-dir=', workdir <- tempfile()),
       paste0('--remote-debugging-port=', random_port()),
-      '--disable-gpu', '--no-sandbox',
-      if (xfun::is_windows()) '--no-sandbox',
+      '--disable-gpu',
+      if (xfun::is_windows() | isTRUE(containerized)) '--no-sandbox',
       '--headless',
       '--no-first-run',
       '--no-default-browser-check',

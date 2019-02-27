@@ -7,7 +7,7 @@
 chrome_print(input, output = xfun::with_ext(input, format), wait = 2, 
     browser = "google-chrome", format = c("pdf", "png", "jpeg"), options = list(), 
     work_dir = tempfile(), timeout = 30, extra_args = c("--disable-gpu"), 
-    verbose = FALSE)
+    verbose = FALSE, containerized = FALSE)
 }
 \arguments{
 \item{input}{A URL or local file path to an HTML page, or a path to a local
@@ -53,6 +53,8 @@ that when using this function in a (Docker) container, you should add the
 
 \item{verbose}{Whether to show verbose websocket connection to headless
 Chrome.}
+
+\item{containerized}{Whether the function is run in a container.}
 }
 \value{
 Path of the output file (invisibly).
