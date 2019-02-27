@@ -80,8 +80,7 @@ chrome_print = function(
 
   # for windows, use the --no-sandbox option
   extra_args = unique(c(
-    extra_args, proxy_args(),
-    if (xfun::is_windows()) '--no-sandbox',
+    extra_args, proxy_args(), if (xfun::is_windows()) '--no-sandbox',
     '--headless', '--no-first-run', '--no-default-browser-check', '--hide-scrollbars'
   ))
 
