@@ -31,10 +31,7 @@
 #'   home directory.
 #' @param timeout The number of seconds before canceling the document
 #'   generation. Use a larger value if the document takes longer to build.
-#' @param extra_args Extra command-line arguments to be passed to Chrome. Note
-#'   that when using this function in a (Docker) container, you should add the
-#'   \code{--no-sandbox} option, e.g., \code{extra_args = c('--disable-gpu',
-#'   '--no-sandbox')}.
+#' @param extra_args Extra command-line arguments to be passed to Chrome.
 #' @param verbose Whether to show verbose websocket connection to headless
 #'   Chrome.
 #' @references
@@ -104,7 +101,7 @@ chrome_print = function(
   # there to the above Chrome process (messages come back in the same way); this
   # is mainly to unblock newer CRAN releases of pagedown because the websocket
   # package is not on CRAN (yet)
-  app = ws_server(debug_port, browser)
+  app = ws_server(debug_port, browser, extra_args)
   on.exit(app$cleanup(), add = TRUE)
 
   ws = app$ws
@@ -304,7 +301,7 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
 }
 
 
-ws_server = function(port, browser) {
+ws_server = function(port, browser, extra_args) {
   ws_url = get_entrypoint(port)
   ws_con = NULL
   app = list(
@@ -322,7 +319,7 @@ ws_server = function(port, browser) {
   server = httpuv::startServer('127.0.0.1', httpuv_port, app)
   ps = processx::process$new(
     command = browser,
-    args = c(
+    args = unique(c(
       paste0('--user-data-dir=', workdir <- tempfile()),
       paste0('--remote-debugging-port=', random_port()),
       '--disable-gpu',
@@ -330,8 +327,10 @@ ws_server = function(port, browser) {
       '--headless',
       '--no-first-run',
       '--no-default-browser-check',
-      paste0('http://127.0.0.1:', httpuv_port)
-  ))
+      paste0('http://127.0.0.1:', httpuv_port),
+      extra_args
+    ))
+  )
   while (is.null(ws_con)) {
     if (!ps$is_alive()) {
       # something went wrong with chrome while creating the websocket.

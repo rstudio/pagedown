@@ -4,10 +4,10 @@
 \alias{chrome_print}
 \title{Print a web page to PDF or capture a screenshot using the headless Chrome}
 \usage{
-chrome_print(input, output = xfun::with_ext(input, format), wait = 2, 
-    browser = "google-chrome", format = c("pdf", "png", "jpeg"), options = list(), 
-    work_dir = tempfile(), timeout = 30, extra_args = c("--disable-gpu"), 
-    verbose = FALSE)
+chrome_print(input, output = xfun::with_ext(input, format), wait = 2,
+  browser = "google-chrome", format = c("pdf", "png", "jpeg"),
+  options = list(), work_dir = tempfile(), timeout = 30,
+  extra_args = c("--disable-gpu"), verbose = FALSE)
 }
 \arguments{
 \item{input}{A URL or local file path to an HTML page, or a path to a local
@@ -46,10 +46,7 @@ home directory.}
 \item{timeout}{The number of seconds before canceling the document
 generation. Use a larger value if the document takes longer to build.}
 
-\item{extra_args}{Extra command-line arguments to be passed to Chrome. Note
-that when using this function in a (Docker) container, you should add the
-\code{--no-sandbox} option, e.g., \code{extra_args = c('--disable-gpu',
-'--no-sandbox')}.}
+\item{extra_args}{Extra command-line arguments to be passed to Chrome.}
 
 \item{verbose}{Whether to show verbose websocket connection to headless
 Chrome.}
