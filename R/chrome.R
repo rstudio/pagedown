@@ -325,7 +325,7 @@ ws_server = function(port, browser) {
     args = c(
       paste0('--user-data-dir=', workdir <- tempfile()),
       paste0('--remote-debugging-port=', random_port()),
-      '--disable-gpu',
+      '--disable-gpu', '--no-sandbox',
       if (xfun::is_windows()) '--no-sandbox',
       '--headless',
       '--no-first-run',
