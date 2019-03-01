@@ -10,7 +10,7 @@ chromeConnection.onopen = function(event) {
   httpuv = new WebSocket("ws://" + window.location.host);
 
   this.onmessage = function(event) {
-    httpuv.send(event.data)
+    httpuv.send(event.data);
   };
 
   httpuv.onmessage = function(event) {
