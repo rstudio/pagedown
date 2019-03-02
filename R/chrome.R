@@ -26,6 +26,7 @@
 #'    for options for screenshots. Note that for PDF output, we have changed the
 #'   defaults of \code{printBackground} (\code{TRUE}) and
 #'   \code{preferCSSPageSize} (\code{TRUE}) in this function.
+#' @param selector A CSS selector used when capturing a screenshot.
 #' @param work_dir Name of headless Chrome working directory. If the default
 #'   temporary directory doesn't work, you may try to use a subdirectory of your
 #'   home directory.
@@ -40,7 +41,7 @@
 #' @export
 chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
-  format = c('pdf', 'png', 'jpeg'), options = list(),
+  format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
   work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
@@ -107,7 +108,7 @@ chrome_print = function(
   ws = app$ws
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
-  print_page(ws, url, output2, wait, verbose, token, format, options)
+  print_page(ws, url, output2, wait, verbose, token, format, options, selector)
   while (!isTRUE(token$done)) {
     if (!app$ps$is_alive()) stop('Chrome launched via httpuv crashed')
     if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
@@ -183,6 +184,7 @@ is_remote_protocol_ok = function(debug_port, max_attempts = 15) {
   }
 
   required_commands = list(
+    DOM = c('enable', 'getBoxModel', 'getDocument', 'querySelector'),
     Network = c('enable'),
     Page = c('addScriptToEvaluateOnNewDocument',
              'captureScreenshot',
@@ -231,7 +233,7 @@ get_entrypoint = function(debug_port) {
   page
 }
 
-print_page = function(ws, url, output, wait, verbose, token, format, options = list()) {
+print_page = function(ws, url, output, wait, verbose, token, format, options = list(), selector) {
 
   ws$onMessage(function(binary, text) {
     if (!is.null(token$error)) return(ws$close())
@@ -266,8 +268,29 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
           ws$send('{"id":8,"method":"Runtime.evaluate","params":{"expression":"pagedownReady.then(() => {pagedownListener(\'\');})"}}')
       },
       # Command #8 received - No callback
-      NULL, {
-      # Command #9 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
+      NULL,
+      # Command #9 received -> callback: command #10 DOM.getDocument
+      ws$send('{"id":10,"method":"DOM.getDocument"}'),
+      # Command #10 received -> callback: command #11 DOM.querySelector
+      ws$send(sprintf(
+        '{"id":11,"method":"DOM.querySelector","params":{"nodeId":%i,"selector":"%s"}}',
+        msg$result$root$nodeId,
+        selector
+      )),
+      # Command 11 received -> callback: command #12 DOM.getBoxModel
+      ws$send(sprintf('{"id":12,"method":"DOM.getBoxModel","params":{"nodeId":%i}}', msg$result$nodeId)), {
+      # Command 12 received -> callback: command #13 Page.captureScreenshot
+        opts = as.list(options)
+        origin = as.list(msg$result$model$padding[1:2]) # content, padding, border and margin are available in msg$rsult$model
+        names(origin) = c('x', 'y')
+        clip = c(origin, msg$result$model[c('width', 'height')], list(scale = 1))
+        opts = merge_list(list(clip = clip), opts)
+        opts$format = format
+        ws$send(jsonlite::toJSON(list(
+          id = 13, params = opts, method = 'Page.captureScreenshot'
+        ), auto_unbox = TRUE, null = 'null'))
+      }, {
+      # Command #13 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
         token$done = TRUE
       }
@@ -285,13 +308,14 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
         opts = as.list(options)
-        if (format == 'pdf')
+        if (format == 'pdf') {
           opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), opts)
-        if (format == 'jpeg') opts$format = 'jpeg'
-        ws$send(jsonlite::toJSON(list(
-          id = 9, params = if (length(opts)) opts,
-          method = if (format == 'pdf') 'Page.printToPDF' else 'Page.captureScreenshot'
-        ), auto_unbox = TRUE, null = 'null'))
+          ws$send(jsonlite::toJSON(list(
+            id = 13, params = opts, method = 'Page.printToPDF'
+          ), auto_unbox = TRUE, null = 'null'))
+        } else {
+          ws$send('{"id":9,"method":"DOM.enable"}')
+        }
       }
     }
   })
