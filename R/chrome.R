@@ -27,6 +27,7 @@
 #'   defaults of \code{printBackground} (\code{TRUE}) and
 #'   \code{preferCSSPageSize} (\code{TRUE}) in this function.
 #' @param selector A CSS selector used when capturing a screenshot.
+#' @param box_model The CSS box model used when capturing a screenshot.
 #' @param work_dir Name of headless Chrome working directory. If the default
 #'   temporary directory doesn't work, you may try to use a subdirectory of your
 #'   home directory.
@@ -41,7 +42,8 @@
 #' @export
 chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
-  format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
+  format = c('pdf', 'png', 'jpeg'), options = list(),
+  selector = 'body', box_model = c('border', 'content', 'margin', 'padding'),
   work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
@@ -107,8 +109,10 @@ chrome_print = function(
 
   ws = app$ws
 
+  box_model = match.arg(box_model)
+
   t0 = Sys.time(); token = new.env(parent = emptyenv())
-  print_page(ws, url, output2, wait, verbose, token, format, options, selector)
+  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model)
   while (!isTRUE(token$done)) {
     if (!app$ps$is_alive()) stop('Chrome launched via httpuv crashed')
     if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
@@ -233,7 +237,9 @@ get_entrypoint = function(debug_port) {
   page
 }
 
-print_page = function(ws, url, output, wait, verbose, token, format, options = list(), selector) {
+print_page = function(
+  ws, url, output, wait, verbose, token, format, options = list(), selector, box_model
+) {
 
   ws$onMessage(function(binary, text) {
     if (!is.null(token$error)) return(ws$close())
@@ -281,13 +287,19 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
       ws$send(sprintf('{"id":12,"method":"DOM.getBoxModel","params":{"nodeId":%i}}', msg$result$nodeId)), {
       # Command 12 received -> callback: command #13 Page.captureScreenshot
         opts = as.list(options)
-        origin = as.list(msg$result$model$padding[1:2]) # content, padding, border and margin are available in msg$rsult$model
+
+        coords = msg$result$model[[box_model]]
+
+        origin = as.list(coords[1:2])
         names(origin) = c('x', 'y')
-        dims = as.list(msg$result$model$padding[5:6] - msg$result$model$padding[1:2])
+
+        dims = as.list(coords[5:6] - coords[1:2])
         names(dims) = c('width', 'height')
+
         clip = c(origin, dims, list(scale = 1))
         opts = merge_list(list(clip = clip), opts)
         opts$format = format
+
         ws$send(jsonlite::toJSON(list(
           id = 13, params = opts, method = 'Page.captureScreenshot'
         ), auto_unbox = TRUE, null = 'null'))

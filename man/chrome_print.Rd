@@ -5,9 +5,10 @@
 \title{Print a web page to PDF or capture a screenshot using the headless Chrome}
 \usage{
 chrome_print(input, output = xfun::with_ext(input, format), wait = 2, 
-    browser = "google-chrome", format = c("pdf", "png", "jpeg"), 
-    options = list(), selector = "body", work_dir = tempfile(), timeout = 30, 
-    extra_args = c("--disable-gpu"), verbose = FALSE)
+    browser = "google-chrome", format = c("pdf", "png", "jpeg"), options = list(), 
+    selector = "body", box_model = c("border", "content", "margin", "padding"), 
+    work_dir = tempfile(), timeout = 30, extra_args = c("--disable-gpu"), 
+    verbose = FALSE)
 }
 \arguments{
 \item{input}{A URL or local file path to an HTML page, or a path to a local
@@ -40,6 +41,8 @@ defaults of \code{printBackground} (\code{TRUE}) and
 \code{preferCSSPageSize} (\code{TRUE}) in this function.}
 
 \item{selector}{A CSS selector used when capturing a screenshot.}
+
+\item{box_model}{The CSS box model used when capturing a screenshot.}
 
 \item{work_dir}{Name of headless Chrome working directory. If the default
 temporary directory doesn't work, you may try to use a subdirectory of your
