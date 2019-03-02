@@ -287,9 +287,13 @@ print_page = function(
         '{"id":11,"method":"DOM.querySelector","params":{"nodeId":%i,"selector":"%s"}}',
         msg$result$root$nodeId,
         selector
-      )),
+      )), {
       # Command 11 received -> callback: command #12 DOM.getBoxModel
-      ws$send(sprintf('{"id":12,"method":"DOM.getBoxModel","params":{"nodeId":%i}}', msg$result$nodeId)), {
+        if (msg$result$nodeId == 0)
+          token$error <- 'No element in the HTML page corresponds to the `selector` value.'
+        else
+          ws$send(sprintf('{"id":12,"method":"DOM.getBoxModel","params":{"nodeId":%i}}', msg$result$nodeId))
+      }, {
       # Command 12 received -> callback: command #13 Page.captureScreenshot
         opts = as.list(options)
 
