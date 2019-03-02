@@ -283,7 +283,9 @@ print_page = function(ws, url, output, wait, verbose, token, format, options = l
         opts = as.list(options)
         origin = as.list(msg$result$model$padding[1:2]) # content, padding, border and margin are available in msg$rsult$model
         names(origin) = c('x', 'y')
-        clip = c(origin, msg$result$model[c('width', 'height')], list(scale = 1))
+        dims = as.list(msg$result$model$padding[5:6] - msg$result$model$padding[1:2])
+        names(dims) = c('width', 'height')
+        clip = c(origin, dims, list(scale = 1))
         opts = merge_list(list(clip = clip), opts)
         opts$format = format
         ws$send(jsonlite::toJSON(list(
