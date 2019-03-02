@@ -307,6 +307,10 @@ print_page = function(
 
         clip = c(origin, dims, list(scale = scale))
         opts = merge_list(list(clip = clip), opts)
+        message(
+          'Screenshot captured with the following value for the `options` parameter:\n',
+          paste0(deparse(opts), collapse = '\n ')
+        )
         opts$format = format
 
         ws$send(jsonlite::toJSON(list(
