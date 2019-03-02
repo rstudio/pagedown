@@ -110,6 +110,9 @@ chrome_print = function(
 
   ws = app$ws
 
+  if ((format == 'pdf') & !all(c(missing(selector), missing(box_model), missing(scale))))
+    warning('For "pdf" format, arguments `selector`, `box_model` and `scale` are ignored.', call. = FALSE)
+
   box_model = match.arg(box_model)
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
