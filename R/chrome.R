@@ -28,6 +28,7 @@
 #'   \code{preferCSSPageSize} (\code{TRUE}) in this function.
 #' @param selector A CSS selector used when capturing a screenshot.
 #' @param box_model The CSS box model used when capturing a screenshot.
+#' @param scale The scale factor used for screenshot.
 #' @param work_dir Name of headless Chrome working directory. If the default
 #'   temporary directory doesn't work, you may try to use a subdirectory of your
 #'   home directory.
@@ -43,7 +44,7 @@
 chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
   format = c('pdf', 'png', 'jpeg'), options = list(),
-  selector = 'body', box_model = c('border', 'content', 'margin', 'padding'),
+  selector = 'body', box_model = c('border', 'content', 'margin', 'padding'), scale = 1,
   work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
@@ -112,7 +113,7 @@ chrome_print = function(
   box_model = match.arg(box_model)
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
-  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model)
+  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale)
   while (!isTRUE(token$done)) {
     if (!app$ps$is_alive()) stop('Chrome launched via httpuv crashed')
     if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
@@ -238,7 +239,8 @@ get_entrypoint = function(debug_port) {
 }
 
 print_page = function(
-  ws, url, output, wait, verbose, token, format, options = list(), selector, box_model
+  ws, url, output, wait, verbose, token, format,
+  options = list(), selector, box_model, scale
 ) {
 
   ws$onMessage(function(binary, text) {
@@ -296,7 +298,7 @@ print_page = function(
         dims = as.list(coords[5:6] - coords[1:2])
         names(dims) = c('width', 'height')
 
-        clip = c(origin, dims, list(scale = 1))
+        clip = c(origin, dims, list(scale = scale))
         opts = merge_list(list(clip = clip), opts)
         opts$format = format
 
