@@ -289,10 +289,11 @@ print_page = function(
         selector
       )), {
       # Command 11 received -> callback: command #12 DOM.getBoxModel
-        if (msg$result$nodeId == 0)
+        if (msg$result$nodeId == 0) {
           token$error <- 'No element in the HTML page corresponds to the `selector` value.'
-        else
+        } else {
           ws$send(sprintf('{"id":12,"method":"DOM.getBoxModel","params":{"nodeId":%i}}', msg$result$nodeId))
+        }
       }, {
       # Command 12 received -> callback: command #13 Page.captureScreenshot
         opts = as.list(options)
