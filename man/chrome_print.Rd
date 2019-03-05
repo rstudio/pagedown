@@ -8,7 +8,7 @@ chrome_print(input, output = xfun::with_ext(input, format), wait = 2,
     browser = "google-chrome", format = c("pdf", "png", "jpeg"), options = list(), 
     selector = "body", box_model = c("border", "content", "margin", "padding"), 
     scale = 1, work_dir = tempfile(), timeout = 30, extra_args = c("--disable-gpu"), 
-    verbose = FALSE)
+    verbose = 0)
 }
 \arguments{
 \item{input}{A URL or local file path to an HTML page, or a path to a local
@@ -55,8 +55,10 @@ generation. Use a larger value if the document takes longer to build.}
 
 \item{extra_args}{Extra command-line arguments to be passed to Chrome.}
 
-\item{verbose}{Whether to show verbose websocket connection to headless
-Chrome.}
+\item{verbose}{Level of verbosity: \code{0} means no messages; \code{1} means
+to print out some auxiliary messages (e.g., parameters for capturing
+screenshots); \code{2} (or \code{TRUE}) means all messages, including those
+from the Chrome processes and WebSocket connections.}
 }
 \value{
 Path of the output file (invisibly).

@@ -35,8 +35,10 @@
 #' @param timeout The number of seconds before canceling the document
 #'   generation. Use a larger value if the document takes longer to build.
 #' @param extra_args Extra command-line arguments to be passed to Chrome.
-#' @param verbose Whether to show verbose websocket connection to headless
-#'   Chrome.
+#' @param verbose Level of verbosity: \code{0} means no messages; \code{1} means
+#'   to print out some auxiliary messages (e.g., parameters for capturing
+#'   screenshots); \code{2} (or \code{TRUE}) means all messages, including those
+#'   from the Chrome processes and WebSocket connections.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
 #' @return Path of the output file (invisibly).
@@ -45,13 +47,14 @@ chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
   format = c('pdf', 'png', 'jpeg'), options = list(),
   selector = 'body', box_model = c('border', 'content', 'margin', 'padding'), scale = 1,
-  work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = FALSE
+  work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = 0
 ) {
   if (missing(browser)) browser = find_chrome() else {
     if (!file.exists(browser)) browser = Sys.which(browser)
   }
   if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
-  if (verbose) message('Using the browser "', browser, '"')
+  if (isTRUE(verbose)) verbose = 2
+  if (verbose >= 1) message('Using the browser "', browser, '"')
 
   if (file.exists(input)) {
     is_html = function(x) grepl('[.]html?$', x)
@@ -248,7 +251,7 @@ print_page = function(
 
   ws$onMessage(function(binary, text) {
     if (!is.null(token$error)) return(ws$close())
-    if (verbose) message('Message received from headless Chrome: ', text)
+    if (verbose >= 2) message('Message received from headless Chrome: ', text)
     msg = jsonlite::fromJSON(text)
     id = msg$id
     method = msg$method
@@ -308,7 +311,7 @@ print_page = function(
 
         clip = c(origin, dims, list(scale = scale))
         opts = merge_list(list(clip = clip), opts)
-        message(
+        if (verbose >= 1) message(
           'Screenshot captured with the following value for the `options` parameter:\n',
           paste0(deparse(opts), collapse = '\n ')
         )
