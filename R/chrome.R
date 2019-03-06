@@ -20,9 +20,9 @@
 #'   explicitly provided.
 #' @param format The output format.
 #' @param options A list of page options. See
-#'   \url{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-printToPDF}
+#'   \code{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-printToPDF}
 #'    for the full list of options for PDF output, and
-#'   \url{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-captureScreenshot}
+#'   \code{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-captureScreenshot}
 #'    for options for screenshots. Note that for PDF output, we have changed the
 #'   defaults of \code{printBackground} (\code{TRUE}) and
 #'   \code{preferCSSPageSize} (\code{TRUE}) in this function.
