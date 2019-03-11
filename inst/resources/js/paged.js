@@ -367,7 +367,7 @@
 	/* Based on by https://mths.be/cssescape v1.5.1 by @mathias | MIT license
 	 * Allows # and .
 	 */
-	const querySelectorEscape = CSS.escape || function (value) {
+	function querySelectorEscape(value) {
 		if (arguments.length == 0) {
 			throw new TypeError("`CSS.escape` requires an argument.");
 		}
