@@ -29,8 +29,8 @@
     if (!frontMatter) return;
     let anchors = document.querySelectorAll('a[href^="#"]:not([href*=":"])');
     for (let a of anchors) {
-      const ref = a.getAttribute('href');
-      const element = document.querySelector(CSS.escape(ref));
+      const ref = a.getAttribute('href').replace(/^#/, '');
+      const element = document.getElementById(ref);
       if (frontMatter.contains(element)) a.classList.add('front-matter-ref');
     }
   }
