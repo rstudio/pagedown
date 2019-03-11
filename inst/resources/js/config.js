@@ -30,7 +30,7 @@
     let anchors = document.querySelectorAll('a[href^="#"]:not([href*=":"])');
     for (let a of anchors) {
       const ref = a.getAttribute('href');
-      const element = document.querySelector(ref);
+      const element = document.querySelector(CSS.escape(ref));
       if (frontMatter.contains(element)) a.classList.add('front-matter-ref');
     }
   }
