@@ -103,6 +103,12 @@
         appendShortTitles2()
       ]);
       await runMathJax();
+      let iframedWidgets = document.querySelectorAll('[is="iframed-widget"]');
+      for (const widget of iframedWidgets) {
+        if (widget.ready) {
+          await widget.ready;
+        }
+      }
     },
     after: () => {
       // pagedownListener is a binder added by the chrome_print function
@@ -118,3 +124,32 @@
     }
   };
 })();
+
+if (customElements) {
+  customElements.define(
+    'iframed-widget',
+    class extends HTMLIFrameElement {
+      constructor() {
+        super();
+        let pr = new Promise(resolve => {
+          this.addEventListener('load', () => {resolve();});
+        });
+        this.ready = pr.then(() => {this.resize();});
+        //this.ready().then(() => {this.resize();});
+      }
+
+      resize() {
+        let docEl = this.contentWindow.document.documentElement;
+        let contentHeight = docEl.scrollHeight;
+        let contentWidth = docEl.scrollWidth;
+
+        let scaleFactor = this.getBoundingClientRect().width / (contentWidth+2);
+        this.style.transformOrigin = "top left";
+        this.style.transform = "scale(" + scaleFactor + ")";
+        this.width = contentWidth;
+        this.height = contentHeight + 2;
+      }
+    },
+    {extends: 'iframe'}
+  );
+}

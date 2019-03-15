@@ -144,7 +144,7 @@ knit_print.iframedwidget = function(x, options, ...) {
   }
   knitr::knit_print(htmltools::tags$iframe(
     src = src, srcdoc = srcdoc,
-    #width = options$out.width.px, height = options$out.height.px,
+    width = options$out.width.px, height = options$out.height.px,
     is = "iframed-widget"
   ))
 }
