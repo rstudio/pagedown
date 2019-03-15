@@ -112,7 +112,61 @@ html_format = function(
       pagedown_dependency(xfun::with_ext(css2, '.css'), .pagedjs)
     ))
   }
-  html_document2(
+  format = html_document2(
     ..., css = css, template = template, pandoc_args = c(.pandoc_args, pandoc_args)
   )
+  if (isTRUE(.pagedjs)) format$knitr$opts_chunk[['render']] = paged_render
+  widget_file(reset = TRUE)
+  format
 }
+
+paged_render = function(x, options, ...) {
+  if (inherits(x, 'htmlwidget')) {
+    class(x) = c('iframedwidget', class(x))
+  }
+  knitr::knit_print(x, options)
+}
+
+knit_print.iframedwidget = function(x, options, ...) {
+  class(x) = tail(class(x), -1)
+  d = options$fig.path
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  selfcontained = knitr::opts_knit$get('self.contained')
+  selfcontained = FALSE
+  f = save_widget(d, x, selfcontained, options)
+  src = NULL
+  srcdoc = NULL
+  if (isTRUE(selfcontained)) {
+    srcdoc = paste0(collapse = '\n', readLines(f))
+    file.remove(f)
+  } else {
+    src = f
+  }
+  knitr::knit_print(htmltools::tags$iframe(
+    src = src, srcdoc = srcdoc,
+    #width = options$out.width.px, height = options$out.height.px,
+    is = "iframed-widget"
+  ))
+}
+
+save_widget = function(directory, widget, selfcontained, options) {
+  old_wd = setwd(directory)
+  on.exit({
+    setwd(old_wd)
+  })
+  f = widget_file()
+  htmlwidgets::saveWidget(
+    widget = widget, file = f, selfcontained =  selfcontained,
+    knitrOptions = options
+  )
+  return(paste0(directory, f))
+}
+
+widget_file = (function() {
+  n = 0L
+  function(reset = FALSE) {
+    if (reset) n <<- -1L
+    n <<- n + 1L
+    sprintf('widget%i.html', n)
+  }
+})()
