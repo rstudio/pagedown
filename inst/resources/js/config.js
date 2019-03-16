@@ -103,12 +103,9 @@
         appendShortTitles2()
       ]);
       await runMathJax();
-      let iframedWidgets = document.querySelectorAll('[is="iframed-widget"]');
-      for (const widget of iframedWidgets) {
-        if (widget.ready) {
-          await widget.ready;
-        }
-      }
+      let iframedWidgets = document.getElementsByTagName('iframe-htmlwidget');
+      let widgetsReady = Promise.all([...iframedWidgets].map(el => {return el['ready'];}));
+      await widgetsReady;
     },
     after: () => {
       // pagedownListener is a binder added by the chrome_print function
@@ -126,30 +123,53 @@
 })();
 
 if (customElements) {
-  customElements.define(
-    'iframed-widget',
-    class extends HTMLIFrameElement {
+  customElements.define('iframe-htmlwidget',
+    class extends HTMLElement {
       constructor() {
         super();
-        let pr = new Promise(resolve => {
-          this.addEventListener('load', () => {resolve();});
+        let h = this.getAttribute('height');
+        let w = this.getAttribute('width');
+        let shadowRoot = this.attachShadow({mode: 'open'});
+        shadowRoot.innerHTML = `
+        <style>
+        div {
+          max-height: ` + h + `;
+          max-width: ` + w + `;
+          overflow: hidden;
+        }
+        </style>
+        <div><iframe></iframe></div>
+        `;
+        let iframe = shadowRoot.querySelector('iframe');
+        iframe.frameBorder = 0;
+        iframe.width = w;
+        iframe.height = h;
+        let loaded = new Promise(resolve => {
+          iframe.addEventListener('load', () => {resolve();})
         });
-        this.ready = pr.then(() => {this.resize();});
-        //this.ready().then(() => {this.resize();});
-      }
+        if (this.hasAttribute('src')) {
+          iframe.src = this.getAttribute('src');
+        }
+        if (this.hasAttribute('srcdoc')) {
+          iframe.srcdoc = this.getAttribute('srcdoc');
+        }
+        this.ready = loaded.then(() => {
+          let docEl = iframe.contentWindow.document.documentElement;
+          let contentHeight = docEl.scrollHeight;
+          let contentWidth = docEl.scrollWidth;
 
-      resize() {
-        let docEl = this.contentWindow.document.documentElement;
-        let contentHeight = docEl.scrollHeight;
-        let contentWidth = docEl.scrollWidth;
-
-        let scaleFactor = this.getBoundingClientRect().width / (contentWidth+2);
-        this.style.transformOrigin = "top left";
-        this.style.transform = "scale(" + scaleFactor + ")";
-        this.width = contentWidth;
-        this.height = contentHeight + 2;
+          let widthScaleFactor = this.getBoundingClientRect().width / contentWidth;
+          let heightScaleFactor = this.getBoundingClientRect().height / contentHeight;
+          let scaleFactor = Math.min(widthScaleFactor, heightScaleFactor);
+          iframe.style.transformOrigin = "top left";
+          iframe.style.transform = "scale(" + scaleFactor + ")";
+          iframe.width = contentWidth;
+          iframe.height = contentHeight;
+          let container = iframe.parentElement;
+          container.style.width = iframe.getBoundingClientRect().width + 'px';
+          container.style.height = iframe.getBoundingClientRect().height + 'px';
+        });
       }
-    },
-    {extends: 'iframe'}
+    }
   );
 }

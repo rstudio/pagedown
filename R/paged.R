@@ -142,10 +142,9 @@ knit_print.iframedwidget = function(x, options, ...) {
   } else {
     src = f
   }
-  knitr::knit_print(htmltools::tags$iframe(
+  knitr::knit_print(iframe_widget(
     src = src, srcdoc = srcdoc,
-    width = options$out.width.px, height = options$out.height.px,
-    is = "iframed-widget"
+    width = options$out.width.px, height = options$out.height.px
   ))
 }
 
@@ -170,3 +169,7 @@ widget_file = (function() {
     sprintf('widget%i.html', n)
   }
 })()
+
+iframe_widget = function(...) {
+  htmltools::tag('iframe-htmlwidget', list(...))
+}
