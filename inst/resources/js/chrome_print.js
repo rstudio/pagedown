@@ -40,5 +40,12 @@
     );
   });
 
-  window.pagedownReady = Promise.all([MathJaxReady, HTMLWidgetsReady, document.fonts.ready]);
+  let responsiveIFramesReady = new Promise(resolve => {
+    window.addEventListener('load', () => {
+      let responsiveIFrames = document.getElementsByTagName('responsive-iframe');
+      Promise.all([...responsiveIFrames].map(el => {return el['ready'];})).then(resolve());
+    });
+  });
+
+  window.pagedownReady = Promise.all([MathJaxReady, HTMLWidgetsReady, document.fonts.ready, responsiveIFramesReady]);
 })();
