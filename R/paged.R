@@ -175,7 +175,7 @@ widget_file = (function() {
 responsive_iframe = function(...) {
   htmltools::div(
     htmltools::tag('responsive-iframe', list(...)),
-  style = "overflow:hidden;")
+  style = "overflow:hidden;break-inside:avoid;")
 }
 
 contains_numeric = function(x) {

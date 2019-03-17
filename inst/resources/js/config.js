@@ -161,8 +161,10 @@ if (customElements) {
 
           container.style.width = iframe.getBoundingClientRect().width + 'px';
           this.parentElement.style.width = iframe.getBoundingClientRect().width + 'px';
+          this.setAttribute('width', container.style.width);
           container.style.height = iframe.getBoundingClientRect().height + 'px';
           this.parentElement.style.height = iframe.getBoundingClientRect().height + 'px';
+          this.setAttribute('height', container.style.height);
           this.finished();
         });
 
@@ -170,7 +172,6 @@ if (customElements) {
           iframe.srcdoc = this.getAttribute('srcdoc');
         }
         if (this.hasAttribute('src')) {
-          console.log('attribut src trouvé');
           iframe.src = this.getAttribute('src');
         }
       }
