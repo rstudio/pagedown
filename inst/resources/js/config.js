@@ -145,14 +145,19 @@ if (customElements) {
         // This footprint will take room before Paged.js begins parsing the document
         // Since the constructor is called a second time after Paged.js builds the document,
         // we also must test if the footprint div already exists
-        if (!this.parentElement.classList.contains('responsive-iframe-footprint')) {
-          let footprint = document.createElement('div');
+        let footprint;
+        if (this.parentElement.classList.contains('responsive-iframe-footprint')) {
+          footprint = this.parentElement;
+        } else {
+          footprint = document.createElement('div');
           footprint.style.overflow = 'hidden';
           footprint.style.breakInside = 'avoid';
           footprint.className = 'responsive-iframe-footprint';
           this.insertAdjacentElement('beforebegin', footprint);
           footprint.appendChild(this);
         }
+        footprint.style.width = this.getAttribute('width');
+        footprint.style.height = this.getAttribute('height');
 
         let iframe = this.shadowRoot.querySelector('iframe');
         let container = this.shadowRoot.querySelector('div');
@@ -172,8 +177,8 @@ if (customElements) {
           let contentHeight = docEl.scrollHeight;
           let contentWidth = docEl.scrollWidth;
 
-          let widthScaleFactor = container.getBoundingClientRect().width / contentWidth;
-          let heightScaleFactor = container.getBoundingClientRect().height / contentHeight;
+          let widthScaleFactor = footprint.getBoundingClientRect().width / contentWidth;
+          let heightScaleFactor = footprint.getBoundingClientRect().height / contentHeight;
           let scaleFactor = Math.min(widthScaleFactor, heightScaleFactor);
           iframe.style.transformOrigin = "top left";
           iframe.style.transform = "scale(" + scaleFactor + ")";
@@ -181,10 +186,10 @@ if (customElements) {
           iframe.height = contentHeight;
 
           container.style.width = iframe.getBoundingClientRect().width + 'px';
-          this.parentElement.style.width = iframe.getBoundingClientRect().width + 'px';
+          footprint.style.width = iframe.getBoundingClientRect().width + 'px';
           this.setAttribute('width', container.style.width);
           container.style.height = iframe.getBoundingClientRect().height + 'px';
-          this.parentElement.style.height = iframe.getBoundingClientRect().height + 'px';
+          footprint.style.height = iframe.getBoundingClientRect().height + 'px';
           this.setAttribute('height', container.style.height);
           this.finished();
         });
