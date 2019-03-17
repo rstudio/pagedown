@@ -133,7 +133,7 @@ knit_print.iframehtmlwidget = function(x, options, ...) {
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   selfcontained = knitr::opts_knit$get('self.contained')
   selfcontained = FALSE
-  f = save_widget(d, x, selfcontained, options)
+  f = save_widget(d, x, options)
   src = NULL
   srcdoc = NULL
   if (isTRUE(selfcontained)) {
@@ -150,14 +150,17 @@ knit_print.iframehtmlwidget = function(x, options, ...) {
   ))
 }
 
-save_widget = function(directory, widget, selfcontained, options) {
+save_widget = function(directory, widget, options) {
   old_wd = setwd(directory)
   on.exit({
     setwd(old_wd)
   })
   f = widget_file()
   htmlwidgets::saveWidget(
-    widget = widget, file = f, selfcontained =  selfcontained,
+    widget = widget, file = f,
+    # since chrome_print() does not handle network requests, use a self contained html file
+    # In order to use selcontained = FALSE, we should implement a networkidle option first in chrome_print()
+    selfcontained = TRUE,
     knitrOptions = options
   )
   return(paste0(directory, f))
