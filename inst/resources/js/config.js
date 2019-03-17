@@ -103,8 +103,8 @@
         appendShortTitles2()
       ]);
       await runMathJax();
-      let iframedWidgets = document.getElementsByTagName('iframe-htmlwidget');
-      let widgetsReady = Promise.all([...iframedWidgets].map(el => {return el['ready'];}));
+      let iframeHTMLWidgets = document.getElementsByTagName('responsive-iframe');
+      let widgetsReady = Promise.all([...iframeHTMLWidgets].map(el => {return el['ready'];}));
       await widgetsReady;
     },
     after: () => {
@@ -122,53 +122,57 @@
   };
 })();
 
+// Define a custom <responsive-iframe> element
 if (customElements) {
-  customElements.define('iframe-htmlwidget',
+  customElements.define('responsive-iframe',
     class extends HTMLElement {
       constructor() {
-        super();
-        let h = this.getAttribute('height');
-        let w = this.getAttribute('width');
-        let shadowRoot = this.attachShadow({mode: 'open'});
+        super(); // compulsory
+        let shadowRoot = this.attachShadow({mode: 'open'}); // we must use shadow DOM in the constructor
+        // Populate the shadow DOM:
         shadowRoot.innerHTML = `
         <style>
-        div {
-          max-height: ` + h + `;
-          max-width: ` + w + `;
-          overflow: hidden;
-        }
+        div {overflow: hidden;}
         </style>
-        <div><iframe></iframe></div>
+        <div>
+          <iframe frameborder="0"></iframe>
+        </div>
         `;
-        let iframe = shadowRoot.querySelector('iframe');
-        iframe.frameBorder = 0;
-        iframe.width = w;
-        iframe.height = h;
-        let loaded = new Promise(resolve => {
-          iframe.addEventListener('load', () => {resolve();})
-        });
-        if (this.hasAttribute('src')) {
-          iframe.src = this.getAttribute('src');
-        }
-        if (this.hasAttribute('srcdoc')) {
-          iframe.srcdoc = this.getAttribute('srcdoc');
-        }
-        this.ready = loaded.then(() => {
+        this.ready = new Promise(resolve => {this.finished = resolve;})
+      }
+      connectedCallback() {
+        let iframe = this.shadowRoot.querySelector('iframe');
+        let container = this.shadowRoot.querySelector('div');
+        container.style.width = this.getAttribute('width');
+        container.style.height = this.getAttribute('height');
+
+        iframe.addEventListener('load', () => {
           let docEl = iframe.contentWindow.document.documentElement;
           let contentHeight = docEl.scrollHeight;
           let contentWidth = docEl.scrollWidth;
 
-          let widthScaleFactor = this.getBoundingClientRect().width / contentWidth;
-          let heightScaleFactor = this.getBoundingClientRect().height / contentHeight;
+          let widthScaleFactor = container.getBoundingClientRect().width / contentWidth;
+          let heightScaleFactor = container.getBoundingClientRect().height / contentHeight;
           let scaleFactor = Math.min(widthScaleFactor, heightScaleFactor);
           iframe.style.transformOrigin = "top left";
           iframe.style.transform = "scale(" + scaleFactor + ")";
           iframe.width = contentWidth;
           iframe.height = contentHeight;
-          let container = iframe.parentElement;
+
           container.style.width = iframe.getBoundingClientRect().width + 'px';
+          this.parentElement.style.width = iframe.getBoundingClientRect().width + 'px';
           container.style.height = iframe.getBoundingClientRect().height + 'px';
+          this.parentElement.style.height = iframe.getBoundingClientRect().height + 'px';
+          this.finished();
         });
+
+        if (this.hasAttribute('srcdoc')) {
+          iframe.srcdoc = this.getAttribute('srcdoc');
+        }
+        if (this.hasAttribute('src')) {
+          console.log('attribut src trouvé');
+          iframe.src = this.getAttribute('src');
+        }
       }
     }
   );

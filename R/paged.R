@@ -122,12 +122,12 @@ html_format = function(
 
 paged_render = function(x, options, ...) {
   if (inherits(x, 'htmlwidget')) {
-    class(x) = c('iframedwidget', class(x))
+    class(x) = c('iframehtmlwidget', class(x))
   }
-  knitr::knit_print(x, options)
+  knitr::knit_print(x, options, ...)
 }
 
-knit_print.iframedwidget = function(x, options, ...) {
+knit_print.iframehtmlwidget = function(x, options, ...) {
   class(x) = tail(class(x), -1)
   d = options$fig.path
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
@@ -142,9 +142,11 @@ knit_print.iframedwidget = function(x, options, ...) {
   } else {
     src = f
   }
-  knitr::knit_print(iframe_widget(
+  dims = c(options$out.width.px, options$out.height.px)
+  dims = ifelse(contains_numeric(dims), paste0(dims, 'px'), dims)
+  knitr::knit_print(responsive_iframe(
     src = src, srcdoc = srcdoc,
-    width = options$out.width.px, height = options$out.height.px
+    width = dims[1], height = dims[2]
   ))
 }
 
@@ -170,6 +172,12 @@ widget_file = (function() {
   }
 })()
 
-iframe_widget = function(...) {
-  htmltools::tag('iframe-htmlwidget', list(...))
+responsive_iframe = function(...) {
+  htmltools::div(
+    htmltools::tag('responsive-iframe', list(...)),
+  style = "overflow:hidden;")
+}
+
+contains_numeric = function(x) {
+  !is.na(suppressWarnings(as.numeric(x)))
 }
