@@ -135,18 +135,39 @@ if (customElements) {
         div {overflow: hidden;}
         </style>
         <div>
-          <iframe frameborder="0"></iframe>
+          <iframe frameborder="0" seamless></iframe>
         </div>
         `;
         this.ready = new Promise(resolve => {this.finished = resolve;})
       }
       connectedCallback() {
+        // First, we embed the <responsive-iframe> element in a div footprint
+        // This footprint will take room before Paged.js begins parsing the document
+        // Since the constructor is called a second time after Paged.js builds the document,
+        // we also must test if the footprint div already exists
+        if (!this.parentElement.classList.contains('responsive-iframe-footprint')) {
+          let footprint = document.createElement('div');
+          footprint.style.overflow = 'hidden';
+          footprint.style.breakInside = 'avoid';
+          footprint.className = 'responsive-iframe-footprint';
+          this.insertAdjacentElement('beforebegin', footprint);
+          footprint.appendChild(this);
+        }
+
         let iframe = this.shadowRoot.querySelector('iframe');
         let container = this.shadowRoot.querySelector('div');
         container.style.width = this.getAttribute('width');
         container.style.height = this.getAttribute('height');
 
         iframe.addEventListener('load', () => {
+          // The load event fires twice:
+          // 1st time when the iframe is attached (therefore the iframe document does not exist)
+          // 2nd time when the document is loaded
+          if (!iframe.contentWindow) {
+            // This is the 1st time that the load event fires, the document does not exist
+            // Quit early:
+            return;
+          }
           let docEl = iframe.contentWindow.document.documentElement;
           let contentHeight = docEl.scrollHeight;
           let contentWidth = docEl.scrollWidth;

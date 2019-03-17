@@ -159,7 +159,7 @@ save_widget = function(directory, widget, options) {
   htmlwidgets::saveWidget(
     widget = widget, file = f,
     # since chrome_print() does not handle network requests, use a self contained html file
-    # In order to use selcontained = FALSE, we should implement a networkidle option first in chrome_print()
+    # In order to use selcontained = FALSE, we should implement first a networkidle option in chrome_print()
     selfcontained = TRUE,
     knitrOptions = options
   )
@@ -176,9 +176,7 @@ widget_file = (function() {
 })()
 
 responsive_iframe = function(...) {
-  htmltools::div(
-    htmltools::tag('responsive-iframe', list(...)),
-  style = "overflow:hidden;break-inside:avoid;")
+  htmltools::tag('responsive-iframe', list(...))
 }
 
 contains_numeric = function(x) {
