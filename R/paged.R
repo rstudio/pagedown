@@ -100,7 +100,7 @@ pagedown_dependency = function(css = NULL, js = FALSE) {
 }
 
 html_format = function(
-  ..., css, template, pandoc_args = NULL, .dependencies = NULL,
+  ..., css, template, self_contained = TRUE, pandoc_args = NULL, .dependencies = NULL,
   .pagedjs = FALSE, .pandoc_args = NULL
 ) {
   css2 = grep('[.]css$', css, value = TRUE, invert = TRUE)
@@ -113,40 +113,44 @@ html_format = function(
     ))
   }
   format = html_document2(
-    ..., css = css, template = template, pandoc_args = c(.pandoc_args, pandoc_args)
+    ..., css = css, template = template,
+    self_contained = self_contained, pandoc_args = c(.pandoc_args, pandoc_args)
   )
-  if (isTRUE(.pagedjs)) format$knitr$opts_chunk[['render']] = paged_render
+  if (isTRUE(.pagedjs)) format$knitr$opts_chunk[['render']] = paged_render(self_contained)
   widget_file(reset = TRUE)
   format
 }
 
-paged_render = function(x, options, ...) {
-  if (inherits(x, 'htmlwidget')) {
-    class(x) = c('iframehtmlwidget', class(x))
+paged_render = function(self_contained) {
+  function(x, options, ...) {
+    if (inherits(x, 'htmlwidget')) {
+      class(x) = c('iframehtmlwidget', class(x))
+    }
+    knitr::knit_print(x, options, ..., self_contained = self_contained)
   }
-  knitr::knit_print(x, options, ...)
 }
 
-knit_print.iframehtmlwidget = function(x, options, ...) {
+knit_print.iframehtmlwidget = function(x, options, ..., self_contained) {
   class(x) = tail(class(x), -1)
   d = options$fig.path
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  selfcontained = knitr::opts_knit$get('self.contained')
-  selfcontained = FALSE
+  if (!dir.exists(d)) {
+    dir.create(d, recursive = TRUE)
+    if (self_contained) on.exit({
+      unlink(d, recursive = TRUE) # doesn't work, don't understand why
+    }, add = TRUE)
+  }
   f = save_widget(d, x, options)
   src = NULL
   srcdoc = NULL
-  if (isTRUE(selfcontained)) {
+  if (self_contained) {
     srcdoc = paste0(collapse = '\n', readLines(f))
     file.remove(f)
   } else {
     src = f
   }
-  dims = c(options$out.width.px, options$out.height.px)
-  dims = ifelse(contains_numeric(dims), paste0(dims, 'px'), dims)
   knitr::knit_print(responsive_iframe(
-    src = src, srcdoc = srcdoc,
-    width = dims[1], height = dims[2]
+    src = src, srcdoc = srcdoc, width = options$out.width.px,
+    height = options$out.height.px, extra.attr = options$out.extra
   ))
 }
 
@@ -154,7 +158,7 @@ save_widget = function(directory, widget, options) {
   old_wd = setwd(directory)
   on.exit({
     setwd(old_wd)
-  })
+  }, add = TRUE)
   f = widget_file()
   htmlwidgets::saveWidget(
     widget = widget, file = f,
@@ -175,10 +179,15 @@ widget_file = (function() {
   }
 })()
 
-responsive_iframe = function(...) {
-  htmltools::tag('responsive-iframe', list(...))
-}
-
-contains_numeric = function(x) {
-  !is.na(suppressWarnings(as.numeric(x)))
+responsive_iframe = function(width = NULL, height = NULL, ..., extra.attr = '') {
+  width = htmltools::validateCssUnit(width)
+  height = htmltools::validateCssUnit(height)
+  tag = htmltools::tag('responsive-iframe', c(list(width = width, height = height), list(...)))
+  if (length(extra.attr) == 0) extra.attr = ''
+  extra.attr = strsplit(extra.attr, ' ')[[1]]
+  extra.attr = strsplit(extra.attr, '=')
+  names(extra.attr) = lapply(extra.attr, `[`, 1)
+  extra.attr = lapply(extra.attr, `[`, 2)
+  extra.attr = lapply(extra.attr, function(x) eval(parse(text = x)))
+  do.call(htmltools::tagAppendAttributes, c(list(tag = tag), extra.attr))
 }
