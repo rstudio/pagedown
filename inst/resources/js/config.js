@@ -186,18 +186,16 @@ if (customElements) {
           iframe.height = contentHeight;
 
           container.style.width = iframe.getBoundingClientRect().width + 'px';
-          footprint.style.width = iframe.getBoundingClientRect().width + 'px';
-          this.setAttribute('width', container.style.width);
           container.style.height = iframe.getBoundingClientRect().height + 'px';
           footprint.style.height = iframe.getBoundingClientRect().height + 'px';
-          this.setAttribute('height', container.style.height);
+          this.setAttribute('height', footprint.style.height);
           this.finished();
         });
 
-        if (this.hasAttribute('srcdoc')) {
+        if (this.hasAttribute('srcdoc') && (iframe.srcdoc.length === 0)) {
           iframe.srcdoc = this.getAttribute('srcdoc');
         }
-        if (this.hasAttribute('src')) {
+        if (this.hasAttribute('src') && (iframe.src.length === 0)) {
           iframe.src = this.getAttribute('src');
         }
       }
