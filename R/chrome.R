@@ -341,9 +341,7 @@ print_page = function(
         opts = as.list(options)
         if (format == 'pdf') {
           opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), opts)
-          ws$send(jsonlite::toJSON(list(
-            id = 13, params = opts, method = 'Page.printToPDF'
-          ), auto_unbox = TRUE, null = 'null'))
+          ws$send(to_json(list(id = 13, params = opts, method = 'Page.printToPDF')))
         } else {
           ws$send('{"id":9,"method":"DOM.enable"}')
         }
