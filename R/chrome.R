@@ -70,7 +70,7 @@ chrome_print = function(
     )
     on.exit(svr$stop_server(), add = TRUE)
     url = svr$url
-  } else url = input  # the input is not a local file; assume it is just a URL
+  } else url = utils::URLencode(input)  # the input is not a local file; assume it is just a URL
 
   format = match.arg(format)
   # remove hash/query parameters in url
