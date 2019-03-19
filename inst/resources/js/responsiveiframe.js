@@ -1,5 +1,5 @@
 // A responsive iframe
-// Works only with a same-origin html file
+// Works only with a same-origin url
 if (customElements) {
   customElements.define('responsive-iframe',
     class extends HTMLElement {
@@ -64,24 +64,38 @@ if (customElements) {
             // Quit early:
             return;
           }
-          let docEl = iframe.contentWindow.document.documentElement; // this works only with same-origin content
-          let contentHeight = docEl.scrollHeight;
-          let contentWidth = docEl.scrollWidth;
 
-          let widthScaleFactor = parseFloat(footprint.style.width) / contentWidth;
-          let heightScaleFactor = parseFloat(footprint.style.height) / contentHeight;
-          let scaleFactor = Math.min(widthScaleFactor, heightScaleFactor);
-          scaleFactor = Math.floor(scaleFactor * 1e6) / 1e6;
-          iframe.style.transformOrigin = "top left";
-          iframe.style.transform = "scale(" + scaleFactor + ")";
-          iframe.width = contentWidth;
-          iframe.height = contentHeight;
+          let contentHeight, contentWidth;
+          try {
+            // this works only with a same-origin url
+            // with a cross-origin url, we get an error
+            let docEl = iframe.contentWindow.document.documentElement;
+            contentWidth = docEl.scrollWidth;
+            contentHeight = docEl.scrollHeight;
+          }
+          catch(e) {
+            // cross-origin url:
+            // we cannot find the size of the html page
+            // use a default resolution
+            contentWidth = 1024;
+            contentHeight = 768;
+          }
+          finally {
+            let widthScaleFactor = parseFloat(footprint.style.width) / contentWidth;
+            let heightScaleFactor = parseFloat(footprint.style.height) / contentHeight;
+            let scaleFactor = Math.min(widthScaleFactor, heightScaleFactor);
+            scaleFactor = Math.floor(scaleFactor * 1e6) / 1e6;
+            iframe.style.transformOrigin = "top left";
+            iframe.style.transform = "scale(" + scaleFactor + ")";
+            iframe.width = contentWidth;
+            iframe.height = contentHeight;
 
-          container.style.width = iframe.getBoundingClientRect().width + 'px';
-          container.style.height = iframe.getBoundingClientRect().height + 'px';
-          footprint.style.width = iframe.getBoundingClientRect().width + 'px';
-          footprint.style.height = iframe.getBoundingClientRect().height + 'px';
-          this.finished();
+            container.style.width = iframe.getBoundingClientRect().width + 'px';
+            container.style.height = iframe.getBoundingClientRect().height + 'px';
+            footprint.style.width = iframe.getBoundingClientRect().width + 'px';
+            footprint.style.height = iframe.getBoundingClientRect().height + 'px';
+            this.finished();
+          }
         });
 
         if (this.hasAttribute('srcdoc') && (iframe.srcdoc.length === 0)) {
