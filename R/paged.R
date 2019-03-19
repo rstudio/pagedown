@@ -182,7 +182,10 @@ widget_file = (function() {
 responsive_iframe = function(width = NULL, height = NULL, ..., extra.attr = '') {
   if (length(extra.attr) == 0) extra.attr = ''
   extra.attr = as_html_attrs(extra.attr)
-  tag = htmltools::tag('responsive-iframe', c(extra.attr, list(...)))
+  tag = htmltools::tag(
+    'autoscaling-iframe',
+    c(extra.attr, list(...), list(htmltools::p("This browser does not support this content.")))
+  )
   width = css_declaration('width', htmltools::validateCssUnit(width))
   height = css_declaration('height', htmltools::validateCssUnit(height))
   tag = do.call(
