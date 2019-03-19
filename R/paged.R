@@ -163,7 +163,7 @@ save_widget = function(directory, widget, options) {
   htmlwidgets::saveWidget(
     widget = widget, file = f,
     # since chrome_print() does not handle network requests, use a self contained html file
-    # In order to use selcontained = FALSE, we should implement first a networkidle option in chrome_print()
+    # In order to use selcontained = FALSE, we should implement a networkidle option in chrome_print()
     selfcontained = TRUE,
     knitrOptions = options
   )
@@ -180,14 +180,31 @@ widget_file = (function() {
 })()
 
 responsive_iframe = function(width = NULL, height = NULL, ..., extra.attr = '') {
-  width = htmltools::validateCssUnit(width)
-  height = htmltools::validateCssUnit(height)
-  tag = htmltools::tag('responsive-iframe', c(list(width = width, height = height), list(...)))
   if (length(extra.attr) == 0) extra.attr = ''
-  extra.attr = strsplit(extra.attr, ' ')[[1]]
-  extra.attr = strsplit(extra.attr, '=')
-  names(extra.attr) = lapply(extra.attr, `[`, 1)
-  extra.attr = lapply(extra.attr, `[`, 2)
-  extra.attr = lapply(extra.attr, function(x) eval(parse(text = x)))
-  do.call(htmltools::tagAppendAttributes, c(list(tag = tag), extra.attr))
+  extra.attr = as_html_attrs(extra.attr)
+  tag = htmltools::tag('responsive-iframe', c(extra.attr, list(...)))
+  width = css_declaration('width', htmltools::validateCssUnit(width))
+  height = css_declaration('height', htmltools::validateCssUnit(height))
+  tag = do.call(
+    htmltools::tagAppendAttributes,
+    c(list(tag = tag), list(style = width, style = height))
+  )
+  htmltools::attachDependencies(
+    tag,
+    htmltools::htmlDependency(
+      'responsiveiframe', packageVersion('pagedown'), src = pkg_resource(),
+      script = 'js/responsiveiframe.js', all_files = FALSE
+    )
+  )
+}
+
+as_html_attrs = function(string) {
+  doc = xml2::read_html(sprintf('<p %s>', string))
+  node = xml2::xml_find_first(doc, './/p')
+  xml2::xml_attrs(node)
+}
+
+css_declaration = function(property, value) {
+  if (is.null(value)) return('')
+  paste0(property, ':', value, ';')
 }
