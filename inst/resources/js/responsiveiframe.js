@@ -9,10 +9,11 @@ if (customElements) {
         // Populate the shadow DOM:
         shadowRoot.innerHTML = `
         <style>
+        div, iframe {position: absolute;}
         div {overflow: hidden;}
         </style>
         <div>
-          <iframe frameborder="0" seamless></iframe>
+          <iframe frameborder="0"></iframe>
         </div>
         `;
         this.ready = new Promise(resolve => {this.finished = resolve;});
@@ -37,11 +38,13 @@ if (customElements) {
           footprint = document.createElement('div');
           footprint.style = this.style.cssText;
           this.removeAttribute('style');
-          footprint.style.boxSizing="content-box";
+          footprint.style.boxSizing='content-box';
           footprint.style.breakInside = 'avoid';
+          footprint.style.position = 'relative';
           footprint.className = 'responsive-iframe-footprint';
           this.insertAdjacentElement('beforebegin', footprint);
           footprint.appendChild(this);
+          this.setAttribute('style', 'position: absolute;');
         } else {
           // The footprint div already exists.
           footprint = this.parentElement;
