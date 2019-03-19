@@ -22,14 +22,22 @@ if (customElements) {
         <iframe frameborder="0">
         </iframe>
         `;
-        this.ready = new Promise(resolve => {this.finished = resolve;});
+        this.ready = new Promise($ => this.addEventListener('resized', $));
       }
       connectedCallback() {
         // Be aware that the connectedCallback() function can be called multiple times,
         // see https://developer.mozilla.org/docs/Web/Web_Components/Using_custom_elements#Using_the_lifecycle_callbacks
-        var currentObject = this;
         let iframe = this.shadowRoot.querySelector('iframe');
-        iframe.addEventListener('load', () => {
+        iframe.addEventListener('load', resize, true);
+        if (this.hasAttribute('srcdoc') && (iframe.srcdoc.length === 0)) {
+          iframe.srcdoc = this.getAttribute('srcdoc');
+        }
+        if (this.hasAttribute('src') && (iframe.src.length === 0)) {
+          iframe.src = this.getAttribute('src');
+        }
+        var currentObject = this;
+        function resize(event) {
+          let iframe = event.currentTarget;
           // The load event fires twice:
           // 1st time when the iframe is attached (therefore the iframe document does not exist)
           // 2nd time when the document is loaded
@@ -66,15 +74,9 @@ if (customElements) {
             currentObject.style.width = iframe.getBoundingClientRect().width + 'px';
             currentObject.style.height = iframe.getBoundingClientRect().height + 'px';
             currentObject.style.boxSizing = "content-box";
-            currentObject.finished();
           }
-        });
-
-        if (this.hasAttribute('srcdoc') && (iframe.srcdoc.length === 0)) {
-          iframe.srcdoc = this.getAttribute('srcdoc');
-        }
-        if (this.hasAttribute('src') && (iframe.src.length === 0)) {
-          iframe.src = this.getAttribute('src');
+          iframe.removeEventListener('load', resize, true);
+          currentObject.dispatchEvent(new Event('resized'));
         }
       }
     }
