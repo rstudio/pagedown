@@ -148,7 +148,7 @@ knit_print.iframehtmlwidget = function(x, options, ..., self_contained) {
   } else {
     src = f
   }
-  knitr::knit_print(responsive_iframe(
+  knitr::knit_print(autoscaling_iframe(
     src = src, srcdoc = srcdoc, width = options$out.width.px,
     height = options$out.height.px, extra.attr = options$out.extra
   ))
@@ -179,7 +179,7 @@ widget_file = (function() {
   }
 })()
 
-responsive_iframe = function(width = NULL, height = NULL, ..., extra.attr = '') {
+autoscaling_iframe = function(width = NULL, height = NULL, ..., extra.attr = '') {
   if (length(extra.attr) == 0) extra.attr = ''
   extra.attr = as_html_attrs(extra.attr)
   tag = htmltools::tag(
@@ -195,8 +195,8 @@ responsive_iframe = function(width = NULL, height = NULL, ..., extra.attr = '') 
   htmltools::attachDependencies(
     tag,
     htmltools::htmlDependency(
-      'responsiveiframe', packageVersion('pagedown'), src = pkg_resource(),
-      script = 'js/responsiveiframe.js', all_files = FALSE
+      'autoscalingiframe', packageVersion('pagedown'), src = pkg_resource(),
+      script = 'js/autoscaling_iframe.js', all_files = FALSE
     )
   )
 }
