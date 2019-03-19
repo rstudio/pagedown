@@ -9,10 +9,9 @@ if (customElements) {
         shadowRoot.innerHTML = `
         <style>
         :host {
-          /*box-sizing: content-box;*/
           break-inside: avoid;
           display: block;
-          position:relative;
+          position: relative;
           overflow: hidden;
         }
         iframe {
@@ -55,8 +54,8 @@ if (customElements) {
             contentHeight = 768;
           }
           finally {
-            let widthScaleFactor = parseFloat(this.style.width) / contentWidth;
-            let heightScaleFactor = parseFloat(this.style.height) / contentHeight;
+            let widthScaleFactor = this.clientWidth / contentWidth;
+            let heightScaleFactor = this.clientHeight / contentHeight;
             let scaleFactor = Math.min(widthScaleFactor, heightScaleFactor);
             scaleFactor = Math.floor(scaleFactor * 1e6) / 1e6;
             iframe.style.transform = "scale(" + scaleFactor + ")";
@@ -65,6 +64,7 @@ if (customElements) {
 
             this.style.width = iframe.getBoundingClientRect().width + 'px';
             this.style.height = iframe.getBoundingClientRect().height + 'px';
+            this.style.boxSizing = "content-box";
             this.finished();
           }
         });
