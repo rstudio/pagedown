@@ -27,6 +27,7 @@ if (customElements) {
       connectedCallback() {
         // Be aware that the connectedCallback() function can be called multiple times,
         // see https://developer.mozilla.org/docs/Web/Web_Components/Using_custom_elements#Using_the_lifecycle_callbacks
+        var currentObject = this;
         let iframe = this.shadowRoot.querySelector('iframe');
         iframe.addEventListener('load', () => {
           // The load event fires twice:
@@ -54,18 +55,18 @@ if (customElements) {
             contentHeight = 768;
           }
           finally {
-            let widthScaleFactor = this.clientWidth / contentWidth;
-            let heightScaleFactor = this.clientHeight / contentHeight;
+            let widthScaleFactor = currentObject.clientWidth / contentWidth;
+            let heightScaleFactor = currentObject.clientHeight / contentHeight;
             let scaleFactor = Math.min(widthScaleFactor, heightScaleFactor);
             scaleFactor = Math.floor(scaleFactor * 1e6) / 1e6;
             iframe.style.transform = "scale(" + scaleFactor + ")";
             iframe.width = contentWidth;
             iframe.height = contentHeight;
 
-            this.style.width = iframe.getBoundingClientRect().width + 'px';
-            this.style.height = iframe.getBoundingClientRect().height + 'px';
-            this.style.boxSizing = "content-box";
-            this.finished();
+            currentObject.style.width = iframe.getBoundingClientRect().width + 'px';
+            currentObject.style.height = iframe.getBoundingClientRect().height + 'px';
+            currentObject.style.boxSizing = "content-box";
+            currentObject.finished();
           }
         });
 
