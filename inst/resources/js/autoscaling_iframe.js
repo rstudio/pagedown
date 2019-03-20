@@ -23,6 +23,9 @@ if (customElements) {customElements.define('autoscaling-iframe',
       }
       iframe {
         transform-origin: top left;
+        position: absolute;
+        top: 0;
+        left: 0;
       }
       </style>
       <iframe frameborder="0">
