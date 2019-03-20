@@ -117,7 +117,7 @@ html_format = function(
     self_contained = self_contained, pandoc_args = c(.pandoc_args, pandoc_args)
   )
   if (isTRUE(.pagedjs)) format$knitr$opts_chunk[['render']] = paged_render(self_contained)
-  widget_file(reset = TRUE)
+  iframe_file(reset = TRUE)
   format
 }
 
@@ -159,7 +159,7 @@ save_widget = function(directory, widget, options) {
   on.exit({
     setwd(old_wd)
   }, add = TRUE)
-  f = widget_file()
+  f = iframe_file()
   htmlwidgets::saveWidget(
     widget = widget, file = f,
     # since chrome_print() does not handle network requests, use a self contained html file
@@ -170,12 +170,12 @@ save_widget = function(directory, widget, options) {
   return(paste0(directory, f))
 }
 
-widget_file = (function() {
+iframe_file = (function() {
   n = 0L
   function(reset = FALSE) {
     if (reset) n <<- -1L
     n <<- n + 1L
-    sprintf('widget%i.html', n)
+    sprintf('iframe%i.html', n)
   }
 })()
 
@@ -184,7 +184,10 @@ autoscaling_iframe = function(width = NULL, height = NULL, ..., extra.attr = '')
   extra.attr = as_html_attrs(extra.attr)
   tag = htmltools::tag(
     'autoscaling-iframe',
-    c(extra.attr, list(...), list(htmltools::p("This browser does not support this content.")))
+    c(extra.attr,
+      list(...),
+      list(htmltools::p("This browser does not support this feature."))
+    )
   )
   width = css_declaration('width', htmltools::validateCssUnit(width))
   height = css_declaration('height', htmltools::validateCssUnit(height))

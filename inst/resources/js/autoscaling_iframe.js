@@ -1,8 +1,12 @@
 // An auto-scaling iframe
 // This object emits the following events:
+// - initialize: when the iframe is ready to load a document
+// - clear: when the iframe sources are removed
 // - load: this is the same event as the iframe
-// - initialized: before the iframe load the source document
-// - resized: this event fires when the auto-scaling has finished
+// - resize: this event fires when the auto-scaling has finished
+//
+// TODO  crosstalk support
+//       setters/getters for width/height
 if (customElements) {customElements.define('autoscaling-iframe',
   class extends HTMLElement {
     constructor() {
@@ -18,7 +22,6 @@ if (customElements) {customElements.define('autoscaling-iframe',
         overflow: hidden;
       }
       iframe {
-        position: absolute;
         transform-origin: top left;
       }
       </style>
@@ -27,26 +30,25 @@ if (customElements) {customElements.define('autoscaling-iframe',
       `;
       let iframe = shadowRoot.querySelector('iframe');
 
-      // dispatch the iframe load events by the custom element
-      iframe.addEventListener('load', event => {
-        this.dispatchEvent(new Event('load'));
-      });
-
-      // the first load event throws the initialized event
-      this.addEventListener('load', () => this.dispatchEvent(new Event('initialized')), {once: true});
+      // the first load event throws the initialize event
+      iframe.addEventListener(
+        'load',
+        () => this.dispatchEvent(new Event('initialize')),
+        {once: true}
+      );
 
       this.initialized = new Promise(resolve => {
         if (this.hasAttribute('initialized')) {
           resolve(this);
         } else {
-          this.addEventListener('initialized', e => {
+          this.addEventListener('initialize', e => {
             this.setAttribute('initialized', '');
             resolve(e.currentTarget);
           });
         }
       });
 
-      this.ready = new Promise($ => this.addEventListener('resized', e => $(e.currentTarget), {once: true}));
+      this.ready = new Promise($ => this.addEventListener('resize', e => $(e.currentTarget), {once: true}));
     }
 
     connectedCallback() {
@@ -63,7 +65,7 @@ if (customElements) {customElements.define('autoscaling-iframe',
       const clearSource = (attr) => {
         let pr;
         if (iframe.hasAttribute(attr)) {
-          pr = new Promise($ => this.addEventListener('load', e => $(e.currentTarget), {once: true, capture: true}));
+          pr = new Promise($ => iframe.addEventListener('load', e => $(e.currentTarget), {once: true, capture: true}));
           iframe.removeAttribute(attr);
         } else {
           pr = Promise.resolve(this);
@@ -72,33 +74,31 @@ if (customElements) {customElements.define('autoscaling-iframe',
       };
 
       // clear srcdoc first (important)
-      return clearSource('srcdoc').then(() => clearSource('src'));
+      let res = clearSource('srcdoc').then(() => clearSource('src'));
+      res.then(() => this.dispatchEvent(new Event('clear')));
+      return res;
     }
-    loadSrc() {
-      let iframe = this.shadowRoot.querySelector('iframe');
-      let pr;
-      if (this.hasAttribute('src')) {
-        pr = new Promise($ => this.addEventListener('load', e => $(e.currentTarget), {once: true, capture: true}));
-        iframe.src = this.getAttribute('src');
-      } else {
-        pr = Promise.resolve();
-      }
-      return pr;
-    }
+
     loadSource() {
       let iframe = this.shadowRoot.querySelector('iframe');
-      // load src first (important)
-      return this.loadSrc().then(() => {
-        let loadSrcdoc;
-        if (this.hasAttribute('srcdoc')) {
-          loadSrcdoc = new Promise($ => this.addEventListener('load', e => $(e.currentTarget), {once: true, capture: true}));
-          iframe.srcdoc = this.getAttribute('srcdoc');
+
+      const load = (attr) => {
+        let pr;
+        if (this.hasAttribute(attr)) {
+          pr = new Promise($ => iframe.addEventListener('load', e => $(e.currentTarget), {once: true, capture: true}));
+          iframe.src = this.getAttribute(attr);
         } else {
-          loadSrcdoc = Promise.resolve();
+          pr = Promise.resolve();
         }
-        return loadSrcdoc;
-      });
+        return pr;
+      };
+
+      // load src first (important)
+      const res = load('src').then(() => load('srcdoc'));
+      res.then(() => this.dispatchEvent(new Event('load')));
+      return res;
     }
+
     resize() {
       let iframe = this.shadowRoot.querySelector('iframe');
       let contentHeight, contentWidth;
@@ -129,7 +129,7 @@ if (customElements) {customElements.define('autoscaling-iframe',
         this.style.height = iframe.getBoundingClientRect().height + 'px';
         this.style.boxSizing = "content-box";
       }
-      this.dispatchEvent(new Event('resized'));
+      this.dispatchEvent(new Event('resize'));
       return Promise.resolve(this);
     }
   }
