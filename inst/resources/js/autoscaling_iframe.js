@@ -56,21 +56,24 @@ if (customElements) {customElements.define('autoscaling-iframe',
                              .then(() => this.loadSource())
                              .then(() => this.resize());
     }
-    clearSource(attr) {
-      let iframe = this.shadowRoot.querySelector('iframe');
-      let pr;
-      if (iframe.hasAttribute(attr)) {
-        pr = new Promise($ => this.addEventListener('load', e => $(e.currentTarget), {once: true, capture: true}));
-        iframe.removeAttribute(attr);
-      } else {
-        pr = Promise.resolve(this);
-      }
-      return pr;
-    }
+
     clear() {
+      const clearSource = (attr) => {
+        let iframe = this.shadowRoot.querySelector('iframe');
+        let pr;
+        if (iframe.hasAttribute(attr)) {
+          pr = new Promise($ => this.addEventListener('load', e => $(e.currentTarget), {once: true, capture: true}));
+          iframe.removeAttribute(attr);
+        } else {
+          pr = Promise.resolve(this);
+        }
+        return pr;
+      };
+
+
       let iframe = this.shadowRoot.querySelector('iframe');
       // clear srcdoc first (important)
-      return this.clearSource('srcdoc').then(() => this.clearSource('src'));
+      return clearSource('srcdoc').then(() => clearSource('src'));
     }
     loadSrc() {
       let iframe = this.shadowRoot.querySelector('iframe');
