@@ -58,8 +58,9 @@ if (customElements) {customElements.define('autoscaling-iframe',
     }
 
     clear() {
+      let iframe = this.shadowRoot.querySelector('iframe');
+
       const clearSource = (attr) => {
-        let iframe = this.shadowRoot.querySelector('iframe');
         let pr;
         if (iframe.hasAttribute(attr)) {
           pr = new Promise($ => this.addEventListener('load', e => $(e.currentTarget), {once: true, capture: true}));
@@ -70,8 +71,6 @@ if (customElements) {customElements.define('autoscaling-iframe',
         return pr;
       };
 
-
-      let iframe = this.shadowRoot.querySelector('iframe');
       // clear srcdoc first (important)
       return clearSource('srcdoc').then(() => clearSource('src'));
     }
