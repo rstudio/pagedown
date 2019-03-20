@@ -103,7 +103,7 @@
         appendShortTitles2()
       ]);
       await runMathJax();
-      let iframeHTMLWidgets = document.getElementsByTagName('responsive-iframe');
+      let iframeHTMLWidgets = document.getElementsByTagName('autoscaling-iframe');
       let widgetsReady = Promise.all([...iframeHTMLWidgets].map(el => {return el['ready'];}));
       await widgetsReady;
     },

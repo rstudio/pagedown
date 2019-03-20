@@ -42,7 +42,7 @@
 
   let responsiveIFramesReady = new Promise(resolve => {
     window.addEventListener('load', () => {
-      let responsiveIFrames = document.getElementsByTagName('responsive-iframe');
+      let responsiveIFrames = document.getElementsByTagName('autoscaling-iframe');
       Promise.all([...responsiveIFrames].map(el => {return el['ready'];})).then(resolve());
     });
   });
