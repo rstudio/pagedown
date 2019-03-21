@@ -261,11 +261,14 @@ print_page = function(
     if (!is.null(id)) switch(
       id,
       # Command #1 received -> callback: command #2 Page.enable
-      ws$send('{"id":2,"method":"Page.enable"}'),
+      ws$send(to_json(list(id = 2, method = "Page.enable"))),
       # Command #2 received -> callback: command #3 Runtime.addBinding
-      ws$send('{"id":3,"method":"Runtime.addBinding","params":{"name":"pagedownListener"}}'),
+      ws$send(to_json(list(
+        id = 3, method = "Runtime.addBinding",
+        params = list(name = "pagedownListener")
+      ))),
       # Command #3 received -> callback: command #4 Network.Enable
-      ws$send('{"id":4,"method":"Network.enable"}'),
+      ws$send(to_json(list(id = 4, method  = "Network.enable"))),
       # Command #4 received -> callback: command #5 Page.addScriptToEvaluateOnNewDocument
       ws$send(to_json(list(
           id = 5, method = "Page.addScriptToEvaluateOnNewDocument",
@@ -280,13 +283,17 @@ print_page = function(
       {
       # Command #7 received - Test if the html document uses the paged.js polyfill
       # if not, call the binding when fonts are ready
-        if (!isTRUE(msg$result$result$value))
-          ws$send('{"id":8,"method":"Runtime.evaluate","params":{"expression":"pagedownReady.then(() => {pagedownListener(\'\');})"}}')
+        if (!isTRUE(msg$result$result$value)) {
+          ws$send(to_json(list(
+            id = 8, method = "Runtime.evaluate",
+            params = list(expression = "pagedownReady.then(() => {pagedownListener(\'\');})")
+          )))
+        }
       },
       # Command #8 received - No callback
       NULL,
       # Command #9 received -> callback: command #10 DOM.getDocument
-      ws$send('{"id":10,"method":"DOM.getDocument"}'),
+      ws$send(to_json(list(id = 10, method = "DOM.getDocument"))),
       # Command #10 received -> callback: command #11 DOM.querySelector
       ws$send(to_json(list(
           id = 11, method = "DOM.querySelector",
@@ -341,7 +348,10 @@ print_page = function(
         )
       }
       if (method == "Page.loadEventFired") {
-        ws$send('{"id":7,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
+        ws$send(to_json(list(
+          id = 7, method = "Runtime.evaluate",
+          params = list(expression = "!!window.PagedPolyfill")
+        )))
       }
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
@@ -352,13 +362,13 @@ print_page = function(
             id = 13, params = opts, method = 'Page.printToPDF'
           )))
         } else {
-          ws$send('{"id":9,"method":"DOM.enable"}')
+          ws$send(to_json(list(id = 9, method = "DOM.enable")))
         }
       }
     }
   })
 
-  ws$send('{"id":1,"method":"Runtime.enable"}')
+  ws$send(to_json(list(id = 1, method = "Runtime.enable")))
 
 }
 
