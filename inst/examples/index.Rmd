@@ -614,7 +614,7 @@ knitr::kable(head(iris[, -5]), caption = 'An example table.')
 
 ## HTMLWidgets
 
-HTMLWidgets keep their interactivity: you can insert a widget, interactively modify it and then print the document.^[This interactivity is not allowed in RStudio because of security restrictions.] As any other other figures, you can modify their dimensions and styles using the chunk options `out.width`, `out.height` and `out.extra`.  
+HTMLWidgets keep their interactivity: you can insert a widget, interactively modify it and then print the document.^[This interactivity is not allowed in RStudio because of security restrictions.] As any other figures, you can modify their dimensions and styles using the chunk options `out.width`, `out.height` and `out.extra`.  
 Note that one of these dimensions is adjusted to keep the aspect ratio of the HTML widget constant without leaving extra space.
 
 ```{r, out.width="4in", out.height="4in", out.extra='style="margin:auto;"', echo=FALSE}
