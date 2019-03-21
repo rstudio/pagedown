@@ -89,7 +89,7 @@ if (customElements) {customElements.define('autoscaling-iframe',
         let pr;
         if (this.hasAttribute(attr)) {
           pr = new Promise($ => iframe.addEventListener('load', e => $(e.currentTarget), {once: true, capture: true}));
-          iframe.src = this.getAttribute(attr);
+          iframe.setAttribute(attr, this.getAttribute(attr));
         } else {
           pr = Promise.resolve();
         }
