@@ -105,6 +105,12 @@
       await runMathJax();
     },
     after: () => {
+      // force redraw, see https://github.com/rstudio/pagedown/issues/35#issuecomment-475905361
+      // and https://stackoverflow.com/a/24753578/6500804
+      document.body.style.display = 'none';
+      document.body.offsetHeight;
+      document.body.style.display = '';
+
       // pagedownListener is a binder added by the chrome_print function
       // this binder exists only when chrome_print opens the html file
       if (window.pagedownListener) {
