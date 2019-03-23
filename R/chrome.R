@@ -286,7 +286,7 @@ print_page = function(
         if (!isTRUE(msg$result$result$value)) {
           ws$send(to_json(list(
             id = 8, method = "Runtime.evaluate",
-            params = list(expression = "pagedownReady.then(() => {pagedownListener(\'\');})")
+            params = list(expression = "pagedownReady.then(() => {pagedownListener('');})")
           )))
         }
       },
