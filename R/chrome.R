@@ -261,44 +261,57 @@ print_page = function(
     if (!is.null(id)) switch(
       id,
       # Command #1 received -> callback: command #2 Page.enable
-      ws$send('{"id":2,"method":"Page.enable"}'),
+      ws$send(to_json(list(id = 2, method = "Page.enable"))),
       # Command #2 received -> callback: command #3 Runtime.addBinding
-      ws$send('{"id":3,"method":"Runtime.addBinding","params":{"name":"pagedownListener"}}'),
+      ws$send(to_json(list(
+        id = 3, method = "Runtime.addBinding",
+        params = list(name = "pagedownListener")
+      ))),
       # Command #3 received -> callback: command #4 Network.Enable
-      ws$send('{"id":4,"method":"Network.enable"}'),
+      ws$send(to_json(list(id = 4, method  = "Network.enable"))),
       # Command #4 received -> callback: command #5 Page.addScriptToEvaluateOnNewDocument
-      ws$send(
-        sprintf('{"id":5,"method":"Page.addScriptToEvaluateOnNewDocument","params":{"source":"%s"}}',
-                paste0(readLines(pkg_resource('js', 'chrome_print.js')), collapse = ""))
-      ),
+      ws$send(to_json(list(
+          id = 5, method = "Page.addScriptToEvaluateOnNewDocument",
+          params = list(source = paste0(readLines(pkg_resource('js', 'chrome_print.js')), collapse = ""))
+      ))),
       # Command #5 received -> callback: command #6 Page.Navigate
-      ws$send(sprintf('{"id":6,"method":"Page.navigate","params":{"url":"%s"}}', url)),
+      ws$send(to_json(list(
+          id = 6, method= "Page.navigate", params = list(url = url)
+      ))),
       # Command #6 received - check if there is an error when navigating to url
       token$error <- msg$result$errorText,
       {
       # Command #7 received - Test if the html document uses the paged.js polyfill
       # if not, call the binding when fonts are ready
-        if (!isTRUE(msg$result$result$value))
-          ws$send('{"id":8,"method":"Runtime.evaluate","params":{"expression":"pagedownReady.then(() => {pagedownListener(\'\');})"}}')
+        if (!isTRUE(msg$result$result$value)) {
+          ws$send(to_json(list(
+            id = 8, method = "Runtime.evaluate",
+            params = list(expression = "pagedownReady.then(() => {pagedownListener('');})")
+          )))
+        }
       },
       # Command #8 received - No callback
       NULL,
       # Command #9 received -> callback: command #10 DOM.getDocument
-      ws$send('{"id":10,"method":"DOM.getDocument"}'),
+      ws$send(to_json(list(id = 10, method = "DOM.getDocument"))),
       # Command #10 received -> callback: command #11 DOM.querySelector
-      ws$send(sprintf(
-        '{"id":11,"method":"DOM.querySelector","params":{"nodeId":%i,"selector":"%s"}}',
-        msg$result$root$nodeId,
-        selector
-      )), {
-      # Command 11 received -> callback: command #12 DOM.getBoxModel
+      ws$send(to_json(list(
+          id = 11, method = "DOM.querySelector",
+          params = list(nodeId = msg$result$root$nodeId, selector = selector)
+      ))),
+      {
+        # Command 11 received -> callback: command #12 DOM.getBoxModel
         if (msg$result$nodeId == 0) {
           token$error <- 'No element in the HTML page corresponds to the `selector` value.'
         } else {
-          ws$send(sprintf('{"id":12,"method":"DOM.getBoxModel","params":{"nodeId":%i}}', msg$result$nodeId))
+          ws$send(to_json(list(
+              id = 12, method = "DOM.getBoxModel",
+              params = list(nodeId = msg$result$nodeId)
+          )))
         }
-      }, {
-      # Command 12 received -> callback: command #13 Page.captureScreenshot
+      },
+      {
+        # Command 12 received -> callback: command #13 Page.captureScreenshot
         opts = as.list(options)
 
         coords = msg$result$model[[box_model]]
@@ -317,10 +330,11 @@ print_page = function(
         )
         opts$format = format
 
-        ws$send(jsonlite::toJSON(list(
-          id = 13, params = opts, method = 'Page.captureScreenshot'
-        ), auto_unbox = TRUE, null = 'null'))
-      }, {
+        ws$send(to_json(list(
+            id = 13, params = opts, method = 'Page.captureScreenshot'
+        )))
+      },
+      {
       # Command #13 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
         token$done = TRUE
@@ -334,24 +348,27 @@ print_page = function(
         )
       }
       if (method == "Page.loadEventFired") {
-        ws$send('{"id":7,"method":"Runtime.evaluate","params":{"expression":"!!window.PagedPolyfill"}}')
+        ws$send(to_json(list(
+          id = 7, method = "Runtime.evaluate",
+          params = list(expression = "!!window.PagedPolyfill")
+        )))
       }
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
         opts = as.list(options)
         if (format == 'pdf') {
           opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), opts)
-          ws$send(jsonlite::toJSON(list(
+          ws$send(to_json(list(
             id = 13, params = opts, method = 'Page.printToPDF'
-          ), auto_unbox = TRUE, null = 'null'))
+          )))
         } else {
-          ws$send('{"id":9,"method":"DOM.enable"}')
+          ws$send(to_json(list(id = 9, method = "DOM.enable")))
         }
       }
     }
   })
 
-  ws$send('{"id":1,"method":"Runtime.enable"}')
+  ws$send(to_json(list(id = 1, method = "Runtime.enable")))
 
 }
 
