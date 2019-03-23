@@ -50,13 +50,12 @@ if (customElements) {customElements.define('autoscaling-iframe',
           });
         }
       });
-
-      this.ready = new Promise($ => this.addEventListener('resize', e => $(e.currentTarget), {once: true}));
     }
 
     connectedCallback() {
       // Be aware that the connectedCallback() function can be called multiple times,
       // see https://developer.mozilla.org/docs/Web/Web_Components/Using_custom_elements#Using_the_lifecycle_callbacks
+      this.ready = new Promise($ => this.addEventListener('resize', e => $(e.currentTarget), {once: true}));
       return this.initialized.then(() => this.clear())
                              .then(() => this.loadSource())
                              .then(() => this.resize());
