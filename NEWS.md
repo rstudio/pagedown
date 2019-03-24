@@ -1,5 +1,10 @@
 # CHANGES IN pagedown VERSION 0.3
 
+## BUG FIXES
+
+- browser is forced to redraw the document after Paged.js finished. This will fix wrong page references observed with Chrome and RStudio 1.2.xxxx (#35 and #46, thanks, @petermeissner).  
+
+- `jsonlite::toJSON()` is now used in `chrome_print()` for building all the JSON messages sent to headless Chromium/Chrome: this guarantees that the JSON strings are valid (thanks, @ColinFay, #85 and @cderv, #88).
 
 
 # CHANGES IN pagedown VERSION 0.2
