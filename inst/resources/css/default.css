@@ -1,7 +1,7 @@
 :root {
   --background: whitesmoke;
-  --width: 6in;
-  --height: 9in;
+  --pagedjs-width: 6in;
+  --pagedjs-height: 9in;
   --color-paper: white;
   --color-mbox: rgba(0, 0, 0, 0.2);
   --running-title-width: 2.5in;
@@ -107,7 +107,7 @@ code {
   }
   .pagedjs_pages {
     display: flex;
-    max-width: calc(var(--width) * 2);
+    max-width: calc(var(--pagedjs-width) * 2);
     flex: 0;
     flex-wrap: wrap;
     margin: 0 auto;
@@ -127,7 +127,7 @@ code {
     margin: auto 0 var(--screen-pages-spacing) 0;
   }
   .pagedjs_first_page {
-    margin-left: var(--width);
+    margin-left: var(--pagedjs-width);
   }
 }
 

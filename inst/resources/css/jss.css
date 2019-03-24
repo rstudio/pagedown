@@ -1,6 +1,6 @@
 :root {
   --background: #2888b8;
-  --width: 210mm;
+  --pagedjs-width: 210mm;
   --color-paper: white;
   --screen-pages-spacing: 5mm;
   --header-width: 462px;
@@ -24,13 +24,13 @@ html {
   content: "";
   display: block;
   position: absolute;
-  left: calc(var(--header-width) - var(--width) + var(--margin-left) + var(--margin-right));
+  left: calc(var(--header-width) - var(--pagedjs-width) + var(--pagedjs-margin-left) + var(--pagedjs-margin-right));
   border-width: 4px 0;
   border-style: solid;
   border-color: transparent;
   top: -4px;
   height: 100%;
-  width: calc(var(--width) - var(--margin-left) - var(--margin-right) - var(--header-width) - var(--header-image-padding));
+  width: calc(var(--pagedjs-width) - var(--pagedjs-margin-left) - var(--pagedjs-margin-right) - var(--header-width) - var(--header-image-padding));
   background-clip: border-box;
   background-image: url(https://www.jstatsoft.org/public/site/images/jstatsoft/jsslogo.jpg);
   background-size: contain;
@@ -156,7 +156,7 @@ pre, code {
 }
 main img {
   max-width: 100%;
-  max-height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
+  max-height: calc(var(--pagedjs-height) - var(--pagedjs-margin-top) - var(--pagedjs-margin-bottom));
 }
 .figure {
   break-inside: avoid;
@@ -247,7 +247,7 @@ table {
   }
   .pagedjs_pages {
     display: flex;
-    max-width: var(--width);
+    max-width: var(--pagedjs-width);
     flex: 0;
     flex-wrap: wrap;
     margin: 0 auto;
@@ -263,6 +263,6 @@ table {
 
 @media screen and (max-width:1180px)  {
   body {
-    width: calc(var(--width) + 2 * var(--screen-pages-spacing));
+    width: calc(var(--pagedjs-width) + 2 * var(--screen-pages-spacing));
   }
 }
