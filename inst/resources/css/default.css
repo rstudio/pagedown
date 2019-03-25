@@ -134,6 +134,6 @@ code {
 /* use a fixed width body for mobiles */
 @media screen and (max-width:1180px)  {
   body {
-    width: calc(var(--width) + 2 * var(--screen-pages-spacing));
+    width: calc(var(--pagedjs-width) + 2 * var(--screen-pages-spacing));
   }
 }
