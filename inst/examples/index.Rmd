@@ -692,8 +692,8 @@ Now, open the `custom.css` file. The first lines you see are CSS variables decla
 ```css
 :root {
   --background: whitesmoke;
-  --width: 6in;
-  --height: 9in;
+  --pagedjs-width: 6in;
+  --pagedjs-height: 9in;
   --color-paper: white;
   --color-mbox: rgba(0, 0, 0, 0.2);
   --running-title-width: 2.5in;
@@ -701,7 +701,7 @@ Now, open the `custom.css` file. The first lines you see are CSS variables decla
 }
 ```
 
-According to the paper size you just defined, modify the `--width` and `--height` values.  
+According to the paper size you just defined, modify the `--pagedjs-width` and `--pagedjs-height` values.  
 You can also modify the background color of the viewer with the `--background` variable^[for further customization of the viewer, see the media queries declarations at the very end of the `custom.css` file.].
 
 ## Margins customizations
