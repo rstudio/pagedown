@@ -125,7 +125,7 @@ chrome_print = function(
   if (is_shiny) {
     pr <- promises::promise(function(resolve, reject) res_fun <<- resolve)
     on.exit()
-    promises::then(pr, ~ app$cleanup())
+    promises::finally(pr, ~ app$cleanup())
   }
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
