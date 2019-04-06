@@ -61,7 +61,8 @@ screenshots); \code{2} (or \code{TRUE}) means all messages, including those
 from the Chrome processes and WebSocket connections.}
 }
 \value{
-Path of the output file (invisibly).
+Path of the output file (invisibly). In a Shiny context, this value is
+  a \code{\link[promises]{promise}}.
 }
 \description{
 Print an HTML page to PDF or capture a PNG/JPEG screenshot through the Chrome

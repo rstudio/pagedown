@@ -41,13 +41,14 @@
 #'   from the Chrome processes and WebSocket connections.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
-#' @return Path of the output file (invisibly).
+#' @return Path of the output file (invisibly). In a Shiny context, this value is
+#'   a \code{\link[promises]{promise}}.
 #' @export
 chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
-  format = c('pdf', 'png', 'jpeg'), options = list(),
-  selector = 'body', box_model = c('border', 'content', 'margin', 'padding'), scale = 1,
-  work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = 0
+  format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
+  box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
+  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0
 ) {
   if (missing(browser)) browser = find_chrome() else {
     if (!file.exists(browser)) browser = Sys.which(browser)
@@ -118,8 +119,20 @@ chrome_print = function(
 
   box_model = match.arg(box_model)
 
+  is_shiny <- !is.null(shiny::getDefaultReactiveDomain())
+  pr <- NULL
+  res_fun <- NULL
+  if (is_shiny) {
+    pr <- promises::promise(function(resolve, reject) res_fun <<- resolve)
+    on.exit()
+    promises::then(pr, ~ app$cleanup())
+  }
+
   t0 = Sys.time(); token = new.env(parent = emptyenv())
-  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale)
+  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun)
+
+  if (is_shiny) return(pr)
+
   while (!isTRUE(token$done)) {
     if (!app$ps$is_alive()) stop('Chrome launched via httpuv crashed')
     if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
@@ -246,7 +259,7 @@ get_entrypoint = function(debug_port) {
 
 print_page = function(
   ws, url, output, wait, verbose, token, format,
-  options = list(), selector, box_model, scale
+  options = list(), selector, box_model, scale, resolve
 ) {
 
   ws$onMessage(function(binary, text) {
@@ -337,6 +350,7 @@ print_page = function(
       {
       # Command #13 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
+        if (!is.null(resolve)) resolve(output)
         token$done = TRUE
       }
     )
