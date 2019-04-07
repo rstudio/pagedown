@@ -121,10 +121,10 @@ chrome_print = function(
 
   box_model = match.arg(box_model)
 
-  pr <- NULL
-  res_fun <- NULL
+  pr = NULL
+  res_fun = NULL
   if (async <- async && xfun::loadable('promises')) {
-    pr <- promises::promise(function(resolve, reject) res_fun <<- resolve)
+    pr = promises::promise(function(resolve, reject) res_fun <<- resolve)
     on.exit()
     promises::finally(pr, ~ app$cleanup())
   }
