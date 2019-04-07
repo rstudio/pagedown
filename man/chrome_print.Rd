@@ -8,7 +8,7 @@ chrome_print(input, output = xfun::with_ext(input, format), wait = 2,
     browser = "google-chrome", format = c("pdf", "png", "jpeg"), options = list(), 
     selector = "body", box_model = c("border", "content", "margin", "padding"), 
     scale = 1, work_dir = tempfile(), timeout = 30, extra_args = c("--disable-gpu"), 
-    verbose = 0)
+    verbose = 0, async = FALSE)
 }
 \arguments{
 \item{input}{A URL or local file path to an HTML page, or a path to a local
@@ -59,10 +59,13 @@ generation. Use a larger value if the document takes longer to build.}
 to print out some auxiliary messages (e.g., parameters for capturing
 screenshots); \code{2} (or \code{TRUE}) means all messages, including those
 from the Chrome processes and WebSocket connections.}
+
+\item{async}{Execute \code{chrome_print()} asynchronously? If \code{TRUE},
+\code{chrome_print()} returns a \code{\link[promises]{promise}} value.}
 }
 \value{
-Path of the output file (invisibly). In a Shiny context, this value is
-  a \code{\link[promises]{promise}}.
+Path of the output file (invisibly). If \code{async} is \code{TRUE}, this
+  is a \code{\link[promises]{promise}} value.
 }
 \description{
 Print an HTML page to PDF or capture a PNG/JPEG screenshot through the Chrome

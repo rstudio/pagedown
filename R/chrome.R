@@ -39,16 +39,18 @@
 #'   to print out some auxiliary messages (e.g., parameters for capturing
 #'   screenshots); \code{2} (or \code{TRUE}) means all messages, including those
 #'   from the Chrome processes and WebSocket connections.
+#' @param async Execute \code{chrome_print()} asynchronously? If \code{TRUE},
+#'   \code{chrome_print()} returns a \code{\link[promises]{promise}} value.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
-#' @return Path of the output file (invisibly). In a Shiny context, this value is
-#'   a \code{\link[promises]{promise}}.
+#' @return Path of the output file (invisibly). If \code{async} is \code{TRUE}, this
+#'   is a \code{\link[promises]{promise}} value.
 #' @export
 chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
   format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
   box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
-  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0
+  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
     if (!file.exists(browser)) browser = Sys.which(browser)
@@ -119,10 +121,9 @@ chrome_print = function(
 
   box_model = match.arg(box_model)
 
-  is_shiny <- !is.null(shiny::getDefaultReactiveDomain())
   pr <- NULL
   res_fun <- NULL
-  if (is_shiny) {
+  if (async <- async && xfun::loadable('promises')) {
     pr <- promises::promise(function(resolve, reject) res_fun <<- resolve)
     on.exit()
     promises::finally(pr, ~ app$cleanup())
@@ -131,7 +132,7 @@ chrome_print = function(
   t0 = Sys.time(); token = new.env(parent = emptyenv())
   print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun)
 
-  if (is_shiny) return(pr)
+  if (async) return(pr)
 
   while (!isTRUE(token$done)) {
     if (!app$ps$is_alive()) stop('Chrome launched via httpuv crashed')
