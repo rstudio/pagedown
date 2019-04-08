@@ -40,7 +40,8 @@
 #'   screenshots); \code{2} (or \code{TRUE}) means all messages, including those
 #'   from the Chrome processes and WebSocket connections.
 #' @param async Execute \code{chrome_print()} asynchronously? If \code{TRUE},
-#'   \code{chrome_print()} returns a \code{\link[promises]{promise}} value.
+#'   \code{chrome_print()} returns a \code{\link[promises]{promise}} value (the
+#'   \pkg{promises} package has to be installed in this case).
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
 #' @return Path of the output file (invisibly). If \code{async} is \code{TRUE}, this
