@@ -124,7 +124,7 @@ chrome_print = function(
 
   pr = NULL
   res_fun = NULL
-  if (async <- async && xfun::loadable('promises')) {
+  if (async) {
     pr = promises::promise(function(resolve, reject) res_fun <<- resolve)
     on.exit()
     promises::finally(pr, ~ app$cleanup())
