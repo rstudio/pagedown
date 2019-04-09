@@ -123,12 +123,12 @@ chrome_print = function(
   box_model = match.arg(box_model)
 
   pr = NULL
-  res_fun = NULL
-  rej_fun = NULL
+  res_fun = function(value) {} # default: do nothing
+  rej_fun = function(reason) {} # default: do nothing
   if (async) {
     pr_print = promises::promise(function(resolve, reject) {
       res_fun <<- resolve
-      rej_fun <<- reject
+      rej_fun <<- function(reason) reject(paste('Failed to generate output. Reason:', reason))
     })
     on.exit()
     pr_timeout = promises::promise(function(resolve, reject) {
@@ -278,7 +278,7 @@ print_page = function(
   ws$onMessage(function(binary, text) {
     if (!is.null(token$error)) {
       res = ws$close()
-      if(!is.null(reject)) reject(paste('Failed to generate output. Reason:', token$error))
+      reject(token$error)
       return(res)
     }
     if (verbose >= 2) message('Message received from headless Chrome: ', text)
@@ -288,7 +288,7 @@ print_page = function(
 
     if (!is.null(token$error <- msg$error$message)) {
       res = ws$close()
-      if(!is.null(reject)) reject(paste('Failed to generate output. Reason:', token$error))
+      reject(token$error)
       return(res)
     }
 
@@ -315,7 +315,7 @@ print_page = function(
       {
       # Command #6 received - check if there is an error when navigating to url
         if(!is.null(token$error <- msg$result$errorText)) {
-          if(!is.null(reject)) reject(paste('Failed to generate output. Reason:', token$error))
+          reject(token$error)
         }
       },
       {
@@ -341,7 +341,7 @@ print_page = function(
         # Command 11 received -> callback: command #12 DOM.getBoxModel
         if (msg$result$nodeId == 0) {
           token$error <- 'No element in the HTML page corresponds to the `selector` value.'
-          if(!is.null(reject)) reject(paste('Failed to generate output. Reason:', token$error))
+          reject(token$error)
         } else {
           ws$send(to_json(list(
               id = 12, method = "DOM.getBoxModel",
@@ -376,7 +376,7 @@ print_page = function(
       {
       # Command #13 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
-        if (!is.null(resolve)) resolve(output)
+        resolve(output)
         token$done = TRUE
       }
     )
@@ -387,7 +387,7 @@ print_page = function(
           token$error = sprintf(
             'Failed to open %s (HTTP status code: %s)', msg$params$response$url, status
           )
-          if(!is.null(reject)) reject(paste('Failed to generate output. Reason:', token$error))
+          reject(token$error)
         }
       }
       if (method == "Page.loadEventFired") {
