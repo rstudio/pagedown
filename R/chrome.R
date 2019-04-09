@@ -124,14 +124,25 @@ chrome_print = function(
 
   pr = NULL
   res_fun = NULL
+  rej_fun = NULL
   if (async) {
-    pr = promises::promise(function(resolve, reject) res_fun <<- resolve)
+    pr_print = promises::promise(function(resolve, reject) {
+      res_fun <<- resolve
+      rej_fun <<- reject
+    })
     on.exit()
+    pr_timeout = promises::promise(function(resolve, reject) {
+      later::later(
+        ~reject(paste('Failed to generate output in', timeout, 'seconds (timeout).')),
+        timeout
+      )
+    })
+    pr = promises::promise_race(pr_print, pr_timeout)
     promises::finally(pr, ~ app$cleanup())
   }
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
-  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun)
+  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun, rej_fun)
 
   if (async) return(pr)
 
@@ -261,17 +272,25 @@ get_entrypoint = function(debug_port) {
 
 print_page = function(
   ws, url, output, wait, verbose, token, format,
-  options = list(), selector, box_model, scale, resolve
+  options = list(), selector, box_model, scale, resolve, reject
 ) {
 
   ws$onMessage(function(binary, text) {
-    if (!is.null(token$error)) return(ws$close())
+    if (!is.null(token$error)) {
+      res = ws$close()
+      if(!is.null(reject)) reject(paste('Failed to generate output. Reason:', token$error))
+      return(res)
+    }
     if (verbose >= 2) message('Message received from headless Chrome: ', text)
     msg = jsonlite::fromJSON(text)
     id = msg$id
     method = msg$method
 
-    if (!is.null(token$error <- msg$error$message)) return(ws$close())
+    if (!is.null(token$error <- msg$error$message)) {
+      res = ws$close()
+      if(!is.null(reject)) reject(paste('Failed to generate output. Reason:', token$error))
+      return(res)
+    }
 
     if (!is.null(id)) switch(
       id,
@@ -293,8 +312,12 @@ print_page = function(
       ws$send(to_json(list(
           id = 6, method= "Page.navigate", params = list(url = url)
       ))),
+      {
       # Command #6 received - check if there is an error when navigating to url
-      token$error <- msg$result$errorText,
+        if(!is.null(token$error <- msg$result$errorText)) {
+          if(!is.null(reject)) reject(paste('Failed to generate output. Reason:', token$error))
+        }
+      },
       {
       # Command #7 received - Test if the html document uses the paged.js polyfill
       # if not, call the binding when fonts are ready
@@ -318,6 +341,7 @@ print_page = function(
         # Command 11 received -> callback: command #12 DOM.getBoxModel
         if (msg$result$nodeId == 0) {
           token$error <- 'No element in the HTML page corresponds to the `selector` value.'
+          if(!is.null(reject)) reject(paste('Failed to generate output. Reason:', token$error))
         } else {
           ws$send(to_json(list(
               id = 12, method = "DOM.getBoxModel",
@@ -359,9 +383,12 @@ print_page = function(
     if (!is.null(method)) {
       if (method == "Network.responseReceived") {
         status = as.numeric(msg$params$response$status)
-        if (status >= 400) token$error = sprintf(
-          "Failed to open %s (HTTP status code: %s)", msg$params$response$url, status
-        )
+        if (status >= 400) {
+          token$error = sprintf(
+            'Failed to open %s (HTTP status code: %s)', msg$params$response$url, status
+          )
+          if(!is.null(reject)) reject(paste('Failed to generate output. Reason:', token$error))
+        }
       }
       if (method == "Page.loadEventFired") {
         ws$send(to_json(list(
