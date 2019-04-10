@@ -277,9 +277,9 @@ print_page = function(
 
   ws$onMessage(function(binary, text) {
     if (!is.null(token$error)) {
-      res = ws$close()
+      ws$close()
       reject(token$error)
-      return(res)
+      return()
     }
     if (verbose >= 2) message('Message received from headless Chrome: ', text)
     msg = jsonlite::fromJSON(text)
@@ -287,9 +287,9 @@ print_page = function(
     method = msg$method
 
     if (!is.null(token$error <- msg$error$message)) {
-      res = ws$close()
+      ws$close()
       reject(token$error)
-      return(res)
+      return()
     }
 
     if (!is.null(id)) switch(
