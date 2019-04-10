@@ -39,15 +39,19 @@
 #'   to print out some auxiliary messages (e.g., parameters for capturing
 #'   screenshots); \code{2} (or \code{TRUE}) means all messages, including those
 #'   from the Chrome processes and WebSocket connections.
+#' @param async Execute \code{chrome_print()} asynchronously? If \code{TRUE},
+#'   \code{chrome_print()} returns a \code{\link[promises]{promise}} value (the
+#'   \pkg{promises} package has to be installed in this case).
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
-#' @return Path of the output file (invisibly).
+#' @return Path of the output file (invisibly). If \code{async} is \code{TRUE}, this
+#'   is a \code{\link[promises]{promise}} value.
 #' @export
 chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
-  format = c('pdf', 'png', 'jpeg'), options = list(),
-  selector = 'body', box_model = c('border', 'content', 'margin', 'padding'), scale = 1,
-  work_dir = tempfile(), timeout = 30, extra_args = c('--disable-gpu'), verbose = 0
+  format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
+  box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
+  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE
 ) {
   if (missing(browser)) browser = find_chrome() else {
     if (!file.exists(browser)) browser = Sys.which(browser)
@@ -118,8 +122,30 @@ chrome_print = function(
 
   box_model = match.arg(box_model)
 
+  pr = NULL
+  res_fun = function(value) {} # default: do nothing
+  rej_fun = function(reason) {} # default: do nothing
+  if (async) {
+    pr_print = promises::promise(function(resolve, reject) {
+      res_fun <<- resolve
+      rej_fun <<- function(reason) reject(paste('Failed to generate output. Reason:', reason))
+    })
+    on.exit()
+    pr_timeout = promises::promise(function(resolve, reject) {
+      later::later(
+        ~reject(paste('Failed to generate output in', timeout, 'seconds (timeout).')),
+        timeout
+      )
+    })
+    pr = promises::promise_race(pr_print, pr_timeout)
+    promises::finally(pr, ~ app$cleanup())
+  }
+
   t0 = Sys.time(); token = new.env(parent = emptyenv())
-  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale)
+  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun, rej_fun)
+
+  if (async) return(pr)
+
   while (!isTRUE(token$done)) {
     if (!app$ps$is_alive()) stop('Chrome launched via httpuv crashed')
     if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
@@ -246,17 +272,25 @@ get_entrypoint = function(debug_port) {
 
 print_page = function(
   ws, url, output, wait, verbose, token, format,
-  options = list(), selector, box_model, scale
+  options = list(), selector, box_model, scale, resolve, reject
 ) {
 
   ws$onMessage(function(binary, text) {
-    if (!is.null(token$error)) return(ws$close())
+    if (!is.null(token$error)) {
+      ws$close()
+      reject(token$error)
+      return()
+    }
     if (verbose >= 2) message('Message received from headless Chrome: ', text)
     msg = jsonlite::fromJSON(text)
     id = msg$id
     method = msg$method
 
-    if (!is.null(token$error <- msg$error$message)) return(ws$close())
+    if (!is.null(token$error <- msg$error$message)) {
+      ws$close()
+      reject(token$error)
+      return()
+    }
 
     if (!is.null(id)) switch(
       id,
@@ -278,8 +312,12 @@ print_page = function(
       ws$send(to_json(list(
           id = 6, method= "Page.navigate", params = list(url = url)
       ))),
+      {
       # Command #6 received - check if there is an error when navigating to url
-      token$error <- msg$result$errorText,
+        if(!is.null(token$error <- msg$result$errorText)) {
+          reject(token$error)
+        }
+      },
       {
       # Command #7 received - Test if the html document uses the paged.js polyfill
       # if not, call the binding when fonts are ready
@@ -303,6 +341,7 @@ print_page = function(
         # Command 11 received -> callback: command #12 DOM.getBoxModel
         if (msg$result$nodeId == 0) {
           token$error <- 'No element in the HTML page corresponds to the `selector` value.'
+          reject(token$error)
         } else {
           ws$send(to_json(list(
               id = 12, method = "DOM.getBoxModel",
@@ -337,15 +376,19 @@ print_page = function(
       {
       # Command #13 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
+        resolve(output)
         token$done = TRUE
       }
     )
     if (!is.null(method)) {
       if (method == "Network.responseReceived") {
         status = as.numeric(msg$params$response$status)
-        if (status >= 400) token$error = sprintf(
-          "Failed to open %s (HTTP status code: %s)", msg$params$response$url, status
-        )
+        if (status >= 400) {
+          token$error = sprintf(
+            'Failed to open %s (HTTP status code: %s)', msg$params$response$url, status
+          )
+          reject(token$error)
+        }
       }
       if (method == "Page.loadEventFired") {
         ws$send(to_json(list(

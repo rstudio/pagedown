@@ -19,7 +19,7 @@ Description: Use the paged media properties in CSS and the JavaScript
   reports, papers, business cards, resumes, and posters.
 Imports: rmarkdown (>= 1.11), bookdown (>= 0.8), htmltools, jsonlite, later,
   processx, servr (>= 0.13), httpuv, xfun
-Suggests: testit, xaringan
+Suggests: promises, testit, xaringan
 License: MIT + file LICENSE
 URL: https://github.com/rstudio/pagedown
 BugReports: https://github.com/rstudio/pagedown/issues
