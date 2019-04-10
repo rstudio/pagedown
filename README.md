@@ -53,6 +53,8 @@ Below are some existing R Markdown output formats and examples.
 
 - "Template of Exec Summaries with pagedown" by Joshua David Barillas: https://github.com/jdbarillas/executive_summary
 
+- Ulrik Lyngs's CVs: https://ulyngs.github.io/pagedown-cv/
+
 - Deepak Kumar Tanwar's CV: https://dktanwar.github.io/CV/ds.html
 
 ## Authors and contributors
