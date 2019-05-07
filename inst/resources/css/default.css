@@ -69,6 +69,10 @@ pre {
 pre[class] {
   background: #f9f9f9;
 }
+pre.numberSource a.sourceLine {
+  left: 0 !important;
+  text-indent: -5em
+}
 table {
   margin: auto;
   border-top: 1px solid #666;
