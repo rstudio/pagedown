@@ -57,6 +57,8 @@ Below are some existing R Markdown output formats and examples.
 
 - Deepak Kumar Tanwar's CV: https://dktanwar.github.io/CV/ds.html
 
+- Jiena Gu McLellan's CV: https://github.com/jienagu/Jiena_McLellan_CV
+
 ## Authors and contributors
 
 The main authors of this package are Yihui Xie (RStudio) and Romain Lesur. Romain has received a grant from the Shuttleworth Foundation for his work on both Paged.js and **pagedown**.
