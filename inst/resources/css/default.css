@@ -69,6 +69,14 @@ pre {
 pre[class] {
   background: #f9f9f9;
 }
+@media screen {
+  div.sourceCode {
+    overflow: visible !important;
+  }
+  a.sourceLine::before { 
+    text-decoration: unset !important; 
+  }
+}
 pre.numberSource a.sourceLine {
   left: 0 !important;
   text-indent: -5em
