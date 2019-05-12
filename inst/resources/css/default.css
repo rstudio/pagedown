@@ -81,6 +81,9 @@ pre.numberSource a.sourceLine {
   left: 0 !important;
   text-indent: -5em
 }
+pre.numberSource {
+  margin-left: 0 !important;
+}
 table {
   margin: auto;
   border-top: 1px solid #666;
