@@ -1,5 +1,5 @@
 ---
-title: A thesis template for HTML R Markdown user's
+title: A paged html thesis template for R Markdown user's
 subtitle: A {pagedown} template.
 author: 
   - name: William Brent Thorne
@@ -48,9 +48,27 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.align = 'center')
 ```
 
+```{js}
+  Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+  }
+  beforeParsed(content) {
+    const tocAnchors = content.querySelectorAll('.toc a[href^="#"]:not([href*=":"]');
+    for(let anchor of tocAnchors) {
+      const ref = anchor.getAttribute('href').replace(/^#/, '');
+      const element = content.getElementById(ref);
+      if(element.classList.contains('chapter')) {
+        anchor.classList.add('chapter-ref');
+      }
+    }
+  }
+});
+```
+
 # Literature Review {-}
 
-This is where you can include a lit review if you dont which for it to be an individual chapter.
+This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered.
 
 ```{r child = 'chap1.Rmd'}
 ```

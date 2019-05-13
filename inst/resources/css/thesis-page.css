@@ -119,7 +119,6 @@ content: none;
 content: counter(page, lower-roman);
 }
 }
-
 /* page breaks; aka CSS fragmentation */
 .level1 {
 page: chapter;
@@ -137,11 +136,14 @@ break-after: always;
 .figure {
 break-inside: avoid;
 }
-
+#TOC {
+counter-reset: page;
+}
 /* reset page numbering after front matter */
 .front-matter-container+.level1 h1 {
 counter-reset: page;
 }
+
 a[href^="http"]:not([class="uri"])::after {
   content: "";
 }
@@ -159,6 +161,7 @@ div.acknowledge {
 }
 div.signpage {
   break-before: page;
+  counter-reset: page;
 }
 .front-page {
   padding-top: 1in;
@@ -224,6 +227,8 @@ font-style: italic;
 .caption {
 font-size: 9pt;
 line-height: normal;
+padding-left: 1cm;
+padding-right: 1cm;
 }
 #references p {
 font-size: 9pt;
@@ -248,11 +253,12 @@ code {
 p {
   line-height: 200%;
 }
-.toc-section-number span:before {
+.chapter > h1:before, .chapter-ref::before {
   content: "Chapter ";
 }
-.chapter > h1:before {
-  content: "Chapter ";
+.chapter-ref {
+  font-weight: bold;
+  line-height: 250%;
 }
 :root {
   --background: whitesmoke;
@@ -311,6 +317,15 @@ a[href^="http"]:not([class="uri"])::after {
   white-space: nowrap;
   content: ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ";
 }
+/* Use empty space for sections that are of
+class chapter and chapter-ref*/
+.toc .chapter-ref .leaders::before {
+  float: left;
+  width: 0;
+  white-space: nowrap;
+  content: "                                                                                                                                                                                ";
+}
+
 
 /* misc elements */
 .subtitle span {
