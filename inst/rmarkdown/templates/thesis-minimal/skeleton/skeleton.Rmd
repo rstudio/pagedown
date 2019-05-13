@@ -1,0 +1,36 @@
+---
+title: A thesis template for HTML R Markdown user's
+subtitle: A {pagedown} template.
+author: 
+  - name: William Brent Thorne
+    edu: BSc
+degree: Master of Science
+specialty: Earth Science
+institute: Brock University
+faculty: Mathematics and Science
+department: Earth Science
+location: St. Catharines, ON 
+date:
+  - year: 2019
+    month: August
+committee:
+  - name: Jane Doe III
+    prefix: Dr
+    position: Chair of Department
+output:
+  pagedown::thesis_minimal: 
+    toc: true
+    number_sections: yes
+    pandoc_args: --mathjax
+    self_contained: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set()
+```
+
+# A Minimal Thesis Template {.chapter}
+
+Please refer to [pagedown::html_thesis](https://github.com/rstudio/pagedown) to see a full example of how the thesis template can be utilized. For example it shows how to us a seperate `.Rmd` file for each chapter of your thesis so you can focus on them individually.
+
+This template was created by [Brent Thorne](https://github.com/brentthorne) and was inspired by his inability to cope with writting a master's thesis in MS Word. 

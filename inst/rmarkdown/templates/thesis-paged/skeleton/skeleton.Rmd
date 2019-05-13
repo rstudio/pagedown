@@ -1,0 +1,69 @@
+---
+title: A thesis template for HTML R Markdown user's
+subtitle: A {pagedown} template.
+author: 
+  - name: William Brent Thorne
+    edu: BSc
+degree: Master of Science
+specialty: Earth Science
+institute: Brock University
+faculty: Mathematics and Science
+department: Earth Science
+location: St. Catharines, ON 
+date:
+  - year: 2019
+    month: August
+sign_page: true
+dedication: |
+  `r paste(readLines("dedication.Rmd"), collapse = '\n  ')`
+abstract: | 
+  `r paste(readLines("abstract.Rmd"), collapse = '\n  ')`
+preface: |
+  `r paste(readLines("preface.Rmd"), collapse = '\n  ')`
+acknowledge: |
+  `r paste(readLines("acknowledge.Rmd"), collapse = '\n  ')`
+committee:
+  - name: Jane Doe III
+    prefix: Dr
+    position: Chair of Department
+  - name: John Smith
+    prefix: Dr
+    position: Faculty Advisor
+toc-title: Contents
+lof-title: Figures
+lof: true
+lot: true
+output:
+  pagedown::thesis_paged: 
+    toc: true
+    number_sections: yes
+    pandoc_args: --mathjax
+    self_contained: no
+bibliography: Thesis.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      fig.align = 'center')
+```
+
+# Literature Review {-}
+
+This is where you can include a lit review if you dont which for it to be an individual chapter.
+
+```{r child = 'chap1.Rmd'}
+```
+
+```{r child = 'chap2.Rmd'}
+```
+
+```{r child = 'chap3.Rmd'}
+```
+
+# References {-}
+
+<div id="refs"></div>
+
+```{r child = 'append1.Rmd'}
+```

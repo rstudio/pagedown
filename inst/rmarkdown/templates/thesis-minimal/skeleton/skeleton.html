@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta name="viewport" content="width=device-width">
+<meta property="og:title" content="A thesis template for HTML R Markdown user’s" />
+
+
+
+
+
+
+<meta name="description" content="A thesis template for HTML R Markdown user’s">
+
+<title>A thesis template for HTML R Markdown user’s</title>
+
+
+<link href="skeleton_files/paged-0.2.5/css/thesis-page.css" rel="stylesheet" />
+<script src="skeleton_files/paged-0.2.5/js/config.js"></script>
+<script src="skeleton_files/paged-0.2.5/js/paged.js"></script>
+<script src="skeleton_files/paged-0.2.5/js/hooks.js"></script>
+
+
+
+
+</head>
+
+<body>
+
+<div class="running-h1-title"></div>
+
+<div class="running-h2-title"></div>
+
+
+
+<!--
+Title Page
+-->
+<div class="front-page">
+<div id="header" class="title-page">
+<h1 class="title">A thesis template for HTML R Markdown user’s</h1>
+<h1 class="subtitle"><span>A {pagedown} template.</span></h1>
+<br><p class="titlep">by<p><br>
+<h2 class="author">William Brent Thorne, BSc</h2>
+</div>
+<br>
+<p class="department">Department of Earth Science</p>
+<br>
+<p class="titlep">Submitted in partial fulfillment of <br> the requirements for the degree of</p>
+<br>
+<h2 class="degree">Master of Science</h2>
+<br>
+<p class="institute">Faculty of Mathematics and Science, Brock University<br>St. Catharines, ON</p>
+<br>
+<p class="copyright">&#169; 2019 William Brent Thorne</p>
+
+<!--
+Bellow is the signature page
+if the user wants one the YAML
+should be "sign_page: true" -->
+
+
+<!-- Pre content section
+-Example, if user want a dedication page then they include "dedication: 'some text' in the YAML"
+-If you want other pages not found in this template simply add it to this section in the same way
+using the ""
+-->
+
+
+
+
+
+</div>
+
+<!-- This
+Container for the table of content, table of tables and table of figures etc.
+- See pagedown::html_paged for details on how to use.
+-->
+
+<div class="front-matter-container">
+
+<div id="TOC" class="level1 toc front-matter">
+<ul>
+<li><a href="#a-minimal-thesis-template"><span class="toc-section-number">1</span> A Minimal Thesis Template</a></li>
+</ul>
+</div>
+</div>
+
+<div id="a-minimal-thesis-template" class="section level1 chapter">
+<h1><span class="header-section-number">1</span> A Minimal Thesis Template</h1>
+<p>Please refer to <a href="https://github.com/rstudio/pagedown">pagedown::html_thesis</a> to see a full example of how the thesis template can be utilized. For example it shows how to us a seperate <code>.Rmd</code> file for each chapter of your thesis so you can focus on them individually.</p>
+<p>This template was created by <a href="https://github.com/brentthorne">Brent Thorne</a> and was inspired by his inability to cope with writting a master’s thesis in MS Word.</p>
+</div>
+
+
+
+<script>
+// when the page is about to reload via servr, remember the scroll position
+document.addEventListener('servr:reload', function(e) {
+  sessionStorage.setItem('pagedown-scroll', window.scrollY);
+});
+</script>
+</body>
+</html>
