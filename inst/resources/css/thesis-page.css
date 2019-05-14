@@ -238,6 +238,7 @@ span.citation {
 }
 code {
   font-size: 9pt;
+  line-height: 110%;
 }
 .signature {
   border: 0;
@@ -272,7 +273,6 @@ p {
 
 /* generated content */
 a[href^="http"]:not([class="uri"])::after {
-  content: " (" attr(href) ")";
   font-size: 90%;
   hyphens: none;
   word-break: break-all;

@@ -4,11 +4,10 @@ subtitle: A {pagedown} template.
 author: 
   - name: William Brent Thorne
     edu: BSc
-degree: Master of Science
-specialty: Earth Science
-institute: Brock University
-faculty: Mathematics and Science
-department: Earth Science
+degree: Master of Documentation
+institute: Typeset University
+faculty: Reproducibility and FOSS
+department: Templates
 location: St. Catharines, ON 
 date:
   - year: 2019
@@ -48,27 +47,17 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.align = 'center')
 ```
 
-```{js}
-  Paged.registerHandlers(class extends Paged.Handler {
-  constructor(chunker, polisher, caller) {
-    super(chunker, polisher, caller);
-  }
-  beforeParsed(content) {
-    const tocAnchors = content.querySelectorAll('.toc a[href^="#"]:not([href*=":"]');
-    for(let anchor of tocAnchors) {
-      const ref = anchor.getAttribute('href').replace(/^#/, '');
-      const element = content.getElementById(ref);
-      if(element.classList.contains('chapter')) {
-        anchor.classList.add('chapter-ref');
-      }
-    }
-  }
-});
-```
-
 # Literature Review {-}
 
-This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered.
+This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
+
+_**rmarkdown**_:
+
+```markdown
+# Literature Review {-}
+
+This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
+```
 
 ```{r child = 'chap1.Rmd'}
 ```

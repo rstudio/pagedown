@@ -4,6 +4,22 @@
 
 This template is based on the `pagedown::html_paged` template and modified to meet the requirements of a generic thesis document. Standard RMarkdown formatting can be used for smooth and distraction free writting, for example I will add a citation for the {knitr} package which is located in the `Thesis.bib` file auto-generated in this template [@knitr2014].
 
+Thanks to the [help](https://github.com/rstudio/pagedown/issues/101) of [Romain Lesur](https://github.com/RLesur) this template has the ability to tag section headers with the word "Chapter ". To have your chapters display as this one (_Chapter 1 The Basics_) use the `{.chapter}` class like this:
+
+_**rmarkdown**_
+```markdown
+---
+output:
+  pagedown::thesis_paged
+    number_Sections: yes
+---
+# The Basics {.chapter}
+
+## Introduction
+
+This template is based on the `pagedown::html_paged` template...
+```
+
 ## Second level heading
 
 Here is some code and a plot, with a figure caption, Figure \@ref(fig:code):

@@ -107,3 +107,20 @@ Paged.registerHandlers(class extends Paged.Handler {
     }
   }
 });
+
+// Support for "Chapter " label on section with class `.chapter`
+Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+  }
+  beforeParsed(content) {
+    const tocAnchors = content.querySelectorAll('.toc a[href^="#"]:not([href*=":"]');
+    for(let anchor of tocAnchors) {
+      const ref = anchor.getAttribute('href').replace(/^#/, '');
+      const element = content.getElementById(ref);
+      if(element.classList.contains('chapter')) {
+        anchor.classList.add('chapter-ref');
+      }
+    }
+  }
+});
