@@ -38,5 +38,5 @@ thesis_paged = function(
 thesis_minimal = function(
   ...
 ) {
-  html_thesis(...)
+  thesis_paged(...)
 }
