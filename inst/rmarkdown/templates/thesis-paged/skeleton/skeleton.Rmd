@@ -13,8 +13,7 @@ date:
   - year: 2019
     month: August
 sign_page: true
-dedication: |
-  `r paste(readLines("dedication.Rmd"), collapse = '\n  ')`
+dedication: "`r paste(readLines('dedication.Rmd'), collapse = '\n  ')`"
 abstract: | 
   `r paste(readLines("abstract.Rmd"), collapse = '\n  ')`
 preface: |
