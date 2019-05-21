@@ -184,7 +184,7 @@ find_chrome = function() {
     unix = if (xfun::is_macos()) {
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
     } else {
-      for (i in c('google-chrome', 'chromium-browser', 'chromium')) {
+      for (i in c('google-chrome', 'chromium-browser', 'chromium', 'google-chrome-stable')) {
         if ((res <- Sys.which(i)) != '') break
       }
       if (res == '') stop('Cannot find Chromium or Google Chrome')
