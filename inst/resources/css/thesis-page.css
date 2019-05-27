@@ -204,7 +204,7 @@ p.abstract {
 }
 body {
   font-family: "Trebuchet MS";
-  font-size: 12pt;
+  font-size: 11pt;
   line-height: 200%;
 }
 TOC {
@@ -259,7 +259,14 @@ p {
 }
 .chapter-ref {
   font-weight: bold;
-  line-height: 250%;
+  line-height: 115%;
+}
+a.chapter-ref {
+  padding: 0;
+  line-height: 110%;
+}
+#list-of-abbreviations {
+  line-height: 110%;
 }
 :root {
   --background: whitesmoke;
@@ -286,7 +293,11 @@ a[href^="http"]:not([class="uri"])::after {
 .main a.front-matter-ref[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
   content: " (page " target-counter(attr(href), page, lower-roman) ")";
 }
-
+#refs div {
+  margin-left: 2em;
+  text-indent: -2em;
+  text-align: justify;
+}
 /* TOC, LOT, LOF */
 .toc ul, .lot ul, .lof ul {
   list-style: none;
@@ -379,7 +390,9 @@ body {
 code {
   hyphens: none;
 }
-
+.sourceCode {
+  line-height: 1;
+}
 /* two pages in a row if possible on screen */
 @media screen {
   body {

@@ -13,7 +13,8 @@ date:
   - year: 2019
     month: August
 sign_page: true
-dedication: This is the dedication.
+dedication: |
+  `r paste(readLines("dedication.Rmd"), collapse = '\n  ')`
 abstract: | 
   `r paste(readLines("abstract.Rmd"), collapse = '\n  ')`
 preface: |
@@ -27,8 +28,6 @@ committee:
   - name: John Smith
     prefix: Dr
     position: Faculty Advisor
-toc-title: Contents
-lof-title: Figures
 lof: true
 lot: true
 output:
@@ -46,6 +45,7 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.align = 'center')
 ```
 
+
 # Literature Review {-}
 
 This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
@@ -58,6 +58,9 @@ _**rmarkdown**_:
 This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
 ```
 
+Pagedown uses <abbr title="HyperText Markup Language">HTML</abbr>, <abbr title="Cascading Style Sheets">CSS</abbr> and <abbr title="JavaScript">JS</abbr> to paginate documents.
+
+
 ```{r child = 'chap1.Rmd'}
 ```
 
@@ -69,6 +72,9 @@ This is where you can include a lit review if you don't whish for it to be an in
 
 # References {-}
 
+<!-- This '<div id="refs"></div>' needs to 
+be here if you have appendix pages 
+otherwise you can remove it.-->
 <div id="refs"></div>
 
 ```{r child = 'append1.Rmd'}

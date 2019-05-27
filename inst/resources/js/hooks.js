@@ -108,6 +108,7 @@ Paged.registerHandlers(class extends Paged.Handler {
   }
 });
 
+
 // Support for "Chapter " label on section with class `.chapter`
 Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
@@ -121,6 +122,34 @@ Paged.registerHandlers(class extends Paged.Handler {
       if(element.classList.contains('chapter')) {
         anchor.classList.add('chapter-ref');
       }
+    }
+  }
+});
+
+
+// add abbreviations
+Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+  }
+  beforeParsed(content) {
+    const abbreviations = content.querySelectorAll('abbr');
+    if(!abbreviations) return;
+    let listOfAbbreviations = document.createElement('div');
+    let descriptionList = document.createElement('dl');
+    content.querySelector('.front-matter-container').appendChild(listOfAbbreviations);
+    listOfAbbreviations.id = 'list-of-abbreviations';
+    listOfAbbreviations.classList.add('section', 'level1');
+    listOfAbbreviations.innerHTML = '<h1>List of Abbreviations</h1>';
+    listOfAbbreviations.appendChild(descriptionList);
+    for(let abbr of abbreviations) {
+      if(!abbr.title) continue;
+      let term = document.createElement('dt');
+      let definition = document.createElement('dd');
+      descriptionList.appendChild(term);
+      descriptionList.appendChild(definition);
+      term.innerHTML = abbr.innerHTML;
+      definition.innerText = abbr.title;
     }
   }
 });

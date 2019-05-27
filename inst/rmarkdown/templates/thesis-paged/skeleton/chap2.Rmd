@@ -14,3 +14,4 @@ You can easyly add tables to this document like so:
 knitr::kable(iris[1:4,1:5], align = 'c',caption = 'A caption for the table.',col.names = c("Sepal L","Sepal W", "Petal L", "Petal W", "Species"))
 ```
 
+Here is the abbreviation for my name: <abbr title="Brent Thorne">BT</abbr>
