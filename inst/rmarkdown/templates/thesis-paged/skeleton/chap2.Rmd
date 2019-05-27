@@ -8,7 +8,7 @@ $$
 
 ## Adding Tables
 
-You can easyly add tables to this document like so:
+You can easyly add tables to this document like so, Table \@ref(tab:atable):
 
 ```{r atable}
 knitr::kable(iris[1:4,1:5], align = 'c',caption = 'A caption for the table.',col.names = c("Sepal L","Sepal W", "Petal L", "Petal W", "Species"))
