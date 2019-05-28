@@ -134,12 +134,12 @@ Paged.registerHandlers(class extends Paged.Handler {
   }
   beforeParsed(content) {
     const abbreviations = content.querySelectorAll('abbr');
-    if(!abbreviations) return;
+    if(abbreviations.length === 0) return;
     let listOfAbbreviations = document.createElement('div');
     let descriptionList = document.createElement('dl');
     content.querySelector('.front-matter-container').appendChild(listOfAbbreviations);
     listOfAbbreviations.id = 'list-of-abbreviations';
-    listOfAbbreviations.classList.add('section', 'level1');
+    listOfAbbreviations.classList.add('section', 'front-matter', 'level1');
     listOfAbbreviations.innerHTML = '<h1>List of Abbreviations</h1>';
     listOfAbbreviations.appendChild(descriptionList);
     for(let abbr of abbreviations) {

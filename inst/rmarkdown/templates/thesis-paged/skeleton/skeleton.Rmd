@@ -59,8 +59,6 @@ _**rmarkdown**_:
 This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
 ```
 
-Pagedown uses <abbr title="HyperText Markup Language">HTML</abbr>, <abbr title="Cascading Style Sheets">CSS</abbr> and <abbr title="JavaScript">JS</abbr> to paginate documents, Tble \@ref(tab:btable)
-
 ```{r btable}
 knitr::kable(iris[1:4,1:5], align = 'c',caption = 'A non nested table and its caption for the table.',col.names = c("Sepal L","Sepal W", "Petal L", "Petal W", "Species"))
 ```
