@@ -1,5 +1,118 @@
 // Hooks for paged.js
 
+// This hook moves the sections of class front-matter in the div.front-matter-container
+Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+  }
+
+  beforeParsed(content) {
+    const frontMatter = content.querySelector('.front-matter-container');
+    if (!frontMatter) return;
+    const items = content.querySelectorAll('.level1.front-matter');
+    for (const item of items) {
+      frontMatter.appendChild(item);
+    }
+  }
+});
+
+// This hook adds the class front-matter-ref to any <a></a> element
+// referring to an entry in the front matter
+Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+  }
+
+  beforeParsed(content) {
+    const frontMatter = content.querySelector('.front-matter-container');
+    if (!frontMatter) return;
+    const anchors = content.querySelectorAll('a[href^="#"]:not([href*=":"])');
+    for (const a of anchors) {
+      const ref = a.getAttribute('href').replace(/^#/, '');
+      const element = content.getElementById(ref);
+      if (frontMatter.contains(element)) a.classList.add('front-matter-ref');
+    }
+  }
+});
+
+// This hook expands the links in the lists of figures and tables
+Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+  }
+
+  beforeParsed(content) {
+    const items = content.querySelectorAll('.lof li, .lot li');
+    for (const item of items) {
+      const anchor = item.firstChild;
+      anchor.innerText = item.innerText;
+      item.innerText = '';
+      item.append(anchor);
+    }
+  }
+});
+
+// This hook adds spans for leading symbols
+Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+  }
+
+  beforeParsed(content) {
+    const anchors = content.querySelectorAll('.toc a, .lof a, .lot a');
+    for (const a of anchors) {
+      a.innerHTML = a.innerHTML + '<span class="leaders"></span>';
+    }
+  }
+});
+
+// This hook appends short titles spans
+Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+  }
+
+  beforeParsed(content) {
+  /* A factory returning a function that appends short titles spans.
+     The text content of these spans are reused for running titles (see default.css).
+     Argument: level - An integer between 1 and 6.
+  */
+  function appendShortTitleSpans(level) {
+    return () => {
+      const divs = Array.from(content.querySelectorAll('.level' + level));
+
+      function addSpan(div) {
+        const mainHeader = div.getElementsByTagName('h' + level)[0];
+        if (!mainHeader) return;
+        const mainTitle = mainHeader.textContent;
+        const spanSectionNumber = mainHeader.getElementsByClassName('header-section-number')[0];
+        const mainNumber = !!spanSectionNumber ? spanSectionNumber.textContent : '';
+        const runningTitle = 'shortTitle' in div.dataset ? mainNumber + ' ' + div.dataset.shortTitle : mainTitle;
+        const span = document.createElement('span');
+        span.className = 'shorttitle' + level;
+        span.innerText = runningTitle;
+        span.style.display = "none";
+        mainHeader.insertAdjacentElement('afterend', span);
+        if (level == 1 && div.querySelector('.level2') === null) {
+          var span2 = document.createElement('span');
+          span2.className = 'shorttitle2';
+          span2.innerText = ' ';
+          span2.style.display = "none";
+          span.insertAdjacentElement('afterend', span2);
+        }
+      }
+
+      for (const div of divs) {
+        addSpan(div);
+      }
+    };
+  }
+
+  appendShortTitleSpans(1)();
+  appendShortTitleSpans(2)();
+  }
+});
+
 // Footnotes support
 Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
