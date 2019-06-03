@@ -9,43 +9,28 @@ Paged.registerHandlers(class extends Paged.Handler {
   beforeParsed(content) {
     const frontMatter = content.querySelector('.front-matter-container');
     if (!frontMatter) return;
-    const items = content.querySelectorAll('.level1.front-matter');
-    for (const item of items) {
-      frontMatter.appendChild(item);
+
+    // move front matter sections in the front matter container
+    const frontMatterSections = content.querySelectorAll('.level1.front-matter');
+    for (const section of frontMatterSections) {
+      frontMatter.appendChild(section);
     }
-  }
-});
 
-// This hook adds the class front-matter-ref to any <a></a> element
-// referring to an entry in the front matter
-Paged.registerHandlers(class extends Paged.Handler {
-  constructor(chunker, polisher, caller) {
-    super(chunker, polisher, caller);
-  }
-
-  beforeParsed(content) {
-    const frontMatter = content.querySelector('.front-matter-container');
-    if (!frontMatter) return;
+    // add the class front-matter-ref to any <a></a> element
+    // referring to an entry in the front matter
     const anchors = content.querySelectorAll('a[href^="#"]:not([href*=":"])');
     for (const a of anchors) {
       const ref = a.getAttribute('href').replace(/^#/, '');
       const element = content.getElementById(ref);
       if (frontMatter.contains(element)) a.classList.add('front-matter-ref');
     }
-  }
-});
 
-// This hook updates the toc, lof and lot for front matter sections
-Paged.registerHandlers(class extends Paged.Handler {
-  constructor(chunker, polisher, caller) {
-    super(chunker, polisher, caller);
-  }
-
-  beforeParsed(content) {
-    const anchors = content.querySelectorAll('.toc .front-matter-ref, .lof .front-matter-ref, .lot .front-matter-ref');
-    for (let i = anchors.length - 1; i >= 0; i--) {
-      const list = anchors[i].parentNode.parentNode;
-      list.insertBefore(anchors[i].parentNode, list.firstChild);
+    // update the toc, lof and lot for front matter sections
+    const frontMatterSectionsLinks = content.querySelectorAll('.toc .front-matter-ref, .lof .front-matter-ref, .lot .front-matter-ref');
+    for (let i = frontMatterSectionsLinks.length - 1; i >= 0; i--) {
+      const listItem = frontMatterSectionsLinks[i].parentNode;
+      const list = listItem.parentNode;
+      list.insertBefore(listItem, list.firstChild);
     }
   }
 });
