@@ -35,6 +35,21 @@ Paged.registerHandlers(class extends Paged.Handler {
   }
 });
 
+// This hook updates the toc, lof and lot for front matter sections
+Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+  }
+
+  beforeParsed(content) {
+    const anchors = content.querySelectorAll('.toc .front-matter-ref, .lof .front-matter-ref, .lot .front-matter-ref');
+    for (let i = anchors.length - 1; i >= 0; i--) {
+      const list = anchors[i].parentNode.parentNode;
+      list.insertBefore(anchors[i].parentNode, list.firstChild);
+    }
+  }
+});
+
 // This hook expands the links in the lists of figures and tables
 Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
