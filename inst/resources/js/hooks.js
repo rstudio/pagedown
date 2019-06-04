@@ -1,5 +1,41 @@
 // Hooks for paged.js
 
+// This hook creates a list of abbreviations
+// Note: we also could implement this feature using a Pandoc filter
+Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+  }
+  beforeParsed(content) {
+    const abbreviations = content.querySelectorAll('abbr');
+    if(abbreviations.length === 0) return;
+    const loaTitle = 'List of Abbreviations';
+    const loaId = 'LOA';
+    const tocList = content.querySelector('.toc ul');
+    let listOfAbbreviations = document.createElement('div');
+    let descriptionList = document.createElement('dl');
+    content.appendChild(listOfAbbreviations);
+    listOfAbbreviations.id = loaId;
+    listOfAbbreviations.classList.add('section', 'front-matter', 'level1', 'loa');
+    listOfAbbreviations.innerHTML = '<h1>' + loaTitle + '</h1>';
+    listOfAbbreviations.appendChild(descriptionList);
+    for(let abbr of abbreviations) {
+      if(!abbr.title) continue;
+      let term = document.createElement('dt');
+      let definition = document.createElement('dd');
+      descriptionList.appendChild(term);
+      descriptionList.appendChild(definition);
+      term.innerHTML = abbr.innerHTML;
+      definition.innerText = abbr.title;
+    }
+    if (tocList) {
+      const loaTOCItem = document.createElement('li');
+      loaTOCItem.innerHTML = '<a href="#' + loaId + '">' + loaTitle + '</a>';
+      tocList.appendChild(loaTOCItem);
+    }
+  }
+});
+
 // This hook moves the sections of class front-matter in the div.front-matter-container
 Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
@@ -239,30 +275,3 @@ Paged.registerHandlers(class extends Paged.Handler {
   }
 });
 
-
-// add abbreviations
-Paged.registerHandlers(class extends Paged.Handler {
-  constructor(chunker, polisher, caller) {
-    super(chunker, polisher, caller);
-  }
-  beforeParsed(content) {
-    const abbreviations = content.querySelectorAll('abbr');
-    if(abbreviations.length === 0) return;
-    let listOfAbbreviations = document.createElement('div');
-    let descriptionList = document.createElement('dl');
-    content.querySelector('.front-matter-container').appendChild(listOfAbbreviations);
-    listOfAbbreviations.id = 'list-of-abbreviations';
-    listOfAbbreviations.classList.add('section', 'front-matter', 'level1');
-    listOfAbbreviations.innerHTML = '<h1>List of Abbreviations</h1>';
-    listOfAbbreviations.appendChild(descriptionList);
-    for(let abbr of abbreviations) {
-      if(!abbr.title) continue;
-      let term = document.createElement('dt');
-      let definition = document.createElement('dd');
-      descriptionList.appendChild(term);
-      descriptionList.appendChild(definition);
-      term.innerHTML = abbr.innerHTML;
-      definition.innerText = abbr.title;
-    }
-  }
-});
