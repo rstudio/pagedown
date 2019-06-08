@@ -2,6 +2,11 @@ setwd('inst/examples')
 
 options(htmltools.dir.version = FALSE)
 
+# generate index.html and zh-CN.html first
+for (f in list.files('.', '[.]Rmd$')) {
+  rmarkdown::render(f, output_options = list(self_contained = FALSE))
+}
+
 for (tpl in list.files('../rmarkdown/templates', full.names = TRUE)) {
   f = list.files(paste0(tpl, '/skeleton'), recursive = TRUE, full.names = TRUE)
   file.copy(f, '.')
