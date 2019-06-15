@@ -21,8 +21,8 @@
 #' @import stats utils
 #' @export
 thesis_paged = function(
-  ..., css = c('thesis-page'), theme = NULL,
-  template = pkg_resource('html', 'thesis.html'), csl = NULL
+  ..., css = c('thesis-page'),
+  template = pkg_resource('html', 'thesis.html')
 ) {
   html_paged(...,
              css = css,
