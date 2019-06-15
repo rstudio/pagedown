@@ -126,7 +126,7 @@ html_format = function(
 #' @return An R Markdown output format.
 #' @export
 thesis_paged = function(
-  ..., css = c('thesis-page'), template = pkg_resource('html', 'thesis.html')
+  ..., css = c('thesis'), template = pkg_resource('html', 'thesis.html')
 ) {
   html_paged(..., css = css, template = template)
 }

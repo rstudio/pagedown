@@ -4,7 +4,8 @@
 \alias{thesis_paged}
 \title{Create a paged HTML thesis document suitable for printing}
 \usage{
-thesis_paged(..., css = c("thesis-page"), template = pkg_resource("html", "thesis.html"))
+thesis_paged(..., css = c("thesis"), template = pkg_resource("html",
+  "thesis.html"))
 }
 \arguments{
 \item{..., css, template}{Arguments passed to \code{\link{html_paged}()}.}
@@ -14,6 +15,6 @@ An R Markdown output format.
 }
 \description{
 This output format is similar to \code{\link{html_paged}}. The only
-difference is in the default stylesheets and template. See
+difference is in the default stylesheets and Pandoc template. See
 \url{https://pagedown.rbind.io/thesis-paged/} for an example.
 }
