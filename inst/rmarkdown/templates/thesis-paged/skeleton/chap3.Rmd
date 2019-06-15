@@ -1,11 +1,11 @@
 # The final chapter to my pretend thesis {.chapter}
 
-There are still a few features that would be nice to implament in the future for this template. For instance:
+There are still a few features that would be nice to implement in the future for this template. For instance:
 
 1. It would be great to have the ability to use the [{redoc}](https://github.com/noamross/redoc) package to help those who have the ever dreaded "USE WORD ONLY" supervisors.
 
-2. It would also be great to have the ability to generate a _Reference_ section for each _Chapter_ for those who are writting in the "integrated artcile" format.
+2. It would also be great to have the ability to generate a _Reference_ section for each _Chapter_ for those who are writing in the "integrated article" format.
 
-3. Along with that, it would be great to pull the YAML data from a child .Rmd file and use it as a way to add the Chapter titles and any other subsiquent information (for example a thesis chapter can often actually be a full manuscript and or published paper which would need to have all author's listed for that chapter specifically as well as the journal publication information/ citation data)
+3. Along with that, it would be great to pull the YAML data from a child .Rmd file and use it as a way to add the Chapter titles and any other subsequent information (for example a thesis chapter can often actually be a full manuscript and or published paper which would need to have all author's listed for that chapter specifically as well as the journal publication information/ citation data).
 
-4. A table of abbreviations and _list of formulas_, which is being worked on but is not yet implamented 
+

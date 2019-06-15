@@ -1,6 +1,0 @@
-# APPENDIX A {-}
-
-```{r}
-knitr::kable(iris[1:20,1:5], align = 'c',col.names = c("Sepal L","Sepal W", "Petal L", "Petal W", "Species"))
-```
-

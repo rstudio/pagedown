@@ -28,15 +28,3 @@ thesis_paged = function(
              css = css,
              template = template)
 }
-
-#' @description The output format \code{thesis_minimal} provides a minamal Rmd
-#'   file so that power user's can "just go". See
-#'   \url{https://pagedown.rbind.io/thesis-paged/} for a bloatted example of
-#'   what this template can achieve.
-#' @rdname thesis_paged
-#' @export
-thesis_minimal = function(
-  ...
-) {
-  thesis_paged(...)
-}

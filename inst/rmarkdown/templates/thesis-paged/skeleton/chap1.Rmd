@@ -31,3 +31,5 @@ plot(iris$Sepal.Length,
      col=iris$Species, pch=19)
 ```
 
+Here is an example of an abbreviation where I use the `<abbr>` html tag <abbr title="Brent Thorne">BT</abbr>. In the future there may be a pandoc solution to abbreviation management, however <abbr title="Hyper Text Markup Language">HTML</abbr> is the way to go for now.
+
