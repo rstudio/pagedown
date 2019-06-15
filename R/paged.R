@@ -116,3 +116,31 @@ html_format = function(
     ..., css = css, template = template, pandoc_args = c(.pandoc_args, pandoc_args)
   )
 }
+
+#' Create a paged HTML thesis document suitable for printing
+#'
+#' This is an output format based on \code{bookdown::html_document2} (which
+#' means you can use those Markdown features added by \pkg{bookdown}). The HTML
+#' output document is split into multiple pages via a JavaScript library
+#' \pkg{paged.js}. These pages contain elements commonly seen in PDF documents,
+#' such as page numbers and running headers.
+#' @param ... Arguments passed to
+#'   \code{bookdown::\link[bookdown]{html_document2}}.
+#' @param css A character vector of CSS file paths. If a path does not contain
+#'   the \file{.css} extension, it is assumed to be a built-in CSS file. For
+#'   example, \code{default-fonts} means the file
+#'   \code{pagedown:::pkg_resource('css', 'default-fonts.css')}. To see all
+#'   built-in CSS files, run \code{pagedown:::list_css()}.
+#' @param template The path to the Pandoc template to convert Markdown to HTML.
+#' @references \url{https://pagedown.rbind.io}
+#' @return An R Markdown thesis output format.
+#' @import stats utils
+#' @export
+thesis_paged = function(
+  ..., css = c('thesis-page'),
+  template = pkg_resource('html', 'thesis.html')
+) {
+  html_paged(...,
+             css = css,
+             template = template)
+}
