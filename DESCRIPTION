@@ -7,11 +7,12 @@ Authors@R: c(
   person("Romain", "Lesur", role = c("aut", "cph"), comment = c(ORCID = "0000-0002-0721-5595")),
   person("Christophe", "Dervieux", role = c("ctb"), comment = c(ORCID = "0000-0003-4474-2498")),
   person("Atsushi", "Yasumoto", role = c("ctb"), comment = c(ORCID = "0000-0002-8335-495X")),
+  person("Brent", "Thorne", role = "ctb", comment = c(ORCID = "0000-0002-1099-3857")),
   person(family = "RStudio, Inc.", role = "cph"),
   person("Adam", "Hyde", role = "ctb", comment = "paged.js in resources/js/"),
   person("Min-Zhong", "Lu", role = "ctb", comment = "resume.css in resources/css/"),
   person("Zulko", role = "ctb", comment = "poster-relaxed.css in resources/css/"),
-  person("Brent", "Thorne", role = "ctb", comment = c(ORCID = "0000-0002-1099-3857"))
+  person()
   )
 Description: Use the paged media properties in CSS and the JavaScript
   library 'paged.js' to split the content of an HTML document into discrete
