@@ -4,31 +4,16 @@
 \alias{thesis_paged}
 \title{Create a paged HTML thesis document suitable for printing}
 \usage{
-thesis_paged(..., css = c("thesis-page"),
-  template = pkg_resource("html", "thesis.html"))
+thesis_paged(..., css = c("thesis-page"), template = pkg_resource("html", "thesis.html"))
 }
 \arguments{
-\item{...}{Arguments passed to
-\code{bookdown::\link[bookdown]{html_document2}}.}
-
-\item{css}{A character vector of CSS file paths. If a path does not contain
-the \file{.css} extension, it is assumed to be a built-in CSS file. For
-example, \code{default-fonts} means the file
-\code{pagedown:::pkg_resource('css', 'default-fonts.css')}. To see all
-built-in CSS files, run \code{pagedown:::list_css()}.}
-
-\item{template}{The path to the Pandoc template to convert Markdown to HTML.}
+\item{..., css, template}{Arguments passed to \code{\link{html_paged}()}.}
 }
 \value{
-An R Markdown thesis output format.
+An R Markdown output format.
 }
 \description{
-This is an output format based on \code{bookdown::html_document2} (which
-means you can use those Markdown features added by \pkg{bookdown}). The HTML
-output document is split into multiple pages via a JavaScript library
-\pkg{paged.js}. These pages contain elements commonly seen in PDF documents,
-such as page numbers and running headers.
-}
-\references{
-\url{https://pagedown.rbind.io}
+This output format is similar to \code{\link{html_paged}}. The only
+difference is in the default stylesheets and template. See
+\url{https://pagedown.rbind.io/thesis-paged/} for an example.
 }
