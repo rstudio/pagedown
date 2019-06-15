@@ -2,13 +2,9 @@
 % Please edit documentation in R/thesis.R
 \name{thesis_paged}
 \alias{thesis_paged}
-\alias{thesis_minimal}
 \title{Create a paged HTML thesis document suitable for printing}
 \usage{
-thesis_paged(..., css = c("thesis-page"), theme = NULL, template = pkg_resource("html", 
-    "thesis.html"), csl = NULL)
-
-thesis_minimal(...)
+thesis_paged(..., css = c("thesis-page"), template = pkg_resource("html", "thesis.html"))
 }
 \arguments{
 \item{...}{Arguments passed to
@@ -20,9 +16,9 @@ example, \code{default-fonts} means the file
 \code{pagedown:::pkg_resource('css', 'default-fonts.css')}. To see all
 built-in CSS files, run \code{pagedown:::list_css()}.}
 
-\item{theme}{The Bootstrap theme. By default, Bootstrap is not used.}
-
 \item{template}{The path to the Pandoc template to convert Markdown to HTML.}
+
+\item{theme}{The Bootstrap theme. By default, Bootstrap is not used.}
 
 \item{csl}{The path of the Citation Style Language (CSL) file used to format
 citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).}
@@ -36,11 +32,6 @@ means you can use those Markdown features added by \pkg{bookdown}). The HTML
 output document is split into multiple pages via a JavaScript library
 \pkg{paged.js}. These pages contain elements commonly seen in PDF documents,
 such as page numbers and running headers.
-
-The output format \code{thesis_minimal} provides a minamal Rmd
-  file so that power user's can "just go". See
-  \url{https://pagedown.rbind.io/thesis-paged/} for a bloatted example of
-  what this template can achieve.
 }
 \references{
 \url{https://pagedown.rbind.io}
