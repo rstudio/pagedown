@@ -4,7 +4,8 @@
 \alias{thesis_paged}
 \title{Create a paged HTML thesis document suitable for printing}
 \usage{
-thesis_paged(..., css = c("thesis-page"), template = pkg_resource("html", "thesis.html"))
+thesis_paged(..., css = c("thesis-page"),
+  template = pkg_resource("html", "thesis.html"))
 }
 \arguments{
 \item{...}{Arguments passed to
@@ -17,11 +18,6 @@ example, \code{default-fonts} means the file
 built-in CSS files, run \code{pagedown:::list_css()}.}
 
 \item{template}{The path to the Pandoc template to convert Markdown to HTML.}
-
-\item{theme}{The Bootstrap theme. By default, Bootstrap is not used.}
-
-\item{csl}{The path of the Citation Style Language (CSL) file used to format
-citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).}
 }
 \value{
 An R Markdown thesis output format.

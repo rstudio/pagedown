@@ -12,10 +12,7 @@
 #'   example, \code{default-fonts} means the file
 #'   \code{pagedown:::pkg_resource('css', 'default-fonts.css')}. To see all
 #'   built-in CSS files, run \code{pagedown:::list_css()}.
-#' @param theme The Bootstrap theme. By default, Bootstrap is not used.
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
-#' @param csl The path of the Citation Style Language (CSL) file used to format
-#'   citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).
 #' @references \url{https://pagedown.rbind.io}
 #' @return An R Markdown thesis output format.
 #' @import stats utils
