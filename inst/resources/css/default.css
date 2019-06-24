@@ -56,6 +56,14 @@ a[href^="http"]:not([class="uri"])::after {
   content: ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ";
 }
 
+/* Chapter name */
+.chapter > h1 > .header-section-number::before, .chapter-ref > .toc-section-number::before {
+  content: var(--chapter-name-before, "Chapter ");
+}
+.chapter > h1 > .header-section-number::after, .chapter-ref > .toc-section-number::after {
+  content: var(--chapter-name-after, "");
+}
+
 /* misc elements */
 .subtitle span {
   font-size: .9em;
@@ -73,8 +81,8 @@ pre[class] {
   div.sourceCode {
     overflow: visible !important;
   }
-  a.sourceLine::before { 
-    text-decoration: unset !important; 
+  a.sourceLine::before {
+    text-decoration: unset !important;
   }
 }
 pre.numberSource a.sourceLine {
