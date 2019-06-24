@@ -32,7 +32,7 @@
   function buildChapterNameStyleSheet(chapterName) {
     let text = '';
     if(isString(chapterName)) {
-      text = '--chapter-name-before: "' + chapterName + ' ";';
+      text = '--chapter-name-before: "' + chapterName + '";';
     }
     if(isArray(chapterName)) {
       text = '--chapter-name-before: "' + chapterName[0] + '";';
