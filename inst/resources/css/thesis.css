@@ -254,8 +254,11 @@ code {
 p {
   line-height: 200%;
 }
-.chapter > h1:before, .chapter-ref::before {
-  content: "Chapter ";
+.chapter > h1 > .header-section-number::before, .chapter-ref > .toc-section-number::before {
+  content: var(--chapter-name-before, "Chapter ");
+}
+.chapter > h1 > .header-section-number::after, .chapter-ref > .toc-section-number::after {
+  content: var(--chapter-name-after, "");
 }
 .chapter-ref {
   font-weight: bold;

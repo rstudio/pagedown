@@ -34,9 +34,11 @@
     if(isString(chapterName)) {
       text = '--chapter-name-before: "' + chapterName + ' ";';
     }
-    if(isArray(chapterName)){
-      text = '--chapter-name-before: "' + chapterName[0] + ' ";' +
-             '--chapter-name-after: " ' + chapterName[1] + '";';
+    if(isArray(chapterName)) {
+      text = '--chapter-name-before: "' + chapterName[0] + '";';
+      if(chapterName[1]) {
+        text  = text + '--chapter-name-after: "' + chapterName[1] + '";';
+      }
     }
     return ':root {' + text + '}';
   }
