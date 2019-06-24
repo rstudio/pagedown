@@ -46,7 +46,7 @@
   window.PagedConfig.before = async () => {
     // Define CSS variables for internationalization
     const pandocMeta = getPandocMeta();
-    const chapterName = pandocMeta["chapter-name"];
+    const chapterName = pandocMeta["chapter_name"];
 
     if(chapterName) {
       const text = buildChapterNameStyleSheet(chapterName);
