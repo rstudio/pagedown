@@ -520,11 +520,9 @@ Lists of tables and/or figures can be inserted in the document using the `lot` a
 title: "A document with lists of tables and figures"
 output: pagedown::html_paged
 toc-title: Contents
-
 lot: true
 # default: "List of Tables"
 lot-title: "Tables"
-
 lof: true
 # default: "List of Figures"
 lof-title: "Figures"
