@@ -529,9 +529,23 @@ lof-title: "Figures"
 ---
 ```
 
+## List of abbreviations
+
+A list of abbreviations is automatically built if the document contains at least one HTML `abbr` element.
+
+For instance, if the R Markdown document contains `<abbr title="Cascading Style Sheets">CSS</abbr>`, a list of abbreviations is built with the CSS definition.
+
+:::{#loa-example style="background-color:#f9f9f9;"}
+
+**List of abbreviations example**
+
+CSS
+:   Cascading Style Sheets
+:::
+
 ## Front matter
 
-By default, the front matter is composed of the cover, the table of contents and the lists of figures and tables if any. The only difference between the front matter pages and the main content pages is the style of the page numbers.
+By default, the front matter is composed of the cover, the table of contents and the lists of figures, tables and abbreviations if any. The only difference between the front matter pages and the main content pages is the style of the page numbers.
 
 You can add extra sections to the front matter using the `front-matter` class. For instance, if you want to add a preface to the front matter, you need to write:
 
