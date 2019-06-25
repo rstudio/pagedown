@@ -539,6 +539,45 @@ You can add extra sections to the front matter using the `front-matter` class. F
 # Preface {.front-matter .unnumbered}
 ```
 
+## Chapters prefix
+
+The word "Chapter " can be prepended to chapter numbers in chapter titles using the `chapter` class :
+
+```markdown
+# A prefixed chapter{.chapter}
+```
+
+### Internationalization
+
+The chapter title prefix can be customized using the `chapter_name` field in the YAML header or in `_bookdown.yml` file^[see <https://bookdown.org/yihui/bookdown/internationalization.html>]
+
+When defined in the YAML header the `chapter_name` field is parsed by Pandoc. Therefore, special characters like spaces have to be escaped^[see <https://pandoc.org/MANUAL#backslash-escapes>]. For instance, if you want to use `'CHAPTER '` as a chapter title prefix, you have to write:
+
+```markdown
+---
+title: "Custom chapter title prefix"
+output: pagedown::html_paged
+chapter_name: "CHAPTER\\ "
+---
+
+# A chapter with a custom prefix{.chapter}
+```
+
+A suffix string can be added after the chapter number. For instance, to add a dot (`.`) after the chapter number, use the following value for the `chapter_name` field:
+
+```markdown
+---
+title: "Custom chapter title prefix"
+output: pagedown::html_paged
+chapter_name: ["CHAPTER\\ ", "."]
+---
+
+# A chapter with a custom prefix{.chapter}
+```
+
+If defined in `_bookdown.yml` file, the `chapter_name` field will override a `chapter_name` field declared in the YAML header.\
+Note that contrary to the **bookdown** HTML formats, a custom function is not allowed as a value for the `chapter_name` field.
+
 ## Links
 
 In Markdown, the usual ways to insert links are _automatic_ and _inline_ links.
