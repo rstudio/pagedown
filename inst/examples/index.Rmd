@@ -505,6 +505,11 @@ output: pagedown::business_card
 
 You can write a letter with the `pagedown::html_letter` format. See https://pagedown.rbind.io/html-letter/ for an example.
 
+## Thesis
+
+You can write a thesis with the `pagedown::thesis_paged` format created by Brent 
+Thorne. See https://pagedown.rbind.io/thesis-paged/ for an example.
+
 ## A Journal of Statistical Software article
 
 You can write an article for the [Journal of Statistical Sofware](https://jstatsoft.org/). See https://pagedown.rbind.io/jss-paged/ for an example. 
