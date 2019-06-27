@@ -505,6 +505,11 @@ output: pagedown::business_card
 
 You can write a letter with the `pagedown::html_letter` format. See https://pagedown.rbind.io/html-letter/ for an example.
 
+## Thesis
+
+You can write a thesis with the `pagedown::thesis_paged` format created by Brent 
+Thorne. See https://pagedown.rbind.io/thesis-paged/ for an example.
+
 ## A Journal of Statistical Software article
 
 You can write an article for the [Journal of Statistical Sofware](https://jstatsoft.org/). See https://pagedown.rbind.io/jss-paged/ for an example. 
@@ -520,26 +525,77 @@ Lists of tables and/or figures can be inserted in the document using the `lot` a
 title: "A document with lists of tables and figures"
 output: pagedown::html_paged
 toc-title: Contents
-
 lot: true
 # default: "List of Tables"
 lot-title: "Tables"
-
 lof: true
 # default: "List of Figures"
 lof-title: "Figures"
 ---
 ```
 
+## List of abbreviations
+
+A list of abbreviations is automatically built if the document contains at least one HTML `abbr` element.
+
+For instance, if the R Markdown document contains `<abbr title="Cascading Style Sheets">CSS</abbr>`, a list of abbreviations is built with the CSS definition.
+
+:::{#loa-example style="background-color:#f9f9f9;"}
+
+**List of abbreviations example**
+
+CSS
+:   Cascading Style Sheets
+:::
+
 ## Front matter
 
-By default, the front matter is composed of the cover, the table of contents and the lists of figures and tables if any. The only difference between the front matter pages and the main content pages is the style of the page numbers.
+By default, the front matter is composed of the cover, the table of contents and the lists of figures, tables and abbreviations if any. The only difference between the front matter pages and the main content pages is the style of the page numbers.
 
 You can add extra sections to the front matter using the `front-matter` class. For instance, if you want to add a preface to the front matter, you need to write:
 
 ```markdown
 # Preface {.front-matter .unnumbered}
 ```
+
+## Chapters prefix
+
+The word "Chapter " can be prepended to chapter numbers in chapter titles using the `chapter` class :
+
+```markdown
+# A prefixed chapter{.chapter}
+```
+
+### Internationalization
+
+The chapter title prefix can be customized using the `chapter_name` field in the YAML header or in `_bookdown.yml` file^[see <https://bookdown.org/yihui/bookdown/internationalization.html>]
+
+When defined in the YAML header the `chapter_name` field is parsed by Pandoc. Therefore, special characters like spaces have to be escaped^[see <https://pandoc.org/MANUAL#backslash-escapes>]. For instance, if you want to use `'CHAPTER '` as a chapter title prefix, you have to write:
+
+```markdown
+---
+title: "Custom chapter title prefix"
+output: pagedown::html_paged
+chapter_name: "CHAPTER\\ "
+---
+
+# A chapter with a custom prefix{.chapter}
+```
+
+A suffix string can be added after the chapter number. For instance, to add a dot (`.`) after the chapter number, use the following value for the `chapter_name` field:
+
+```markdown
+---
+title: "Custom chapter title prefix"
+output: pagedown::html_paged
+chapter_name: ["CHAPTER\\ ", "."]
+---
+
+# A chapter with a custom prefix{.chapter}
+```
+
+If defined in `_bookdown.yml` file, the `chapter_name` field will override a `chapter_name` field declared in the YAML header.\
+Note that contrary to the **bookdown** HTML formats, a custom function is not allowed as a value for the `chapter_name` field.
 
 ## Links
 

@@ -4,6 +4,12 @@
 
 - Added an `async` argument to `chrome_print()`. When `async = TRUE`, `chrome_print()` returns a `promises::promise` object. This allows `chrome_print()` to be used inside a Shiny App (thanks, @ColinFay, #91).
 
+- Added the support for chapter prefix as in **bookdown**. Chapter of class `chapter` are prefixed with the word `Chapter`. This prefix can be changed for internationalization purpose (thanks, @brentthorne, #101 and #107).
+
+- Added the support for lists of abbreviations. If the document contains `<abbr>` HTML elements, a list of abbreviations is automatically built (thanks, @brentthorne, #102 and #107).
+
+- Added the new `thesis_paged` template (thanks, @brentthorne, #107).
+
 ## MAJOR CHANGES
 
 - Paged.js is upgraded from version 0.1.28 to 0.1.32: Paged.js CSS variables are now prefixed with `pagedjs-`. For instance, `--width` is replaced by `--pagedjs-width`. Users' stylesheets that use Paged.js CSS variables need to be updated. Bleeds and crop marks are now supported. Several bugs are fixed.
