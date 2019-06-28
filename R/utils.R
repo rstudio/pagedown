@@ -36,4 +36,4 @@ to_json = function(x, ..., auto_unbox = TRUE, null = 'null') {
 # "createTcpServer: address already in use" too often)
 random_port = function() servr::random_port(NULL)
 
-`%n%` = bookdown:::`%n%`
+`%n%` = knitr:::`%n%`
