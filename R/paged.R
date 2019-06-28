@@ -135,16 +135,12 @@ html_format = function(
 chapter_name = function() {
   config = bookdown:::load_config()
   chapter_name = config[['chapter_name']] %n% bookdown:::ui_language('chapter_name')
-  if(is.null(chapter_name) || identical(chapter_name, '')) return(NULL)
-  if(is.character(chapter_name)) {
-    if(length(chapter_name) <= 2) {
-      return(chapter_name)
-    } else {
-      stop('chapter_name must be of length 1 or 2')
-    }
-  } else {
-    stop('chapter_name in _bookdown.yml must be a character string')
-  }
+  if (is.null(chapter_name) || identical(chapter_name, '')) return()
+  if (!is.character(chapter_name)) stop(
+    'chapter_name in _bookdown.yml must be a character string'
+  )
+  if (length(chapter_name) > 2) stop('chapter_name must be of length 1 or 2')
+  chapter_name
 }
 
 pandoc_metadata_arg = function(name, value) {
