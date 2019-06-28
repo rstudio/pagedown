@@ -7,7 +7,7 @@
 
   function getPandocMeta() {
     const el = document.getElementById('pandoc-meta');
-    if(el) {
+    if (el) {
       return JSON.parse(el.firstChild.data);
     } else {
       return {};
@@ -31,10 +31,10 @@
 
   function buildChapterNameStyleSheet(chapterName) {
     let text = '';
-    if(isString(chapterName)) {
+    if (isString(chapterName)) {
       text = '--chapter-name-before: "' + chapterName + '";';
     }
-    if(isArray(chapterName)) {
+    if (isArray(chapterName)) {
       text = '--chapter-name-before: "' + chapterName[0] + '";';
       if(chapterName[1]) {
         text  = text + '--chapter-name-after: "' + chapterName[1] + '";';
@@ -48,7 +48,7 @@
     const pandocMeta = getPandocMeta();
     const chapterName = pandocMeta["chapter_name"];
 
-    if(chapterName) {
+    if (chapterName) {
       const text = buildChapterNameStyleSheet(chapterName);
       insertCSS(text);
     }

@@ -563,7 +563,7 @@ You can add extra sections to the front matter using the `front-matter` class. F
 The word "Chapter " can be prepended to chapter numbers in chapter titles using the `chapter` class :
 
 ```markdown
-# A prefixed chapter{.chapter}
+# A prefixed chapter {.chapter}
 ```
 
 ### Internationalization
@@ -579,7 +579,7 @@ output: pagedown::html_paged
 chapter_name: "CHAPTER\\ "
 ---
 
-# A chapter with a custom prefix{.chapter}
+# A chapter with a custom prefix {.chapter}
 ```
 
 A suffix string can be added after the chapter number. For instance, to add a dot (`.`) after the chapter number, use the following value for the `chapter_name` field:
@@ -591,7 +591,7 @@ output: pagedown::html_paged
 chapter_name: ["CHAPTER\\ ", "."]
 ---
 
-# A chapter with a custom prefix{.chapter}
+# A chapter with a custom prefix {.chapter}
 ```
 
 If defined in `_bookdown.yml` file, the `chapter_name` field will override a `chapter_name` field declared in the YAML header.\

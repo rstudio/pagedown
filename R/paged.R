@@ -81,7 +81,7 @@ jss_paged = function(
   )
 
   opts_jss = list(
-    prompt = TRUE, comment = NA, R.options = list(prompt ='R> ', continue = 'R+ '),
+    prompt = TRUE, comment = NA, R.options = list(prompt = 'R> ', continue = 'R+ '),
     fig.align = 'center', fig.width = 4.9, fig.height = 3.675,
     class.source = 'r-chunk-code'
   )
@@ -144,7 +144,7 @@ chapter_name = function() {
 }
 
 pandoc_metadata_arg = function(name, value) {
-  if(!missing(value) && is.character(value)) {
+  if (!missing(value) && is.character(value)) {
     value = deparse(value)
   }
   c('--metadata', if (missing(value)) name else paste0(name, '=', value))
