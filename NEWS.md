@@ -18,6 +18,8 @@
 
 - The default stylesheet of `html_paged()` is updated to support the new argument `clean_highlight_tags` of `bookdown::html_document2()` introduced in **bookdown** 0.10 (thanks, @atusy, #100).
 
+- In `chrome_print()` the connection between the R session and headless Chrome now uses the native websocket client provided by the **websocket** package. The previous turnaround which used a websocket server, a websocket tunnel and a browser-based websocket client is removed (reverts #74).
+
 ## BUG FIXES
 
 - browser is forced to redraw the document after Paged.js finished. This will fix wrong page references observed with Chrome and RStudio 1.2.xxxx (#35 and #46, thanks, @petermeissner).  
