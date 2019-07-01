@@ -60,31 +60,6 @@ chrome_print = function(
   if (isTRUE(verbose)) verbose = 2
   if (verbose >= 1) message('Using the browser "', browser, '"')
 
-  if (file.exists(input)) {
-    is_html = function(x) grepl('[.]html?$', x)
-    url = if (is_html(input)) input else rmarkdown::render(
-      input, envir = parent.frame(), encoding = 'UTF-8'
-    )
-    if (!is_html(url)) stop(
-      "The file '", url, "' should have the '.html' or '.htm' extension."
-    )
-    svr = servr::httd(
-      dirname(url), daemon = TRUE, browser = FALSE, verbose = FALSE,
-      port = random_port(), initpath = httpuv::encodeURIComponent(basename(url))
-    )
-    on.exit(svr$stop_server(), add = TRUE)
-    url = svr$url
-  } else url = input  # the input is not a local file; assume it is just a URL
-
-  format = match.arg(format)
-  # remove hash/query parameters in url
-  if (missing(output) && !file.exists(input))
-    output = xfun::with_ext(basename(gsub('[#?].*', '', url)), format)
-  output2 = normalizePath(output, mustWork = FALSE)
-  if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
-    'Cannot create the directory for the output file: ', d
-  )
-
   # check that work_dir does not exist because it will be deleted at the end
   if (dir.exists(work_dir)) stop('The directory ', work_dir, ' already exists.')
   work_dir = normalizePath(work_dir, mustWork = FALSE)
@@ -100,17 +75,55 @@ chrome_print = function(
     paste0('--remote-debugging-port=', debug_port),
     paste0('--user-data-dir=', work_dir), extra_args
   ))
-  on.exit({
+  kill_chrome = function(...) {
+    if (verbose >= 1) message('Closing browser')
     if (ps$is_alive()) ps$kill()
+    if (verbose >= 1) message('Cleaning browser working directory')
     unlink(work_dir, recursive = TRUE)
-  }, add = TRUE)
+  }
+  on.exit(kill_chrome(), add = TRUE)
 
   if (!is_remote_protocol_ok(debug_port))
     stop('A more recent version of Chrome is required. ')
 
   ws = websocket::WebSocket$new(get_entrypoint(debug_port), autoConnect = FALSE)
-  close_ws = function() if (ws$readyState() < 2L) ws$close()
-  on.exit(close_ws(), add = TRUE)
+  ws$onClose(kill_chrome)
+  ws$onError(kill_chrome)
+  close_ws = function() {
+    if (verbose >= 1) message('Closing websocket connection')
+    ws$close()
+  }
+
+  if (file.exists(input)) {
+    is_html = function(x) grepl('[.]html?$', x)
+    url = if (is_html(input)) input else rmarkdown::render(
+      input, envir = parent.frame(), encoding = 'UTF-8'
+    )
+    if (!is_html(url)) stop(
+      "The file '", url, "' should have the '.html' or '.htm' extension."
+    )
+    svr = servr::httd(
+      dirname(url), daemon = TRUE, browser = FALSE, verbose = verbose >= 1,
+      port = random_port(), initpath = httpuv::encodeURIComponent(basename(url))
+    )
+    stop_server = function(...) {
+      if (verbose >= 1) message('Closing local webserver')
+      svr$stop_server()
+    }
+    on.exit(stop_server(), add = TRUE)
+    ws$onClose(stop_server)
+    ws$onError(stop_server)
+    url = svr$url
+  } else url = input  # the input is not a local file; assume it is just a URL
+
+  format = match.arg(format)
+  # remove hash/query parameters in url
+  if (missing(output) && !file.exists(input))
+    output = xfun::with_ext(basename(gsub('[#?].*', '', url)), format)
+  output2 = normalizePath(output, mustWork = FALSE)
+  if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
+    'Cannot create the directory for the output file: ', d
+  )
 
   if ((format == 'pdf') && !all(c(missing(selector), missing(box_model), missing(scale))))
     warning('For "pdf" format, arguments `selector`, `box_model` and `scale` are ignored.', call. = FALSE)
@@ -125,7 +138,6 @@ chrome_print = function(
       res_fun <<- resolve
       rej_fun <<- function(reason) reject(paste('Failed to generate output. Reason:', reason))
     })
-    on.exit()
     pr_timeout = promises::promise(function(resolve, reject) {
       later::later(
         ~reject(paste('Failed to generate output in', timeout, 'seconds (timeout).')),
@@ -137,9 +149,13 @@ chrome_print = function(
   }
 
   t0 = Sys.time(); token = new.env(parent = emptyenv())
+  on.exit(close_ws())
   print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun, rej_fun)
 
-  if (async) return(pr)
+  if (async) {
+    on.exit()
+    return(pr)
+  }
 
   while (!isTRUE(token$done)) {
     if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
