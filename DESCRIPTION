@@ -5,9 +5,9 @@ Version: 0.2.9
 Authors@R: c(
   person("Yihui", "Xie", role = c("aut", "cre"), email = "xie@yihui.name", comment = c(ORCID = "0000-0003-0645-5666")),
   person("Romain", "Lesur", role = c("aut", "cph"), comment = c(ORCID = "0000-0002-0721-5595")),
+  person("Brent", "Thorne", role = "aut", comment = c(ORCID = "0000-0002-1099-3857")),
   person("Christophe", "Dervieux", role = c("ctb"), comment = c(ORCID = "0000-0003-4474-2498")),
   person("Atsushi", "Yasumoto", role = c("ctb"), comment = c(ORCID = "0000-0002-8335-495X")),
-  person("Brent", "Thorne", role = "ctb", comment = c(ORCID = "0000-0002-1099-3857")),
   person(family = "RStudio, Inc.", role = "cph"),
   person("Adam", "Hyde", role = "ctb", comment = "paged.js in resources/js/"),
   person("Min-Zhong", "Lu", role = "ctb", comment = "resume.css in resources/css/"),
