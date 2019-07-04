@@ -1,133 +1,88 @@
 // Configuration script for paged.js
 
 (function() {
-  // Retrieve MathJax loading function
-  function getBeforeAsync() {
-    if (typeof window.PagedConfig !== "undefined") {
-      if (typeof window.PagedConfig.before !== "undefined") {
-        return window.PagedConfig.before;
+  // Retrieve previous config object if defined
+  window.PagedConfig = window.PagedConfig || {};
+  const {before: beforePaged, after: afterPaged} = window.PagedConfig;
+
+  function getPandocMeta() {
+    const el = document.getElementById('pandoc-meta');
+    if (el) {
+      return JSON.parse(el.firstChild.data);
+    } else {
+      return {};
+    }
+  }
+
+  function isString(value) {
+    return typeof value === 'string' || value instanceof String;
+  }
+
+  function isArray(value) {
+    return value && typeof value === 'object' && value.constructor === Array;
+  }
+
+  function insertCSS(text) {
+    let style = document.createElement("style");
+		style.type = "text/css";
+		style.appendChild(document.createTextNode(text));
+    document.head.appendChild(style);
+  }
+
+  function buildChapterNameStyleSheet(chapterName) {
+    let text = '';
+    if (isString(chapterName)) {
+      text = '--chapter-name-before: "' + chapterName + '";';
+    }
+    if (isArray(chapterName)) {
+      text = '--chapter-name-before: "' + chapterName[0] + '";';
+      if(chapterName[1]) {
+        text  = text + '--chapter-name-after: "' + chapterName[1] + '";';
       }
     }
-    return async () => {};
+    return ':root {' + text + '}';
   }
 
-  var runMathJax = getBeforeAsync();
+  window.PagedConfig.before = async () => {
+    // Define CSS variables for internationalization
+    const pandocMeta = getPandocMeta();
+    const chapterName = pandocMeta["chapter_name"];
 
-  // This function puts the sections of class front-matter in the div.front-matter-container
-  async function moveToFrontMatter() {
-    let frontMatter = document.querySelector('.front-matter-container');
-    const items = document.querySelectorAll('.level1.front-matter');
-    for (const item of items) {
-      frontMatter.appendChild(item);
+    if (chapterName) {
+      const text = buildChapterNameStyleSheet(chapterName);
+      insertCSS(text);
     }
-  }
 
-  // This function adds the class front-matter-ref to any <a></a> element
-  // referring to an entry in the front matter
-  async function detectFrontMatterReferences() {
-    const frontMatter = document.querySelector('.front-matter-container');
-    if (!frontMatter) return;
-    let anchors = document.querySelectorAll('a[href^="#"]:not([href*=":"])');
-    for (let a of anchors) {
-      const ref = a.getAttribute('href').replace(/^#/, '');
-      const element = document.getElementById(ref);
-      if (frontMatter.contains(element)) a.classList.add('front-matter-ref');
-    }
-  }
+    if (beforePaged) await beforePaged();
 
-  // This function expands the links in the lists of figures or tables (loft)
-  async function expandLinksInLoft() {
-    var items = document.querySelectorAll('.lof li, .lot li');
-    for (var item of items) {
-      var anchor = item.firstChild;
-      anchor.innerText = item.innerText;
-      item.innerText = '';
-      item.append(anchor);
-    }
-  }
+    let iframeHTMLWidgets = document.getElementsByTagName('autoscaling-iframe');
+    let widgetsReady = Promise.all([...iframeHTMLWidgets].map(el => {return el['ready'];}));
+    await widgetsReady;
+  };
 
-  // This function add spans for leading symbols.
-  async function addLeadersSpans() {
-    var anchors = document.querySelectorAll('.toc a, .lof a, .lot a');
-    for (var a of anchors) {
-      a.innerHTML = a.innerHTML + '<span class="leaders"></span>';
-    }
-  }
+  window.PagedConfig.after = () => {
+    let iframeHTMLWidgets = document.getElementsByTagName('autoscaling-iframe');
+    let widgetsReady = Promise.all([...iframeHTMLWidgets].map(el => {return el['ready'];}));
+    widgetsReady.then(() => {
+      // force redraw, see https://github.com/rstudio/pagedown/issues/35#issuecomment-475905361
+      // and https://stackoverflow.com/a/24753578/6500804
+      document.body.style.display = 'none';
+      document.body.offsetHeight;
+      document.body.style.display = '';
 
-  /* A factory returning a function that appends short titles spans.
-     The text content of these spans are reused for running titles (see default.css).
-     Argument: level - An integer between 1 and 6.
-  */
-  function appendShortTitleSpans(level) {
-    return async () => {
-      var divs = Array.from(document.getElementsByClassName('level' + level));
+      // run previous PagedConfig.after function if defined
+      if (afterPaged) afterPaged();
 
-      async function addSpan(div) {
-        var mainHeader = div.getElementsByTagName('h' + level)[0];
-        if (!mainHeader) return;
-        var mainTitle = mainHeader.textContent;
-        var spanSectionNumber = mainHeader.getElementsByClassName('header-section-number')[0];
-        var mainNumber = !!spanSectionNumber ? spanSectionNumber.textContent : '';
-        var runningTitle = 'shortTitle' in div.dataset ? mainNumber + ' ' + div.dataset.shortTitle : mainTitle;
-        var span = document.createElement('span');
-        span.className = 'shorttitle' + level;
-        span.innerText = runningTitle;
-        span.style.display = "none";
-        mainHeader.insertAdjacentElement('afterend', span);
-        if (level == 1 && div.querySelector('.level2') === null) {
-          var span2 = document.createElement('span');
-          span2.className = 'shorttitle2';
-          span2.innerText = ' ';
-          span2.style.display = "none";
-          span.insertAdjacentElement('afterend', span2);
-        }
+      // pagedownListener is a binder added by the chrome_print function
+      // this binder exists only when chrome_print opens the html file
+      if (window.pagedownListener) {
+        // the html file is opened for printing
+        // call the binder to signal to the R session that Paged.js has finished
+        pagedownListener('');
+      } else {
+        // scroll to the last position before the page is reloaded
+        window.scrollTo(0, sessionStorage.getItem('pagedown-scroll'));
       }
-
-      for (const div of divs) {
-        await addSpan(div);
-      }
-    };
-  }
-
-  var appendShortTitles1 = appendShortTitleSpans(1);
-  var appendShortTitles2 = appendShortTitleSpans(2);
-
-  window.PagedConfig = {
-    before: async () => {
-      await moveToFrontMatter();
-      await detectFrontMatterReferences();
-      await expandLinksInLoft();
-      await Promise.all([
-        addLeadersSpans(),
-        appendShortTitles1(),
-        appendShortTitles2()
-      ]);
-      await runMathJax();
-      let iframeHTMLWidgets = document.getElementsByTagName('autoscaling-iframe');
-      let widgetsReady = Promise.all([...iframeHTMLWidgets].map(el => {return el['ready'];}));
-      await widgetsReady;
-    },
-    after: () => {
-      let iframeHTMLWidgets = document.getElementsByTagName('autoscaling-iframe');
-      let widgetsReady = Promise.all([...iframeHTMLWidgets].map(el => {return el['ready'];}));
-      widgetsReady.then(() => {
-        // force redraw, see https://github.com/rstudio/pagedown/issues/35#issuecomment-475905361
-        // and https://stackoverflow.com/a/24753578/6500804
-        document.body.style.display = 'none';
-        document.body.offsetHeight;
-        document.body.style.display = '';
-
-        // pagedownListener is a binder added by the chrome_print function
-        // this binder exists only when chrome_print opens the html file
-        if (window.pagedownListener) {
-          // the html file is opened for printing
-          // call the binder to signal to the R session that Paged.js has finished
-          pagedownListener('');
-        } else {
-          // scroll to the last position before the page is reloaded
-          window.scrollTo(0, sessionStorage.getItem('pagedown-scroll'));
-        }
-      });
-    }
+    });
   };
 })();

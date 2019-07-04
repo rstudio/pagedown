@@ -1,11 +1,15 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
-	(global.PagedPolyfill = factory());
-}(this, (function () { 'use strict';
+	global.PagedPolyfill = factory();
+}(typeof self !== 'undefined' ? self : this, function () { 'use strict';
 
 	function createCommonjsModule(fn, module) {
 		return module = { exports: {} }, fn(module, module.exports), module.exports;
+	}
+
+	function getCjsExportFromNamespace (n) {
+		return n && n.default || n;
 	}
 
 	var isImplemented = function () {
@@ -468,6 +472,10 @@
 
 	const requestIdleCallback = typeof window !== "undefined" && ("requestIdleCallback" in window ? window.requestIdleCallback : window.requestAnimationFrame);
 
+	function CSSValueToString(obj) {
+		return obj.value + (obj.unit || "");
+	}
+
 	function isElement(node) {
 		return node && node.nodeType === 1;
 	}
@@ -897,6 +905,27 @@
 		return false;
 	}
 
+	function indexOfTextNode(node, parent) {
+		if (!isText(node)) {
+			return -1;
+		}
+		let nodeTextContent = node.textContent;
+		let child;
+		let index = -1;
+		for (var i = 0; i < parent.childNodes.length; i++) {
+			child = parent.childNodes[i];
+			if (child.nodeType === 3) {
+				let text = parent.childNodes[i].textContent;
+				if (text.includes(nodeTextContent)) {
+					index = i;
+					break;
+				}
+			}
+		}
+
+		return index;
+	}
+
 	/**
 	 * Hooks allow for injecting functions that must all complete in order before finishing
 	 * They will execute in parallel but all must finish before continuing
@@ -932,7 +961,7 @@
 		/**
 		 * Triggers a hook to run all functions
 		 * @example this.content.trigger(args).then(function(){...});
-		 * @return {undefined} void
+		 * @return {Promise} results
 		 */
 		trigger(){
 			var args = arguments;
@@ -946,12 +975,35 @@
 					// Task is a function that returns a promise
 					promises.push(executing);
 				}
-				// Otherwise Task resolves immediately, continue
+				// Otherwise Task resolves immediately, add resolved promise with result
+				promises.push(new Promise((resolve, reject) => {
+					resolve(executing);
+				}));
 			});
 
 
 			return Promise.all(promises);
 		}
+
+	  /**
+	   * Triggers a hook to run all functions synchronously
+	   * @example this.content.trigger(args).then(function(){...});
+	   * @return {Array} results
+	   */
+	  triggerSync(){
+	    var args = arguments;
+	    var context = this.context;
+	    var results = [];
+
+	    this.hooks.forEach(function(task) {
+	      var executing = task.apply(context, args);
+
+	      results.push(executing);
+	    });
+
+
+	    return results;
+	  }
 
 		// Adds a function to be run before a hook completes
 		list(){
@@ -983,7 +1035,9 @@
 				this.hooks.layout = new Hook();
 				this.hooks.renderNode = new Hook();
 				this.hooks.layoutNode = new Hook();
-				this.hooks.overflow = new Hook();
+				this.hooks.beforeOverflow = new Hook();
+				this.hooks.onOverflow = new Hook();
+				this.hooks.onBreakToken = new Hook();
 			}
 
 			this.maxChars = maxChars || MAX_CHARS_PER_BREAK;
@@ -1145,7 +1199,12 @@
 				dest.appendChild(clone);
 			}
 
-			this.hooks && this.hooks.renderNode.trigger(clone);
+			let nodeHooks = this.hooks.renderNode.triggerSync(clone, node);
+			nodeHooks.forEach((newNode) => {
+				if (typeof newNode != "undefined") {
+					clone = newNode;
+				}
+			});
 
 			return clone;
 		}
@@ -1225,7 +1284,7 @@
 					}
 
 					parent = findElement(renderedNode, source);
-					index = indexOf$1(temp);
+					index = indexOfTextNode(temp, parent);
 					node = child(parent, index);
 					offset = 0;
 				}
@@ -1237,8 +1296,15 @@
 				}
 
 				parent = findElement(renderedNode, source);
-				index = indexOf$1(container);
+				index = indexOfTextNode(container, parent);
+
+				if (index === -1) {
+					return;
+				}
+
 				node = child(parent, index);
+
+				offset += node.textContent.indexOf(container.textContent);
 			}
 
 			if (!node) {
@@ -1256,8 +1322,23 @@
 			let overflow = this.findOverflow(rendered, bounds);
 			let breakToken;
 
+			let overflowHooks = this.hooks.onOverflow.triggerSync(overflow, rendered, bounds, this);
+			overflowHooks.forEach((newOverflow) => {
+				if (typeof newOverflow != "undefined") {
+					overflow = newOverflow;
+				}
+			});
+
 			if (overflow) {
 				breakToken = this.createBreakToken(overflow, rendered, source);
+
+				let breakHooks = this.hooks.onBreakToken.triggerSync(breakToken, overflow, rendered, this);
+				breakHooks.forEach((newToken) => {
+					if (typeof newToken != "undefined") {
+						breakToken = newToken;
+					}
+				});
+
 
 				if (breakToken && breakToken.node && extract) {
 					this.removeOverflow(overflow);
@@ -1341,7 +1422,7 @@
 						left = 0;
 						for (var i = 0; i != rects.length; i++) {
 							rect = rects[i];
-							if (!left || rect.left > left) {
+							if (rect.width > 0 && (!left || rect.left > left)) {
 								left = rect.left;
 							}
 						}
@@ -1476,21 +1557,23 @@
 		}
 
 		removeOverflow(overflow) {
-			this.hyphenateAtBreak(overflow);
+			let {startContainer} = overflow;
+			let extracted = overflow.extractContents();
 
-			return overflow.extractContents();
+			this.hyphenateAtBreak(startContainer);
+
+			return extracted;
 		}
 
-		hyphenateAtBreak(overflow) {
-			if (isText(overflow.startContainer) && overflow.startOffset > 0) {
-				let startText = overflow.startContainer.textContent;
-				let startOffset = overflow.startOffset;
-				let prevLetter = startText[startOffset-1];
+		hyphenateAtBreak(startContainer) {
+			if (isText(startContainer)) {
+				let startText = startContainer.textContent;
+				let prevLetter = startText[startText.length-1];
 
 				// Add a hyphen if previous character is a letter or soft hyphen
 				if (/^\w|\u00AD$/.test(prevLetter)) {
-					overflow.startContainer.textContent = startText.slice(0, startOffset) + "\u2010";
-					overflow.setStart(overflow.startContainer, startOffset + 1);
+					startContainer.parentNode.classList.add("pagedjs_hyphen");
+					startContainer.textContent += "\u2011";
 				}
 			}
 		}
@@ -1521,16 +1604,17 @@
 			//let page = documentFragment.children[0];
 			let clone = document.importNode(this.pageTemplate.content, true);
 
-			let page;
+			let page, index;
 			if (after) {
-				this.pagesArea.insertBefore(clone, after.nextSibling);
-				let index = Array.prototype.indexOf.call(this.pagesArea.children, after.nextSibling);
+				this.pagesArea.insertBefore(clone, after.nextElementSibling);
+				index = Array.prototype.indexOf.call(this.pagesArea.children, after.nextElementSibling);
 				page = this.pagesArea.children[index];
 			} else {
 				this.pagesArea.appendChild(clone);
 				page = this.pagesArea.lastChild;
 			}
 
+			let pagebox = page.querySelector(".pagedjs_pagebox");
 			let area = page.querySelector(".pagedjs_page_content");
 
 
@@ -1538,13 +1622,14 @@
 
 
 			area.style.columnWidth = Math.round(size.width) + "px";
-			area.style.columnGap = "calc(var(--margin-right) + var(--margin-left))";
+			area.style.columnGap = "calc(var(--pagedjs-margin-right) + var(--pagedjs-margin-left))";
 			// area.style.overflow = "scroll";
 
 			this.width = Math.round(size.width);
 			this.height = Math.round(size.height);
 
 			this.element = page;
+			this.pagebox = pagebox;
 			this.area = area;
 
 			return page;
@@ -1564,12 +1649,18 @@
 			this.position = pgnum;
 
 			let page = this.element;
+			// let pagebox = this.pagebox;
 
-			let id = `page-${pgnum+1}`;
+			let index = pgnum+1;
+
+			let id = `page-${index}`;
 
 			this.id = id;
 
-			page.dataset.pageNumber = pgnum+1;
+			// page.dataset.pageNumber = index;
+
+			page.dataset.pageNumber = index;
+			page.setAttribute('id', id);
 
 			if (this.name) {
 				page.classList.add("pagedjs_" + this.name + "_page");
@@ -2099,42 +2190,71 @@
 		}
 	}
 
-	const TEMPLATE = `<div class="pagedjs_page">
-	<div class="pagedjs_margin-top-left-corner-holder">
-		<div class="pagedjs_margin pagedjs_margin-top-left-corner"><div class="pagedjs_margin-content"></div></div>
-	</div>
-	<div class="pagedjs_margin-top">
-		<div class="pagedjs_margin pagedjs_margin-top-left"><div class="pagedjs_margin-content"></div></div>
-		<div class="pagedjs_margin pagedjs_margin-top-center"><div class="pagedjs_margin-content"></div></div>
-		<div class="pagedjs_margin pagedjs_margin-top-right"><div class="pagedjs_margin-content"></div></div>
-	</div>
-	<div class="pagedjs_margin-top-right-corner-holder">
-		<div class="pagedjs_margin pagedjs_margin-top-right-corner"><div class="pagedjs_margin-content"></div></div>
-	</div>
-	<div class="pagedjs_margin-right">
-		<div class="pagedjs_margin pagedjs_margin-right-top"><div class="pagedjs_margin-content"></div></div>
-		<div class="pagedjs_margin pagedjs_margin-right-middle"><div class="pagedjs_margin-content"></div></div>
-		<div class="pagedjs_margin pagedjs_margin-right-bottom"><div class="pagedjs_margin-content"></div></div>
-	</div>
-	<div class="pagedjs_margin-left">
-		<div class="pagedjs_margin pagedjs_margin-left-top"><div class="pagedjs_margin-content"></div></div>
-		<div class="pagedjs_margin pagedjs_margin-left-middle"><div class="pagedjs_margin-content"></div></div>
-		<div class="pagedjs_margin pagedjs_margin-left-bottom"><div class="pagedjs_margin-content"></div></div>
-	</div>
-	<div class="pagedjs_margin-bottom-left-corner-holder">
-		<div class="pagedjs_margin pagedjs_margin-bottom-left-corner"><div class="pagedjs_margin-content"></div></div>
-	</div>
-	<div class="pagedjs_margin-bottom">
-		<div class="pagedjs_margin pagedjs_margin-bottom-left"><div class="pagedjs_margin-content"></div></div>
-		<div class="pagedjs_margin pagedjs_margin-bottom-center"><div class="pagedjs_margin-content"></div></div>
-		<div class="pagedjs_margin pagedjs_margin-bottom-right"><div class="pagedjs_margin-content"></div></div>
-	</div>
-	<div class="pagedjs_margin-bottom-right-corner-holder">
-		<div class="pagedjs_margin pagedjs_margin-bottom-right-corner"><div class="pagedjs_margin-content"></div></div>
-	</div>
-	<div class="pagedjs_area">
-		<div class="pagedjs_page_content">
-
+	const TEMPLATE = `
+<div class="pagedjs_page">
+	<div class="pagedjs_sheet">
+		<div class="pagedjs_bleed pagedjs_bleed-top">
+			<div class="pagedjs_marks-crop"></div>
+			<div class="pagedjs_marks-middle">
+				<div class="pagedjs_marks-cross"></div>
+			</div>
+			<div class="pagedjs_marks-crop"></div>
+		</div>
+		<div class="pagedjs_bleed pagedjs_bleed-bottom">
+			<div class="pagedjs_marks-crop"></div>
+			<div class="pagedjs_marks-middle">
+				<div class="pagedjs_marks-cross"></div>
+			</div>		<div class="pagedjs_marks-crop"></div>
+		</div>
+		<div class="pagedjs_bleed pagedjs_bleed-left">
+			<div class="pagedjs_marks-crop"></div>
+			<div class="pagedjs_marks-middle">
+				<div class="pagedjs_marks-cross"></div>
+			</div>		<div class="pagedjs_marks-crop"></div>
+		</div>
+		<div class="pagedjs_bleed pagedjs_bleed-right">
+			<div class="pagedjs_marks-crop"></div>
+			<div class="pagedjs_marks-middle">
+				<div class="pagedjs_marks-cross"></div>
+			</div>
+			<div class="pagedjs_marks-crop"></div>
+		</div>
+		<div class="pagedjs_pagebox">
+			<div class="pagedjs_margin-top-left-corner-holder">
+				<div class="pagedjs_margin pagedjs_margin-top-left-corner"><div class="pagedjs_margin-content"></div></div>
+			</div>
+			<div class="pagedjs_margin-top">
+				<div class="pagedjs_margin pagedjs_margin-top-left"><div class="pagedjs_margin-content"></div></div>
+				<div class="pagedjs_margin pagedjs_margin-top-center"><div class="pagedjs_margin-content"></div></div>
+				<div class="pagedjs_margin pagedjs_margin-top-right"><div class="pagedjs_margin-content"></div></div>
+			</div>
+			<div class="pagedjs_margin-top-right-corner-holder">
+				<div class="pagedjs_margin pagedjs_margin-top-right-corner"><div class="pagedjs_margin-content"></div></div>
+			</div>
+			<div class="pagedjs_margin-right">
+				<div class="pagedjs_margin pagedjs_margin-right-top"><div class="pagedjs_margin-content"></div></div>
+				<div class="pagedjs_margin pagedjs_margin-right-middle"><div class="pagedjs_margin-content"></div></div>
+				<div class="pagedjs_margin pagedjs_margin-right-bottom"><div class="pagedjs_margin-content"></div></div>
+			</div>
+			<div class="pagedjs_margin-left">
+				<div class="pagedjs_margin pagedjs_margin-left-top"><div class="pagedjs_margin-content"></div></div>
+				<div class="pagedjs_margin pagedjs_margin-left-middle"><div class="pagedjs_margin-content"></div></div>
+				<div class="pagedjs_margin pagedjs_margin-left-bottom"><div class="pagedjs_margin-content"></div></div>
+			</div>
+			<div class="pagedjs_margin-bottom-left-corner-holder">
+				<div class="pagedjs_margin pagedjs_margin-bottom-left-corner"><div class="pagedjs_margin-content"></div></div>
+			</div>
+			<div class="pagedjs_margin-bottom">
+				<div class="pagedjs_margin pagedjs_margin-bottom-left"><div class="pagedjs_margin-content"></div></div>
+				<div class="pagedjs_margin pagedjs_margin-bottom-center"><div class="pagedjs_margin-content"></div></div>
+				<div class="pagedjs_margin pagedjs_margin-bottom-right"><div class="pagedjs_margin-content"></div></div>
+			</div>
+			<div class="pagedjs_margin-bottom-right-corner-holder">
+				<div class="pagedjs_margin pagedjs_margin-bottom-right-corner"><div class="pagedjs_margin-content"></div></div>
+			</div>
+			<div class="pagedjs_area">
+				<div class="pagedjs_page_content"></div>
+			</div>
 		</div>
 	</div>
 </div>`;
@@ -2154,7 +2274,8 @@
 			this.hooks.layout = new Hook(this);
 			this.hooks.renderNode = new Hook(this);
 			this.hooks.layoutNode = new Hook(this);
-			this.hooks.overflow = new Hook(this);
+			this.hooks.onOverflow = new Hook(this);
+			this.hooks.onBreakToken = new Hook();
 			this.hooks.afterPageLayout = new Hook(this);
 			this.hooks.afterRendered = new Hook(this);
 
@@ -2460,7 +2581,6 @@
 						this.rendered = false;
 
 						this.q.enqueue(async () => {
-							console.log("start",page.id, this.rendered);
 
 							this.start();
 
@@ -2530,7 +2650,7 @@
 		}
 
 		set total(num) {
-			this.pagesArea.style.setProperty("--page-count", num);
+			this.pagesArea.style.setProperty("--pagedjs-page-count", num);
 			this._total = num;
 		}
 
@@ -20395,11 +20515,11 @@
 		default: patch
 	});
 
-	var mdnProperties = ( properties$2 && properties$1 ) || properties$2;
+	var mdnProperties = getCjsExportFromNamespace(properties$2);
 
-	var mdnSyntaxes = ( syntaxes$1 && syntaxes ) || syntaxes$1;
+	var mdnSyntaxes = getCjsExportFromNamespace(syntaxes$1);
 
-	var patch$2 = ( patch$1 && patch ) || patch$1;
+	var patch$2 = getCjsExportFromNamespace(patch$1);
 
 	function buildDictionary(dict, patchDict) {
 	    var result = {};
@@ -23263,6 +23383,7 @@
 				this.hooks.onRule = new Hook(this);
 				this.hooks.onDeclaration = new Hook(this);
 				this.hooks.onContent = new Hook(this);
+				this.hooks.onImport = new Hook(this);
 
 				this.hooks.beforeTreeParse = new Hook(this);
 				this.hooks.beforeTreeWalk = new Hook(this);
@@ -23298,6 +23419,8 @@
 
 			// Replace IDs with data-id
 			this.replaceIds(this.ast);
+
+			this.imported = [];
 
 			// Trigger Hooks
 			this.urls(this.ast);
@@ -23340,6 +23463,11 @@
 					if (basename === "media") {
 						this.hooks.onAtMedia.trigger(node, item, list);
 						this.declarations(node, item, list);
+					}
+
+					if (basename === "import") {
+						this.hooks.onImport.trigger(node, item, list);
+						this.imports(node, item, list);
 					}
 				}
 			});
@@ -23463,6 +23591,51 @@
 			});
 		}
 
+		imports(node, item, list) {
+			// console.log("import", node, item, list);
+			let queries = [];
+			lib.walk(node, {
+				visit: "MediaQuery",
+				enter: (mqNode, mqItem, mqList) => {
+					lib.walk(mqNode, {
+						visit: "Identifier",
+						enter: (identNode, identItem, identList) => {
+							queries.push(identNode.name);
+						}
+					});
+				}
+			});
+
+			// Just basic media query support for now
+			let shouldNotApply = queries.some((query, index) => {
+				let q = query;
+				if (q === "not") {
+					q = queries[index + 1];
+					return !(q === "screen" || q === "speech");
+				} else {
+					return (q === "screen" || q === "speech");
+				}
+			});
+
+			if (shouldNotApply) {
+				return;
+			}
+
+			lib.walk(node, {
+				visit: "String",
+				enter: (urlNode, urlItem, urlList) => {
+					let href = urlNode.value.replace(/["']/g, "");
+					let url = new URL(href, this.url);
+					let value = url.toString();
+
+					this.imported.push(value);
+
+					// Remove the original
+					list.remove(item);
+				}
+			});
+		}
+
 		set text(t) {
 			this._text = t;
 		}
@@ -23479,13 +23652,25 @@
 
 	var baseStyles = `
 :root {
-	--width: 8.5in;
-	--height: 11in;
-	--margin-top: 1in;
-	--margin-right: 1in;
-	--margin-bottom: 1in;
-	--margin-left: 1in;
-	--page-count: 0;
+	--pagedjs-width: 8.5in;
+	--pagedjs-height: 11in;
+	--pagedjs-pagebox-width: 8.5in;
+	--pagedjs-pagebox-height: 11in;
+	--pagedjs-margin-top: 1in;
+	--pagedjs-margin-right: 1in;
+	--pagedjs-margin-bottom: 1in;
+	--pagedjs-margin-left: 1in;
+	--pagedjs-bleed-top: 0;
+	--pagedjs-bleed-right: 0;
+	--pagedjs-bleed-bottom: 0;
+	--pagedjs-bleed-left: 0;
+	--pagedjs-crop-color: black;
+	--pagedjs-crop-offset: 2mm;
+	--pagedjs-crop-stroke: 1px;
+	--pagedjs-cross-size: 5mm;
+	--pagedjs-mark-cross-display: none;
+	--pagedjs-mark-crop-display: none;
+	--pagedjs-page-count: 0;
 }
 
 @page {
@@ -23493,24 +23678,138 @@
 	margin: 0;
 }
 
-.pagedjs_page {
+.pagedjs_sheet {
 	box-sizing: border-box;
-	width: var(--width);
-	height: var(--height);
+	width: var(--pagedjs-width);
+	height: var(--pagedjs-height);
 	overflow: hidden;
 	position: relative;
 	display: grid;
-	grid-template-columns: [left] var(--margin-left) [center] calc(var(--width) - var(--margin-left) - var(--margin-right)) [right] var(--margin-right);
-	grid-template-rows: [header] var(--margin-top) [page] calc(var(--height) - var(--margin-top) - var(--margin-bottom)) [footer] var(--margin-bottom);
+	grid-template-columns: [bleed-left] var(--pagedjs-bleed-left) [sheet-center] calc(var(--pagedjs-width) - var(--pagedjs-bleed-left) - var(--pagedjs-bleed-right)) [bleed-right] var(--pagedjs-bleed-right);
+	grid-template-rows: [bleed-top] var(--pagedjs-bleed-top) [sheet-middle] calc(var(--pagedjs-height) - var(--pagedjs-bleed-top) - var(--pagedjs-bleed-bottom)) [bleed-bottom] var(--pagedjs-bleed-bottom);
 }
 
-.pagedjs_page * {
+.pagedjs_bleed {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: nowrap;
+	overflow: hidden;
+}
+
+.pagedjs_bleed-top {
+	grid-column: bleed-left / -1;
+	grid-row: bleed-top;
+	flex-direction: row;
+}
+
+.pagedjs_bleed-bottom {
+	grid-column: bleed-left / -1;
+	grid-row: bleed-bottom;
+	flex-direction: row;
+}
+
+.pagedjs_bleed-left {
+	grid-column: bleed-left;
+	grid-row: bleed-top / -1;
+	flex-direction: column;
+}
+
+.pagedjs_bleed-right {
+	grid-column: bleed-right;
+	grid-row: bleed-top / -1;
+	flex-direction: column;
+}
+
+.pagedjs_marks-crop {
+	display: var(--pagedjs-mark-crop-display);
+	flex-grow: 0;
+	flex-shrink: 0;
+}
+
+.pagedjs_bleed-top .pagedjs_marks-crop:nth-child(1),
+.pagedjs_bleed-bottom .pagedjs_marks-crop:nth-child(1) {
+	width: calc(var(--pagedjs-bleed-left) - var(--pagedjs-crop-stroke));
+	border-right: var(--pagedjs-crop-stroke) solid var(--pagedjs-crop-color);
+}
+
+.pagedjs_bleed-top .pagedjs_marks-crop:nth-child(3),
+.pagedjs_bleed-bottom .pagedjs_marks-crop:nth-child(3) {
+	width: calc(var(--pagedjs-bleed-right) - var(--pagedjs-crop-stroke));
+	border-left: var(--pagedjs-crop-stroke) solid var(--pagedjs-crop-color);
+}
+
+.pagedjs_bleed-top .pagedjs_marks-crop {
+	align-self: flex-start;
+	height: calc(var(--pagedjs-bleed-top) - var(--pagedjs-crop-offset));
+}
+
+.pagedjs_bleed-bottom .pagedjs_marks-crop {
+	align-self: flex-end;
+	height: calc(var(--pagedjs-bleed-bottom) - var(--pagedjs-crop-offset));
+}
+
+.pagedjs_bleed-left .pagedjs_marks-crop:nth-child(1),
+.pagedjs_bleed-right .pagedjs_marks-crop:nth-child(1) {
+	height: calc(var(--pagedjs-bleed-top) - var(--pagedjs-crop-stroke));
+	border-bottom: var(--pagedjs-crop-stroke) solid var(--pagedjs-crop-color);
+}
+
+.pagedjs_bleed-left .pagedjs_marks-crop:nth-child(3),
+.pagedjs_bleed-right .pagedjs_marks-crop:nth-child(3) {
+	height: calc(var(--pagedjs-bleed-bottom) - var(--pagedjs-crop-stroke));
+	border-top: var(--pagedjs-crop-stroke) solid var(--pagedjs-crop-color);
+}
+
+.pagedjs_bleed-left .pagedjs_marks-crop {
+	width: calc(var(--pagedjs-bleed-left) - var(--pagedjs-crop-offset));
+	align-self: flex-start;
+}
+
+.pagedjs_bleed-right .pagedjs_marks-crop {
+	width: calc(var(--pagedjs-bleed-right) - var(--pagedjs-crop-offset));
+	align-self: flex-end;
+}
+
+.pagedjs_marks-middle {
+	display: flex;
+	flex-grow: 1;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+}
+
+.pagedjs_marks-cross {
+	display: var(--pagedjs-mark-cross-display);
+	background-image: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiIHdpZHRoPSIzMi41MzdweCIgaGVpZ2h0PSIzMi41MzdweCIgdmlld0JveD0iMC4xMDQgMC4xMDQgMzIuNTM3IDMyLjUzNyIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwLjEwNCAwLjEwNCAzMi41MzcgMzIuNTM3IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMy4zODkzIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIGQ9Ik0yOS45MzEsMTYuMzczYzAsNy40ODktNi4wNjgsMTMuNTYtMTMuNTU4LDEzLjU2Yy03LjQ4MywwLTEzLjU1Ny02LjA3Mi0xMy41NTctMTMuNTZjMC03LjQ4Niw2LjA3NC0xMy41NTQsMTMuNTU3LTEzLjU1NEMyMy44NjIsMi44MTksMjkuOTMxLDguODg3LDI5LjkzMSwxNi4zNzN6Ii8+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjMuMzg5MyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iMC4xMDQiIHkxPSIxNi4zNzMiIHgyPSIzMi42NDIiIHkyPSIxNi4zNzMiLz48bGluZSBmaWxsPSJub25lIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMy4zODkzIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHgxPSIxNi4zNzMiIHkxPSIwLjEwNCIgeDI9IjE2LjM3MyIgeTI9IjMyLjY0MiIvPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIzLjM4OTMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgZD0iTTI0LjUwOCwxNi4zNzNjMCw0LjQ5Ni0zLjYzOCw4LjEzNS04LjEzNSw4LjEzNWMtNC40OTEsMC04LjEzNS0zLjYzOC04LjEzNS04LjEzNWMwLTQuNDg5LDMuNjQ0LTguMTM1LDguMTM1LTguMTM1QzIwLjg2OSw4LjIzOSwyNC41MDgsMTEuODg0LDI0LjUwOCwxNi4zNzN6Ii8+PHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjAuNjc3OCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBkPSJNMjkuOTMxLDE2LjM3M2MwLDcuNDg5LTYuMDY4LDEzLjU2LTEzLjU1OCwxMy41NmMtNy40ODMsMC0xMy41NTctNi4wNzItMTMuNTU3LTEzLjU2YzAtNy40ODYsNi4wNzQtMTMuNTU0LDEzLjU1Ny0xMy41NTRDMjMuODYyLDIuODE5LDI5LjkzMSw4Ljg4NywyOS45MzEsMTYuMzczeiIvPjxsaW5lIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIwLjY3NzgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgeDE9IjAuMTA0IiB5MT0iMTYuMzczIiB4Mj0iMzIuNjQyIiB5Mj0iMTYuMzczIi8+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjAuNjc3OCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iMTYuMzczIiB5MT0iMC4xMDQiIHgyPSIxNi4zNzMiIHkyPSIzMi42NDIiLz48cGF0aCBkPSJNMjQuNTA4LDE2LjM3M2MwLDQuNDk2LTMuNjM4LDguMTM1LTguMTM1LDguMTM1Yy00LjQ5MSwwLTguMTM1LTMuNjM4LTguMTM1LTguMTM1YzAtNC40ODksMy42NDQtOC4xMzUsOC4xMzUtOC4xMzVDMjAuODY5LDguMjM5LDI0LjUwOCwxMS44ODQsMjQuNTA4LDE2LjM3MyIvPjxsaW5lIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIwLjY3NzgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgeDE9IjguMjM5IiB5MT0iMTYuMzczIiB4Mj0iMjQuNTA4IiB5Mj0iMTYuMzczIi8+PGxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjAuNjc3OCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiB4MT0iMTYuMzczIiB5MT0iOC4yMzkiIHgyPSIxNi4zNzMiIHkyPSIyNC41MDgiLz48L3N2Zz4=);
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  background-size: var(--pagedjs-cross-size);
+
+  z-index: 2147483647;
+	width: var(--pagedjs-cross-size);
+	height: var(--pagedjs-cross-size);
+}
+
+.pagedjs_pagebox {
+	box-sizing: border-box;
+	width: var(--pagedjs-pagebox-width);
+	height: var(--pagedjs-pagebox-height);
+	position: relative;
+	display: grid;
+	grid-template-columns: [left] var(--pagedjs-margin-left) [center] calc(var(--pagedjs-pagebox-width) - var(--pagedjs-margin-left) - var(--pagedjs-margin-right)) [right] var(--pagedjs-margin-right);
+	grid-template-rows: [header] var(--pagedjs-margin-top) [page] calc(var(--pagedjs-pagebox-height) - var(--pagedjs-margin-top) - var(--pagedjs-margin-bottom)) [footer] var(--pagedjs-margin-bottom);
+	grid-column: sheet-center;
+	grid-row: sheet-middle;
+}
+
+.pagedjs_pagebox * {
 	box-sizing: border-box;
 }
 
 .pagedjs_margin-top {
-	width: calc(var(--width) - var(--margin-left) - var(--margin-right));
-	height: var(--margin-top);
+	width: calc(var(--pagedjs-pagebox-width) - var(--pagedjs-margin-left) - var(--pagedjs-margin-right));
+	height: var(--pagedjs-margin-top);
 	grid-column: center;
 	grid-row: header;
 	flex-wrap: nowrap;
@@ -23520,33 +23819,32 @@
 }
 
 .pagedjs_margin-top-left-corner-holder {
-	width: var(--margin-left);
-	height: var(--margin-top);
+	width: var(--pagedjs-margin-left);
+	height: var(--pagedjs-margin-top);
 	display: flex;
 	grid-column: left;
 	grid-row: header;
 }
 
 .pagedjs_margin-top-right-corner-holder {
-	width: var(--margin-right);
-	height: var(--margin-top);
+	width: var(--pagedjs-margin-right);
+	height: var(--pagedjs-margin-top);
 	display: flex;
 	grid-column: right;
 	grid-row: header;
 }
 
 .pagedjs_margin-top-left-corner {
-	width: var(--margin-left);
+	width: var(--pagedjs-margin-left);
 }
 
 .pagedjs_margin-top-right-corner {
-	width: var(--margin-right);
+	width: var(--pagedjs-margin-right);
 }
 
-
 .pagedjs_margin-right {
-	height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
-	width: var(--margin-right);
+	height: calc(var(--pagedjs-pagebox-height) - var(--pagedjs-margin-top) - var(--pagedjs-margin-bottom));
+	width: var(--pagedjs-margin-right);
 	right: 0;
 	grid-column: right;
 	grid-row: page;
@@ -23555,11 +23853,9 @@
 	grid-template-columns: 100%;
 }
 
-
-
 .pagedjs_margin-bottom {
-	width: calc(var(--width) - var(--margin-left) - var(--margin-right));
-	height: var(--margin-bottom);
+	width: calc(var(--pagedjs-pagebox-width) - var(--pagedjs-margin-left) - var(--pagedjs-margin-right));
+	height: var(--pagedjs-margin-bottom);
 	grid-column: center;
 	grid-row: footer;
 	display: grid;
@@ -23568,34 +23864,34 @@
 }
 
 .pagedjs_margin-bottom-left-corner-holder {
-	width: var(--margin-left);
-	height: var(--margin-bottom);
+	width: var(--pagedjs-margin-left);
+	height: var(--pagedjs-margin-bottom);
 	display: flex;
 	grid-column: left;
 	grid-row: footer;
 }
 
 .pagedjs_margin-bottom-right-corner-holder {
-	width: var(--margin-right);
-	height: var(--margin-bottom);
+	width: var(--pagedjs-margin-right);
+	height: var(--pagedjs-margin-bottom);
 	display: flex;
 	grid-column: right;
 	grid-row: footer;
 }
 
 .pagedjs_margin-bottom-left-corner {
-	width: var(--margin-left);
+	width: var(--pagedjs-margin-left);
 }
 
 .pagedjs_margin-bottom-right-corner {
-	width: var(--margin-right);
+	width: var(--pagedjs-margin-right);
 }
 
 
 
 .pagedjs_margin-left {
-	height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
-	width: var(--margin-left);
+	height: calc(var(--pagedjs-pagebox-height) - var(--pagedjs-margin-top) - var(--pagedjs-margin-bottom));
+	width: var(--pagedjs-margin-left);
 	grid-column: left;
 	grid-row: page;
 	display: grid;
@@ -23603,18 +23899,18 @@
 	grid-template-columns: 100%;
 }
 
-.pagedjs_pages .pagedjs_page .pagedjs_margin:not(.hasContent) {
+.pagedjs_pages .pagedjs_pagebox .pagedjs_margin:not(.hasContent) {
 	visibility: hidden;
 }
 
-.pagedjs_page > .pagedjs_area {
+.pagedjs_pagebox > .pagedjs_area {
 	grid-column: center;
 	grid-row: page;
 	width: 100%;
 	height: 100%;
 }
 
-.pagedjs_page > .pagedjs_area > .pagedjs_page_content {
+.pagedjs_pagebox > .pagedjs_area > .pagedjs_page_content {
 	width: 100%;
 	height: 100%;
 	position: relative;
@@ -23623,25 +23919,27 @@
 
 .pagedjs_page {
 	counter-increment: page;
+	width: var(--pagedjs-width);
+	height: var(--pagedjs-height);
 }
 
 .pagedjs_pages {
-	counter-reset: pages var(--page-count);
+	counter-reset: pages var(--pagedjs-page-count);
 }
 
 
-.pagedjs_page .pagedjs_margin-top-left-corner,
-.pagedjs_page .pagedjs_margin-top-right-corner,
-.pagedjs_page .pagedjs_margin-bottom-left-corner,
-.pagedjs_page .pagedjs_margin-bottom-right-corner,
-.pagedjs_page .pagedjs_margin-top-left,
-.pagedjs_page .pagedjs_margin-top-right,
-.pagedjs_page .pagedjs_margin-bottom-left,
-.pagedjs_page .pagedjs_margin-bottom-right,
-.pagedjs_page .pagedjs_margin-top-center,
-.pagedjs_page .pagedjs_margin-bottom-center,
-.pagedjs_page .pagedjs_margin-top-center,
-.pagedjs_page .pagedjs_margin-bottom-center,
+.pagedjs_pagebox .pagedjs_margin-top-left-corner,
+.pagedjs_pagebox .pagedjs_margin-top-right-corner,
+.pagedjs_pagebox .pagedjs_margin-bottom-left-corner,
+.pagedjs_pagebox .pagedjs_margin-bottom-right-corner,
+.pagedjs_pagebox .pagedjs_margin-top-left,
+.pagedjs_pagebox .pagedjs_margin-top-right,
+.pagedjs_pagebox .pagedjs_margin-bottom-left,
+.pagedjs_pagebox .pagedjs_margin-bottom-right,
+.pagedjs_pagebox .pagedjs_margin-top-center,
+.pagedjs_pagebox .pagedjs_margin-bottom-center,
+.pagedjs_pagebox .pagedjs_margin-top-center,
+.pagedjs_pagebox .pagedjs_margin-bottom-center,
 .pagedjs_margin-right-middle,
 .pagedjs_margin-left-middle  {
 	display: flex;
@@ -23664,8 +23962,8 @@
 
 
 /*
-.pagedjs_page .pagedjs_margin-top-center,
-.pagedjs_page .pagedjs_margin-bottom-center {
+.pagedjs_pagebox .pagedjs_margin-top-center,
+.pagedjs_pagebox .pagedjs_margin-bottom-center {
 	height: 100%;
 	display: none;
 	align-items: center;
@@ -23673,51 +23971,51 @@
 	margin: 0 auto;
 }
 
-.pagedjs_page .pagedjs_margin-top-left-corner,
-.pagedjs_page .pagedjs_margin-top-right-corner,
-.pagedjs_page .pagedjs_margin-bottom-right-corner,
-.pagedjs_page .pagedjs_margin-bottom-left-corner {
+.pagedjs_pagebox .pagedjs_margin-top-left-corner,
+.pagedjs_pagebox .pagedjs_margin-top-right-corner,
+.pagedjs_pagebox .pagedjs_margin-bottom-right-corner,
+.pagedjs_pagebox .pagedjs_margin-bottom-left-corner {
 	display: none;
 	align-items: center;
 }
 
-.pagedjs_page .pagedjs_margin-left-top,
-.pagedjs_page .pagedjs_margin-right-top {
+.pagedjs_pagebox .pagedjs_margin-left-top,
+.pagedjs_pagebox .pagedjs_margin-right-top {
 	display: none;
 	align-items: flex-start;
 }
 
-.pagedjs_page .pagedjs_margin-right-middle,
-.pagedjs_page .pagedjs_margin-left-middle {
+.pagedjs_pagebox .pagedjs_margin-right-middle,
+.pagedjs_pagebox .pagedjs_margin-left-middle {
 	display: none;
 	align-items: center;
 }
 
-.pagedjs_page .pagedjs_margin-left-bottom,
-.pagedjs_page .pagedjs_margin-right-bottom {
+.pagedjs_pagebox .pagedjs_margin-left-bottom,
+.pagedjs_pagebox .pagedjs_margin-right-bottom {
 	display: none;
 	align-items: flex-end;
 }
 */
 
-.pagedjs_page .pagedjs_margin-top-left,
-.pagedjs_page .pagedjs_margin-top-right-corner,
-.pagedjs_page .pagedjs_margin-bottom-left,
-.pagedjs_page .pagedjs_margin-bottom-right-corner { text-align: left; }
+.pagedjs_pagebox .pagedjs_margin-top-left,
+.pagedjs_pagebox .pagedjs_margin-top-right-corner,
+.pagedjs_pagebox .pagedjs_margin-bottom-left,
+.pagedjs_pagebox .pagedjs_margin-bottom-right-corner { text-align: left; }
 
-.pagedjs_page .pagedjs_margin-top-left-corner,
-.pagedjs_page .pagedjs_margin-top-right,
-.pagedjs_page .pagedjs_margin-bottom-left-corner,
-.pagedjs_page .pagedjs_margin-bottom-right { text-align: right; }
+.pagedjs_pagebox .pagedjs_margin-top-left-corner,
+.pagedjs_pagebox .pagedjs_margin-top-right,
+.pagedjs_pagebox .pagedjs_margin-bottom-left-corner,
+.pagedjs_pagebox .pagedjs_margin-bottom-right { text-align: right; }
 
-.pagedjs_page .pagedjs_margin-top-center,
-.pagedjs_page .pagedjs_margin-bottom-center,
-.pagedjs_page .pagedjs_margin-left-top,
-.pagedjs_page .pagedjs_margin-left-middle,
-.pagedjs_page .pagedjs_margin-left-bottom,
-.pagedjs_page .pagedjs_margin-right-top,
-.pagedjs_page .pagedjs_margin-right-middle,
-.pagedjs_page .pagedjs_margin-right-bottom { text-align: center; }
+.pagedjs_pagebox .pagedjs_margin-top-center,
+.pagedjs_pagebox .pagedjs_margin-bottom-center,
+.pagedjs_pagebox .pagedjs_margin-left-top,
+.pagedjs_pagebox .pagedjs_margin-left-middle,
+.pagedjs_pagebox .pagedjs_margin-left-bottom,
+.pagedjs_pagebox .pagedjs_margin-right-top,
+.pagedjs_pagebox .pagedjs_margin-right-middle,
+.pagedjs_pagebox .pagedjs_margin-right-bottom { text-align: center; }
 
 .pagedjs_pages .pagedjs_margin .pagedjs_margin-content {
 	width: 100%;
@@ -23730,20 +24028,20 @@
 	display: block;
 }
 
-.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-to] {
+.pagedjs_pages > .pagedjs_page > .pagedjs_sheet > .pagedjs_pagebox > .pagedjs_area > div [data-split-to] {
 	margin-bottom: unset;
 	padding-bottom: unset;
 }
 
-.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from] {
+.pagedjs_pages > .pagedjs_page > .pagedjs_sheet > .pagedjs_pagebox > .pagedjs_area > div [data-split-from] {
 	text-indent: unset;
 	margin-top: unset;
 	padding-top: unset;
 	initial-letter: unset;
 }
 
-.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from] > *::first-letter,
-.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from]::first-letter {
+.pagedjs_pages > .pagedjs_page > .pagedjs_sheet > .pagedjs_pagebox > .pagedjs_area > div [data-split-from] > *::first-letter,
+.pagedjs_pages > .pagedjs_page > .pagedjs_sheet > .pagedjs_pagebox > .pagedjs_area > div [data-split-from]::first-letter {
 	color: unset;
 	font-size: unset;
 	font-weight: unset;
@@ -23755,17 +24053,17 @@
 	margin: unset;
 }
 
-.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-to]:after,
-.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-to]::after {
+.pagedjs_pages > .pagedjs_page > .pagedjs_sheet > .pagedjs_pagebox > .pagedjs_area > div [data-split-to]:after,
+.pagedjs_pages > .pagedjs_page > .pagedjs_sheet > .pagedjs_pagebox > .pagedjs_area > div [data-split-to]::after {
 	content: unset;
 }
 
-.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from]:before,
-.pagedjs_pages > .pagedjs_page > .pagedjs_area > div [data-split-from]::before {
+.pagedjs_pages > .pagedjs_page > .pagedjs_sheet > .pagedjs_pagebox > .pagedjs_area > div [data-split-from]:before,
+.pagedjs_pages > .pagedjs_page > .pagedjs_sheet > .pagedjs_pagebox > .pagedjs_area > div [data-split-from]::before {
 	content: unset;
 }
 
-.pagedjs_pages > .pagedjs_page > .pagedjs_area > div li[data-split-from]:first-of-type {
+.pagedjs_pages > .pagedjs_page > .pagedjs_sheet > .pagedjs_pagebox > .pagedjs_area > div li[data-split-from]:first-of-type {
 	list-style: none;
 }
 
@@ -23817,7 +24115,7 @@ img {
 		max-height: 100%;
 	}
 	.pagedjs_pages {
-		width: var(--width);
+		width: var(--pagedjs-width);
 		display: block !important;
 		transform: none !important;
 		height: 100% !important;
@@ -23837,6 +24135,30 @@ img {
 }
 `;
 
+	async function request(url, options={}) {
+		return new Promise(function(resolve, reject) {
+			let request = new XMLHttpRequest();
+
+			request.open(options.method || 'get', url, true);
+
+			for (let i in options.headers) {
+				request.setRequestHeader(i, options.headers[i]);
+			}
+
+			request.withCredentials = options.credentials=='include';
+
+			request.onload = () => {
+	 			// Chrome returns a status code of 0 for local files
+	 			const status = request.status === 0 && url.startsWith('file://') ? 200 : request.status;
+				resolve(new Response(request.responseText, {status}));
+			};
+
+			request.onerror = reject;
+
+			request.send(options.body || null);
+		});
+	}
+
 	class Polisher {
 		constructor(setup) {
 			this.sheets = [];
@@ -23849,6 +24171,7 @@ img {
 			this.hooks.onRule = new Hook(this);
 			this.hooks.onDeclaration = new Hook(this);
 			this.hooks.onContent = new Hook(this);
+			this.hooks.onImport = new Hook(this);
 
 			this.hooks.beforeTreeParse = new Hook(this);
 			this.hooks.beforeTreeWalk = new Hook(this);
@@ -23884,7 +24207,7 @@ img {
 					}
 				} else {
 					urls.push(arguments[i]);
-					f = fetch(arguments[i]).then((response) => {
+					f = request(arguments[i]).then((response) => {
 						return response.text();
 					});
 				}
@@ -23897,9 +24220,9 @@ img {
 				.then(async (originals) => {
 					let text = "";
 					for (let index = 0; index < originals.length; index++) {
-						text += await this.convertViaSheet(originals[index], urls[index]);
+						text = await this.convertViaSheet(originals[index], urls[index]);
+						this.insert(text);
 					}
-					this.insert(text);
 					return text;
 				});
 		}
@@ -23907,6 +24230,16 @@ img {
 		async convertViaSheet(cssStr, href) {
 			let sheet = new Sheet(href, this.hooks);
 			await sheet.parse(cssStr);
+
+			// Insert the imported sheets first
+			for (let url of sheet.imported) {
+				let str = await request(url).then((response) => {
+					return response.text();
+				});
+				let text = await this.convertViaSheet(str, url);
+				this.insert(text);
+			}
+
 			this.sheets.push(sheet);
 
 			if (typeof sheet.width !== "undefined") {
@@ -24211,6 +24544,56 @@ img {
 				page.format = declarations.size.format;
 			}
 
+			if (declarations.bleed && declarations.bleed[0] != "auto") {
+				switch (declarations.bleed.length) {
+					case 4: // top right bottom left
+						page.bleed = {
+							top: declarations.bleed[0],
+							right: declarations.bleed[1],
+							bottom: declarations.bleed[2],
+							left: declarations.bleed[3]
+						};
+						break;
+					case 3: // top right bottom right
+						page.bleed = {
+							top: declarations.bleed[0],
+							right: declarations.bleed[1],
+							bottom: declarations.bleed[2],
+							left: declarations.bleed[1]
+						};
+						break;
+					case 2: // top right top right
+						page.bleed = {
+							top: declarations.bleed[0],
+							right: declarations.bleed[1],
+							bottom: declarations.bleed[0],
+							left: declarations.bleed[1]
+						};
+						break;
+					default:
+						page.bleed = {
+							top: declarations.bleed[0],
+							right: declarations.bleed[0],
+							bottom: declarations.bleed[0],
+							left: declarations.bleed[0]
+						};
+				}
+			}
+
+			if (declarations.marks) {
+				if (!declarations.bleed || declarations.bleed && declarations.bleed[0] === "auto") {
+					// Spec say 6pt, but needs more space for marks
+					page.bleed = {
+						top: { value: 6, unit: "mm" },
+						right: { value: 6, unit: "mm" },
+						bottom: { value: 6, unit: "mm" },
+						left: { value: 6, unit: "mm" }
+					};
+				}
+
+				page.marks = declarations.marks;
+			}
+
 			if (declarations.margin) {
 				page.margin = declarations.margin;
 			}
@@ -24251,6 +24634,9 @@ img {
 				let height = this.pages["*"].height;
 				let format = this.pages["*"].format;
 				let orientation = this.pages["*"].orientation;
+				let bleed = this.pages["*"].bleed;
+				let marks = this.pages["*"].marks;
+
 
 				if ((width && height) &&
 						(this.width !== width || this.height !== height)) {
@@ -24259,10 +24645,10 @@ img {
 					this.format = format;
 					this.orientation = orientation;
 
-					this.addRootVars(ast, width, height, orientation);
-					this.addRootPage(ast, this.pages["*"].size);
+					this.addRootVars(ast, width, height, orientation, bleed, marks);
+					this.addRootPage(ast, this.pages["*"].size, bleed);
 
-					this.emit("size", { width, height, orientation, format });
+					this.emit("size", { width, height, orientation, format, bleed });
 				}
 
 			}
@@ -24348,8 +24734,15 @@ img {
 				enter: (declaration, dItem, dList) => {
 					let prop = lib.property(declaration.property).name;
 					let value = declaration.value;
+
 					if (prop === "marks") {
-						parsed.marks = value.children.first().name;
+						parsed.marks = [];
+						lib.walk(declaration, {
+							visit: "Identifier",
+							enter: (ident) => {
+								parsed.marks.push(ident.name);
+							}
+						});
 						dList.remove(dItem);
 					} else if (prop === "margin") {
 						parsed.margin = this.getMargins(declaration);
@@ -24368,6 +24761,37 @@ img {
 						dList.remove(dItem);
 					} else if (prop === "size") {
 						parsed.size = this.getSize(declaration);
+						dList.remove(dItem);
+					} else if (prop === "bleed") {
+						parsed.bleed = [];
+
+						lib.walk(declaration, {
+							enter: (subNode) => {
+								switch (subNode.type) {
+									case "String": // bleed: "auto"
+										if (subNode.value.indexOf("auto") > -1) {
+											parsed.bleed.push("auto");
+										}
+										break;
+									case "Dimension": // bleed: 1in 2in, bleed: 20px ect.
+										parsed.bleed.push({
+											value: subNode.value,
+											unit: subNode.unit
+										});
+										break;
+									case "Number":
+										parsed.bleed.push({
+											value: subNode.value,
+											unit: "px"
+										});
+										break;
+									default:
+										// ignore
+								}
+
+							}
+						});
+
 						dList.remove(dItem);
 					}
 
@@ -24553,7 +24977,7 @@ img {
 					let value = margin[m].value + (margin[m].unit || "");
 					let mVar = list.createItem({
 						type: "Declaration",
-						property: "--margin-" + m,
+						property: "--pagedjs-margin-" + m,
 						value: {
 							type: "Raw",
 							value: value
@@ -24565,32 +24989,28 @@ img {
 		}
 
 		addDimensions(width, height, orientation, list, item) {
+			let widthString, heightString;
 
-			let outputWidth, outputHeight;
-			if (!orientation || orientation === "portrait") {
-				outputWidth = width;
-				outputHeight = height;
-			} else {
-				outputWidth = height;
-				outputHeight = width;
+			widthString = CSSValueToString(width);
+			heightString = CSSValueToString(height);
+
+			if (orientation && orientation !== "portrait") {
+				// reverse for orientation
+				[widthString, heightString] = [heightString, widthString];
 			}
 
 			// width variable
-			let wVar = this.createVariable("--width", outputWidth.value + (outputWidth.unit || ""));
+			let wVar = this.createVariable("--pagedjs-pagebox-width", widthString);
 			list.appendData(wVar);
 
 			// height variable
-			let hVar = this.createVariable("--height", outputHeight.value + (outputHeight.unit || ""));
+			let hVar = this.createVariable("--pagedjs-pagebox-height", heightString);
 			list.appendData(hVar);
 
-			// width dimension
-			let w = this.createDimension("width", outputWidth.value, outputWidth.unit);
-			list.appendData(w);
-
-			// height dimension
-			let h = this.createDimension("height", outputHeight.value, outputHeight.unit);
-			list.appendData(h);
-
+			// let w = this.createDimension("width", width);
+			// let h = this.createDimension("height", height);
+			// list.appendData(w);
+			// list.appendData(h);
 		}
 
 		addMarginaliaStyles(page, list, item, sheet) {
@@ -24754,7 +25174,8 @@ img {
 			}
 		}
 
-		addRootVars(ast, width, height, orientation) {
+		addRootVars(ast, width, height, orientation, bleed, marks) {
+			let rules = [];
 			let selectors = new lib.List();
 			selectors.insertData({
 				type: "PseudoClassSelector",
@@ -24762,38 +25183,186 @@ img {
 				children: null
 			});
 
-			// orientation variable
-			let oVar = this.createVariable("--orientation", orientation || "");
-
 			let widthString, heightString;
-			if (!orientation || orientation === "portrait") {
-				widthString = width.value + (width.unit || "");
-				heightString = height.value + (height.unit || "");
+
+			if (!bleed) {
+				widthString = CSSValueToString(width);
+				heightString = CSSValueToString(height);
 			} else {
-				widthString = height.value + (height.unit || "");
-				heightString = width.value + (width.unit || "");
+				widthString = `calc( ${CSSValueToString(width)} + ${CSSValueToString(bleed.left)} + ${CSSValueToString(bleed.right)} )`;
+				heightString = `calc( ${CSSValueToString(height)} + ${CSSValueToString(bleed.top)} + ${CSSValueToString(bleed.bottom)} )`;
+
+				let bleedTop = this.createVariable("--pagedjs-bleed-top", CSSValueToString(bleed.top));
+				let bleedRight = this.createVariable("--pagedjs-bleed-right", CSSValueToString(bleed.right));
+				let bleedBottom = this.createVariable("--pagedjs-bleed-bottom", CSSValueToString(bleed.bottom));
+				let bleedLeft = this.createVariable("--pagedjs-bleed-left", CSSValueToString(bleed.left));
+
+				let pageWidthVar = this.createVariable("--pagedjs-width", CSSValueToString(width));
+				let pageHeightVar = this.createVariable("--pagedjs-height", CSSValueToString(height));
+
+				rules.push(bleedTop, bleedRight, bleedBottom, bleedLeft, pageWidthVar, pageHeightVar);
 			}
 
-			let wVar = this.createVariable("--width", widthString);
-			let hVar = this.createVariable("--height", heightString);
-			let rule = this.createRule(selectors, [wVar, hVar, oVar]);
+			if (marks) {
+				marks.forEach((mark) => {
+					let markDisplay = this.createVariable("--pagedjs-mark-" + mark + "-display", "block");
+					rules.push(markDisplay);
+				});
+			}
+
+			// orientation variable
+			if (orientation) {
+				let oVar = this.createVariable("--pagedjs-orientation", orientation);
+				rules.push(oVar);
+
+				if (orientation !== "portrait") {
+					// reverse for orientation
+					[widthString, heightString] = [heightString, widthString];
+				}
+			}
+
+			let wVar = this.createVariable("--pagedjs-width", widthString);
+			let hVar = this.createVariable("--pagedjs-height", heightString);
+
+			rules.push(wVar, hVar);
+
+			let rule = this.createRule(selectors, rules);
 
 			ast.children.appendData(rule);
 		}
 
 		/*
 		@page {
-			size: var(--width) var(--height);
+			size: var(--pagedjs-width) var(--pagedjs-height);
 			margin: 0;
 			padding: 0;
 		}
 		*/
-		addRootPage(ast, size) {
+		addRootPage(ast, size, bleed) {
 			let { width, height, orientation, format } = size;
 			let children = new lib.List();
 			let dimensions = new lib.List();
 
-			if (format) {
+			if (bleed) {
+				let widthCalculations = new lib.List();
+				let heightCalculations = new lib.List();
+
+				// width
+				widthCalculations.appendData({
+					type: "Dimension",
+					unit: width.unit,
+					value: width.value
+				});
+
+				widthCalculations.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculations.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				widthCalculations.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculations.appendData({
+					type: "Dimension",
+					unit: bleed.left.unit,
+					value: bleed.left.value
+				});
+
+				widthCalculations.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculations.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				widthCalculations.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculations.appendData({
+					type: "Dimension",
+					unit: bleed.right.unit,
+					value: bleed.right.value
+				});
+
+				// height
+				heightCalculations.appendData({
+					type: "Dimension",
+					unit: height.unit,
+					value: height.value
+				});
+
+				heightCalculations.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculations.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				heightCalculations.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculations.appendData({
+					type: "Dimension",
+					unit: bleed.top.unit,
+					value: bleed.top.value
+				});
+
+				heightCalculations.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculations.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				heightCalculations.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculations.appendData({
+					type: "Dimension",
+					unit: bleed.bottom.unit,
+					value: bleed.bottom.value
+				});
+
+				dimensions.appendData({
+					type: "Function",
+					name: "calc",
+					children: widthCalculations
+				});
+
+				dimensions.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				dimensions.appendData({
+					type: "Function",
+					name: "calc",
+					children: heightCalculations
+				});
+
+			} else if (format) {
 				dimensions.appendData({
 					type: "Identifier",
 					name: format
@@ -25316,14 +25885,63 @@ img {
 			};
 		}
 
-		createDimension(property, value, unit, important) {
+		createCalculatedDimension(property, items, important, operator="+") {
+			let children = new lib.List();
+			let calculations = new lib.List();
+
+			items.forEach((item, index) => {
+				calculations.appendData({
+					type: "Dimension",
+					unit: item.unit,
+					value: item.value
+				});
+
+				calculations.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				if (index + 1 < items.length) {
+					calculations.appendData({
+						type: "Operator",
+						value: operator
+					});
+
+					calculations.appendData({
+						type: "WhiteSpace",
+						value: " "
+					});
+				}
+			});
+
+			children.insertData({
+				type: "Function",
+				loc: null,
+				name: "calc",
+				children: calculations
+			});
+
+			return {
+				type: "Declaration",
+				loc: null,
+				important: important,
+				property: property,
+				value: {
+					type: "Value",
+					loc: null,
+					children: children
+				}
+			};
+		}
+
+		createDimension(property, cssValue, important) {
 			let children = new lib.List();
 
 			children.insertData({
 				type: "Dimension",
 				loc: null,
-				value: value,
-				unit: unit
+				value: cssValue.value,
+				unit: cssValue.unit
 			});
 
 			return {
@@ -25796,7 +26414,12 @@ img {
 		afterPageLayout(pageElement, page, breakToken, chunker) {
 			var orderedLists = pageElement.getElementsByTagName("ol");
 			for (var list of orderedLists) {
+				if (list.hasChildNodes()) {
 				list.start = list.firstElementChild.dataset.itemNum;
+				}
+				else {
+					list.parentNode.removeChild(list);
+				}
 			}
 		}
 
@@ -26076,7 +26699,7 @@ img {
 				funcNode.children.append(funcNode.children.createItem({
 					type: "Identifier",
 					loc: null,
-					name: "--string-" + identifier
+					name: "--pagedjs-string-" + identifier
 				}));
 			}
 		}
@@ -26089,17 +26712,17 @@ img {
 					let cssVar;
 					if (set.value === "content" || set.value === "content()" || set.value === "content(text)") {
 						cssVar = selected.textContent.replace(/\\([\s\S])|(["|'])/g,"\\$1$2");
-						// this.styleSheet.insertRule(`:root { --string-${name}: "${cssVar}"; }`, this.styleSheet.cssRules.length);
-						// fragment.style.setProperty(`--string-${name}`, `"${cssVar}"`);
+						// this.styleSheet.insertRule(`:root { --pagedjs-string-${name}: "${cssVar}"; }`, this.styleSheet.cssRules.length);
+						// fragment.style.setProperty(`--pagedjs-string-${name}`, `"${cssVar}"`);
 						set.first = cssVar;
-						fragment.style.setProperty(`--string-${name}`, `"${set.first}"`);
+						fragment.style.setProperty(`--pagedjs-string-${name}`, `"${set.first}"`);
 					} else {
 						console.warn(set.value + "needs css replacement");
 					}
 				} else {
 					// Use the previous values
 					if (set.first) {
-						fragment.style.setProperty(`--string-${name}`, `"${set.first}"`);
+						fragment.style.setProperty(`--pagedjs-string-${name}`, `"${set.first}"`);
 					}
 				}
 			}
@@ -26213,16 +26836,15 @@ img {
 								}
 							}
 
-							// let psuedo = "";
-							// if (split.length > 1) {
-							// 	psuedo += "::" + split[1];
-							// }
-
-							this.styleSheet.insertRule(`[data-${target.variable}="${selector}"] { counter-reset: ${target.variable} ${pg}; }`, this.styleSheet.cssRules.length);
+							let psuedo = "";
+							if (split.length > 1) {
+								psuedo += "::" + split[1];
+							}
+							this.styleSheet.insertRule(`[data-${target.variable}="${selector}"]${psuedo} { counter-reset: ${target.variable} ${pg}; }`, this.styleSheet.cssRules.length);
 						} else {
 							let value = element.getAttribute(`data-counter-${target.counter}-value`);
 							if (value) {
-								this.styleSheet.insertRule(`[data-${target.variable}="${selector}"] { counter-reset: ${target.variable} ${target.variable} ${parseInt(value)}; }`, this.styleSheet.cssRules.length);
+								this.styleSheet.insertRule(`[data-${target.variable}="${selector}"]${psuedo} { counter-reset: ${target.variable} ${target.variable} ${parseInt(value)}; }`, this.styleSheet.cssRules.length);
 							}
 						}
 					}
@@ -26261,7 +26883,7 @@ img {
 					style = last.name;
 				}
 
-				let variable = "--" + UUID();
+				let variable = "--pagedjs-" + UUID();
 
 				selector.split(",").forEach((s) => {
 					this.textTargets[s] = {
@@ -26651,7 +27273,7 @@ img {
 		return arr;
 	};
 
-	var from = isImplemented$3()
+	var from_1 = isImplemented$3()
 		? Array.from
 		: shim$4;
 
@@ -26749,7 +27371,7 @@ img {
 			delete desc.set;
 		}
 		desc.value = function () {
-			var i, emitter, data = from(pipes);
+			var i, emitter, data = from_1(pipes);
 			emit.apply(this, arguments);
 			for (i = 0; (emitter = data[i]); ++i) emit.apply(emitter, arguments);
 		};
@@ -26857,11 +27479,12 @@ img {
 
 			// Check if a template exists
 			let template;
-			template = body.querySelector(":scope > template");
+			template = body.querySelector(":scope > template[data-ref='pagedjs-content']");
 
 			if (!template) {
 				// Otherwise create one
 				template = document.createElement("template");
+				template.dataset.ref = "pagedjs-content";
 				template.innerHTML = body.innerHTML;
 				body.innerHTML = "";
 				body.appendChild(template);
@@ -26984,4 +27607,4 @@ img {
 
 	return previewer;
 
-})));
+}));

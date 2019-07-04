@@ -1,0 +1,133 @@
+---
+title: A paged html thesis template for R Markdown user's
+subtitle: A {pagedown} template.
+author: 
+  - name: William Brent Thorne
+    edu: BSc
+degree: Master of Documentation
+institute: Typeset University
+faculty: Reproducibility and FOSS
+department: Templates
+location: St. Catharines, ON 
+date:
+  - year: 2019
+    month: August
+sign_page: true
+dedication: A dedication line or two goes here.
+abstract: This is the abstract.
+preface: A preface to the thesis.
+acknowledge: Put the ackknowledgements here.
+committee:
+  - name: Jane Doe III
+    prefix: Dr
+    position: Chair of Department
+  - name: John Smith
+    prefix: Dr
+    position: Faculty Advisor
+lof: true
+lot: true
+toc-title: Contents
+output:
+  pagedown::thesis_paged: 
+    toc: true
+    number_sections: yes
+    pandoc_args: --mathjax
+    self_contained: no
+bibliography: packages.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      fig.align = 'center')
+```
+
+# Literature Review {-}
+
+This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
+
+_**rmarkdown**_:
+
+```markdown
+# Literature Review {-}
+
+This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
+```
+
+# The Basics {.chapter}
+
+## Introduction
+
+This template is based on the `pagedown::html_paged` template and modified to meet the requirements of a generic thesis document. Standard RMarkdown formatting can be used for smooth and distraction free writting, for example I will add a citation for the {knitr} package which is located in the `Thesis.bib` file auto-generated in this template [@R-knitr].
+
+Thanks to the [help](https://github.com/rstudio/pagedown/issues/101) of [Romain Lesur](https://github.com/RLesur) this template has the ability to tag section headers with the word "Chapter ". To have your chapters display as this one (_Chapter 1 The Basics_) use the `{.chapter}` class like this:
+
+_**rmarkdown**_
+```markdown
+---
+output:
+  pagedown::thesis_paged
+    number_Sections: yes
+---
+# The Basics {.chapter}
+
+## Introduction
+
+This template is based on the `pagedown::html_paged` template...
+```
+
+## Second level heading
+
+Here is some code and a plot, with a figure caption, Figure \@ref(fig:code):
+
+```{r code, fig.cap='The automatic numbering of this figure will only work if it includes a figure caption, user beware!'}
+
+plot(iris$Sepal.Length,
+     iris$Sepal.Width,
+     col=iris$Species, pch=19)
+```
+
+Here is an example of an abbreviation where I use the `<abbr>` html tag <abbr title="Brent Thorne">BT</abbr>. In the future there may be a pandoc solution to abbreviation management, however <abbr title="Hyper Text Markup Language">HTML</abbr> is the way to go for now.
+
+# Understanding the method to the madness {.chapter}
+
+Need formula's? Here's some `mathjax` notation:
+
+$$
+\beta = \sum^{1 - k}\frac{\delta D}{\sum\frac{\Delta \gamma A}{X-i}}
+$$
+
+## Adding Tables
+
+You can easyly add tables to this document like soand you can also refeence them like a figure, Table \@ref(tab:atable):
+
+```{r atable}
+knitr::kable(iris[1:4,1:5], align = 'c',caption = 'A caption for the table.',col.names = c("Sepal L","Sepal W", "Petal L", "Petal W", "Species"))
+```
+
+# The final chapter to my pretend thesis {.chapter}
+
+There are still a few features that would be nice to implement in the future for this template. For instance:
+
+1. It would be great to have the ability to use the [{redoc}](https://github.com/noamross/redoc) package to help those who have the ever dreaded "USE WORD ONLY" supervisors.
+
+2. It would also be great to have the ability to generate a _Reference_ section for each _Chapter_ for those who are writing in the "integrated article" format.
+
+3. Along with that, it would be great to pull the YAML data from a child .Rmd file and use it as a way to add the Chapter titles and any other subsequent information (for example a thesis chapter can often actually be a full manuscript and or published paper which would need to have all author's listed for that chapter specifically as well as the journal publication information/ citation data).
+
+# References {-}
+
+```{r, include=FALSE}
+knitr::write_bib(c('knitr', 'rmarkdown', 'xaringan'), 'packages.bib')
+```
+
+<!-- This '<div id="refs"></div>' needs to 
+be here if you have appendix pages 
+otherwise you can remove it.-->
+<div id="refs"></div> 
+
+# APPENDIX I {-}
+
+```{r}
+knitr::kable(iris[1:10,1:5], align = 'c')
+```

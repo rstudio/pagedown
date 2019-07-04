@@ -38,8 +38,8 @@
 }
 
 .pagedjs_page {
-  --content-area-height: calc(var(--height) - var(--margin-top) - var(--margin-bottom));
-  --sidebar-background-width: calc(var(--margin-right) + var(--sidebar-width));
+  --content-area-height: calc(var(--pagedjs-height) - var(--pagedjs-margin-top) - var(--pagedjs-margin-bottom));
+  --sidebar-background-width: calc(var(--pagedjs-margin-right) + var(--sidebar-width));
 }
 
 @page{
@@ -398,10 +398,10 @@ h1, h2{
   body {
     background-color: var(--viewer-background-color);
     margin: 0; /* for mobile */
-    width: calc(var(--width) + 2 * var(--viewer-pages-spacing)); /* for mobile */
+    width: calc(var(--pagedjs-width) + 2 * var(--viewer-pages-spacing)); /* for mobile */
   }
    .pagedjs_pages {
-    max-width: var(--width);
+    max-width: var(--pagedjs-width);
     margin: 0 auto;
     display: flex;
     flex-direction: column;

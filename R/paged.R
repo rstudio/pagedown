@@ -28,7 +28,8 @@ html_paged = function(
     ..., css = css, theme = theme, template = template, .pagedjs = TRUE,
     .pandoc_args = c(
       lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua'), # uri-to-fn.lua must come before footnotes.lua
-      if (!is.null(csl)) c('--csl', csl)
+      if (!is.null(csl)) c('--csl', csl),
+      pandoc_chapter_name_args()
     )
   )
 }
@@ -80,7 +81,7 @@ jss_paged = function(
   )
 
   opts_jss = list(
-    prompt = TRUE, comment = NA, R.options = list(prompt ='R> ', continue = 'R+ '),
+    prompt = TRUE, comment = NA, R.options = list(prompt = 'R> ', continue = 'R+ '),
     fig.align = 'center', fig.width = 4.9, fig.height = 3.675,
     class.source = 'r-chunk-code'
   )
@@ -89,6 +90,20 @@ jss_paged = function(
   }
 
   jss_format
+}
+
+#' Create a paged HTML thesis document suitable for printing
+#'
+#' This output format is similar to \code{\link{html_paged}}. The only
+#' difference is in the default stylesheets and Pandoc template. See
+#' \url{https://pagedown.rbind.io/thesis-paged/} for an example.
+#' @param ...,css,template Arguments passed to \code{\link{html_paged}()}.
+#' @return An R Markdown output format.
+#' @export
+thesis_paged = function(
+  ..., css = c('thesis'), template = pkg_resource('html', 'thesis.html')
+) {
+  html_paged(..., css = css, template = template)
 }
 
 pagedown_dependency = function(css = NULL, js = FALSE) {
@@ -213,4 +228,26 @@ as_html_attrs = function(string) {
 css_declaration = function(property, value) {
   if (is.null(value)) return('')
   paste0(property, ':', value, ';')
+}
+
+chapter_name = function() {
+  config = bookdown:::load_config()
+  chapter_name = config[['chapter_name']] %n% bookdown:::ui_language('chapter_name')
+  if (is.null(chapter_name) || identical(chapter_name, '')) return()
+  if (!is.character(chapter_name)) stop(
+    'chapter_name in _bookdown.yml must be a character string'
+  )
+  if (length(chapter_name) > 2) stop('chapter_name must be of length 1 or 2')
+  chapter_name
+}
+
+pandoc_metadata_arg = function(name, value) {
+  if (!missing(value) && is.character(value)) {
+    value = deparse(value)
+  }
+  c('--metadata', if (missing(value)) name else paste0(name, '=', value))
+}
+
+pandoc_chapter_name_args = function() {
+  unlist(lapply(chapter_name(), pandoc_metadata_arg, name = 'chapter_name'))
 }

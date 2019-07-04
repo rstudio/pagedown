@@ -1,7 +1,7 @@
 :root {
   --background: whitesmoke;
-  --width: 6in;
-  --height: 9in;
+  --pagedjs-width: 6in;
+  --pagedjs-height: 9in;
   --color-paper: white;
   --color-mbox: rgba(0, 0, 0, 0.2);
   --running-title-width: 2.5in;
@@ -56,6 +56,14 @@ a[href^="http"]:not([class="uri"])::after {
   content: ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ";
 }
 
+/* Chapter name */
+.chapter > h1 > .header-section-number::before, .chapter-ref > .toc-section-number::before {
+  content: var(--chapter-name-before, "Chapter ");
+}
+.chapter > h1 > .header-section-number::after, .chapter-ref > .toc-section-number::after {
+  content: var(--chapter-name-after, "");
+}
+
 /* misc elements */
 .subtitle span {
   font-size: .9em;
@@ -68,6 +76,25 @@ pre {
 }
 pre[class] {
   background: #f9f9f9;
+}
+abbr {
+  text-decoration: none;
+}
+
+@media screen {
+  div.sourceCode {
+    overflow: visible !important;
+  }
+  a.sourceLine::before {
+    text-decoration: unset !important;
+  }
+}
+pre.numberSource a.sourceLine {
+  left: 0 !important;
+  text-indent: -5em
+}
+pre.numberSource {
+  margin-left: 0 !important;
 }
 table {
   margin: auto;
@@ -107,7 +134,7 @@ code {
   }
   .pagedjs_pages {
     display: flex;
-    max-width: calc(var(--width) * 2);
+    max-width: calc(var(--pagedjs-width) * 2);
     flex: 0;
     flex-wrap: wrap;
     margin: 0 auto;
@@ -127,13 +154,13 @@ code {
     margin: auto 0 var(--screen-pages-spacing) 0;
   }
   .pagedjs_first_page {
-    margin-left: var(--width);
+    margin-left: var(--pagedjs-width);
   }
 }
 
 /* use a fixed width body for mobiles */
 @media screen and (max-width:1180px)  {
   body {
-    width: calc(var(--width) + 2 * var(--screen-pages-spacing));
+    width: calc(var(--pagedjs-width) + 2 * var(--screen-pages-spacing));
   }
 }

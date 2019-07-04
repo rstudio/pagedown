@@ -3,7 +3,12 @@ local options = {} -- where we store pandoc Meta
 -- This function tests the pandoc version againt a target version
 -- The target version has to be of the form {2, 3} or {2, 3, 1}
 local function pandocAvailable(target)
-  local pandocVersion = PANDOC_VERSION -- use the available global variable
+ -- use a shallow copy of PANDOC_VERSION
+ -- this is required since pandoc 2.7.3, see https://github.com/rstudio/pagedown/issues/111
+  local pandocVersion = {}
+  for i = 1,3 do
+    table.insert(pandocVersion, PANDOC_VERSION[i])
+  end
   pandocVersion[3] = pandocVersion[3] or 0 -- because there is not always a patch number
   target[3] = target[3] or 0
 

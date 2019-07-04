@@ -90,18 +90,6 @@ $if(theme)$
 $endif$
 $endif$
 
-$if(abstract)$
-<style type="text/css">
-  h3.abstract{
-    text-align: center;
-  }
-  div.abstract{
-    margin: auto;
-    width: 90%;
-  }
-</style>
-$endif$
-
 $for(css)$
 <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
 $endfor$
@@ -139,52 +127,129 @@ $for(include-before)$
 $include-before$
 $endfor$
 
+<!--
+Title Page
+-->
 <div class="front-page">
 $if(title)$
 <div id="$idprefix$header" class="title-page">
 $if(shorttitle)$
-<h1 class="shorttitle1" style="display: none;">$shorttitle$</h1>
+<br><br><h1 class="shorttitle1" style="display: none;">$shorttitle$</h1>
 $endif$
 <h1 class="title">$title$</h1>
 $if(subtitle)$
 <h1 class="subtitle"><span>$subtitle$</span></h1>
 $endif$
 $for(author)$
+<br><p class="titlep">by<p><br>
 $if(author.name)$
-<h2 class="author">$author.name$</h2>
-$if(author.affiliation)$
-<address class="author-afil">
-$author.affiliation$<br/>$endif$
-$if(author.email)$
-<a class="author-email" href="mailto:#">$author.email$</a>
-</address>
-$endif$
-$else$
-<h2 class="author">$author$</h2>
+<h2 class="author">$author.name$$if(author.edu)$, $author.edu$$endif$</h2>
 $endif$
 $endfor$
-$if(date)$
-<h2 class="date">$date$</h2>
+</div>
+<br>
+<p class="department">Department of $department$</p>
+<br>
+<p class="titlep">Submitted in partial fulfillment of <br> the requirements for the degree of</p>
+<br>
+<h2 class="degree">$degree$</h2>
+<br>
+<p class="institute">Faculty of $faculty$, $institute$<br>$location$</p>
+<br>
+<p class="copyright">&#169; $for(date)$$date.year$$endfor$ $for(author)$$author.name$$endfor$</p>
+$endif$
+
+<!--
+Bellow is the signature page
+if the user wants one the YAML
+should be "sign_page: true" -->
+
+$if(sign_page)$
+<div class="signpage">
+<p class="titlep">This thesis entitled</p>
+$if(title)$
+<div id="$idprefix$header" class="title-page">
+$if(shorttitle)$
+<br><br><h1 class="shorttitle1" style="display: none;">$shorttitle$</h1>
+$endif$
+<p></p>
+<h1 class="title">$title$</h1>
+$for(author)$
+<br><p class="titlep">by<p><br>
+$if(author.name)$
+<h2 class="author">$author.name$$if(author.edu)$, $author.edu$$endif$</h2><br>
+$endif$
+$endfor$
+</div>
+<p class="titlep">Submitted in partial fulfillment of <br> the requirements for the degree of</p>
+<br>
+<h2 class="degree">$degree$</h2>
+<br>
+<p class="titlep">And has been duly approved by</p>
+<br><br>
+$for(committee)$
+<div class="signature">$committee.position$, $committee.prefix$. $committee.name$</div>
+$endfor$
+
+<div class="signature">Date</div>
 $endif$
 </div>
+$endif$
+
+<!-- Pre content section
+-Example, if user want a dedication page then they include "dedication: 'some text' in the YAML"
+-If you want other pages not found in this template simply add it to this section in the same way
+using the "$if(your_new_option)$ <your content> $endif$"
+-->
+$if(dedication)$
+<div class="dedication">
+<h1 class="dedication">$if(dedication-title)$$dedication-title$$else$Dedication$endif$</h1>
+<p class="dedication">$dedication$</p>
+</div>
+$endif$
+
+
 $if(abstract)$
 <div class="abstract">
-<h3 class="abstract">$if(abstract-title)$$abstract-title$$else$Abstract$endif$</h3>
+<h1 class="abstract">$if(abstract-title)$$abstract-title$$else$Abstract$endif$</h1>
 $abstract$
 </div>
 $endif$
+
+$if(preface)$
+<div class="preface">
+<h1 class="preface">$if(preface-title)$$preface-title$$else$Preface$endif$</h1>
+$preface$
+</div>
 $endif$
+
+$if(acknowledge)$
+<div class="acknowledge">
+<h1 class="acknowledge">$if(acknowledge-title)$$acknowledge-title$$else$Acknowledgement$endif$</h1>
+$acknowledge$
+</div>
+$endif$
+
 </div>
 
+<!-- This
+Container for the table of content, table of tables and table of figures etc.
+- See pagedown::html_paged for details on how to use.
+-->
+
 <div class="front-matter-container">
+
 $if(toc)$
 <div id="$idprefix$TOC" class="level1 toc front-matter">
 $if(toc-title)$
 <h1 class="toc-title">$toc-title$</h1>
-$endif$
 $table-of-contents$
+$else$
+$table-of-contents$
+$endif$
 </div>
 $endif$
+
 </div>
 
 $body$

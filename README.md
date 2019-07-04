@@ -15,13 +15,17 @@ You may install this package from Github:
 remotes::install_github('rstudio/pagedown')
 ```
 
-This package requires a recent version of Pandoc (>= 2.2.3). If you use RStudio, you are recommended to install the [Preview version](https://www.rstudio.com/products/rstudio/download/preview/) (>= 1.2.1070), which has bundled Pandoc 2.x, otherwise you need to install Pandoc separately.
+This package requires a recent version of Pandoc (>= 2.2.3). If you use RStudio, you are recommended to install the [latest version](https://www.rstudio.com/products/rstudio/download/) (>= 1.2.1335), which has bundled Pandoc 2.x, otherwise you need to install Pandoc separately.
 
 Below are some existing R Markdown output formats and examples.
 
 ## Paged HTML documents (`pagedown::html_paged`)
 
 [![A paged HTML document](https://user-images.githubusercontent.com/163582/47673682-58b11880-db83-11e8-87fd-b5e753af7288.png)](https://pagedown.rbind.io)
+
+### Thesis (`pagedown::thesis_paged`)
+
+[![A paged HTML thesis](https://user-images.githubusercontent.com/19177171/60126180-b129cb80-978d-11e9-8e32-7ba48f303b6f.png)](https://pagedown.rbind.io/thesis-paged/)
 
 ### Journal of Statistical Software article (`pagedown::jss_paged`)
 
@@ -53,7 +57,11 @@ Below are some existing R Markdown output formats and examples.
 
 - "Template of Exec Summaries with pagedown" by Joshua David Barillas: https://github.com/jdbarillas/executive_summary
 
+- Ulrik Lyngs's CVs: https://ulyngs.github.io/pagedown-cv/
+
 - Deepak Kumar Tanwar's CV: https://dktanwar.github.io/CV/ds.html
+
+- Jiena Gu McLellan's CV: https://github.com/jienagu/Jiena_McLellan_CV
 
 ## Authors and contributors
 

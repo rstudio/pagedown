@@ -1,6 +1,6 @@
 /* page size */
 @page {
-  size: 6in 9in; /* var(--width) doesn't work in browser when printing */
+  size: 6in 9in; /* var(--pagedjs-width) doesn't work in browser when printing */
 }
 @page :blank {
 
