@@ -221,13 +221,16 @@ no_proxy_urls = function() {
   unique(x)
 }
 
-is_remote_protocol_ok = function(debug_port, max_attempts = 15) {
+is_remote_protocol_ok = function(debug_port, max_attempts = 100) {
   url = sprintf('http://127.0.0.1:%s/json/protocol', debug_port)
   for (i in 1:max_attempts) {
     remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
-    if (!is.null(remote_protocol)) break
-    if (i == max_attempts) stop('Cannot connect to headless Chrome. ')
-    Sys.sleep(0.2)
+    if (!is.null(remote_protocol)) {
+      message('connected at attempt ', i)
+      break
+    }
+    if (i == max_attempts) stop('Cannot connect to headless Chrome after ', i, ' attempts')
+    Sys.sleep(0.5)
   }
 
   required_commands = list(
