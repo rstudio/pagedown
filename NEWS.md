@@ -30,6 +30,8 @@
 
 - Insert page numbers after page references (thanks @atusy, #120).
 
+- With Pandoc 2.7.3, page numbers wrongly appear in code blocks.
+
 # CHANGES IN pagedown VERSION 0.2
 
 ## MAJOR CHANGES

@@ -24,6 +24,11 @@ a[href^="http"]:not([class="uri"])::after {
 .main a.front-matter-ref[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
   content: " (page " target-counter(attr(href), page, lower-roman) ")";
 }
+/* do not include page references in code blocks */
+.sourceCode a[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after,
+.sourceCode a.front-matter-ref[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
+  content: unset;
+}
 
 /* TOC, LOT, LOF */
 .toc ul, .lot ul, .lof ul {
