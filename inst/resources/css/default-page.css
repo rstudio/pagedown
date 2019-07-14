@@ -137,3 +137,9 @@ h1, h2, h3, h4, h5, h6 {
 .main .level1:first-child h1 {
   counter-reset: page;
 }
+
+/* do not break captions */
+caption {
+  break-inside: avoid;
+  break-after: avoid;
+}
