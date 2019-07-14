@@ -83,7 +83,7 @@ chrome_print = function(
   }
   on.exit(kill_chrome(), add = TRUE)
 
-  if (!is_remote_protocol_ok(debug_port))
+  if (!is_remote_protocol_ok(debug_port, verbose = verbose))
     stop('A more recent version of Chrome is required. ')
 
   ws = websocket::WebSocket$new(get_entrypoint(debug_port), autoConnect = FALSE)
@@ -221,13 +221,21 @@ no_proxy_urls = function() {
   unique(x)
 }
 
-is_remote_protocol_ok = function(debug_port, max_attempts = 15) {
+is_remote_protocol_ok = function(debug_port,
+                                 verbose = 0) {
   url = sprintf('http://127.0.0.1:%s/json/protocol', debug_port)
-  for (i in 1:max_attempts) {
+  # can be specify with option, for ex. for CI specificity. see #117
+  max_attempts = getOption("pagedown.remote.maxattempts", 20L)
+  sleep_time = getOption("pagedown.remote.sleeptime", 0.5)
+  if (verbose >= 1) message('Checking the remote connection in ', max_attempts, ' attempts.')
+  for (i in seq_len(max_attempts)) {
     remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
-    if (!is.null(remote_protocol)) break
-    if (i == max_attempts) stop('Cannot connect to headless Chrome. ')
-    Sys.sleep(0.2)
+    if (!is.null(remote_protocol)) {
+      if (verbose >= 1) message('Connected at attempt ', i)
+      break
+    }
+    if (i == max_attempts) stop('Cannot connect to headless Chrome after ', max_attempts, ' attempts')
+    Sys.sleep(sleep_time)
   }
 
   required_commands = list(
