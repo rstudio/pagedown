@@ -133,7 +133,7 @@ h1, h2, h3, h4, h5, h6 {
   break-inside: avoid;
 }
 
-/* reset page numbering after front matter */
-.front-matter-container+.level1 h1 {
+/* reset page numbering for main content */
+.main .level1:first-child h1 {
   counter-reset: page;
 }
