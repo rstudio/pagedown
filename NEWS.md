@@ -28,6 +28,8 @@
 
 - In `uri-to-fn.lua`, use a shallow copy of `PANDOC_VERSION`. This is required for Pandoc >= 2.7.3 which changes the type of `PANDOC_VERSION` (thanks, @andreaphsz, #111).
 
+- Insert page numbers after page references (thanks @atusy, #120).
+
 # CHANGES IN pagedown VERSION 0.2
 
 ## MAJOR CHANGES
