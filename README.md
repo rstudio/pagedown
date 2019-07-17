@@ -59,8 +59,6 @@ Below are some existing R Markdown output formats and examples.
 
 - Ulrik Lyngs's CVs: https://ulyngs.github.io/pagedown-cv/
 
-- Deepak Kumar Tanwar's CV: https://dktanwar.github.io/CV/ds.html
-
 - Jiena Gu McLellan's CV: https://github.com/jienagu/Jiena_McLellan_CV
 
 ## Authors and contributors
