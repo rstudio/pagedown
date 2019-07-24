@@ -45,6 +45,8 @@ Below are some existing R Markdown output formats and examples.
 
 [![A poster of the Jacobs University style](https://user-images.githubusercontent.com/163582/49780277-7b326780-fcd3-11e8-9eb6-69e46292158c.png)](https://pagedown.rbind.io/poster-jacobs/)
 
+Want more poster styles? You may take a look at [Brent Thorne's **posterdown** package](https://github.com/brentthorne/posterdown).
+
 ## Business cards (`pagedown::business_card`)
 
 [![A business card](https://user-images.githubusercontent.com/163582/47741877-68933000-dc49-11e8-94f8-92724b67e9a6.png)](https://pagedown.rbind.io/business-card/)
