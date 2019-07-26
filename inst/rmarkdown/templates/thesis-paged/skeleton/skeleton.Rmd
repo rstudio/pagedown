@@ -1,5 +1,5 @@
 ---
-title: A paged html thesis template for R Markdown user's
+title: A paged html thesis template for R Markdown users
 subtitle: A {pagedown} template.
 author: 
   - name: William Brent Thorne
@@ -44,14 +44,14 @@ knitr::opts_chunk$set(echo = FALSE,
 
 # Literature Review {-}
 
-This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
+This is where you can include a lit review if you don't wish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
 
 _**rmarkdown**_:
 
 ```markdown
 # Literature Review {-}
 
-This is where you can include a lit review if you don't whish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
+This is where you can include a lit review if you don't wish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the `{-}` notation beside the header text like this:
 ```
 
 # The Basics {.chapter}
@@ -81,17 +81,17 @@ This template is based on the `pagedown::html_paged` template...
 Here is some code and a plot, with a figure caption, Figure \@ref(fig:code):
 
 ```{r code, fig.cap='The automatic numbering of this figure will only work if it includes a figure caption, user beware!'}
-
 plot(iris$Sepal.Length,
      iris$Sepal.Width,
-     col=iris$Species, pch=19)
+     col = iris$Species,
+     pch = 19)
 ```
 
 Here is an example of an abbreviation where I use the `<abbr>` html tag <abbr title="Brent Thorne">BT</abbr>. In the future there may be a pandoc solution to abbreviation management, however <abbr title="Hyper Text Markup Language">HTML</abbr> is the way to go for now.
 
 # Understanding the method to the madness {.chapter}
 
-Need formula's? Here's some `mathjax` notation:
+Need formulas? Here's some `mathjax` notation:
 
 $$
 \beta = \sum^{1 - k}\frac{\delta D}{\sum\frac{\Delta \gamma A}{X-i}}
@@ -99,10 +99,15 @@ $$
 
 ## Adding Tables
 
-You can easyly add tables to this document like soand you can also refeence them like a figure, Table \@ref(tab:atable):
+You can easily add tables to this document like so, and you can also reference them like a figure, Table \@ref(tab:atable):
 
 ```{r atable}
-knitr::kable(iris[1:4,1:5], align = 'c',caption = 'A caption for the table.',col.names = c("Sepal L","Sepal W", "Petal L", "Petal W", "Species"))
+knitr::kable(
+  iris[1:4, 1:5],
+  align = 'c',
+  caption = 'A caption for the table.',
+  col.names = c("Sepal L", "Sepal W", "Petal L", "Petal W", "Species")
+)
 ```
 
 # The final chapter to my pretend thesis {.chapter}
@@ -113,7 +118,7 @@ There are still a few features that would be nice to implement in the future for
 
 2. It would also be great to have the ability to generate a _Reference_ section for each _Chapter_ for those who are writing in the "integrated article" format.
 
-3. Along with that, it would be great to pull the YAML data from a child .Rmd file and use it as a way to add the Chapter titles and any other subsequent information (for example a thesis chapter can often actually be a full manuscript and or published paper which would need to have all author's listed for that chapter specifically as well as the journal publication information/ citation data).
+3. Along with that, it would be great to pull the YAML data from a child .Rmd file and use it as a way to add the Chapter titles and any other subsequent information (for example a thesis chapter can often actually be a full manuscript and or published paper which would need to have all authors listed for that chapter specifically as well as the journal publication information/ citation data).
 
 # References {-}
 
