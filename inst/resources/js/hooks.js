@@ -275,3 +275,29 @@ Paged.registerHandlers(class extends Paged.Handler {
   }
 });
 
+// Line numbering
+Paged.registerHandlers(class extends Paged.Handler {
+  constructor(chunker, polisher, caller) {
+    super(chunker, polisher, caller);
+
+    const lineNumbersContainerStyle = `
+    .pagedown-linenumbers-container {
+      position: absolute;
+      margin-top: var(--pagedjs-margin-top);
+      right: calc(var(--pagedjs-width) - var(--pagedjs-margin-left));
+    }
+    `;
+    polisher.insert(lineNumbersContainerStyle);
+  }
+
+  afterRendered(pages) {
+    // Append a div in each pagebox.
+    // They will be used as containers for the line numbers.
+    for (let page of pages) {
+      const lineNumbersContainer = document.createElement('div');
+      lineNumbersContainer.classList.add('pagedown-linenumbers-container');
+      page.element.querySelector('.pagedjs_pagebox')
+                  .appendChild(lineNumbersContainer);
+    }
+  }
+});
