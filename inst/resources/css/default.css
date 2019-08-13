@@ -8,6 +8,10 @@
   --screen-pages-spacing: 5mm;
 }
 
+html {
+  line-height: 1.3;
+}
+
 /* generated content */
 a[href^="http"]:not([class="uri"])::after {
   content: " (" attr(href) ")";
