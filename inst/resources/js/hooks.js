@@ -275,29 +275,52 @@ Paged.registerHandlers(class extends Paged.Handler {
   }
 });
 
-// Line numbering
+// Main text line numbering
 Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
     super(chunker, polisher, caller);
 
-    const lineNumbersContainerStyle = `
+    const styles = `
     .pagedown-linenumbers-container {
       position: absolute;
       margin-top: var(--pagedjs-margin-top);
       right: calc(var(--pagedjs-width) - var(--pagedjs-margin-left));
     }
+    .maintextlinenumbers {
+      position: absolute;
+      right: 0;
+    }
     `;
-    polisher.insert(lineNumbersContainerStyle);
+    polisher.insert(styles);
+  }
+
+  appendLineNumbersContainer(page) {
+    const pagebox = page.element.querySelector('.pagedjs_pagebox');
+    const lineNumbersContainer = document.createElement('div');
+    lineNumbersContainer.classList.add('pagedown-linenumbers-container');
+
+    return pagebox.appendChild(lineNumbersContainer);
   }
 
   afterRendered(pages) {
-    // Append a div in each pagebox.
-    // They will be used as containers for the line numbers.
     for (let page of pages) {
-      const lineNumbersContainer = document.createElement('div');
-      lineNumbersContainer.classList.add('pagedown-linenumbers-container');
-      page.element.querySelector('.pagedjs_pagebox')
-                  .appendChild(lineNumbersContainer);
+      // Append a div in each pagebox.
+      // They will be used as containers for the line numbers.
+      const lineNumbersContainer = this.appendLineNumbersContainer(page);
+      const pagecontentTop = page.element.querySelector('.pagedjs_page_content')
+                                         .getBoundingClientRect().y;
+      let elementsToNumber = page.element.querySelectorAll('.pagedjs_page_content .main p');
+      for (let el of elementsToNumber) {
+        const elTop = el.getBoundingClientRect().y;
+        const linenumbers = document.createElement('div');
+        linenumbers.classList.add('maintextlinenumbers');
+        lineNumbersContainer.appendChild(linenumbers);
+        linenumbers.style.top = (elTop - pagecontentTop) + 'px';
+        const elLineHeight = parseInt(getComputedStyle(el).lineHeight);
+        const elHeight = parseInt(el.clientHeight);
+        const linesCount = Math.ceil(elHeight / elLineHeight);
+        linenumbers.innerText = linesCount;
+      }
     }
   }
 });
