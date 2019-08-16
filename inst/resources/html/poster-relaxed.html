@@ -114,19 +114,20 @@ $body$
 </script>
 
 $if(math)$
+$if(mathjax)$
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    var src = "$if(mathjax)$$mathjax$$endif$";
-    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    var src = `$mathjaxurl$` + "?config=TeX-MML-AM_CHTML";
     if (location.protocol !== "file:" && /^https?:/.test(src))
       src = src.replace(/^https?:/, '');
     script.src = src;
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>
+$endif$
 $endif$
 
 $for(include-after)$
