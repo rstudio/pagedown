@@ -1,6 +1,8 @@
 # CHANGES IN pagedown VERSION 0.4
 
+## BUG FIXES
 
+- Fixed several bugs related to MathJax: local version of MathJax is now used when the `mathjax` parameter is set to `"local"` and self contained documents are rendered by default with MathJax without throwing any warning (#130).
 
 # CHANGES IN pagedown VERSION 0.3
 
