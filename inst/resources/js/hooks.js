@@ -280,6 +280,10 @@ Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
     super(chunker, polisher, caller);
 
+    this.options = this.pandocMeta()["number-lines"];
+
+    if(!this.options) return;
+
     const styles = `
     :root {
       --line-numbers-padding-right: 10px;
@@ -301,6 +305,15 @@ Paged.registerHandlers(class extends Paged.Handler {
     polisher.insert(styles);
 
     this.resetLinesCounter();
+  }
+
+  pandocMeta() {
+    const el = document.getElementById('pandoc-meta');
+    if (el) {
+      return JSON.parse(el.firstChild.data);
+    } else {
+      return {};
+    }
   }
 
   appendLineNumbersContainer(page) {
@@ -352,6 +365,8 @@ Paged.registerHandlers(class extends Paged.Handler {
   }
 
   afterRendered(pages) {
+    if (!this.options) return;
+
     for (let page of pages) {
       const lineNumbersContainer = this.appendLineNumbersContainer(page);
       const pageAreaY = page.area.getBoundingClientRect().y;
@@ -404,8 +419,10 @@ Paged.registerHandlers(class extends Paged.Handler {
                                     .reduce((t, v) => t + '<br />' + v);
         this.incrementLinesCounter(nLines);
       }
-      // uncomment to reset the line numbers on each page:
-      // this.resetLinesCounter();
+
+      if (this.options["reset-page"]) {
+        this.resetLinesCounter();
+      }
     }
   }
 });
