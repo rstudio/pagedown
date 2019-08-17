@@ -1,6 +1,8 @@
 # CHANGES IN pagedown VERSION 0.4
 
+## NEW FEATURES
 
+- For templates which use Paged.js, lines can be numbered using the top-level YAML parameter `number-lines` (thanks, @julientaq, #115 and #129).
 
 # CHANGES IN pagedown VERSION 0.3
 
