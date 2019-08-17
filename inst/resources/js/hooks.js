@@ -285,7 +285,7 @@ Paged.registerHandlers(class extends Paged.Handler {
     // quit early if the "number-lines" option is false or missing
     if (!this.options) return;
     // retrieve the selector if provided, otherwise use the default selector
-    this.selector = this.options.selector ? this.pandocMetaToString(this.options.selector) : '.main p:not(.caption)';
+    this.selector = this.options.selector ? this.pandocMetaToString(this.options.selector) : '.level1 p:not(.caption)';
 
     const styles = `
     :root {
