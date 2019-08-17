@@ -280,9 +280,12 @@ Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
     super(chunker, polisher, caller);
 
-    this.options = this.pandocMeta()["number-lines"];
-
-    if(!this.options) return;
+    // get the number-lines option from Pandoc metavariables
+    this.options = this.pandocMeta()['number-lines'];
+    // quit early if the "number-lines" option is false or missing
+    if (!this.options) return;
+    // retrieve the selector if provided, otherwise use the default selector
+    this.selector = this.options.selector ? this.pandocMetaToString(this.options.selector) : '.main p:not(.caption)';
 
     const styles = `
     :root {
@@ -314,6 +317,12 @@ Paged.registerHandlers(class extends Paged.Handler {
     } else {
       return {};
     }
+  }
+
+  pandocMetaToString(meta) {
+    let el = document.createElement('div');
+    el.innerHTML = meta;
+    return el.innerText;
   }
 
   appendLineNumbersContainer(page) {
@@ -361,7 +370,7 @@ Paged.registerHandlers(class extends Paged.Handler {
   isDisplayMath(element) {
     const nodes = element.childNodes;
     if (nodes.length != 1) return false;
-    return (nodes[0].nodeName === "SPAN") && (nodes[0].classList.value === "math display");
+    return (nodes[0].nodeName === 'SPAN') && (nodes[0].classList.value === 'math display');
   }
 
   afterRendered(pages) {
@@ -370,7 +379,7 @@ Paged.registerHandlers(class extends Paged.Handler {
     for (let page of pages) {
       const lineNumbersContainer = this.appendLineNumbersContainer(page);
       const pageAreaY = page.area.getBoundingClientRect().y;
-      let elementsToNumber = page.area.querySelectorAll('.main p:not(.caption)');
+      let elementsToNumber = page.area.querySelectorAll(this.selector);
 
       for (let element of elementsToNumber) {
         // Do not add line numbers for display math environment
@@ -420,7 +429,7 @@ Paged.registerHandlers(class extends Paged.Handler {
         this.incrementLinesCounter(nLines);
       }
 
-      if (this.options["reset-page"]) {
+      if (this.options['reset-page']) {
         this.resetLinesCounter();
       }
     }
