@@ -115,9 +115,21 @@ pagedown_dependency = function(css = NULL, js = FALSE) {
 }
 
 html_format = function(
-  ..., css, template, pandoc_args = NULL, .dependencies = NULL,
-  .pagedjs = FALSE, .pandoc_args = NULL
+  ..., self_contained = TRUE, mathjax = 'default', css, template, pandoc_args = NULL,
+  .dependencies = NULL, .pagedjs = FALSE, .pandoc_args = NULL
 ) {
+  if (!identical(mathjax, 'local')) {
+    if (identical(mathjax, 'default'))
+      mathjax = rmarkdown:::default_mathjax()
+
+    # workaround the rmarkdown warning when self_contained is TRUE
+    # see https://github.com/rstudio/pagedown/issues/128#issuecomment-518371613
+    if (isTRUE(self_contained) && !is.null(mathjax)) {
+      pandoc_args = c(pandoc_args, paste0('--mathjax=', mathjax))
+      mathjax = NULL # let rmarkdown believe that we do not use MathJax
+    }
+  }
+
   css2 = grep('[.]css$', css, value = TRUE, invert = TRUE)
   css  = setdiff(css, css2)
   check_css(css2)
@@ -128,7 +140,8 @@ html_format = function(
     ))
   }
   html_document2(
-    ..., css = css, template = template, pandoc_args = c(.pandoc_args, pandoc_args)
+    ..., self_contained = self_contained, mathjax = mathjax, css = css,
+    template = template, pandoc_args = c(.pandoc_args, pandoc_args)
   )
 }
 
