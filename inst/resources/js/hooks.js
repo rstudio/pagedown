@@ -262,16 +262,61 @@ Paged.registerHandlers(class extends Paged.Handler {
 Paged.registerHandlers(class extends Paged.Handler {
   constructor(chunker, polisher, caller) {
     super(chunker, polisher, caller);
+
+    this.options = this.pandocMeta()['chapter_name'];
+
+    let styles;
+    if (this.isString(this.options)) {
+      this.options = this.pandocMetaToString(this.options);
+      styles = `
+      :root {
+        --chapter-name-before: "${this.options}";
+      }
+      `;
+    }
+    if (this.isArray(this.options)) {
+      this.options = this.options.map(this.pandocMetaToString);
+      styles = `
+      :root {
+        --chapter-name-before: "${this.options[0]}";
+        --chapter-name-after: "${this.options[1]}";
+      }
+      `;
+    }
+    if (styles) polisher.insert(styles);
   }
+
+  pandocMeta() {
+    const el = document.getElementById('pandoc-meta');
+    if (el) {
+      return JSON.parse(el.firstChild.data);
+    } else {
+      return {};
+    }
+  }
+
+  pandocMetaToString(meta) {
+    let el = document.createElement('div');
+    el.innerHTML = meta;
+    return el.innerText;
+  }
+
+  isString(value) {
+    return typeof value === 'string' || value instanceof String;
+  }
+
+  isArray(value) {
+    return value && typeof value === 'object' && value.constructor === Array;
+  }
+
   beforeParsed(content) {
     const tocAnchors = content.querySelectorAll('.toc a[href^="#"]:not([href*=":"]');
-    for(let anchor of tocAnchors) {
+    for (const anchor of tocAnchors) {
       const ref = anchor.getAttribute('href').replace(/^#/, '');
       const element = content.getElementById(ref);
-      if(element.classList.contains('chapter')) {
+      if (element.classList.contains('chapter')) {
         anchor.classList.add('chapter-ref');
       }
     }
   }
 });
-
