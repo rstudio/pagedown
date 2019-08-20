@@ -21,6 +21,41 @@
     return value && typeof value === 'object' && value.constructor === Array;
   };
 
+  // This hook is an attempt to fix https://github.com/rstudio/pagedown/issues/131
+  // Sometimes, the {break-after: avoid;} declaration applied on headers
+  // lead to duplicated headers. I hate this bug.
+  // This is linked to the way the HTML source is written
+  // When we have the \n character like this: <div>\n<h1>...</h1>
+  // the header may be duplicated.
+  // But, if we have <div><h1>...</h1> without any \n, the problem disappear
+  // I think this handler can fix most of cases
+  // Obviously, we cannot suppress all the \n in the HTML document
+  // because carriage returns are important in <pre> elements.
+  // Tested with Chrome 76.0.3809.100/Windows
+  Paged.registerHandlers(class extends Paged.Handler {
+    constructor(chunker, polisher, caller) {
+      super(chunker, polisher, caller);
+      this.carriageReturn = String.fromCharCode(10);
+    }
+
+    checkNode(node) {
+      if (!node) return;
+      if (node.nodeType !== 3) return;
+      if (node.textContent === this.carriageReturn) {
+        node.remove();
+      }
+    }
+
+    afterParsed(parsed) {
+      let template = document.querySelector('template').content;
+      const breakAfterAvoidElements = template.querySelectorAll('[data-break-after="avoid"], [data-break-before="avoid"]');
+      for (let el of breakAfterAvoidElements) {
+        this.checkNode(el.previousSibling);
+        this.checkNode(el.nextSibling);
+      }
+    }
+  });
+
   // This hook creates a list of abbreviations
   // Note: we also could implement this feature using a Pandoc filter
   Paged.registerHandlers(class extends Paged.Handler {

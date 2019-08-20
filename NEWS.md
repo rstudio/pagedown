@@ -4,6 +4,8 @@
 
 - Fixed several bugs related to MathJax: local version of MathJax is now used when the `mathjax` parameter is set to `"local"` and self contained documents are rendered by default with MathJax without throwing any warning (#130).
 
+- In `html_paged`, the nodes tree is sanitized before Paged.js splits the content into pages. This should avoid duplicated content observed when `break-after: avoid` and `break-before: avoid` are used (#131).
+
 # CHANGES IN pagedown VERSION 0.3
 
 ## NEW FEATURES
