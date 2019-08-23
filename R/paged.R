@@ -106,17 +106,17 @@ thesis_paged = function(
   html_paged(..., css = css, template = template)
 }
 
-pagedown_dependency = function(css = NULL, js = FALSE) {
+pagedown_dependency = function(css = NULL, js = FALSE, .test = FALSE) {
   list(htmltools::htmlDependency(
     'paged', packageVersion('pagedown'), src = pkg_resource(),
-    script = if (js) c('js/config.js', 'js/paged.js', 'js/hooks.js'),
+    script = if (js) c('js/config.js', if (.test) 'js/paged-latest.js' else 'js/paged.js', 'js/hooks.js'),
     stylesheet = file.path('css', css), all_files = FALSE
   ))
 }
 
 html_format = function(
   ..., self_contained = TRUE, mathjax = 'default', css, template, pandoc_args = NULL,
-  .dependencies = NULL, .pagedjs = FALSE, .pandoc_args = NULL
+  .dependencies = NULL, .pagedjs = FALSE, .pandoc_args = NULL, .test = FALSE
 ) {
   if (!identical(mathjax, 'local')) {
     if (identical(mathjax, 'default'))
@@ -136,7 +136,7 @@ html_format = function(
   html_document2 = function(..., extra_dependencies = list()) {
     bookdown::html_document2(..., extra_dependencies = c(
       extra_dependencies, .dependencies,
-      pagedown_dependency(xfun::with_ext(css2, '.css'), .pagedjs)
+      pagedown_dependency(xfun::with_ext(css2, '.css'), .pagedjs, .test)
     ))
   }
   html_document2(
