@@ -107,10 +107,11 @@ thesis_paged = function(
 }
 
 pagedown_dependency = function(css = NULL, js = FALSE, .test = FALSE) {
+  paged = if (.test) 'js/paged-latest.js' else c('js/paged.js', 'js/hooks.js')
   list(htmltools::htmlDependency(
     'paged', packageVersion('pagedown'), src = pkg_resource(),
-    script = if (js) c('js/config.js', if (.test) 'js/paged-latest.js' else 'js/paged.js', 'js/hooks.js'),
-    stylesheet = file.path('css', css), all_files = FALSE
+    script = if (js) c('js/config.js', paged),
+    stylesheet = file.path('css', css), all_files = .test
   ))
 }
 
