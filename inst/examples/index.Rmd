@@ -708,3 +708,9 @@ knitr::kable(head(iris[, -5]), caption = 'An example table.')
 ```{r, include=FALSE}
 knitr::write_bib(c(.packages(), 'pagedown', 'xaringan', 'servr'), 'index.bib')
 ```
+
+```{js, echo=FALSE}
+// insert a soft break to avoid an infinite loop with FF
+// this is because FF handles lists differently
+document.querySelector('#TOC h1').insertAdjacentHTML('afterend', '<wbr>');
+```
