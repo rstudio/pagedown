@@ -1,6 +1,8 @@
 # CHANGES IN pagedown VERSION 0.5
 
+## NEW FEATURES
 
+- When `chrome_print()` is used with `verbose >= 1`, some auxiliary informations about Paged.js rendering are printed (number of pages and elapsed time).  
 
 # CHANGES IN pagedown VERSION 0.4
 

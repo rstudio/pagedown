@@ -5,7 +5,7 @@
   window.PagedConfig = window.PagedConfig || {};
   const afterPaged = window.PagedConfig.after;
 
-  window.PagedConfig.after = () => {
+  window.PagedConfig.after = (flow) => {
     // force redraw, see https://github.com/rstudio/pagedown/issues/35#issuecomment-475905361
     // and https://stackoverflow.com/a/24753578/6500804
     document.body.style.display = 'none';
@@ -20,7 +20,11 @@
     if (window.pagedownListener) {
       // the html file is opened for printing
       // call the binding to signal to the R session that Paged.js has finished
-      pagedownListener('');
+      pagedownListener(JSON.stringify({
+        pagedjs: true,
+        pages: flow.total,
+        elapsedtime: flow.performance
+      }));
     } else {
       // scroll to the last position before the page is reloaded
       window.scrollTo(0, sessionStorage.getItem('pagedown-scroll'));

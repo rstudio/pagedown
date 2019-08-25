@@ -342,11 +342,12 @@ print_page = function(
       },
       {
         # Command #7 received - Test if the html document uses the paged.js polyfill
-        # if not, call the binding when fonts are ready
+        # if not, call the binding when HTMLWidgets, MathJax and fonts are ready
+        # (see inst/resources/js/chrome_print.js)
         if (!isTRUE(msg$result$result$value)) {
           ws$send(to_json(list(
             id = 8, method = "Runtime.evaluate",
-            params = list(expression = "pagedownReady.then(() => {pagedownListener('');})")
+            params = list(expression = "pagedownReady.then(() => {pagedownListener('{\"pagedjs\":false}');})")
           )))
         }
       },
@@ -422,6 +423,10 @@ print_page = function(
         Sys.sleep(wait)
         opts = as.list(options)
         if (format == 'pdf') {
+          payload = jsonlite::fromJSON(msg$params$payload)
+          if (verbose >= 1 && payload$pagedjs) {
+            message("Rendered ", payload$pages, " pages in ", payload$elapsedtime, " milliseconds.")
+          }
           opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), opts)
           ws$send(to_json(list(
             id = 13, params = opts, method = 'Page.printToPDF'
