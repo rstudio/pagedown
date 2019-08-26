@@ -2,7 +2,9 @@
 
 ## NEW FEATURES
 
-- When `chrome_print()` is used with `verbose >= 1`, some auxiliary informations about Paged.js rendering are printed (number of pages and elapsed time).  
+- When `chrome_print()` is used with `verbose >= 1`, some auxiliary informations about Paged.js rendering are printed (number of pages and elapsed time).
+
+- Added a `template` argument to the `business_card()` output format for passing a custom Pandoc template (thanks, @mariakharitonova, #135).
 
 # CHANGES IN pagedown VERSION 0.4
 
