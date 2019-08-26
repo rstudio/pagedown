@@ -115,10 +115,6 @@ $if(front-cover)$
 <style type="text/css">
 @page :first {
   --pagedjs-pagebox-width: 400mm;
-  @top-left-corner {content: none;}
-  @top-right-corner {content: none;}
-  @top-right {content: none;}
-  @bottom-right-corner {content: none;}
 }
 .front-cover {
   break-after: page;
@@ -130,7 +126,6 @@ $if(front-cover)$
   position: absolute;
   top: calc(var(--pagedjs-margin-top)*-1);
   left: calc(var(--pagedjs-margin-left)*-1);
-  z-index: 0;
 }
 .front-page {
   counter-reset: page;
