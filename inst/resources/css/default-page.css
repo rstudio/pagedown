@@ -87,6 +87,16 @@
   background-repeat: no-repeat;
 }
 
+/* Front cover */
+.front-cover {
+  break-after: recto;
+}
+
+/* Front page or title page */
+.front-page {
+  counter-reset: page;
+}
+
 /* Front matter*/
 @page frontmatter:left {
   @top-left {
@@ -119,6 +129,9 @@
 }
 
 /* last page or back cover */
+.back-cover {
+  break-before: verso;
+}
 .pagedjs_page:last-of-type {
   background-image: var(--back-cover);
   background-position: center;
@@ -134,7 +147,7 @@
 .front-matter-container .level1 {
   page: frontmatter;
 }
-h1, h2, h3, h4, h5, h6 {
+.section > h1, .section > h2, .section > h3, .section > h4, .section > h5, .section > h6 {
   break-after: avoid;
 }
 .footenotes {
