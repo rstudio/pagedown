@@ -642,7 +642,7 @@ Covers can be added using the `front_cover` and `back_cover` parameters of `page
 output:
   pagedown::html_paged:
     front_cover: !expr system.file("img", "Rlogo.png", package="png")
-    back_cover: https://bookdown.org/yihui/rmarkdown/images/hex-rmarkdown.png
+    back_cover: https://www.r-project.org/Rlogo.png
 ---
 
 # Content
@@ -664,7 +664,7 @@ You also can add textual content on the front and back covers using two special 
 output:
   pagedown::html_paged:
     front_cover: !expr system.file("img", "Rlogo.png", package="png")
-    back_cover: https://bookdown.org/yihui/rmarkdown/images/hex-rmarkdown.png
+    back_cover: https://www.r-project.org/Rlogo.png
 ---
 
 :::front-cover
