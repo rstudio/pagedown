@@ -81,6 +81,10 @@
   @bottom-right {
     content: none !important;
   }
+  background-image: var(--front-cover);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 /* Front matter*/
@@ -112,6 +116,14 @@
   @bottom-right {
     content: counter(page, lower-roman);
   }
+}
+
+/* last page or back cover */
+.pagedjs_page:last-of-type {
+  background-image: var(--back-cover);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 /* page breaks; aka CSS fragmentation */
