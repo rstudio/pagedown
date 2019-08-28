@@ -37,3 +37,5 @@ to_json = function(x, ..., auto_unbox = TRUE, null = 'null') {
 random_port = function() servr::random_port(NULL)
 
 `%n%` = knitr:::`%n%`
+
+is_uri = function(x) grepl('://', x)

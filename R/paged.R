@@ -16,20 +16,30 @@
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
 #' @param csl The path of the Citation Style Language (CSL) file used to format
 #'   citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).
+#' @param front_cover,back_cover Paths or urls to images to be used as front or
+#'   back covers. Theses images are available through CSS variables \code{--front-cover-xx}
+#'   and \code{--back-cover-yy}.
 #' @references \url{https://pagedown.rbind.io}
 #' @return An R Markdown output format.
 #' @import stats utils
 #' @export
 html_paged = function(
   ..., css = c('default-fonts', 'default-page', 'default'), theme = NULL,
-  template = pkg_resource('html', 'paged.html'), csl = NULL
+  template = pkg_resource('html', 'paged.html'), csl = NULL,
+  front_cover = NULL, back_cover = NULL
 ) {
   html_format(
     ..., css = css, theme = theme, template = template, .pagedjs = TRUE,
     .pandoc_args = c(
       lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua'), # uri-to-fn.lua must come before footnotes.lua
       if (!is.null(csl)) c('--csl', csl),
-      pandoc_chapter_name_args()
+      pandoc_chapter_name_args(),
+      cover_pandoc_args('front-cover', front_cover),
+      cover_pandoc_args('back-cover', back_cover)
+    ),
+    .dependencies = c(
+      cover_dependencies('front-cover', front_cover),
+      cover_dependencies('back-cover', back_cover)
     )
   )
 }
@@ -166,4 +176,48 @@ pandoc_metadata_arg = function(name, value) {
 
 pandoc_chapter_name_args = function() {
   unlist(lapply(chapter_name(), pandoc_metadata_arg, name = 'chapter_name'))
+}
+
+cover_pandoc_args = function(name, img) {
+  if (length(img) == 0) return()
+  build_html = is_uri(img)
+  in_header = mapply(
+    name, img, seq_along(img), build_html,
+    FUN = function(name, img, index, build_html) {
+      if (!isTRUE(build_html)) return()
+      img = utils::URLencode(img)
+      html_content = sprintf(
+        '<link id="%s-%i-1-attachment" rel="attachment" href="%s" />',
+        name, index, img
+      )
+      writeLines(html_content, f <- tempfile(fileext = ".html"))
+      f
+    },
+    USE.NAMES = FALSE
+  )
+
+  rmarkdown::includes_to_pandoc_args(
+    rmarkdown::includes(in_header = in_header),
+    filter = function(x) x[build_html]
+  )
+}
+
+cover_dependencies = function(name, img) {
+  if (length(img) == 0) return(list())
+  name = paste0(name, seq_along(img))
+  build_dep = !is_uri(img)
+  deps = mapply(
+    name, img, build_dep,
+    FUN = function(name, img, build_dep) {
+      if (!isTRUE(build_dep)) return()
+      if (!isTRUE(file.exists(img)))
+        stop('File ', img, ' not found.', call. = FALSE)
+      htmltools::htmlDependency(
+        name, packageVersion('pagedown'), dirname(path.expand(img)),
+        attachment = basename(img), all_files = FALSE
+      )
+    },
+    USE.NAMES = FALSE, SIMPLIFY = FALSE
+  )
+  deps[build_dep]
 }

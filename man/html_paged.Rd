@@ -5,7 +5,8 @@
 \title{Create a paged HTML document suitable for printing}
 \usage{
 html_paged(..., css = c("default-fonts", "default-page", "default"), theme = NULL, 
-    template = pkg_resource("html", "paged.html"), csl = NULL)
+    template = pkg_resource("html", "paged.html"), csl = NULL, front_cover = NULL, 
+    back_cover = NULL)
 }
 \arguments{
 \item{...}{Arguments passed to
@@ -23,6 +24,10 @@ built-in CSS files, run \code{pagedown:::list_css()}.}
 
 \item{csl}{The path of the Citation Style Language (CSL) file used to format
 citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).}
+
+\item{front_cover, back_cover}{Paths or urls to images to be used as front or
+back covers. Theses images are available through CSS variables \code{--front-cover-xx}
+and \code{--back-cover-yy}.}
 }
 \value{
 An R Markdown output format.
