@@ -190,7 +190,7 @@ pandoc_chapter_name_args = function() {
 cover_pandoc_args = function(name, img) {
   if (length(img) == 0) return()
   name = paste(name, seq_along(img), sep = '-')
-  build_html = is_uri(img)
+  build_html = is_url(img)
   in_header = mapply(
     name, img, build_html,
     FUN = function(name, img, build_html) {
@@ -215,7 +215,7 @@ cover_pandoc_args = function(name, img) {
 cover_dependencies = function(name, img) {
   if (length(img) == 0) return(list())
   name = paste(name, seq_along(img), sep = '-')
-  build_dep = !is_uri(img)
+  build_dep = !is_url(img)
   deps = mapply(
     name, img, build_dep,
     FUN = function(name, img, build_dep) {

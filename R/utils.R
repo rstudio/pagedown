@@ -38,4 +38,4 @@ random_port = function() servr::random_port(NULL)
 
 `%n%` = knitr:::`%n%`
 
-is_uri = function(x) grepl('://', x)
+is_url = function(x) grepl('://', x)
