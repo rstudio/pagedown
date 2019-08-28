@@ -25,9 +25,9 @@ built-in CSS files, run \code{pagedown:::list_css()}.}
 \item{csl}{The path of the Citation Style Language (CSL) file used to format
 citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).}
 
-\item{front_cover, back_cover}{Paths or urls to images to be used as front or
-back covers. Theses images are available through CSS variables \code{--front-cover-xx}
-and \code{--back-cover-yy}.}
+\item{front_cover, back_cover}{Vector of paths or urls to images to be used
+as front or back covers. Theses images are available through CSS variables:
+\code{var(--front-cover)}, \code{var(--front-cover-2)} and so on.}
 }
 \value{
 An R Markdown output format.

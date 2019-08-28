@@ -16,9 +16,9 @@
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
 #' @param csl The path of the Citation Style Language (CSL) file used to format
 #'   citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).
-#' @param front_cover,back_cover Paths or urls to images to be used as front or
-#'   back covers. Theses images are available through CSS variables \code{--front-cover-xx}
-#'   and \code{--back-cover-yy}.
+#' @param front_cover,back_cover Vector of paths or urls to images to be used
+#'   as front or back covers. Theses images are available through CSS variables:
+#'   \code{var(--front-cover)}, \code{var(--front-cover-2)} and so on.
 #' @references \url{https://pagedown.rbind.io}
 #' @return An R Markdown output format.
 #' @import stats utils
