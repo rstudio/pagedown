@@ -633,6 +633,30 @@ Sometimes a section title may be too long to fit the header or footer area. In t
 ## The actual long long long title {data-short-title="An alternative title"}
 ```
 
+## Covers
+
+Covers can be added using the `front_cover` and `back_cover` parameters of `pagedown::html_paged()`. You can pass any path to a file or an url. 
+
+```yaml
+---
+output:
+  pagedown::html_paged:
+    front_cover: !expr system.file("img", "Rlogo.png", package="png")
+    back_cover: https://bookdown.org/yihui/rmarkdown/images/hex-rmarkdown.png
+---
+
+# Content
+```
+
+Several paths or links can be passed to `front_cover` and `back_cover`. For each image declared in the `front_cover` or `back_cover` parameter, a CSS variable is created: `--front-cover`, `--back-cover`, `--front-cover-2`, `--back-cover-2`, etc.  
+They can be used as value for the `background-image` CSS property:
+
+```css
+@page chapter:first {
+  background-image: var(--front-cover-2);
+}
+```
+
 ## MathJax
 
 The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
