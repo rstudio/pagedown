@@ -648,13 +648,34 @@ output:
 # Content
 ```
 
-Several paths or links can be passed to `front_cover` and `back_cover`. For each image declared in the `front_cover` or `back_cover` parameter, a CSS variable is created: `--front-cover`, `--back-cover`, `--front-cover-2`, `--back-cover-2`, etc.  
+Several paths or links can be passed to the `front_cover` and `back_cover` parameters. For each image declared in the `front_cover` or `back_cover` parameter, a CSS variable is created: `--front-cover`, `--back-cover`, `--front-cover-2`, `--back-cover-2`, etc.  
 They can be used as value for the `background-image` CSS property:
 
 ```css
 @page chapter:first {
   background-image: var(--front-cover-2);
 }
+```
+
+You also can add textual content on the front and back covers using two special divs of classes `front-cover` and `back-cover`:
+
+```markdown
+---
+output:
+  pagedown::html_paged:
+    front_cover: !expr system.file("img", "Rlogo.png", package="png")
+    back_cover: https://bookdown.org/yihui/rmarkdown/images/hex-rmarkdown.png
+---
+
+:::front-cover
+# My great book about
+:::
+
+:::back-cover
+### Written with
+:::
+
+# Content
 ```
 
 ## MathJax
