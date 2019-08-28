@@ -5,6 +5,15 @@
 #' output document is split into multiple pages via a JavaScript library
 #' \pkg{paged.js}. These pages contain elements commonly seen in PDF documents,
 #' such as page numbers and running headers.
+#'
+#' When a path or an url is passed to the \code{front_cover} or \code{back_cover}
+#' argument, several CSS variables are created. They are named \code{--front-cover}
+#' and \code{--back-cover} and can be used as value for the CSS property \code{background-image}.
+#' For example, \code{background-image: var(--front-cover);}. When a vector of
+#' paths of urls is used as a value for \code{front_cover} or \code{back_cover},
+#' the CSS variables are suffixed with an index: \code{--front-cover-1},
+#' \code{--front-cover-2}, etc.
+#'
 #' @param ... Arguments passed to
 #'   \code{bookdown::\link[bookdown]{html_document2}}.
 #' @param css A character vector of CSS file paths. If a path does not contain
@@ -16,9 +25,9 @@
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
 #' @param csl The path of the Citation Style Language (CSL) file used to format
 #'   citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).
-#' @param front_cover,back_cover Vector of paths or urls to images to be used
-#'   as front or back covers. Theses images are available through CSS variables:
-#'   \code{var(--front-cover)}, \code{var(--front-cover-2)} and so on.
+#' @param front_cover,back_cover Paths or urls to image files to be used
+#'   as front or back covers. Theses images are available through CSS variables
+#'   (see Details).
 #' @references \url{https://pagedown.rbind.io}
 #' @return An R Markdown output format.
 #' @import stats utils
