@@ -10,7 +10,7 @@
 #' argument, several CSS variables are created. They are named \code{--front-cover}
 #' and \code{--back-cover} and can be used as value for the CSS property \code{background-image}.
 #' For example, \code{background-image: var(--front-cover);}. When a vector of
-#' paths of urls is used as a value for \code{front_cover} or \code{back_cover},
+#' paths or urls is used as a value for \code{front_cover} or \code{back_cover},
 #' the CSS variables are suffixed with an index: \code{--front-cover-1},
 #' \code{--front-cover-2}, etc.
 #'
