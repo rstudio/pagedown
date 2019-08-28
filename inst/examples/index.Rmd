@@ -8,6 +8,7 @@ output:
   pagedown::html_paged: 
     toc: true
     self_contained: false
+    front_cover: pagedown_hex.svg
 toc-title: Contents
 paged-footnotes: true
 lot: true
@@ -723,4 +724,12 @@ knitr::write_bib(c(.packages(), 'pagedown', 'xaringan', 'servr'), 'index.bib')
 // insert a soft break to avoid an infinite loop with FF
 // this is because FF handles lists differently
 document.querySelector('#TOC h1').insertAdjacentHTML('afterend', '<wbr>');
+```
+
+```{css, echo=FALSE}
+/* position the hex logo on the first page */
+.pagedjs_page.pagedjs_first_page {
+  background-size: 40%;
+  background-position: center 80%;
+}
 ```
