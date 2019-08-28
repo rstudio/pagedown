@@ -180,15 +180,16 @@ pandoc_chapter_name_args = function() {
 
 cover_pandoc_args = function(name, img) {
   if (length(img) == 0) return()
+  name = paste(name, seq_along(img), sep = '-')
   build_html = is_uri(img)
   in_header = mapply(
-    name, img, seq_along(img), build_html,
-    FUN = function(name, img, index, build_html) {
+    name, img, build_html,
+    FUN = function(name, img, build_html) {
       if (!isTRUE(build_html)) return()
       img = utils::URLencode(img)
       html_content = sprintf(
-        '<link id="%s-%i-1-attachment" rel="attachment" href="%s" />',
-        name, index, img
+        '<link id="%s-pagedown-attachment" rel="attachment" href="%s" />',
+        name, img
       )
       writeLines(html_content, f <- tempfile(fileext = ".html"))
       f
@@ -204,7 +205,7 @@ cover_pandoc_args = function(name, img) {
 
 cover_dependencies = function(name, img) {
   if (length(img) == 0) return(list())
-  name = paste0(name, seq_along(img))
+  name = paste(name, seq_along(img), sep = '-')
   build_dep = !is_uri(img)
   deps = mapply(
     name, img, build_dep,
@@ -214,7 +215,7 @@ cover_dependencies = function(name, img) {
         stop('File ', img, ' not found.', call. = FALSE)
       htmltools::htmlDependency(
         name, packageVersion('pagedown'), dirname(path.expand(img)),
-        attachment = basename(img), all_files = FALSE
+        attachment = c(pagedown = basename(img)), all_files = FALSE
       )
     },
     USE.NAMES = FALSE, SIMPLIFY = FALSE
