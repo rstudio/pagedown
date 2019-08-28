@@ -13,7 +13,7 @@
     document.head.appendChild(style);
   };
 
-  // Support for front and back covers images CSS variables
+  // Util function for front and back covers images
   const insertCSSForCover = type => {
     const links = document.querySelectorAll('link[id^=' + type + ']');
     if (!links.length) return;
@@ -27,6 +27,11 @@
   };
 
   window.PagedConfig.before = async () => {
+    // Front and back covers support
+    let frontCover = document.querySelector('.front-cover');
+    let backCover = document.querySelector('.back-cover');
+    if (frontCover) document.body.prepend(frontCover);
+    if (backCover) document.body.append(backCover);
     insertCSSForCover('front-cover');
     insertCSSForCover('back-cover');
 
