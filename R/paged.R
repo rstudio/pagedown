@@ -43,8 +43,7 @@ html_paged = function(
       lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua'), # uri-to-fn.lua must come before footnotes.lua
       if (!is.null(csl)) c('--csl', csl),
       pandoc_chapter_name_args(),
-      cover_pandoc_args('front-cover', front_cover),
-      cover_pandoc_args('back-cover', back_cover)
+      cover_pandoc_args(front_cover, back_cover)
     ),
     .dependencies = c(
       cover_dependencies('front-cover', front_cover),
@@ -187,29 +186,18 @@ pandoc_chapter_name_args = function() {
   unlist(lapply(chapter_name(), pandoc_metadata_arg, name = 'chapter_name'))
 }
 
-cover_pandoc_args = function(name, img) {
-  if (length(img) == 0) return()
-  name = paste(name, seq_along(img), sep = '-')
-  build_html = is_url(img)
-  in_header = mapply(
-    name, img, build_html,
-    FUN = function(name, img, build_html) {
-      if (!isTRUE(build_html)) return()
-      img = utils::URLencode(img)
-      html_content = sprintf(
-        '<link id="%s-pagedown-attachment" rel="attachment" href="%s" />',
-        name, img
-      )
-      writeLines(html_content, f <- tempfile(fileext = ".html"))
-      f
-    },
-    USE.NAMES = FALSE
-  )
-
-  rmarkdown::includes_to_pandoc_args(
-    rmarkdown::includes(in_header = in_header),
-    filter = function(x) x[build_html]
-  )
+cover_pandoc_args = function(front_cover, back_cover) {
+  build_links = function(name, img) {
+    if (length(img) == 0) return()
+    name = paste(name, seq_along(img), sep = '-')
+    links = paste0('<link id="', name,'-pagedown-attachment" rel="attachment" href="', img, '" />')
+    links[!file.exists(img)]
+  }
+  links = c(build_links('front-cover', front_cover), build_links('back-cover', back_cover))
+  if (length(links)) {
+    writeLines(links, f <- tempfile(fileext = ".html"))
+    rmarkdown::includes_to_pandoc_args(rmarkdown::includes(f))
+  }
 }
 
 cover_dependencies = function(name, img) {
