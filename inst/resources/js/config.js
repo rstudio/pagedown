@@ -3,7 +3,40 @@
 (function() {
   // Retrieve previous config object if defined
   window.PagedConfig = window.PagedConfig || {};
-  const afterPaged = window.PagedConfig.after;
+  const {before: beforePaged, after: afterPaged} = window.PagedConfig;
+
+  // utils
+  const insertCSS = text => {
+    let style = document.createElement('style');
+		style.type = 'text/css';
+		style.appendChild(document.createTextNode(text));
+    document.head.appendChild(style);
+  };
+
+  // Util function for front and back covers images
+  const insertCSSForCover = type => {
+    const links = document.querySelectorAll('link[id^=' + type + ']');
+    if (!links.length) return;
+    const re = new RegExp(type + '-\\d+');
+    let text = ':root {--' + type + ': var(--' + type + '-1);';
+    for (const link of links) {
+      text += '--' + re.exec(link.id)[0] + ': url("' + link.href + '");';
+    }
+    text += '}';
+    insertCSS(text);
+  };
+
+  window.PagedConfig.before = async () => {
+    // Front and back covers support
+    let frontCover = document.querySelector('.front-cover');
+    let backCover = document.querySelector('.back-cover');
+    if (frontCover) document.body.prepend(frontCover);
+    if (backCover) document.body.append(backCover);
+    insertCSSForCover('front-cover');
+    insertCSSForCover('back-cover');
+
+    if (beforePaged) await beforePaged();
+  };
 
   window.PagedConfig.after = (flow) => {
     // force redraw, see https://github.com/rstudio/pagedown/issues/35#issuecomment-475905361

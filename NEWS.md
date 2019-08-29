@@ -2,6 +2,8 @@
 
 ## NEW FEATURES
 
+- Added support for covers images in `html_paged()`: `html_paged()` gains two arguments, `front_cover` and `back_cover`, to insert images in the front and back covers. Textual contents can also be added in the covers using two special divs of classes `front-cover` and `back-cover` (thanks, @atusy, #134, #136 and #137).
+
 - When `chrome_print()` is used with `verbose >= 1`, some auxiliary informations about Paged.js rendering are printed (number of pages and elapsed time).
 
 - Added a `template` argument to the `business_card()` output format for passing a custom Pandoc template (thanks, @mariakharitonova, #135).

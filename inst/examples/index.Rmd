@@ -8,6 +8,7 @@ output:
   pagedown::html_paged: 
     toc: true
     self_contained: false
+    front_cover: pagedown_hex.svg
 toc-title: Contents
 paged-footnotes: true
 lot: true
@@ -633,6 +634,63 @@ Sometimes a section title may be too long to fit the header or footer area. In t
 ## The actual long long long title {data-short-title="An alternative title"}
 ```
 
+## Covers
+
+Covers images can be added using the `front_cover` and `back_cover` parameters of `pagedown::html_paged()`. You can pass any path to a file or an url. 
+
+```yaml
+---
+output:
+  pagedown::html_paged:
+    front_cover: !expr system.file("img", "Rlogo.png", package="png")
+    back_cover: https://www.r-project.org/Rlogo.png
+---
+
+# Content
+```
+
+Several paths or links can be passed to the `front_cover` and `back_cover` parameters. For each image declared in the `front_cover` or `back_cover` parameter, a CSS variable is created: `--front-cover`, `--back-cover`, `--front-cover-2`, `--back-cover-2`, etc.  
+They can be used as value for the `background-image` CSS property:
+
+```css
+@page chapter:first {
+  background-image: var(--front-cover-2);
+}
+```
+
+You also can add textual content on the front and back covers using two special divs of classes `front-cover` and `back-cover`:
+
+
+```markdown
+---
+output:
+  pagedown::html_paged:
+    front_cover: !expr system.file("img", "Rlogo.png", package="png")
+    back_cover: https://www.r-project.org/Rlogo.png
+---
+
+:::front-cover
+# My great book about
+:::
+
+:::back-cover
+### Written with
+:::
+
+# Content
+```
+
+If the background properties of the default template does not suit your needs, here is a small hack to modify them.  
+The following lines are used to position the **pagedown** hex logo on the front page of the current document:
+
+```{css}
+/* position the hex logo on the first page */
+.pagedjs_page.pagedjs_first_page {
+  background-size: 40%;
+  background-position: center 80%;
+}
+```
+
 ## MathJax
 
 The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
@@ -679,3 +737,4 @@ knitr::write_bib(c(.packages(), 'pagedown', 'xaringan', 'servr'), 'index.bib')
 // this is because FF handles lists differently
 document.querySelector('#TOC h1').insertAdjacentHTML('afterend', '<wbr>');
 ```
+

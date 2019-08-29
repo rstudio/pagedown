@@ -5,7 +5,8 @@
 \title{Create a paged HTML document suitable for printing}
 \usage{
 html_paged(..., css = c("default-fonts", "default-page", "default"), theme = NULL, 
-    template = pkg_resource("html", "paged.html"), csl = NULL)
+    template = pkg_resource("html", "paged.html"), csl = NULL, front_cover = NULL, 
+    back_cover = NULL)
 }
 \arguments{
 \item{...}{Arguments passed to
@@ -23,6 +24,10 @@ built-in CSS files, run \code{pagedown:::list_css()}.}
 
 \item{csl}{The path of the Citation Style Language (CSL) file used to format
 citations and references (see the \href{https://pandoc.org/MANUAL.html#citations}{Pandoc documentation}).}
+
+\item{front_cover, back_cover}{Paths or urls to image files to be used
+as front or back covers. Theses images are available through CSS variables
+(see Details).}
 }
 \value{
 An R Markdown output format.
@@ -33,6 +38,15 @@ means you can use those Markdown features added by \pkg{bookdown}). The HTML
 output document is split into multiple pages via a JavaScript library
 \pkg{paged.js}. These pages contain elements commonly seen in PDF documents,
 such as page numbers and running headers.
+}
+\details{
+When a path or an url is passed to the \code{front_cover} or \code{back_cover}
+argument, several CSS variables are created. They are named \code{--front-cover}
+and \code{--back-cover} and can be used as value for the CSS property \code{background-image}.
+For example, \code{background-image: var(--front-cover);}. When a vector of
+paths or urls is used as a value for \code{front_cover} or \code{back_cover},
+the CSS variables are suffixed with an index: \code{--front-cover-1},
+\code{--front-cover-2}, etc.
 }
 \references{
 \url{https://pagedown.rbind.io}
