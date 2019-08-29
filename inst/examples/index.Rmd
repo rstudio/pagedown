@@ -636,7 +636,7 @@ Sometimes a section title may be too long to fit the header or footer area. In t
 
 ## Covers
 
-Covers can be added using the `front_cover` and `back_cover` parameters of `pagedown::html_paged()`. You can pass any path to a file or an url. 
+Covers images can be added using the `front_cover` and `back_cover` parameters of `pagedown::html_paged()`. You can pass any path to a file or an url. 
 
 ```yaml
 ---
@@ -660,6 +660,7 @@ They can be used as value for the `background-image` CSS property:
 
 You also can add textual content on the front and back covers using two special divs of classes `front-cover` and `back-cover`:
 
+
 ```markdown
 ---
 output:
@@ -677,6 +678,17 @@ output:
 :::
 
 # Content
+```
+
+If the background properties of the default template does not suit your needs, here is a small hack to modify them.  
+The following lines are used to position the **pagedown** hex logo on the front page of the current document:
+
+```{css}
+/* position the hex logo on the first page */
+.pagedjs_page.pagedjs_first_page {
+  background-size: 40%;
+  background-position: center 80%;
+}
 ```
 
 ## MathJax
@@ -726,10 +738,3 @@ knitr::write_bib(c(.packages(), 'pagedown', 'xaringan', 'servr'), 'index.bib')
 document.querySelector('#TOC h1').insertAdjacentHTML('afterend', '<wbr>');
 ```
 
-```{css, echo=FALSE}
-/* position the hex logo on the first page */
-.pagedjs_page.pagedjs_first_page {
-  background-size: 40%;
-  background-position: center 80%;
-}
-```
