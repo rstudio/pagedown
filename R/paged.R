@@ -45,10 +45,7 @@ html_paged = function(
       pandoc_chapter_name_args(),
       pandoc_cover_args(front_cover, back_cover)
     ),
-    .dependencies = c(
-      cover_dependencies('front-cover', front_cover),
-      cover_dependencies('back-cover', back_cover)
-    )
+    .dependencies = cover_dependencies(front_cover, back_cover)
   )
 }
 
@@ -200,22 +197,21 @@ pandoc_cover_args = function(front_cover, back_cover) {
   }
 }
 
-cover_dependencies = function(name, img) {
-  if (length(img) == 0) return(list())
-  name = paste(name, seq_along(img), sep = '-')
-  build_dep = !is_url(img)
-  deps = mapply(
-    name, img, build_dep,
-    FUN = function(name, img, build_dep) {
-      if (!isTRUE(build_dep)) return()
-      if (!isTRUE(file.exists(img)))
-        stop('File ', img, ' not found.', call. = FALSE)
-      htmltools::htmlDependency(
-        name, packageVersion('pagedown'), dirname(path.expand(img)),
-        attachment = c(pagedown = basename(img)), all_files = FALSE
-      )
-    },
-    USE.NAMES = FALSE, SIMPLIFY = FALSE
-  )
-  deps[build_dep]
+cover_dependencies = function(front_cover, back_cover) {
+  html_dep = function(name, img) {
+    htmltools::htmlDependency(
+      name, packageVersion('pagedown'), dirname(path.expand(img)),
+      attachment = c(pagedown = basename(img)), all_files = FALSE
+    )
+  }
+
+  build_deps = function(name, img) {
+    if (length(img) == 0) return(list())
+    name = paste(name, seq_along(img), sep = '-')
+    name = name[file.exists(img)]
+    img = img[file.exists(img)]
+    mapply(name, img, FUN = html_dep, USE.NAMES = FALSE, SIMPLIFY = FALSE)
+  }
+
+  c(build_deps('front-cover', front_cover), build_deps('back-cover', back_cover))
 }
