@@ -43,7 +43,7 @@ html_paged = function(
       lua_filters('uri-to-fn.lua', 'loft.lua', 'footnotes.lua'), # uri-to-fn.lua must come before footnotes.lua
       if (!is.null(csl)) c('--csl', csl),
       pandoc_chapter_name_args(),
-      cover_pandoc_args(front_cover, back_cover)
+      pandoc_cover_args(front_cover, back_cover)
     ),
     .dependencies = c(
       cover_dependencies('front-cover', front_cover),
@@ -186,7 +186,7 @@ pandoc_chapter_name_args = function() {
   unlist(lapply(chapter_name(), pandoc_metadata_arg, name = 'chapter_name'))
 }
 
-cover_pandoc_args = function(front_cover, back_cover) {
+pandoc_cover_args = function(front_cover, back_cover) {
   build_links = function(name, img) {
     if (length(img) == 0) return()
     name = paste(name, seq_along(img), sep = '-')
