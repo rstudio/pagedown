@@ -46,7 +46,7 @@
     document.body.style.display = '';
 
     // run previous PagedConfig.after function if defined
-    if (afterPaged) afterPaged();
+    if (afterPaged) afterPaged(flow);
 
     // pagedownListener is a binding added by the chrome_print function
     // this binding exists only when chrome_print opens the html file
