@@ -58,9 +58,16 @@
         pages: flow.total,
         elapsedtime: flow.performance
       }));
-    } else {
+      return;
+    }
+    if (sessionStorage.getItem('pagedown-scroll')) {
       // scroll to the last position before the page is reloaded
       window.scrollTo(0, sessionStorage.getItem('pagedown-scroll'));
+      return;
+    }
+    if (window.location.hash) {
+      const id = window.location.hash.replace(/^#/, '');
+      document.getElementById(id).scrollIntoView({behavior: 'smooth'});
     }
   };
 })();
