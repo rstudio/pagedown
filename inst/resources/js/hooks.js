@@ -353,7 +353,9 @@
     }
   });
 
-  // Main text line numbering
+  // Main text line numbering,
+  // see https://github.com/rstudio/pagedown/issues/115
+  // Original idea: Julien Taquet, thanks!
   Paged.registerHandlers(class extends Paged.Handler {
     constructor(chunker, polisher, caller) {
       super(chunker, polisher, caller);
