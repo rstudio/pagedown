@@ -718,6 +718,49 @@ Internal links will be followed by page numbers by default. For example, you can
 
 Do you still remember [Paged.js](#pagedjs) that we mentioned earlier?
 
+## Line numbering
+
+For templates built on top of `html_paged`, line numbering can be added using the top-level YAML parameter `number-lines`. For example:
+
+```yaml
+---
+output: pagedown::thesis_paged
+number-lines: true
+---
+```
+
+The line numbers can be reset on each page using the `reset-page` option:
+
+```yaml
+---
+output: pagedown::thesis_paged
+number-lines:
+  reset-page: true
+---
+```
+
+You also can select the HTML elements by passing a CSS selector to the `selector` parameter. To number the lines of all the paragraphs and headers, you need to write:
+
+```yaml
+---
+output: pagedown::thesis_paged
+number-lines:
+  selector: "p, h1, h2, h3, h4, h5, h6"
+---
+```
+
+The default CSS selector is `".level1:not(.front-matter) h1, .level1 h2, .level1 h3, .level1 p"`. Line numbering is deactivated for display math environments.
+
+If your template relies on custom CSS files, the CSS `line-height` property must have a value different than `"normal"`. For example:
+
+```css
+html {
+  line-height: 1.3;
+}
+```
+
+Please note that this feature is sensitive to elements which break the vertical rythm of the text like inline maths.
+
 ## Figures and tables
 
 Table \@ref(tab:test-table):

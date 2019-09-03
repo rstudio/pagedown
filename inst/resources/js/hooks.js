@@ -352,4 +352,152 @@
       }
     }
   });
+
+  // Main text line numbering,
+  // see https://github.com/rstudio/pagedown/issues/115
+  // Original idea: Julien Taquet, thanks!
+  Paged.registerHandlers(class extends Paged.Handler {
+    constructor(chunker, polisher, caller) {
+      super(chunker, polisher, caller);
+
+      // get the number-lines option from Pandoc metavariables
+      this.options = pandocMeta['number-lines'];
+      // quit early if the "number-lines" option is false or missing
+      if (!this.options) return;
+      // retrieve the selector if provided, otherwise use the default selector
+      this.selector = this.options.selector ? pandocMetaToString(this.options.selector) : '.level1:not(.front-matter) h1, .level1 h2, .level1 h3, .level1 p';
+
+      const styles = `
+      :root {
+        --line-numbers-padding-right: 10px;
+        --line-numbers-font-size: 8pt;
+      }
+      .pagedown-linenumbers-container {
+        position: absolute;
+        margin-top: var(--pagedjs-margin-top);
+        right: calc(var(--pagedjs-width) - var(--pagedjs-margin-left));
+      }
+      .maintextlinenumbers {
+        position: absolute;
+        right: 0;
+        text-align: right;
+        padding-right: var(--line-numbers-padding-right);
+        font-size: var(--line-numbers-font-size);
+      }
+      `;
+      polisher.insert(styles);
+
+      this.resetLinesCounter();
+    }
+
+    appendLineNumbersContainer(page) {
+      const pagebox = page.element.querySelector('.pagedjs_pagebox');
+      const lineNumbersContainer = document.createElement('div');
+      lineNumbersContainer.classList.add('pagedown-linenumbers-container');
+
+      return pagebox.appendChild(lineNumbersContainer);
+    }
+
+    lineHeight(element) {
+      // If the document stylesheet does not define a value for line-height,
+      // Blink returns "normal". Therefore, parseInt may return NaN.
+      return parseInt(getComputedStyle(element).lineHeight);
+    }
+
+    innerHeight(element) {
+      let outerHeight = element.getBoundingClientRect().height;
+      let {borderTopWidth,
+           borderBottomWidth,
+           paddingTop,
+           paddingBottom} = getComputedStyle(element);
+
+      borderTopWidth = parseFloat(borderTopWidth);
+      borderBottomWidth = parseFloat(borderBottomWidth);
+      paddingTop = parseFloat(paddingTop);
+      paddingBottom = parseFloat(paddingBottom);
+
+      return Math.round(outerHeight - borderTopWidth - borderBottomWidth - paddingTop - paddingBottom);
+    }
+
+    arrayOfInt(from, length) {
+      // adapted from https://stackoverflow.com/a/50234108/6500804
+      return Array.from(Array(length).keys(), n => n + from);
+    }
+
+    incrementLinesCounter(value) {
+      this.linesCounter = this.linesCounter + value;
+    }
+
+    resetLinesCounter() {
+      this.linesCounter = 0;
+    }
+
+    isDisplayMath(element) {
+      const nodes = element.childNodes;
+      if (nodes.length != 1) return false;
+      return (nodes[0].nodeName === 'SPAN') && (nodes[0].classList.value === 'math display');
+    }
+
+    afterRendered(pages) {
+      if (!this.options) return;
+
+      for (let page of pages) {
+        const lineNumbersContainer = this.appendLineNumbersContainer(page);
+        const pageAreaY = page.area.getBoundingClientRect().y;
+        let elementsToNumber = page.area.querySelectorAll(this.selector);
+
+        for (let element of elementsToNumber) {
+          // Do not add line numbers for display math environment
+          if (this.isDisplayMath(element)) continue;
+
+          // Try to retrieve line height
+          const lineHeight = this.lineHeight(element);
+          // Test against lineHeight method returns NaN
+          if (!lineHeight) {
+            console.warn('Failed to compute line height value on "' + page.id + '".');
+            continue;
+          }
+
+          const innerHeight = this.innerHeight(element);
+
+          // Number of lines estimation
+          // There is no built-in method to detect the number of lines in a block.
+          // The main caveat is that an actual line height can differ from
+          // the line-height CSS property.
+          // Mixed fonts, subscripts, superscripts, inline math... can increase
+          // the actual line height.
+          // Here, we divide the inner height of the block by the line-height
+          // computed property and round to the floor to take into account that
+          // sometimes the actual line height is greater than its property value.
+          // This is far from perfect and can be easily broken especially by
+          // inline math.
+          const nLines = Math.floor(innerHeight / lineHeight);
+
+          // do not add line numbers for void paragraphs
+          if (nLines <= 0) continue;
+
+          const linenumbers = document.createElement('div');
+          lineNumbersContainer.appendChild(linenumbers);
+          linenumbers.classList.add('maintextlinenumbers');
+
+          const elementY = element.getBoundingClientRect().y;
+          linenumbers.style.top = (elementY - pageAreaY) + 'px';
+
+          const cs = getComputedStyle(element);
+          const paddingTop = parseFloat(cs.paddingTop) + parseFloat(cs.borderTopWidth);
+          linenumbers.style.paddingTop = paddingTop + 'px';
+
+          linenumbers.style.lineHeight = cs.lineHeight;
+
+          linenumbers.innerHTML = this.arrayOfInt(this.linesCounter + 1, nLines)
+                                      .reduce((t, v) => t + '<br />' + v);
+          this.incrementLinesCounter(nLines);
+        }
+
+        if (this.options['reset-page']) {
+          this.resetLinesCounter();
+        }
+      }
+    }
+  });
 }
