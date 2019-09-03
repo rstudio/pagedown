@@ -292,6 +292,8 @@ print_page = function(
   ws, url, output, wait, verbose, token, format,
   options = list(), selector, box_model, scale, resolve, reject
 ) {
+  # init values
+  coords = NULL
 
   ws$onOpen(function(event) {
     ws$send(to_json(list(id = 1, method = "Runtime.enable")))
@@ -342,11 +344,12 @@ print_page = function(
       },
       {
         # Command #7 received - Test if the html document uses the paged.js polyfill
-        # if not, call the binding when fonts are ready
+        # if not, call the binding when HTMLWidgets, MathJax and fonts are ready
+        # (see inst/resources/js/chrome_print.js)
         if (!isTRUE(msg$result$result$value)) {
           ws$send(to_json(list(
             id = 8, method = "Runtime.evaluate",
-            params = list(expression = "pagedownReady.then(() => {pagedownListener('');})")
+            params = list(expression = "pagedownReady.then(() => {pagedownListener('{\"pagedjs\":false}');})")
           )))
         }
       },
@@ -372,10 +375,21 @@ print_page = function(
         }
       },
       {
-        # Command 12 received -> callback: command #13 Page.captureScreenshot
+        # Command 12 received -> callback: command #13 Emulation.setDeviceMetricsOverride
+        coords <<- msg$result$model[[box_model]]
+        device_metrics = list(
+          width = ceiling(coords[5]),
+          height = ceiling(coords[6]),
+          deviceScaleFactor = 1,
+          mobile = FALSE
+        )
+        ws$send(to_json(list(
+          id = 13, params = device_metrics, method = 'Emulation.setDeviceMetricsOverride'
+        )))
+      },
+      {
+        # Command #13 received -> callback: command #14 Page.captureScreenshot
         opts = as.list(options)
-
-        coords = msg$result$model[[box_model]]
 
         origin = as.list(coords[1:2])
         names(origin) = c('x', 'y')
@@ -392,11 +406,11 @@ print_page = function(
         opts$format = format
 
         ws$send(to_json(list(
-          id = 13, params = opts, method = 'Page.captureScreenshot'
+          id = 14, params = opts, method = 'Page.captureScreenshot'
         )))
       },
       {
-        # Command #13 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
+        # Command #14 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
         resolve(output)
         token$done = TRUE
@@ -421,10 +435,14 @@ print_page = function(
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
         opts = as.list(options)
+        payload = jsonlite::fromJSON(msg$params$payload)
+        if (verbose >= 1 && payload$pagedjs) {
+          message("Rendered ", payload$pages, " pages in ", payload$elapsedtime, " milliseconds.")
+        }
         if (format == 'pdf') {
           opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), opts)
           ws$send(to_json(list(
-            id = 13, params = opts, method = 'Page.printToPDF'
+            id = 14, params = opts, method = 'Page.printToPDF'
           )))
         } else {
           ws$send(to_json(list(id = 9, method = "DOM.enable")))

@@ -149,7 +149,7 @@ code {
     margin: 0 auto;
   }
   .pagedjs_page {
-    background: var(--color-paper);
+    background-color: var(--color-paper);
     box-shadow: 0 0 0 1px var(--color-mbox);
     flex-shrink: 0;
     flex-grow: 0;
