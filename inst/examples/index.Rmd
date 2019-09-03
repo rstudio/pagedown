@@ -749,7 +749,7 @@ number-lines:
 ---
 ```
 
-The default CSS selector is `".level1 p:not(.caption)"`. Line numbering is deactivated for display math environments.
+The default CSS selector is `".level1:not(.front-matter) h1, .level1 h2, .level1 h3, .level1 p"`. Line numbering is deactivated for display math environments.
 
 If your template relies on custom CSS files, the CSS `line-height` property must have a value different than `"normal"`. For example:
 

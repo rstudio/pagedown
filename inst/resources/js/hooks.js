@@ -365,7 +365,7 @@
       // quit early if the "number-lines" option is false or missing
       if (!this.options) return;
       // retrieve the selector if provided, otherwise use the default selector
-      this.selector = this.options.selector ? pandocMetaToString(this.options.selector) : '.level1 p:not(.caption)';
+      this.selector = this.options.selector ? pandocMetaToString(this.options.selector) : '.level1:not(.front-matter) h1, .level1 h2, .level1 h3, .level1 p';
 
       const styles = `
       :root {
