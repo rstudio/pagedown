@@ -751,6 +751,14 @@ number-lines:
 
 The default CSS selector is `".level1 p:not(.caption)"`. Line numbering is deactivated for display math environments.
 
+If your template relies on custom CSS files, the CSS `line-height` property must have a value different than `"normal"`. For example:
+
+```css
+html {
+  line-height: 1.3;
+}
+```
+
 Please note that this feature is sensitive to elements which break the vertical rythm of the text like inline maths.
 
 ## Figures and tables
