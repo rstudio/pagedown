@@ -730,11 +730,22 @@ number-lines:
 
 The default CSS selector is `".level1:not(.front-matter) h1, .level1 h2, .level1 h3, .level1 p"`. Line numbering is deactivated for display math environments.
 
-If your template relies on custom CSS files, the CSS `line-height` property must have a value different than `"normal"`. For example:
+Be aware that the value `"normal"` of the CSS `line-height` property is not supported: elements with a normal line height are not numbered. Since `"normal"` is the default value for the `line-height` property, the CSS stylesheets must define a different value. If your template relies on custom CSS files, you can add for example:
 
 ```css
 html {
   line-height: 1.3;
+}
+```
+
+You can modify the horizontal positioning and the font size of the lines numbers using two CSS variables: `--line-numbers-padding-right` (default value `10px`) and `--line-numbers-font-size` (default value `8pt`). For further customisation, you can modify the style of the elements of class `maintextlinenumbers`. Here is an example:
+
+```css
+.maintextlinenumbers {
+  --line-numbers-padding-right: 25px;
+  --line-numbers-font-size: 10pt;
+  font-weight: bold;
+  font-family: monospace;
 }
 ```
 
