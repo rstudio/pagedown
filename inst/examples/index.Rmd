@@ -691,27 +691,6 @@ The following lines are used to position the **pagedown** hex logo on the front 
 }
 ```
 
-## MathJax
-
-The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
-
-Some RBM stuff:
-
-$$
-  E(\mathbf{v}, \mathbf{h}) = -\sum_{i,j}w_{ij}v_i h_j - \sum_i b_i v_i - \sum_j c_j h_j
-$$
-
-Multiline equations:
-
-$$
-  \begin{align}
-    p(v_i=1|\mathbf{h}) & = \sigma\left(\sum_j w_{ij}h_j + b_i\right) \\
-    p(h_j=1|\mathbf{v}) & = \sigma\left(\sum_i w_{ij}v_i + c_j\right)
-  \end{align}
-$$
-
-Here is an example of an inline expression: $p(x|y) = \frac{p(y|x)p(x)}{p(y)}$.
-
 ## Page references
 
 Internal links will be followed by page numbers by default. For example, you can refer to another section using either `[Section Title]` or `[Link Text](#section-id)` (where `section-id` is the ID of the section header).
@@ -760,6 +739,27 @@ html {
 ```
 
 Please note that this feature is sensitive to elements which break the vertical rythm of the text like inline maths.
+
+## MathJax
+
+The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
+
+Some RBM stuff:
+
+$$
+  E(\mathbf{v}, \mathbf{h}) = -\sum_{i,j}w_{ij}v_i h_j - \sum_i b_i v_i - \sum_j c_j h_j
+$$
+
+Multiline equations:
+
+$$
+  \begin{align}
+    p(v_i=1|\mathbf{h}) & = \sigma\left(\sum_j w_{ij}h_j + b_i\right) \\
+    p(h_j=1|\mathbf{v}) & = \sigma\left(\sum_i w_{ij}v_i + c_j\right)
+  \end{align}
+$$
+
+Here is an example of an inline expression: $p(x|y) = \frac{p(y|x)p(x)}{p(y)}$.
 
 ## Figures and tables
 
