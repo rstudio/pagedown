@@ -10,6 +10,10 @@
 
 - Added a `template` argument to the `business_card()` output format for passing a custom Pandoc template (thanks, @mariakharitonova, #135).
 
+## BUG FIXES
+
+- Remove duplicated footnotes in table of contents (thanks, @pzhaonet and @jdbarillas, #54).
+
 # CHANGES IN pagedown VERSION 0.4
 
 ## BUG FIXES

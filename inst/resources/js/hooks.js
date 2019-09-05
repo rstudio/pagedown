@@ -214,6 +214,13 @@
     }
 
     beforeParsed(content) {
+      // remove footnotes in toc, lof, lot
+      // see https://github.com/rstudio/pagedown/issues/54
+      let removeThese = content.querySelectorAll('.toc .footnote, .lof .footnote, .lot .footnote');
+      for (const el of removeThese) {
+        el.remove();
+      }
+
       let footnotes = content.querySelectorAll('.footnote');
 
       for (let footnote of footnotes) {
