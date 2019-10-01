@@ -1,3 +1,7 @@
+# CHANGES IN pagedown VERSION 0.6
+
+
+
 # CHANGES IN pagedown VERSION 0.5
 
 ## NEW FEATURES
