@@ -57,6 +57,8 @@ Want more poster styles? You may take a look at [Brent Thorne's **posterdown** p
 
 ## Other examples
 
+- Nick Strayer's CV: https://github.com/nstrayer/cv (also includes instructions on how to build your own CV).
+
 - "Template of Exec Summaries with pagedown" by Joshua David Barillas: https://github.com/jdbarillas/executive_summary
 
 - Ulrik Lyngs's CVs: https://ulyngs.github.io/pagedown-cv/
