@@ -5,58 +5,40 @@
   window.PagedConfig = window.PagedConfig || {};
   const {before: beforePaged, after: afterPaged} = window.PagedConfig;
 
-  function getPandocMeta() {
-    const el = document.getElementById('pandoc-meta');
-    if (el) {
-      return JSON.parse(el.firstChild.data);
-    } else {
-      return {};
-    }
-  }
-
-  function isString(value) {
-    return typeof value === 'string' || value instanceof String;
-  }
-
-  function isArray(value) {
-    return value && typeof value === 'object' && value.constructor === Array;
-  }
-
-  function insertCSS(text) {
-    let style = document.createElement("style");
-		style.type = "text/css";
+  // utils
+  const insertCSS = text => {
+    let style = document.createElement('style');
+		style.type = 'text/css';
 		style.appendChild(document.createTextNode(text));
     document.head.appendChild(style);
-  }
+  };
 
-  function buildChapterNameStyleSheet(chapterName) {
-    let text = '';
-    if (isString(chapterName)) {
-      text = '--chapter-name-before: "' + chapterName + '";';
+  // Util function for front and back covers images
+  const insertCSSForCover = type => {
+    const links = document.querySelectorAll('link[id^=' + type + ']');
+    if (!links.length) return;
+    const re = new RegExp(type + '-\\d+');
+    let text = ':root {--' + type + ': var(--' + type + '-1);';
+    for (const link of links) {
+      text += '--' + re.exec(link.id)[0] + ': url("' + link.href + '");';
     }
-    if (isArray(chapterName)) {
-      text = '--chapter-name-before: "' + chapterName[0] + '";';
-      if(chapterName[1]) {
-        text  = text + '--chapter-name-after: "' + chapterName[1] + '";';
-      }
-    }
-    return ':root {' + text + '}';
-  }
+    text += '}';
+    insertCSS(text);
+  };
 
   window.PagedConfig.before = async () => {
-    // Define CSS variables for internationalization
-    const pandocMeta = getPandocMeta();
-    const chapterName = pandocMeta["chapter_name"];
-
-    if (chapterName) {
-      const text = buildChapterNameStyleSheet(chapterName);
-      insertCSS(text);
-    }
+    // Front and back covers support
+    let frontCover = document.querySelector('.front-cover');
+    let backCover = document.querySelector('.back-cover');
+    if (frontCover) document.body.prepend(frontCover);
+    if (backCover) document.body.append(backCover);
+    insertCSSForCover('front-cover');
+    insertCSSForCover('back-cover');
 
     if (beforePaged) await beforePaged();
-  }
+  };
 
-  window.PagedConfig.after = () => {
+  window.PagedConfig.after = (flow) => {
     // force redraw, see https://github.com/rstudio/pagedown/issues/35#issuecomment-475905361
     // and https://stackoverflow.com/a/24753578/6500804
     document.body.style.display = 'none';
@@ -64,17 +46,28 @@
     document.body.style.display = '';
 
     // run previous PagedConfig.after function if defined
-    if (afterPaged) afterPaged();
+    if (afterPaged) afterPaged(flow);
 
     // pagedownListener is a binding added by the chrome_print function
     // this binding exists only when chrome_print opens the html file
     if (window.pagedownListener) {
       // the html file is opened for printing
       // call the binding to signal to the R session that Paged.js has finished
-      pagedownListener('');
-    } else {
+      pagedownListener(JSON.stringify({
+        pagedjs: true,
+        pages: flow.total,
+        elapsedtime: flow.performance
+      }));
+      return;
+    }
+    if (sessionStorage.getItem('pagedown-scroll')) {
       // scroll to the last position before the page is reloaded
       window.scrollTo(0, sessionStorage.getItem('pagedown-scroll'));
+      return;
+    }
+    if (window.location.hash) {
+      const id = window.location.hash.replace(/^#/, '');
+      document.getElementById(id).scrollIntoView({behavior: 'smooth'});
     }
   };
 })();

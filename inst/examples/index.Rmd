@@ -8,6 +8,7 @@ output:
   pagedown::html_paged: 
     toc: true
     self_contained: false
+    front_cover: pagedown_hex.svg
 toc-title: Contents
 paged-footnotes: true
 lot: true
@@ -633,6 +634,123 @@ Sometimes a section title may be too long to fit the header or footer area. In t
 ## The actual long long long title {data-short-title="An alternative title"}
 ```
 
+## Covers
+
+Covers images can be added using the `front_cover` and `back_cover` parameters of `pagedown::html_paged()`. You can pass any path to a file or an url. 
+
+```yaml
+---
+output:
+  pagedown::html_paged:
+    front_cover: !expr system.file("img", "Rlogo.png", package="png")
+    back_cover: https://www.r-project.org/Rlogo.png
+---
+
+# Content
+```
+
+Several paths or links can be passed to the `front_cover` and `back_cover` parameters. For each image declared in the `front_cover` or `back_cover` parameter, a CSS variable is created: `--front-cover`, `--back-cover`, `--front-cover-2`, `--back-cover-2`, etc.  
+They can be used as value for the `background-image` CSS property:
+
+```css
+@page chapter:first {
+  background-image: var(--front-cover-2);
+}
+```
+
+You also can add textual content on the front and back covers using two special divs of classes `front-cover` and `back-cover`:
+
+
+```markdown
+---
+output:
+  pagedown::html_paged:
+    front_cover: !expr system.file("img", "Rlogo.png", package="png")
+    back_cover: https://www.r-project.org/Rlogo.png
+---
+
+:::front-cover
+# My great book about
+:::
+
+:::back-cover
+### Written with
+:::
+
+# Content
+```
+
+If the background properties of the default template does not suit your needs, here is a small hack to modify them.  
+The following lines are used to position the **pagedown** hex logo on the front page of the current document:
+
+```{css}
+/* position the hex logo on the first page */
+.pagedjs_page.pagedjs_first_page {
+  background-size: 40%;
+  background-position: center 80%;
+}
+```
+
+## Page references
+
+Internal links will be followed by page numbers by default. For example, you can refer to another section using either `[Section Title]` or `[Link Text](#section-id)` (where `section-id` is the ID of the section header).
+
+Do you still remember [Paged.js](#pagedjs) that we mentioned earlier?
+
+## Line numbering
+
+For templates built on top of `html_paged`, line numbering can be added using the top-level YAML parameter `number-lines`. For example:
+
+```yaml
+---
+output: pagedown::thesis_paged
+number-lines: true
+---
+```
+
+The line numbers can be reset on each page using the `reset-page` option:
+
+```yaml
+---
+output: pagedown::thesis_paged
+number-lines:
+  reset-page: true
+---
+```
+
+You also can select the HTML elements by passing a CSS selector to the `selector` parameter. To number the lines of all the paragraphs and headers, you need to write:
+
+```yaml
+---
+output: pagedown::thesis_paged
+number-lines:
+  selector: "p, h1, h2, h3, h4, h5, h6"
+---
+```
+
+The default CSS selector is `".level1:not(.front-matter) h1, .level1 h2, .level1 h3, .level1 p"`. Line numbering is deactivated for display math environments.
+
+Be aware that the value `"normal"` of the CSS `line-height` property is not supported: elements with a normal line height are not numbered. Since `"normal"` is the default value for the `line-height` property, the CSS stylesheets must define a different value. If your template relies on custom CSS files, you can add for example:
+
+```css
+html {
+  line-height: 1.3;
+}
+```
+
+You can modify the horizontal positioning and the font size of the lines numbers using two CSS variables: `--line-numbers-padding-right` (default value `10px`) and `--line-numbers-font-size` (default value `8pt`). For further customisation, you can modify the style of the elements of class `maintextlinenumbers`. Here is an example:
+
+```css
+.maintextlinenumbers {
+  --line-numbers-padding-right: 25px;
+  --line-numbers-font-size: 10pt;
+  font-weight: bold;
+  font-family: monospace;
+}
+```
+
+Please note that this feature is sensitive to elements which break the vertical rythm of the text like inline maths.
+
 ## MathJax
 
 The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
@@ -654,12 +772,6 @@ $$
 
 Here is an example of an inline expression: $p(x|y) = \frac{p(y|x)p(x)}{p(y)}$.
 
-## Page references
-
-Internal links will be followed by page numbers by default. For example, you can refer to another section using either `[Section Title]` or `[Link Text](#section-id)` (where `section-id` is the ID of the section header).
-
-Do you still remember [Paged.js](#pagedjs) that we mentioned earlier?
-
 ## Figures and tables
 
 Table \@ref(tab:test-table):
@@ -673,3 +785,10 @@ knitr::kable(head(iris[, -5]), caption = 'An example table.')
 ```{r, include=FALSE}
 knitr::write_bib(c(.packages(), 'pagedown', 'xaringan', 'servr'), 'index.bib')
 ```
+
+```{js, echo=FALSE}
+// insert a soft break to avoid an infinite loop with FF
+// this is because FF handles lists differently
+document.querySelector('#TOC h1').insertAdjacentHTML('afterend', '<wbr>');
+```
+

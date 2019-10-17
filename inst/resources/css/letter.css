@@ -36,7 +36,7 @@ body {
   }
 }
 
-@media (min-width: 12.32in) {
+@media screen and (min-width: 12.32in) {
   .pagedjs_page, .pagedjs_first_page {
     margin: auto auto 5mm auto;
   }

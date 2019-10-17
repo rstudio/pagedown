@@ -4,7 +4,10 @@
 \alias{business_card}
 \title{Create business cards}
 \usage{
-business_card()
+business_card(template = pkg_resource("html", "card.html"))
+}
+\arguments{
+\item{template}{The path to the Pandoc template to convert Markdown to HTML.}
 }
 \value{
 An R Markdown output format.
