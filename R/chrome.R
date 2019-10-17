@@ -86,86 +86,104 @@ chrome_print = function(
   if (!is_remote_protocol_ok(debug_port, verbose = verbose))
     stop('A more recent version of Chrome is required. ')
 
-  ws = websocket::WebSocket$new(get_entrypoint(debug_port), autoConnect = FALSE)
-  ws$onClose(kill_chrome)
-  ws$onError(kill_chrome)
-  close_ws = function() {
-    if (verbose >= 1) message('Closing websocket connection')
-    ws$close()
-  }
+  # If !async, use a private event loop to drive the websocket. This is
+  # necessary to separate later callbacks relevant to chrome_print, from any
+  # other callbacks that have been scheduled before entering chrome_print; the
+  # latter must not be invoked while inside of any synchronous function,
+  # including chrome_print(async=FALSE).
+  #
+  # It's also critical that none of the code inside with_temp_loop waits on a
+  # promise that originates from outside the with_temp_loop, as it will cause
+  # the code inside to hang. And finally, no promise from inside with_temp_loop
+  # should escape to the outside either, as with_temp_loop uses a truly "temp"
+  # loop--it will be destroyed when with_temp_loop completes.
+  #
+  # Therefore, if async, it's important NOT to use a private event loop.
+  with_temp_loop_maybe <- if (async) identity else later::with_temp_loop
 
-  if (file.exists(input)) {
-    is_html = function(x) grepl('[.]html?$', x)
-    url = if (is_html(input)) input else rmarkdown::render(
-      input, envir = parent.frame(), encoding = 'UTF-8'
-    )
-    if (!is_html(url)) stop(
-      "The file '", url, "' should have the '.html' or '.htm' extension."
-    )
-    svr = servr::httd(
-      dirname(url), daemon = TRUE, browser = FALSE, verbose = verbose >= 1,
-      port = random_port(), initpath = httpuv::encodeURIComponent(basename(url))
-    )
-    stop_server = function(...) {
-      if (verbose >= 1) message('Closing local webserver')
-      svr$stop_server()
+  with_temp_loop_maybe({
+
+    ws = websocket::WebSocket$new(get_entrypoint(debug_port), autoConnect = FALSE)
+    ws$onClose(kill_chrome)
+    ws$onError(kill_chrome)
+    close_ws = function() {
+      if (verbose >= 1) message('Closing websocket connection')
+      ws$close()
     }
-    on.exit(stop_server(), add = TRUE)
-    ws$onClose(stop_server)
-    ws$onError(stop_server)
-    url = svr$url
-  } else url = input  # the input is not a local file; assume it is just a URL
 
-  format = match.arg(format)
-  # remove hash/query parameters in url
-  if (missing(output) && !file.exists(input))
-    output = xfun::with_ext(basename(gsub('[#?].*', '', url)), format)
-  output2 = normalizePath(output, mustWork = FALSE)
-  if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
-    'Cannot create the directory for the output file: ', d
-  )
-
-  if ((format == 'pdf') && !all(c(missing(selector), missing(box_model), missing(scale))))
-    warning('For "pdf" format, arguments `selector`, `box_model` and `scale` are ignored.', call. = FALSE)
-
-  box_model = match.arg(box_model)
-
-  pr = NULL
-  res_fun = function(value) {} # default: do nothing
-  rej_fun = function(reason) {} # default: do nothing
-  if (async) {
-    pr_print = promises::promise(function(resolve, reject) {
-      res_fun <<- resolve
-      rej_fun <<- function(reason) reject(paste('Failed to generate output. Reason:', reason))
-    })
-    pr_timeout = promises::promise(function(resolve, reject) {
-      later::later(
-        ~reject(paste('Failed to generate output in', timeout, 'seconds (timeout).')),
-        timeout
+    if (file.exists(input)) {
+      is_html = function(x) grepl('[.]html?$', x)
+      url = if (is_html(input)) input else rmarkdown::render(
+        input, envir = parent.frame(), encoding = 'UTF-8'
       )
-    })
-    pr = promises::promise_race(pr_print, pr_timeout)
-    promises::finally(pr, close_ws)
-  }
+      if (!is_html(url)) stop(
+        "The file '", url, "' should have the '.html' or '.htm' extension."
+      )
+      svr = servr::httd(
+        dirname(url), daemon = TRUE, browser = FALSE, verbose = verbose >= 1,
+        port = random_port(), initpath = httpuv::encodeURIComponent(basename(url))
+      )
+      stop_server = function(...) {
+        if (verbose >= 1) message('Closing local webserver')
+        svr$stop_server()
+      }
+      on.exit(stop_server(), add = TRUE)
+      ws$onClose(stop_server)
+      ws$onError(stop_server)
+      url = svr$url
+    } else url = input  # the input is not a local file; assume it is just a URL
 
-  t0 = Sys.time(); token = new.env(parent = emptyenv())
-  on.exit(close_ws())
-  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun, rej_fun)
-
-  if (async) {
-    on.exit()
-    return(pr)
-  }
-
-  while (!isTRUE(token$done)) {
-    if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
-    if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
-      'Failed to generate output in ', timeout, ' seconds (timeout).'
+    format = match.arg(format)
+    # remove hash/query parameters in url
+    if (missing(output) && !file.exists(input))
+      output = xfun::with_ext(basename(gsub('[#?].*', '', url)), format)
+    output2 = normalizePath(output, mustWork = FALSE)
+    if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
+      'Cannot create the directory for the output file: ', d
     )
-    later::run_now()
-  }
 
-  invisible(output)
+    if ((format == 'pdf') && !all(c(missing(selector), missing(box_model), missing(scale))))
+      warning('For "pdf" format, arguments `selector`, `box_model` and `scale` are ignored.', call. = FALSE)
+
+    box_model = match.arg(box_model)
+
+    pr = NULL
+    res_fun = function(value) {} # default: do nothing
+    rej_fun = function(reason) {} # default: do nothing
+    if (async) {
+      pr_print = promises::promise(function(resolve, reject) {
+        res_fun <<- resolve
+        rej_fun <<- function(reason) reject(paste('Failed to generate output. Reason:', reason))
+      })
+      pr_timeout = promises::promise(function(resolve, reject) {
+        later::later(
+          ~reject(paste('Failed to generate output in', timeout, 'seconds (timeout).')),
+          timeout
+        )
+      })
+      pr = promises::promise_race(pr_print, pr_timeout)
+      promises::finally(pr, close_ws)
+    }
+
+    t0 = Sys.time(); token = new.env(parent = emptyenv())
+    on.exit(close_ws())
+    print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun, rej_fun)
+
+    if (async) {
+      on.exit()
+      return(pr)
+    }
+
+    while (!isTRUE(token$done)) {
+      if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
+      if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
+        'Failed to generate output in ', timeout, ' seconds (timeout).'
+      )
+      later::run_now()
+    }
+
+    invisible(output)
+  })
 }
 
 #' Find Google Chrome or Chromium in the system
