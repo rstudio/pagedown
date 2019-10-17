@@ -1,6 +1,8 @@
 # CHANGES IN pagedown VERSION 0.6
 
+## MINOR CHANGES
 
+- The `chrome_print()` function internally uses a private event loop provided by `later` 1.0.0 when `async=FALSE` (thanks, @jcheng5, #127).
 
 # CHANGES IN pagedown VERSION 0.5
 
