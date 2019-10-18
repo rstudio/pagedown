@@ -19,7 +19,7 @@ Description: Use the paged media properties in CSS and the JavaScript
   pages. Each page can have its page size, page numbers, margin boxes, and
   running headers, etc. Applications of this package include books, letters,
   reports, papers, business cards, resumes, and posters.
-Imports: rmarkdown (>= 1.11), bookdown (>= 0.8), htmltools, jsonlite, later (>= 1.0.0),
+Imports: rmarkdown (>= 1.14), bookdown (>= 0.8), htmltools, jsonlite, later (>= 1.0.0),
   processx, servr (>= 0.13), httpuv, xfun, websocket
 Suggests: promises, testit, xaringan
 License: MIT + file LICENSE
