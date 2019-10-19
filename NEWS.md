@@ -2,6 +2,8 @@
 
 ## MINOR CHANGES
 
+- Added support for MathJax in `html_resume` output format (thanks, @ginolhac, #146).
+
 - The `chrome_print()` function internally uses a private event loop provided by `later` 1.0.0 when `async=FALSE` (thanks, @jcheng5, #127).
 
 # CHANGES IN pagedown VERSION 0.5
