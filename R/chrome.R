@@ -111,6 +111,7 @@ chrome_print = function(
       ws$close()
     }
 
+    svr = NULL # init svr variable
     if (file.exists(input)) {
       is_html = function(x) grepl('[.]html?$', x)
       url = if (is_html(input)) input else rmarkdown::render(
@@ -179,7 +180,7 @@ chrome_print = function(
       if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
         'Failed to generate output in ', timeout, ' seconds (timeout).'
       )
-      later::run_now()
+      later::run_now(); if (!is.null(svr)) run_servr()
     }
 
     invisible(output)
