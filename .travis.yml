@@ -4,6 +4,8 @@ language: R
 sudo: false
 cache: packages
 pandoc_version: 2.3.1
+addons:
+  chrome: stable
 
 before_install:
   - "curl https://xran.yihui.name/.gitconfig -o ~/.gitconfig"
