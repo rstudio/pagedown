@@ -1,0 +1,21 @@
+---
+title: "Test page breaks"
+output:
+  pagedown::html_paged:
+    self_contained: false
+    css: null
+---
+
+# First page
+
+\newpage
+
+# Second page
+
+\pagebreak
+
+# Third page {.page-break-after}
+
+# Fourth page
+
+# Fifth page {.page-break-before}

@@ -1,14 +1,5 @@
 library(testit)
 
-print_pdf = function(input) {
-  chrome_print(
-    input, tempfile(),
-    # use --no-sandbox with travis
-    # https://docs.travis-ci.com/user/chrome#sandboxing
-    extra_args = c('--disable-gpu', '--no-sandbox')
-  )
-}
-
 is_pdf = function(file) {
   identical(readBin(file, 'raw', 5L), charToRaw('%PDF-'))
 }

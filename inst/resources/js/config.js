@@ -26,6 +26,13 @@
     insertCSS(text);
   };
 
+  const insertPageBreaksCSS = () => {
+    insertCSS(`
+    .page-break-after {break-after: page;}
+    .page-break-before {break-before: page;}
+    `);
+  };
+
   window.PagedConfig.before = async () => {
     // Front and back covers support
     let frontCover = document.querySelector('.front-cover');
@@ -34,6 +41,7 @@
     if (backCover) document.body.append(backCover);
     insertCSSForCover('front-cover');
     insertCSSForCover('back-cover');
+    insertPageBreaksCSS();
 
     if (beforePaged) await beforePaged();
   };

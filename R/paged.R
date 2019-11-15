@@ -149,6 +149,14 @@ html_format = function(
   css2 = grep('[.]css$', css, value = TRUE, invert = TRUE)
   css  = setdiff(css, css2)
   check_css(css2)
+
+  pandoc_args = c(
+    .pandoc_args,
+    pandoc_args,
+    # use the pagebreak pandoc filter provided by rmarkdown 1.15:
+    if (isTRUE(.pagedjs)) pandoc_metadata_arg('newpage_html_class', 'page-break-after')
+  )
+
   html_document2 = function(..., extra_dependencies = list()) {
     bookdown::html_document2(..., extra_dependencies = c(
       extra_dependencies, .dependencies,
@@ -157,7 +165,7 @@ html_format = function(
   }
   html_document2(
     ..., self_contained = self_contained, mathjax = mathjax, css = css,
-    template = template, pandoc_args = c(.pandoc_args, pandoc_args)
+    template = template, pandoc_args = pandoc_args
   )
 }
 

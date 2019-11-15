@@ -6,6 +6,11 @@ cache: packages
 pandoc_version: 2.3.1
 addons:
   chrome: stable
+  apt:
+    sources:
+      - sourceline: 'ppa:cran/poppler'
+    packages:
+      - libpoppler-cpp-dev
 
 before_install:
   - "curl https://xran.yihui.name/.gitconfig -o ~/.gitconfig"

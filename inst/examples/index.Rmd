@@ -751,6 +751,18 @@ You can modify the horizontal positioning and the font size of the lines numbers
 
 Please note that this feature is sensitive to elements which break the vertical rythm of the text like inline maths.
 
+## Page breaks
+
+There are two ways to force a page break:
+
+- with the `\newpage` $\LaTeX$ command (`\pagebreak` also works)
+
+- using one of these two CSS classes: `page-break-before` or `page-break-after`\
+For example, to force a page break before a given section, use:
+  ```markdown
+  ### New section {.page-break-before}
+  ```
+
 ## MathJax
 
 The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
