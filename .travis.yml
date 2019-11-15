@@ -13,7 +13,7 @@ addons:
       - libpoppler-cpp-dev
 
 before_install:
-  - "curl https://xran.yihui.name/.gitconfig -o ~/.gitconfig"
+  - "curl https://xran.yihui.org/.gitconfig -o ~/.gitconfig"
 
 before_script:
   - R CMD INSTALL .
