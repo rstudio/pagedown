@@ -20,5 +20,5 @@ before_script:
   - Rscript tools/website.R
 
 after_success:
-  - "(curl https://xran.yihui.name/r-xran | bash)"
+  - "(curl https://xran.yihui.org/r-xran | bash)"
   - cd inst/examples; ./deploy_github
