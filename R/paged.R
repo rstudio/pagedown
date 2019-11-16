@@ -153,7 +153,7 @@ html_format = function(
   pandoc_args = c(
     .pandoc_args,
     pandoc_args,
-    # use the pagebreak pandoc filter provided by rmarkdown 1.15:
+    # use the pagebreak pandoc filter provided by rmarkdown 1.16:
     if (isTRUE(.pagedjs)) pandoc_metadata_arg('newpage_html_class', 'page-break-after')
   )
 
