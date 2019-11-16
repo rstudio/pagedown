@@ -4,9 +4,15 @@
 \alias{html_paged}
 \title{Create a paged HTML document suitable for printing}
 \usage{
-html_paged(..., css = c("default-fonts", "default-page", "default"), theme = NULL, 
-    template = pkg_resource("html", "paged.html"), csl = NULL, front_cover = NULL, 
-    back_cover = NULL)
+html_paged(
+  ...,
+  css = c("default-fonts", "default-page", "default"),
+  theme = NULL,
+  template = pkg_resource("html", "paged.html"),
+  csl = NULL,
+  front_cover = NULL,
+  back_cover = NULL
+)
 }
 \arguments{
 \item{...}{Arguments passed to

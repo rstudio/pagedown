@@ -4,11 +4,22 @@
 \alias{chrome_print}
 \title{Print a web page to PDF or capture a screenshot using the headless Chrome}
 \usage{
-chrome_print(input, output = xfun::with_ext(input, format), wait = 2, 
-    browser = "google-chrome", format = c("pdf", "png", "jpeg"), options = list(), 
-    selector = "body", box_model = c("border", "content", "margin", "padding"), 
-    scale = 1, work_dir = tempfile(), timeout = 30, extra_args = c("--disable-gpu"), 
-    verbose = 0, async = FALSE)
+chrome_print(
+  input,
+  output = xfun::with_ext(input, format),
+  wait = 2,
+  browser = "google-chrome",
+  format = c("pdf", "png", "jpeg"),
+  options = list(),
+  selector = "body",
+  box_model = c("border", "content", "margin", "padding"),
+  scale = 1,
+  work_dir = tempfile(),
+  timeout = 30,
+  extra_args = c("--disable-gpu"),
+  verbose = 0,
+  async = FALSE
+)
 }
 \arguments{
 \item{input}{A URL or local file path to an HTML page, or a path to a local

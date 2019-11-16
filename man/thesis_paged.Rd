@@ -4,7 +4,11 @@
 \alias{thesis_paged}
 \title{Create a paged HTML thesis document suitable for printing}
 \usage{
-thesis_paged(..., css = c("thesis"), template = pkg_resource("html", "thesis.html"))
+thesis_paged(
+  ...,
+  css = c("thesis"),
+  template = pkg_resource("html", "thesis.html")
+)
 }
 \arguments{
 \item{..., css, template}{Arguments passed to \code{\link{html_paged}()}.}
