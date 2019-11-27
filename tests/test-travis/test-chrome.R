@@ -21,3 +21,14 @@ assert('chrome_print() works with a local file path', {
 assert('chrome_print() works with html_paged format', {
   (is_pdf(print_pdf('test-chrome.Rmd')))
 })
+
+assert('chrome_print() works with reveal.js presentations', {
+  f = print_pdf('test-revealjs.Rmd')
+
+  (is_pdf(f))
+
+  (identical(pdftools::pdf_info(f)$pages, 5L))
+
+  first_page_text_content = pdftools::pdf_text('reveal.pdf')[1]
+  (identical(first_page_text_content, 'Test reveal.js'))
+})

@@ -4,6 +4,8 @@
 
 - Added support for pagebreaks: in output formats which use **paged.js**, a pagebreak can be forced using the LaTeX commands `\newpage` and `\pagebreak` or using the CSS classes `page-break-before` and `page-break-after`.
 
+- **reveal.js** presentations can be printed to PDF using `chrome_print()`. 
+
 # CHANGES IN pagedown VERSION 0.6
 
 ## MINOR CHANGES
