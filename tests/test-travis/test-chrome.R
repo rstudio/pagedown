@@ -29,6 +29,6 @@ assert('chrome_print() works with reveal.js presentations', {
 
   (identical(pdftools::pdf_info(f)$pages, 5L))
 
-  first_page_text_content = pdftools::pdf_text('reveal.pdf')[1]
+  first_page_text_content = pdftools::pdf_text(f)[1]
   (identical(first_page_text_content, 'Test reveal.js'))
 })
