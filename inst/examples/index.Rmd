@@ -84,8 +84,41 @@ Note that this overriding mechanism also works for other output formats in **pag
 
 ## Print to PDF
 
-You can print HTML pages to PDF using Google Chrome or Chromium using the menu "Print" or by pressing `Ctrl + P` (or `Command + P` on macOS). Remember to allow background graphics to be printed. You may also consider using the function `pagedown::chrome_print()`, but currently it is experimental and you may get an incomplete PDF, so we recommend that you open the page in a real browser and print to PDF there instead.
+There are three ways to print to PDF:
 
+1. with Google Chrome or Chromium using the menu "Print" or by pressing `Ctrl + P` (or `Command + P` on macOS). Remember to allow background graphics to be printed.
+
+1. using the function `pagedown::chrome_print()`. Its first argument (`input`) accepts a path to a local Rmd or HTML file or an URL.
+
+1. in RStudio, adding the following line in the YAML header of your Rmd file:
+
+   ```yaml
+   knit: pagedown::knit_pdf_chrome
+   ```
+   
+   With this metadata parameter, the behavior of the "Knit" button of RStudio is modified: it produces both the HTML document and the PDF with Chrome. This functionality is suitable for any R Markdown HTML output format and is mainly convenient for small documents like presentations. 
+   
+### Print to PDF with CI/CD services
+
+It is possible to produce a PDF with Chrome using a continuous integration service.
+
+With Travis, activate the Chrome addon by adding theses lines in `.travis.yml` file: \
+```yaml
+addons:
+  chrome: stable
+```
+
+With GitLab CI, you have to use a Docker image with R, Pandoc, **pagedown** and Chromium or Chrome. Depending on the base image, you may have to install some extra fonts.
+
+Travis and GitLab CI are container-based environments. As explained in the [Travis documentation](https://docs.travis-ci.com/user/chrome#sandboxing), you have to pass the `--no-sandbox` argument to `chrome_print()` with both Travis or GitLab CI:
+
+```{r, eval=FALSE}
+chrome_print(
+  ..., 
+  extra_args = c("--disable-gpu", 
+                 "--no-sandbox")
+)
+```
 
 # Applications 
 
