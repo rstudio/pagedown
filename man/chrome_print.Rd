@@ -39,7 +39,8 @@ may need to wait for a longer time).}
 
 \item{browser}{Path to Google Chrome or Chromium. This function will try to
 find it automatically via \code{\link{find_chrome}()} if the path is not
-explicitly provided.}
+explicitly provided and the environment variable \code{PAGEDOWN_CHROME} is
+not set.}
 
 \item{format}{The output format.}
 
@@ -86,4 +87,7 @@ prior to using this function.
 }
 \references{
 \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
+}
+\seealso{
+\link{knit_pdf_chrome}()
 }

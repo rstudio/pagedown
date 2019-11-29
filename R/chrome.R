@@ -17,7 +17,8 @@
 #'   may need to wait for a longer time).
 #' @param browser Path to Google Chrome or Chromium. This function will try to
 #'   find it automatically via \code{\link{find_chrome}()} if the path is not
-#'   explicitly provided.
+#'   explicitly provided and the environment variable \code{PAGEDOWN_CHROME} is
+#'   not set.
 #' @param format The output format.
 #' @param options A list of page options. See
 #'   \code{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-printToPDF}
@@ -46,6 +47,7 @@
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
 #' @return Path of the output file (invisibly). If \code{async} is \code{TRUE}, this
 #'   is a \code{\link[promises]{promise}} value.
+#' @seealso \link{knit_pdf_chrome}()
 #' @export
 chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
@@ -53,7 +55,9 @@ chrome_print = function(
   box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
   timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE
 ) {
-  if (missing(browser)) browser = find_chrome() else {
+  if (missing(browser) && is.na(browser <- Sys.getenv('PAGEDOWN_CHROME', NA))) {
+    browser = find_chrome()
+  } else {
     if (!file.exists(browser)) browser = Sys.which(browser)
   }
   if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
@@ -114,7 +118,7 @@ chrome_print = function(
     svr = NULL # init svr variable
     if (file.exists(input)) {
       is_html = function(x) grepl('[.]html?$', x)
-      url = if (is_html(input)) input else rmarkdown::render(
+      url = if (is_html(input)) input else render_opt_msg(
         input, envir = parent.frame(), encoding = 'UTF-8'
       )
       if (!is_html(url)) stop(
@@ -471,4 +475,40 @@ print_page = function(
   })
 
   ws$connect()
+}
+
+#' Convert Rmd to PDF with Chrome
+#'
+#' This is a helper function intended to be used with RStudio IDE. When the
+#' line \code{"knit: knit_pdf_chrome"} is present in the YAML header of an Rmd
+#' file, the behavior of the 'Knit' button of the RStudio IDE is modified: an
+#' extra PDF file is also generated using Chrome. This function is suitable for
+#' any R Markdown HTML output formats.
+#'
+#' If \code{knit_pdf_chrome()} cannot automatically find Chrome, use the
+#' environment variable \code{PAGEDOWN_CHROME} to set the path to Google Chrome
+#' or Chromium executable.
+#'
+#' @inheritParams rmarkdown::render
+#' @param encoding Not used. This argument is required by
+#'   RStudio IDE.
+#'
+#' @return Path of the output file (invisibly).
+#' @keywords internal
+#' @seealso \link{chrome_print}()
+#' @export
+knit_pdf_chrome = function(input, encoding) {
+  opts = options(pagedown.render.suppress.messages = TRUE)
+  on.exit(options(opts), add = TRUE)
+  dir = getwd()
+  output = chrome_print(input = input, verbose = 1)
+  message('\nOutput created: ', rmarkdown::relative_to(dir, output))
+  output
+}
+
+render_opt_msg = function(...) {
+  if (isTRUE(getOption('pagedown.render.suppress.messages')))
+    suppressMessages(rmarkdown::render(...))
+  else
+    rmarkdown::render(...)
 }
