@@ -96,8 +96,15 @@ There are three ways to print to PDF:
    knit: pagedown::knit_pdf_chrome
    ```
    
-   With this metadata parameter, the behavior of the "Knit" button of RStudio is modified: it produces both the HTML document and the PDF with Chrome. This functionality is suitable for any R Markdown HTML output format and is mainly convenient for small documents like presentations. 
-   
+   With this metadata parameter, the behavior of the "Knit" button of RStudio is modified: it produces both the HTML document and the PDF with Chrome. This functionality is suitable for any R Markdown HTML output format and is mainly convenient for small documents like presentations or notes.  
+   If `knit_pdf_chrome()` cannot find Chrome or Chromium automatically, set the `PAGEDOWN_CHROME` environment variable to the path to Chrome or Chromium executable. 
+
+### Print to PDF on a server
+
+If you want to use `chrome_print()` or `knit_pdf_chrome()` on a server (an RStudio server, for instance), Chromium or Chrome has to be present on this server and available from the `PATH` or `PAGEDOWN_CHROME` environment variables.  
+
+Be sure that the local IP address `127.0.0.1` is referenced in the `no_proxy` environment variable. Otherwise the R session won't be able to connect to Chrome.
+
 ### Print to PDF with CI/CD services
 
 It is possible to produce a PDF with Chrome using a continuous integration service.
@@ -110,7 +117,7 @@ addons:
 
 With GitLab CI, you have to use a Docker image with R, Pandoc, **pagedown** and Chromium or Chrome. Depending on the base image, you may have to install some extra fonts.
 
-Travis and GitLab CI are container-based environments. As explained in the [Travis documentation](https://docs.travis-ci.com/user/chrome#sandboxing), you have to pass the `--no-sandbox` argument to `chrome_print()` with both Travis or GitLab CI:
+Travis and GitLab CI are container-based environments. As explained in the [Travis documentation](https://docs.travis-ci.com/user/chrome#sandboxing), you have to pass the `--no-sandbox` argument to `chrome_print()` (this is required for both Travis and GitLab CI):
 
 ```{r, eval=FALSE}
 chrome_print(
@@ -119,6 +126,8 @@ chrome_print(
                  "--no-sandbox")
 )
 ```
+
+Since the `--no-sandbox─` option can lead to major security threats, do not use these CI/CD services to print untrusted web pages. 
 
 # Applications 
 
