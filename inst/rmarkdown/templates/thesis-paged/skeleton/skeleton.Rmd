@@ -36,7 +36,7 @@ output:
 bibliography: packages.bib
 link-citations: yes
 # uncomment this line to produce HTML and PDF in RStudio:
-#knit: pagedown::knit_pdf_chrome
+#knit: pagedown::chrome_print
 ---
 
 ```{r setup, include=FALSE}

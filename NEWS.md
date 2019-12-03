@@ -6,7 +6,7 @@
 
 - **reveal.js** presentations can be printed to PDF using `chrome_print()`. 
 
-- Using RStudio, any R Markdown HTML output formats can be directly printed to PDF by adding the line `"knit: pagedown::knit_pdf_chrome"` to the YAML header: this line modifies the behavior of the "Knit" button of RStudio and produce both HTML and PDF documents.
+- Using RStudio, any R Markdown HTML output formats can be directly printed to PDF by adding the line `"knit: pagedown::chrome_print"` to the YAML header: this line modifies the behavior of the "Knit" button of RStudio and produce both HTML and PDF documents.
 
 # CHANGES IN pagedown VERSION 0.6
 

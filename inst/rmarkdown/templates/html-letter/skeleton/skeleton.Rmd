@@ -7,7 +7,7 @@ output:
 links-to-footnotes: true
 paged-footnotes: true
 # uncomment this line to produce HTML and PDF in RStudio:
-#knit: pagedown::knit_pdf_chrome
+#knit: pagedown::chrome_print
 ---
 
 ![The RStudio logo](https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png){.logo}

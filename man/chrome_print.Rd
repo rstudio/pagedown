@@ -18,7 +18,8 @@ chrome_print(
   timeout = 30,
   extra_args = c("--disable-gpu"),
   verbose = 0,
-  async = FALSE
+  async = FALSE,
+  encoding
 )
 }
 \arguments{
@@ -75,6 +76,8 @@ from the Chrome processes and WebSocket connections.}
 \item{async}{Execute \code{chrome_print()} asynchronously? If \code{TRUE},
 \code{chrome_print()} returns a \code{\link[promises]{promise}} value (the
 \pkg{promises} package has to be installed in this case).}
+
+\item{encoding}{Not used. This argument is required by RStudio IDE.}
 }
 \value{
 Path of the output file (invisibly). If \code{async} is \code{TRUE}, this
@@ -87,7 +90,4 @@ prior to using this function.
 }
 \references{
 \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
-}
-\seealso{
-\link{knit_pdf_chrome}()
 }
