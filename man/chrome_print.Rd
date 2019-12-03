@@ -18,7 +18,8 @@ chrome_print(
   timeout = 30,
   extra_args = c("--disable-gpu"),
   verbose = 0,
-  async = FALSE
+  async = FALSE,
+  encoding
 )
 }
 \arguments{
@@ -39,7 +40,8 @@ may need to wait for a longer time).}
 
 \item{browser}{Path to Google Chrome or Chromium. This function will try to
 find it automatically via \code{\link{find_chrome}()} if the path is not
-explicitly provided.}
+explicitly provided and the environment variable \code{PAGEDOWN_CHROME} is
+not set.}
 
 \item{format}{The output format.}
 
@@ -74,6 +76,8 @@ from the Chrome processes and WebSocket connections.}
 \item{async}{Execute \code{chrome_print()} asynchronously? If \code{TRUE},
 \code{chrome_print()} returns a \code{\link[promises]{promise}} value (the
 \pkg{promises} package has to be installed in this case).}
+
+\item{encoding}{Not used. This argument is required by RStudio IDE.}
 }
 \value{
 Path of the output file (invisibly). If \code{async} is \code{TRUE}, this

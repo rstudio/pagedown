@@ -21,6 +21,8 @@ bibliography: index.bib
 output: 
   pagedown::jss_paged:
     self_contained: false
+# uncomment this line to produce HTML and PDF in RStudio:
+#knit: pagedown::chrome_print
 ---
 
 # Introduction

@@ -17,7 +17,8 @@
 #'   may need to wait for a longer time).
 #' @param browser Path to Google Chrome or Chromium. This function will try to
 #'   find it automatically via \code{\link{find_chrome}()} if the path is not
-#'   explicitly provided.
+#'   explicitly provided and the environment variable \code{PAGEDOWN_CHROME} is
+#'   not set.
 #' @param format The output format.
 #' @param options A list of page options. See
 #'   \code{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-printToPDF}
@@ -42,6 +43,7 @@
 #' @param async Execute \code{chrome_print()} asynchronously? If \code{TRUE},
 #'   \code{chrome_print()} returns a \code{\link[promises]{promise}} value (the
 #'   \pkg{promises} package has to be installed in this case).
+#' @param encoding Not used. This argument is required by RStudio IDE.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
 #' @return Path of the output file (invisibly). If \code{async} is \code{TRUE}, this
@@ -51,9 +53,16 @@ chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
   format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
   box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
-  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE
+  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE, encoding
 ) {
-  if (missing(browser)) browser = find_chrome() else {
+  is_rstudio_knit =
+    !interactive() && !is.na(Sys.getenv('RSTUDIO', NA)) &&
+    !missing(encoding) && length(match.call()) == 3
+  if (is_rstudio_knit) verbose = 1
+
+  if (missing(browser) && is.na(browser <- Sys.getenv('PAGEDOWN_CHROME', NA))) {
+    browser = find_chrome()
+  } else {
     if (!file.exists(browser)) browser = Sys.which(browser)
   }
   if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
@@ -114,9 +123,10 @@ chrome_print = function(
     svr = NULL # init svr variable
     if (file.exists(input)) {
       is_html = function(x) grepl('[.]html?$', x)
-      url = if (is_html(input)) input else rmarkdown::render(
+      with_msg_maybe = if (is_rstudio_knit) suppressMessages else identity
+      url = if (is_html(input)) input else with_msg_maybe(rmarkdown::render(
         input, envir = parent.frame(), encoding = 'UTF-8'
-      )
+      ))
       if (!is_html(url)) stop(
         "The file '", url, "' should have the '.html' or '.htm' extension."
       )
@@ -183,6 +193,7 @@ chrome_print = function(
       later::run_now(); if (!is.null(svr)) run_servr()
     }
 
+    if (is_rstudio_knit) message('\nOutput created: ', basename(output))
     invisible(output)
   })
 }
@@ -206,7 +217,8 @@ find_chrome = function() {
       res = head(res[file.exists(res)], 1)
       if (length(res) != 1) stop(
         'Cannot find Google Chrome automatically from the Windows Registry Hive. ',
-        "Please pass the full path of chrome.exe to the 'browser' argument."
+        "Please pass the full path of chrome.exe to the 'browser' argument",
+        "or to the environment variable 'PAGEDOWN_CHROME'."
       )
       res
     },
