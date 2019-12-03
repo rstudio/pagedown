@@ -101,7 +101,7 @@ There are three ways to print to PDF:
 
 ### Print to PDF on a server
 
-If you want to use `chrome_print()` or `knit_pdf_chrome()` on a server (an RStudio server, for instance), Chromium or Chrome has to be present on this server and available from the `PATH` or `PAGEDOWN_CHROME` environment variables.  
+If you want to use `chrome_print()` on a server (an RStudio server, for instance), Chromium or Chrome has to be present on this server and available from the `PATH` or `PAGEDOWN_CHROME` environment variables.  
 
 Be sure that the local IP address `127.0.0.1` is referenced in the `no_proxy` environment variable. Otherwise the R session won't be able to connect to Chrome.
 
@@ -846,4 +846,3 @@ knitr::write_bib(c(.packages(), 'pagedown', 'xaringan', 'servr'), 'index.bib')
 // this is because FF handles lists differently
 document.querySelector('#TOC h1').insertAdjacentHTML('afterend', '<wbr>');
 ```
-
