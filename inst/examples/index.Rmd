@@ -116,7 +116,7 @@ addons:
   chrome: stable
 ```
 
-With GitLab CI, you have to use a Docker image with R, Pandoc, **pagedown** and Chromium or Chrome. Depending on the base image, you may have to install some extra fonts.
+With GitLab CI, you have to use a Docker image with R, Pandoc, **pagedown** and Chromium or Chrome.^[see an example below] Depending on the base image, you may have to install some extra fonts.
 
 Travis and GitLab CI are container-based environments running as root. As explained in the [Travis documentation](https://docs.travis-ci.com/user/chrome#sandboxing), you have to pass the `--no-sandbox` argument to `chrome_print()` (this is required for both Travis and GitLab CI):
 
@@ -129,6 +129,37 @@ chrome_print(
 ```
 
 Since the `--no-sandbox` option can lead to major security threats, do not use these CI/CD services to print untrusted web pages. 
+
+### Print to PDF using Docker
+
+Here is a minimal Dockerfile using a popular image from the [Rocker project](https://rocker-project.org) which uses RStudio:
+
+```bash
+FROM rocker/verse:3.6.0
+
+RUN apt-get update -qq && apt-get -y install \
+  libssl-dev \
+  chromium
+
+RUN install2.r pagedown
+```
+
+If you save this Dockerfile in your current directory, you can build the image with:
+
+```bash
+docker build myimages/pagedown .
+```
+
+If you intend to use `pagedown::chrome_print()` in a container running this image, **do not launch the container as usual**.
+
+You have to use Jessie Frazelle's seccomp file for Chrome in Docker^[download here <https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json>] as follows:
+
+```
+docker run -e PASSWORD=yourpassword --rm -p 8787:8787 --security-opt seccomp="$(pwd)/chrome.json" myimages/pagedown
+
+```
+
+With this seccomp file, you do not have to use the `"--no-sandbox"` option: this is much more secure!
 
 # Applications 
 
