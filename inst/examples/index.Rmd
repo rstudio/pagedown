@@ -154,9 +154,8 @@ If you intend to use `pagedown::chrome_print()` in a container running this imag
 
 You have to use Jessie Frazelle's seccomp file for Chrome in Docker^[download here <https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json>] as follows:
 
-```
+```bash
 docker run -e PASSWORD=yourpassword --rm -p 8787:8787 --security-opt seccomp="$(pwd)/chrome.json" myimages/pagedown
-
 ```
 
 With this seccomp file, you do not have to use the `"--no-sandbox"` option: this is much more secure!
