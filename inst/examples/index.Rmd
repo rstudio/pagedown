@@ -243,7 +243,7 @@ For the "Main" part, all sections must follow a specific structure except the fi
 
 The description, location, and time period can each be `N/A` if the relevant information is not available.
 
-You can write artibrary content after the third paragraph (e.g., more paragraphs, bullet lists, and so on). If you want to write content in two columns, you may use a "concise" block, e.g.,
+You can write arbitrary content after the third paragraph (e.g., more paragraphs, bullet lists, and so on). If you want to write content in two columns, you may use a "concise" block, e.g.,
 
 ```markdown
 ::: concise
