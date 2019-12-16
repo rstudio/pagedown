@@ -8,6 +8,10 @@
 
 - Using RStudio, any R Markdown HTML output formats can be directly printed to PDF by adding the line `"knit: pagedown::chrome_print"` to the YAML header: this line modifies the behavior of the "Knit" button of RStudio and produce both HTML and PDF documents.
 
+## BUG FIXES
+
+- In `chrome_print()` with `async = FALSE`, the Chrome processus and the local web server are properly closed when the function exits. This regression was introduced in **pagedown** 0.6.
+
 # CHANGES IN pagedown VERSION 0.6
 
 ## MINOR CHANGES

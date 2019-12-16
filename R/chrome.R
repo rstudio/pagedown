@@ -177,7 +177,11 @@ chrome_print = function(
     }
 
     t0 = Sys.time(); token = new.env(parent = emptyenv())
-    on.exit(close_ws())
+    on.exit({
+      close_ws()
+      kill_chrome()
+      if (!is.null(svr)) stop_server()
+    })
     print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun, rej_fun)
 
     if (async) {
