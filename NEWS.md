@@ -14,7 +14,7 @@
 
 ## BUG FIXES
 
-- In `chrome_print()` with `async = FALSE`, the Chrome processus and the local web server are properly closed when the function exits. This regression was introduced in **pagedown** 0.6.
+- In `chrome_print()` with `async = FALSE`, the Chrome processes and the local web server are properly closed when the function exits. This regression was introduced in **pagedown** 0.6.
 
 # CHANGES IN pagedown VERSION 0.6
 
