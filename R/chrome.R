@@ -316,11 +316,11 @@ is_remote_protocol_ok = function(debug_port,
 
 get_entrypoint = function(debug_port) {
   open_debuggers = jsonlite::read_json(
-    sprintf('http://127.0.0.1:%s/json', debug_port), simplifyVector = TRUE
+    sprintf('http://127.0.0.1:%s/json/version', debug_port), simplifyVector = TRUE
   )
-  page = open_debuggers$webSocketDebuggerUrl[open_debuggers$type == 'page']
-  if (length(page) == 0) stop('Cannot connect R to Chrome. Please retry.')
-  page
+  browser = open_debuggers$webSocketDebuggerUrl
+  if (length(browser) == 0) stop("Cannot find 'Browser' websocket URL. Please retry.")
+  browser
 }
 
 print_page = function(
