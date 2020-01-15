@@ -112,7 +112,7 @@ chrome_print = function(
 
   with_temp_loop_maybe({
 
-    ws = websocket::WebSocket$new(get_entrypoint(debug_port), autoConnect = FALSE)
+    ws = websocket::WebSocket$new(get_entrypoint(debug_port, verbose), autoConnect = FALSE)
     ws$onClose(kill_chrome)
     ws$onError(kill_chrome)
     close_ws = function() {
@@ -314,12 +314,14 @@ is_remote_protocol_ok = function(debug_port,
   )
 }
 
-get_entrypoint = function(debug_port) {
-  open_debuggers = jsonlite::read_json(
+get_entrypoint = function(debug_port, verbose) {
+  version_infos = jsonlite::read_json(
     sprintf('http://127.0.0.1:%s/json/version', debug_port), simplifyVector = TRUE
   )
-  browser = open_debuggers$webSocketDebuggerUrl
+  browser = version_infos$webSocketDebuggerUrl
   if (length(browser) == 0) stop("Cannot find 'Browser' websocket URL. Please retry.")
+  if (verbose >= 1)
+    message(version_infos$Browser, " found.")
   browser
 }
 
