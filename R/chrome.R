@@ -221,7 +221,7 @@ find_chrome = function() {
       res = head(res[file.exists(res)], 1)
       if (length(res) != 1) stop(
         'Cannot find Google Chrome automatically from the Windows Registry Hive. ',
-        "Please pass the full path of chrome.exe to the 'browser' argument",
+        "Please pass the full path of chrome.exe to the 'browser' argument ",
         "or to the environment variable 'PAGEDOWN_CHROME'."
       )
       res
@@ -262,14 +262,14 @@ is_remote_protocol_ok = function(debug_port,
   # can be specify with option, for ex. for CI specificity. see #117
   max_attempts = getOption("pagedown.remote.maxattempts", 20L)
   sleep_time = getOption("pagedown.remote.sleeptime", 0.5)
-  if (verbose >= 1) message('Checking the remote connection in ', max_attempts, ' attempts.')
+  if (verbose >= 1) message('Trying to find headless Chrome in ', max_attempts, ' attempts')
   for (i in seq_len(max_attempts)) {
     remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
     if (!is.null(remote_protocol)) {
-      if (verbose >= 1) message('Connected at attempt ', i)
+      if (verbose >= 1) message('Headless Chrome found at attempt ', i)
       break
     }
-    if (i == max_attempts) stop('Cannot connect to headless Chrome after ', max_attempts, ' attempts')
+    if (i == max_attempts) stop('Cannot find headless Chrome after ', max_attempts, ' attempts')
     Sys.sleep(sleep_time)
   }
 
@@ -322,7 +322,7 @@ get_entrypoint = function(debug_port, verbose) {
   browser = version_infos$webSocketDebuggerUrl
   if (length(browser) == 0) stop("Cannot find 'Browser' websocket URL. Please retry.")
   if (verbose >= 1)
-    message(version_infos$Browser, " found.")
+    message('Browser version: ', version_infos$Browser)
   browser
 }
 
