@@ -112,7 +112,7 @@ chrome_print = function(
 
   with_temp_loop_maybe({
 
-    ws = websocket::WebSocket$new(get_entrypoint(debug_port), autoConnect = FALSE)
+    ws = websocket::WebSocket$new(get_entrypoint(debug_port, verbose), autoConnect = FALSE)
     ws$onClose(kill_chrome)
     ws$onError(kill_chrome)
     close_ws = function() {
@@ -221,7 +221,7 @@ find_chrome = function() {
       res = head(res[file.exists(res)], 1)
       if (length(res) != 1) stop(
         'Cannot find Google Chrome automatically from the Windows Registry Hive. ',
-        "Please pass the full path of chrome.exe to the 'browser' argument",
+        "Please pass the full path of chrome.exe to the 'browser' argument ",
         "or to the environment variable 'PAGEDOWN_CHROME'."
       )
       res
@@ -262,14 +262,14 @@ is_remote_protocol_ok = function(debug_port,
   # can be specify with option, for ex. for CI specificity. see #117
   max_attempts = getOption("pagedown.remote.maxattempts", 20L)
   sleep_time = getOption("pagedown.remote.sleeptime", 0.5)
-  if (verbose >= 1) message('Checking the remote connection in ', max_attempts, ' attempts.')
+  if (verbose >= 1) message('Trying to find headless Chrome in ', max_attempts, ' attempts')
   for (i in seq_len(max_attempts)) {
     remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
     if (!is.null(remote_protocol)) {
-      if (verbose >= 1) message('Connected at attempt ', i)
+      if (verbose >= 1) message('Headless Chrome found at attempt ', i)
       break
     }
-    if (i == max_attempts) stop('Cannot connect to headless Chrome after ', max_attempts, ' attempts')
+    if (i == max_attempts) stop('Cannot find headless Chrome after ', max_attempts, ' attempts')
     Sys.sleep(sleep_time)
   }
 
@@ -282,7 +282,8 @@ is_remote_protocol_ok = function(debug_port,
              'navigate',
              'printToPDF'
     ),
-    Runtime = c('enable', 'addBinding', 'evaluate')
+    Runtime = c('enable', 'addBinding', 'evaluate'),
+    Target = c('attachToTarget', 'createTarget')
   )
 
   remote_domains = sapply(remote_protocol$domains, `[[`, 'domain')
@@ -314,13 +315,15 @@ is_remote_protocol_ok = function(debug_port,
   )
 }
 
-get_entrypoint = function(debug_port) {
-  open_debuggers = jsonlite::read_json(
-    sprintf('http://127.0.0.1:%s/json', debug_port), simplifyVector = TRUE
+get_entrypoint = function(debug_port, verbose) {
+  version_infos = jsonlite::read_json(
+    sprintf('http://127.0.0.1:%s/json/version', debug_port), simplifyVector = TRUE
   )
-  page = open_debuggers$webSocketDebuggerUrl[open_debuggers$type == 'page']
-  if (length(page) == 0) stop('Cannot connect R to Chrome. Please retry.')
-  page
+  browser = version_infos$webSocketDebuggerUrl
+  if (length(browser) == 0) stop("Cannot find 'Browser' websocket URL. Please retry.")
+  if (verbose >= 1)
+    message('Browser version: ', version_infos$Browser)
+  browser
 }
 
 print_page = function(
@@ -328,10 +331,15 @@ print_page = function(
   options = list(), selector, box_model, scale, resolve, reject
 ) {
   # init values
+  session_id = NULL
   coords = NULL
 
   ws$onOpen(function(event) {
-    ws$send(to_json(list(id = 1, method = "Runtime.enable")))
+    # Create a new Target (tab)
+    ws$send(to_json(list(
+      id = 1, method = 'Target.createTarget',
+      params = list(url = 'about:blank')
+    )))
   })
 
   ws$onMessage(function(event) {
@@ -353,64 +361,81 @@ print_page = function(
 
     if (!is.null(id)) switch(
       id,
-      # Command #1 received -> callback: command #2 Page.enable
-      ws$send(to_json(list(id = 2, method = "Page.enable"))),
-      # Command #2 received -> callback: command #3 Runtime.addBinding
+      # Command #1 received -> callback: command #2 Target.attachToTarget in flat mode
       ws$send(to_json(list(
-        id = 3, method = "Runtime.addBinding",
+        id = 2, method = 'Target.attachToTarget',
+        params = list(targetId = msg$result$targetId, flatten = TRUE)
+      ))),
+      # Command #2 received -> store the sessionId; callback: command #3 Runtime.enable
+      {
+        session_id <<- msg$result$sessionId
+        ws$send(to_json(list(
+          id = 3, sessionId = session_id, method = 'Runtime.enable'
+        )))
+      },
+      # Command #3 received -> callback: command #4 Page.enable
+      ws$send(to_json(list(
+        id = 4, sessionId = session_id, method = 'Page.enable'
+      ))),
+      # Command #4 received -> callback: command #5 Runtime.addBinding
+      ws$send(to_json(list(
+        id = 5, sessionId = session_id, method = "Runtime.addBinding",
         params = list(name = "pagedownListener")
       ))),
-      # Command #3 received -> callback: command #4 Network.Enable
-      ws$send(to_json(list(id = 4, method  = "Network.enable"))),
-      # Command #4 received -> callback: command #5 Page.addScriptToEvaluateOnNewDocument
+      # Command #5 received -> callback: command #6 Network.Enable
       ws$send(to_json(list(
-        id = 5, method = "Page.addScriptToEvaluateOnNewDocument",
+        id = 6, sessionId = session_id, method  = 'Network.enable'
+      ))),
+      # Command #6 received -> callback: command #7 Page.addScriptToEvaluateOnNewDocument
+      ws$send(to_json(list(
+        id = 7, sessionId = session_id, method = "Page.addScriptToEvaluateOnNewDocument",
         params = list(source = paste0(readLines(pkg_resource('js', 'chrome_print.js')), collapse = ""))
       ))),
-      # Command #5 received -> callback: command #6 Page.Navigate
+      # Command #7 received -> callback: command #8 Page.Navigate
       ws$send(to_json(list(
-        id = 6, method= "Page.navigate", params = list(url = url)
+        id = 8, sessionId = session_id, method= 'Page.navigate',
+        params = list(url = url)
       ))),
       {
-        # Command #6 received - check if there is an error when navigating to url
+        # Command #8 received - check if there is an error when navigating to url
         if(!is.null(token$error <- msg$result$errorText)) {
           reject(token$error)
         }
       },
       {
-        # Command #7 received - Test if the html document uses the paged.js polyfill
+        # Command #9 received - Test if the html document uses the paged.js polyfill
         # if not, call the binding when HTMLWidgets, MathJax and fonts are ready
         # (see inst/resources/js/chrome_print.js)
         if (!isTRUE(msg$result$result$value)) {
           ws$send(to_json(list(
-            id = 8, method = "Runtime.evaluate",
+            id = 10, sessionId = session_id, method = "Runtime.evaluate",
             params = list(expression = "pagedownReady.then(() => {pagedownListener('{\"pagedjs\":false}');})")
           )))
         }
       },
-      # Command #8 received - No callback
+      # Command #10 received - No callback
       NULL,
-      # Command #9 received -> callback: command #10 DOM.getDocument
-      ws$send(to_json(list(id = 10, method = "DOM.getDocument"))),
-      # Command #10 received -> callback: command #11 DOM.querySelector
+      # Command #11 received -> callback: command #12 DOM.getDocument
+      ws$send(to_json(list(id = 12, sessionId = session_id, method = "DOM.getDocument"))),
+      # Command #12 received -> callback: command #13 DOM.querySelector
       ws$send(to_json(list(
-        id = 11, method = "DOM.querySelector",
+        id = 13, sessionId = session_id, method = "DOM.querySelector",
         params = list(nodeId = msg$result$root$nodeId, selector = selector)
       ))),
       {
-        # Command 11 received -> callback: command #12 DOM.getBoxModel
+        # Command 13 received -> callback: command #14 DOM.getBoxModel
         if (msg$result$nodeId == 0) {
           token$error <- 'No element in the HTML page corresponds to the `selector` value.'
           reject(token$error)
         } else {
           ws$send(to_json(list(
-            id = 12, method = "DOM.getBoxModel",
+            id = 14, sessionId = session_id, method = "DOM.getBoxModel",
             params = list(nodeId = msg$result$nodeId)
           )))
         }
       },
       {
-        # Command 12 received -> callback: command #13 Emulation.setDeviceMetricsOverride
+        # Command 14 received -> callback: command #15 Emulation.setDeviceMetricsOverride
         coords <<- msg$result$model[[box_model]]
         device_metrics = list(
           width = ceiling(coords[5]),
@@ -419,11 +444,12 @@ print_page = function(
           mobile = FALSE
         )
         ws$send(to_json(list(
-          id = 13, params = device_metrics, method = 'Emulation.setDeviceMetricsOverride'
+          id = 15, sessionId = session_id, method = 'Emulation.setDeviceMetricsOverride',
+          params = device_metrics
         )))
       },
       {
-        # Command #13 received -> callback: command #14 Page.captureScreenshot
+        # Command #15 received -> callback: command #16 Page.captureScreenshot
         opts = as.list(options)
 
         origin = as.list(coords[1:2])
@@ -441,11 +467,12 @@ print_page = function(
         opts$format = format
 
         ws$send(to_json(list(
-          id = 14, params = opts, method = 'Page.captureScreenshot'
+          id = 16, sessionId = session_id, method = 'Page.captureScreenshot',
+          params = opts
         )))
       },
       {
-        # Command #14 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
+        # Command #16 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
         resolve(output)
         token$done = TRUE
@@ -463,7 +490,7 @@ print_page = function(
       }
       if (method == "Page.loadEventFired") {
         ws$send(to_json(list(
-          id = 7, method = "Runtime.evaluate",
+          id = 9, sessionId = session_id, method = 'Runtime.evaluate',
           params = list(expression = "!!window.PagedPolyfill")
         )))
       }
@@ -477,10 +504,10 @@ print_page = function(
         if (format == 'pdf') {
           opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), opts)
           ws$send(to_json(list(
-            id = 14, params = opts, method = 'Page.printToPDF'
+            id = 16, sessionId = session_id, params = opts, method = 'Page.printToPDF'
           )))
         } else {
-          ws$send(to_json(list(id = 9, method = "DOM.enable")))
+          ws$send(to_json(list(id = 11, sessionId = session_id, method = "DOM.enable")))
         }
       }
     }

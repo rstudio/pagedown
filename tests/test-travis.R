@@ -9,4 +9,7 @@ print_pdf = function(input) {
   )
 }
 
-if (!is.na(Sys.getenv('CI', NA))) testit::test_pkg('pagedown', 'test-travis')
+if (!is.na(Sys.getenv('CI', NA))) {
+  options(pagedown.remote.maxattempts = 100L)
+  testit::test_pkg('pagedown', 'test-travis')
+}
