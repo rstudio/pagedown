@@ -282,7 +282,8 @@ is_remote_protocol_ok = function(debug_port,
              'navigate',
              'printToPDF'
     ),
-    Runtime = c('enable', 'addBinding', 'evaluate')
+    Runtime = c('enable', 'addBinding', 'evaluate'),
+    Target = c('attachToTarget', 'createTarget')
   )
 
   remote_domains = sapply(remote_protocol$domains, `[[`, 'domain')
