@@ -8,6 +8,7 @@ output:
   pagedown::html_paged: 
     toc: true
     self_contained: false
+    front_cover: pagedown_hex.svg
 toc-title: Contents
 paged-footnotes: true
 lot: true
@@ -83,8 +84,81 @@ Note that this overriding mechanism also works for other output formats in **pag
 
 ## Print to PDF
 
-You can print HTML pages to PDF using Google Chrome or Chromium using the menu "Print" or by pressing `Ctrl + P` (or `Command + P` on macOS). Remember to allow background graphics to be printed. You may also consider using the function `pagedown::chrome_print()`, but currently it is experimental and you may get an incomplete PDF, so we recommend that you open the page in a real browser and print to PDF there instead.
+There are three ways to print to PDF:
 
+1. with Google Chrome or Chromium using the menu "Print" or by pressing `Ctrl + P` (or `Command + P` on macOS). Remember to allow background graphics to be printed.
+
+1. using the function `pagedown::chrome_print()`. Its first argument (`input`) accepts a path to a local Rmd or HTML file or an URL. Google Chrome or Chromium must be installed on your system.
+
+1. in RStudio, adding the following line in the YAML header of your Rmd file:
+
+   ```yaml
+   knit: pagedown::chrome_print
+   ```
+   
+   With this metadata parameter, the behavior of the "Knit" button of RStudio is modified: it produces both the HTML document and the PDF with Chrome. This functionality is suitable for any R Markdown HTML output format and is mainly convenient for small documents like presentations or notes.  
+   If `chrome_print()` cannot find Chrome or Chromium automatically, set the `PAGEDOWN_CHROME` environment variable to the path to Chrome or Chromium executable. 
+
+### Print to PDF on a server
+
+If you want to use `chrome_print()` on a server (an RStudio server, for instance), Chromium or Chrome has to be present on this server and available from the `PATH` or `PAGEDOWN_CHROME` environment variables.  
+
+Be sure that the local IP address `127.0.0.1` is referenced in the `no_proxy` environment variable. Otherwise the R session won't be able to connect to Chrome.
+
+### Print to PDF with CI/CD services
+
+It is possible to produce a PDF with Chrome using a continuous integration service.
+
+With Travis, activate the Chrome addon by adding theses lines in `.travis.yml` file:
+
+```yaml
+addons:
+  chrome: stable
+```
+
+With GitLab CI, you have to use a Docker image with R, Pandoc, **pagedown** and Chromium or Chrome.^[see an example below] Depending on the base image, you may have to install some extra fonts.
+
+Travis and GitLab CI are container-based environments running as root. As explained in the [Travis documentation](https://docs.travis-ci.com/user/chrome#sandboxing), you have to pass the `--no-sandbox` argument to `chrome_print()` (this is required for both Travis and GitLab CI):
+
+```{r, eval=FALSE}
+chrome_print(
+  ..., 
+  extra_args = c("--disable-gpu", 
+                 "--no-sandbox")
+)
+```
+
+Since the `--no-sandbox` option can lead to major security threats, do not use these CI/CD services to print untrusted web pages. 
+
+### Print to PDF using Docker
+
+Here is a minimal Dockerfile using a popular image from the [Rocker project](https://rocker-project.org) which uses RStudio:
+
+```bash
+FROM rocker/verse:3.6.0
+
+RUN apt-get update -qq && apt-get -y install \
+  libssl-dev \
+  chromium
+
+RUN install2.r pagedown
+```
+
+If you save this Dockerfile in your current directory, you can build the image with:
+
+```bash
+docker build myimages/pagedown .
+```
+
+If you intend to use `pagedown::chrome_print()` in a container running this image, **do not launch the container as usual**.
+
+You have to use Jessie Frazelle's seccomp file for Chrome in Docker^[download here <https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json>] as follows:
+
+```bash
+docker run -e PASSWORD=yourpassword --rm -p 8787:8787 --security-opt seccomp="$(pwd)/chrome.json" myimages/pagedown
+```
+
+With this seccomp file, you do not have to use the `"--no-sandbox"` option: this is much more secure!
 
 # Applications 
 
@@ -168,7 +242,7 @@ For the "Main" part, all sections must follow a specific structure except the fi
 
 The description, location, and time period can each be `N/A` if the relevant information is not available.
 
-You can write artibrary content after the third paragraph (e.g., more paragraphs, bullet lists, and so on). If you want to write content in two columns, you may use a "concise" block, e.g.,
+You can write arbitrary content after the third paragraph (e.g., more paragraphs, bullet lists, and so on). If you want to write content in two columns, you may use a "concise" block, e.g.,
 
 ```markdown
 ::: concise
@@ -633,6 +707,135 @@ Sometimes a section title may be too long to fit the header or footer area. In t
 ## The actual long long long title {data-short-title="An alternative title"}
 ```
 
+## Covers
+
+Covers images can be added using the `front_cover` and `back_cover` parameters of `pagedown::html_paged()`. You can pass any path to a file or an url. 
+
+```yaml
+---
+output:
+  pagedown::html_paged:
+    front_cover: !expr system.file("img", "Rlogo.png", package="png")
+    back_cover: https://www.r-project.org/Rlogo.png
+---
+
+# Content
+```
+
+Several paths or links can be passed to the `front_cover` and `back_cover` parameters. For each image declared in the `front_cover` or `back_cover` parameter, a CSS variable is created: `--front-cover`, `--back-cover`, `--front-cover-2`, `--back-cover-2`, etc.  
+They can be used as value for the `background-image` CSS property:
+
+```css
+@page chapter:first {
+  background-image: var(--front-cover-2);
+}
+```
+
+You also can add textual content on the front and back covers using two special divs of classes `front-cover` and `back-cover`:
+
+
+```markdown
+---
+output:
+  pagedown::html_paged:
+    front_cover: !expr system.file("img", "Rlogo.png", package="png")
+    back_cover: https://www.r-project.org/Rlogo.png
+---
+
+:::front-cover
+# My great book about
+:::
+
+:::back-cover
+### Written with
+:::
+
+# Content
+```
+
+If the background properties of the default template does not suit your needs, here is a small hack to modify them.  
+The following lines are used to position the **pagedown** hex logo on the front page of the current document:
+
+```{css}
+/* position the hex logo on the first page */
+.pagedjs_page.pagedjs_first_page {
+  background-size: 40%;
+  background-position: center 80%;
+}
+```
+
+## Page references
+
+Internal links will be followed by page numbers by default. For example, you can refer to another section using either `[Section Title]` or `[Link Text](#section-id)` (where `section-id` is the ID of the section header).
+
+Do you still remember [Paged.js](#pagedjs) that we mentioned earlier?
+
+## Line numbering
+
+For templates built on top of `html_paged`, line numbering can be added using the top-level YAML parameter `number-lines`. For example:
+
+```yaml
+---
+output: pagedown::thesis_paged
+number-lines: true
+---
+```
+
+The line numbers can be reset on each page using the `reset-page` option:
+
+```yaml
+---
+output: pagedown::thesis_paged
+number-lines:
+  reset-page: true
+---
+```
+
+You also can select the HTML elements by passing a CSS selector to the `selector` parameter. To number the lines of all the paragraphs and headers, you need to write:
+
+```yaml
+---
+output: pagedown::thesis_paged
+number-lines:
+  selector: "p, h1, h2, h3, h4, h5, h6"
+---
+```
+
+The default CSS selector is `".level1:not(.front-matter) h1, .level1 h2, .level1 h3, .level1 p"`. Line numbering is deactivated for display math environments.
+
+Be aware that the value `"normal"` of the CSS `line-height` property is not supported: elements with a normal line height are not numbered. Since `"normal"` is the default value for the `line-height` property, the CSS stylesheets must define a different value. If your template relies on custom CSS files, you can add for example:
+
+```css
+html {
+  line-height: 1.3;
+}
+```
+
+You can modify the horizontal positioning and the font size of the lines numbers using two CSS variables: `--line-numbers-padding-right` (default value `10px`) and `--line-numbers-font-size` (default value `8pt`). For further customisation, you can modify the style of the elements of class `maintextlinenumbers`. Here is an example:
+
+```css
+.maintextlinenumbers {
+  --line-numbers-padding-right: 25px;
+  --line-numbers-font-size: 10pt;
+  font-weight: bold;
+  font-family: monospace;
+}
+```
+
+Please note that this feature is sensitive to elements which break the vertical rythm of the text like inline maths.
+
+## Page breaks
+
+There are two ways to force a page break:
+
+- with the `\newpage` $\LaTeX$ command (`\pagebreak` also works)
+
+- using one of these two CSS classes: `page-break-before` or `page-break-after`\
+For example, to force a page break before a given section, use:
+  ```markdown
+  ### New section {.page-break-before}
+  ```
+
 ## MathJax
 
 The following test comes from <http://www.cs.toronto.edu/~yujiali/test/mathjax.html>.
@@ -653,12 +856,6 @@ $$
 $$
 
 Here is an example of an inline expression: $p(x|y) = \frac{p(y|x)p(x)}{p(y)}$.
-
-## Page references
-
-Internal links will be followed by page numbers by default. For example, you can refer to another section using either `[Section Title]` or `[Link Text](#section-id)` (where `section-id` is the ID of the section header).
-
-Do you still remember [Paged.js](#pagedjs) that we mentioned earlier?
 
 ## Figures and tables
 
@@ -689,4 +886,10 @@ leaflet() %>% addTiles() %>% setView(-93.65, 42.0285, zoom = 2) %>%
 
 ```{r, include=FALSE}
 knitr::write_bib(c(.packages(), 'pagedown', 'xaringan', 'servr'), 'index.bib')
+```
+
+```{js, echo=FALSE}
+// insert a soft break to avoid an infinite loop with FF
+// this is because FF handles lists differently
+document.querySelector('#TOC h1').insertAdjacentHTML('afterend', '<wbr>');
 ```

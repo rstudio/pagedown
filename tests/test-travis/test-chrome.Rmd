@@ -1,0 +1,31 @@
+---
+title: "Untitled"
+output:
+  pagedown::html_paged:
+    toc: true
+    self_contained: false
+---
+
+# Chapter One
+
+```{r}
+summary(cars)
+```
+
+# Chapter Two
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+# Chapter Three
+
+You can also print data frames
+
+```{r}
+mtcars
+```

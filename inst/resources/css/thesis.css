@@ -419,7 +419,7 @@ code {
 }
 
 /* when a row can hold two pages, start first page on the right */
-@media (min-width: 12.32in) {
+@media screen and (min-width: 12.32in) {
   .pagedjs_page {
     margin: auto 0 var(--screen-pages-spacing) 0;
   }

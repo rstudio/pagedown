@@ -4,8 +4,12 @@
 \alias{html_resume}
 \title{Create a resume in HTML}
 \usage{
-html_resume(..., css = "resume", template = pkg_resource("html", "resume.html"), 
-    number_sections = FALSE)
+html_resume(
+  ...,
+  css = "resume",
+  template = pkg_resource("html", "resume.html"),
+  number_sections = FALSE
+)
 }
 \arguments{
 \item{..., css, template, number_sections}{See \code{\link{html_paged}()}.}

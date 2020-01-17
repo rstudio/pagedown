@@ -17,7 +17,8 @@
 #'   may need to wait for a longer time).
 #' @param browser Path to Google Chrome or Chromium. This function will try to
 #'   find it automatically via \code{\link{find_chrome}()} if the path is not
-#'   explicitly provided.
+#'   explicitly provided and the environment variable \code{PAGEDOWN_CHROME} is
+#'   not set.
 #' @param format The output format.
 #' @param options A list of page options. See
 #'   \code{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-printToPDF}
@@ -42,6 +43,7 @@
 #' @param async Execute \code{chrome_print()} asynchronously? If \code{TRUE},
 #'   \code{chrome_print()} returns a \code{\link[promises]{promise}} value (the
 #'   \pkg{promises} package has to be installed in this case).
+#' @param encoding Not used. This argument is required by RStudio IDE.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
 #' @return Path of the output file (invisibly). If \code{async} is \code{TRUE}, this
@@ -51,9 +53,16 @@ chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
   format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
   box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
-  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE
+  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE, encoding
 ) {
-  if (missing(browser)) browser = find_chrome() else {
+  is_rstudio_knit =
+    !interactive() && !is.na(Sys.getenv('RSTUDIO', NA)) &&
+    !missing(encoding) && length(match.call()) == 3
+  if (is_rstudio_knit) verbose = 1
+
+  if (missing(browser) && is.na(browser <- Sys.getenv('PAGEDOWN_CHROME', NA))) {
+    browser = find_chrome()
+  } else {
     if (!file.exists(browser)) browser = Sys.which(browser)
   }
   if (!utils::file_test('-x', browser)) stop('The browser is not executable: ', browser)
@@ -83,89 +92,114 @@ chrome_print = function(
   }
   on.exit(kill_chrome(), add = TRUE)
 
-  if (!is_remote_protocol_ok(debug_port))
+  if (!is_remote_protocol_ok(debug_port, verbose = verbose))
     stop('A more recent version of Chrome is required. ')
 
-  ws = websocket::WebSocket$new(get_entrypoint(debug_port), autoConnect = FALSE)
-  ws$onClose(kill_chrome)
-  ws$onError(kill_chrome)
-  close_ws = function() {
-    if (verbose >= 1) message('Closing websocket connection')
-    ws$close()
-  }
+  # If !async, use a private event loop to drive the websocket. This is
+  # necessary to separate later callbacks relevant to chrome_print, from any
+  # other callbacks that have been scheduled before entering chrome_print; the
+  # latter must not be invoked while inside of any synchronous function,
+  # including chrome_print(async=FALSE).
+  #
+  # It's also critical that none of the code inside with_temp_loop waits on a
+  # promise that originates from outside the with_temp_loop, as it will cause
+  # the code inside to hang. And finally, no promise from inside with_temp_loop
+  # should escape to the outside either, as with_temp_loop uses a truly "temp"
+  # loop--it will be destroyed when with_temp_loop completes.
+  #
+  # Therefore, if async, it's important NOT to use a private event loop.
+  with_temp_loop_maybe <- if (async) identity else later::with_temp_loop
 
-  if (file.exists(input)) {
-    is_html = function(x) grepl('[.]html?$', x)
-    url = if (is_html(input)) input else rmarkdown::render(
-      input, envir = parent.frame(), encoding = 'UTF-8'
-    )
-    if (!is_html(url)) stop(
-      "The file '", url, "' should have the '.html' or '.htm' extension."
-    )
-    svr = servr::httd(
-      dirname(url), daemon = TRUE, browser = FALSE, verbose = verbose >= 1,
-      port = random_port(), initpath = httpuv::encodeURIComponent(basename(url))
-    )
-    stop_server = function(...) {
-      if (verbose >= 1) message('Closing local webserver')
-      svr$stop_server()
+  with_temp_loop_maybe({
+
+    ws = websocket::WebSocket$new(get_entrypoint(debug_port, verbose), autoConnect = FALSE)
+    ws$onClose(kill_chrome)
+    ws$onError(kill_chrome)
+    close_ws = function() {
+      if (verbose >= 1) message('Closing websocket connection')
+      ws$close()
     }
-    on.exit(stop_server(), add = TRUE)
-    ws$onClose(stop_server)
-    ws$onError(stop_server)
-    url = svr$url
-  } else url = input  # the input is not a local file; assume it is just a URL
 
-  format = match.arg(format)
-  # remove hash/query parameters in url
-  if (missing(output) && !file.exists(input))
-    output = xfun::with_ext(basename(gsub('[#?].*', '', url)), format)
-  output2 = normalizePath(output, mustWork = FALSE)
-  if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
-    'Cannot create the directory for the output file: ', d
-  )
-
-  if ((format == 'pdf') && !all(c(missing(selector), missing(box_model), missing(scale))))
-    warning('For "pdf" format, arguments `selector`, `box_model` and `scale` are ignored.', call. = FALSE)
-
-  box_model = match.arg(box_model)
-
-  pr = NULL
-  res_fun = function(value) {} # default: do nothing
-  rej_fun = function(reason) {} # default: do nothing
-  if (async) {
-    pr_print = promises::promise(function(resolve, reject) {
-      res_fun <<- resolve
-      rej_fun <<- function(reason) reject(paste('Failed to generate output. Reason:', reason))
-    })
-    pr_timeout = promises::promise(function(resolve, reject) {
-      later::later(
-        ~reject(paste('Failed to generate output in', timeout, 'seconds (timeout).')),
-        timeout
+    svr = NULL # init svr variable
+    if (file.exists(input)) {
+      is_html = function(x) grepl('[.]html?$', x)
+      with_msg_maybe = if (is_rstudio_knit) suppressMessages else identity
+      url = if (is_html(input)) input else with_msg_maybe(rmarkdown::render(
+        input, envir = parent.frame(), encoding = 'UTF-8'
+      ))
+      if (!is_html(url)) stop(
+        "The file '", url, "' should have the '.html' or '.htm' extension."
       )
-    })
-    pr = promises::promise_race(pr_print, pr_timeout)
-    promises::finally(pr, close_ws)
-  }
+      svr = servr::httd(
+        dirname(url), daemon = TRUE, browser = FALSE, verbose = verbose >= 1,
+        port = random_port(), initpath = httpuv::encodeURIComponent(basename(url))
+      )
+      stop_server = function(...) {
+        if (verbose >= 1) message('Closing local webserver')
+        svr$stop_server()
+      }
+      on.exit(stop_server(), add = TRUE)
+      ws$onClose(stop_server)
+      ws$onError(stop_server)
+      url = svr$url
+    } else url = input  # the input is not a local file; assume it is just a URL
 
-  t0 = Sys.time(); token = new.env(parent = emptyenv())
-  on.exit(close_ws())
-  print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun, rej_fun)
-
-  if (async) {
-    on.exit()
-    return(pr)
-  }
-
-  while (!isTRUE(token$done)) {
-    if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
-    if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
-      'Failed to generate output in ', timeout, ' seconds (timeout).'
+    format = match.arg(format)
+    # remove hash/query parameters in url
+    if (missing(output) && !file.exists(input))
+      output = xfun::with_ext(basename(gsub('[#?].*', '', url)), format)
+    output2 = normalizePath(output, mustWork = FALSE)
+    if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
+      'Cannot create the directory for the output file: ', d
     )
-    later::run_now()
-  }
 
-  invisible(output)
+    if ((format == 'pdf') && !all(c(missing(selector), missing(box_model), missing(scale))))
+      warning('For "pdf" format, arguments `selector`, `box_model` and `scale` are ignored.', call. = FALSE)
+
+    box_model = match.arg(box_model)
+
+    pr = NULL
+    res_fun = function(value) {} # default: do nothing
+    rej_fun = function(reason) {} # default: do nothing
+    if (async) {
+      pr_print = promises::promise(function(resolve, reject) {
+        res_fun <<- resolve
+        rej_fun <<- function(reason) reject(paste('Failed to generate output. Reason:', reason))
+      })
+      pr_timeout = promises::promise(function(resolve, reject) {
+        later::later(
+          ~reject(paste('Failed to generate output in', timeout, 'seconds (timeout).')),
+          timeout
+        )
+      })
+      pr = promises::promise_race(pr_print, pr_timeout)
+      promises::finally(pr, close_ws)
+    }
+
+    t0 = Sys.time(); token = new.env(parent = emptyenv())
+    on.exit({
+      close_ws()
+      kill_chrome()
+      if (!is.null(svr)) stop_server()
+    })
+    print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun, rej_fun)
+
+    if (async) {
+      on.exit()
+      return(pr)
+    }
+
+    while (!isTRUE(token$done)) {
+      if (!is.null(e <- token$error)) stop('Failed to generate output. Reason: ', e)
+      if (as.numeric(difftime(Sys.time(), t0, units = 'secs')) > timeout) stop(
+        'Failed to generate output in ', timeout, ' seconds (timeout).'
+      )
+      later::run_now(); if (!is.null(svr)) run_servr()
+    }
+
+    if (is_rstudio_knit) message('\nOutput created: ', basename(output))
+    invisible(output)
+  })
 }
 
 #' Find Google Chrome or Chromium in the system
@@ -187,7 +221,8 @@ find_chrome = function() {
       res = head(res[file.exists(res)], 1)
       if (length(res) != 1) stop(
         'Cannot find Google Chrome automatically from the Windows Registry Hive. ',
-        "Please pass the full path of chrome.exe to the 'browser' argument."
+        "Please pass the full path of chrome.exe to the 'browser' argument ",
+        "or to the environment variable 'PAGEDOWN_CHROME'."
       )
       res
     },
@@ -221,13 +256,21 @@ no_proxy_urls = function() {
   unique(x)
 }
 
-is_remote_protocol_ok = function(debug_port, max_attempts = 15) {
+is_remote_protocol_ok = function(debug_port,
+                                 verbose = 0) {
   url = sprintf('http://127.0.0.1:%s/json/protocol', debug_port)
-  for (i in 1:max_attempts) {
+  # can be specify with option, for ex. for CI specificity. see #117
+  max_attempts = getOption("pagedown.remote.maxattempts", 20L)
+  sleep_time = getOption("pagedown.remote.sleeptime", 0.5)
+  if (verbose >= 1) message('Trying to find headless Chrome in ', max_attempts, ' attempts')
+  for (i in seq_len(max_attempts)) {
     remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
-    if (!is.null(remote_protocol)) break
-    if (i == max_attempts) stop('Cannot connect to headless Chrome. ')
-    Sys.sleep(0.2)
+    if (!is.null(remote_protocol)) {
+      if (verbose >= 1) message('Headless Chrome found at attempt ', i)
+      break
+    }
+    if (i == max_attempts) stop('Cannot find headless Chrome after ', max_attempts, ' attempts')
+    Sys.sleep(sleep_time)
   }
 
   required_commands = list(
@@ -239,7 +282,8 @@ is_remote_protocol_ok = function(debug_port, max_attempts = 15) {
              'navigate',
              'printToPDF'
     ),
-    Runtime = c('enable', 'addBinding', 'evaluate')
+    Runtime = c('enable', 'addBinding', 'evaluate'),
+    Target = c('attachToTarget', 'createTarget')
   )
 
   remote_domains = sapply(remote_protocol$domains, `[[`, 'domain')
@@ -271,22 +315,31 @@ is_remote_protocol_ok = function(debug_port, max_attempts = 15) {
   )
 }
 
-get_entrypoint = function(debug_port) {
-  open_debuggers = jsonlite::read_json(
-    sprintf('http://127.0.0.1:%s/json', debug_port), simplifyVector = TRUE
+get_entrypoint = function(debug_port, verbose) {
+  version_infos = jsonlite::read_json(
+    sprintf('http://127.0.0.1:%s/json/version', debug_port), simplifyVector = TRUE
   )
-  page = open_debuggers$webSocketDebuggerUrl[open_debuggers$type == 'page']
-  if (length(page) == 0) stop('Cannot connect R to Chrome. Please retry.')
-  page
+  browser = version_infos$webSocketDebuggerUrl
+  if (length(browser) == 0) stop("Cannot find 'Browser' websocket URL. Please retry.")
+  if (verbose >= 1)
+    message('Browser version: ', version_infos$Browser)
+  browser
 }
 
 print_page = function(
   ws, url, output, wait, verbose, token, format,
   options = list(), selector, box_model, scale, resolve, reject
 ) {
+  # init values
+  session_id = NULL
+  coords = NULL
 
   ws$onOpen(function(event) {
-    ws$send(to_json(list(id = 1, method = "Runtime.enable")))
+    # Create a new Target (tab)
+    ws$send(to_json(list(
+      id = 1, method = 'Target.createTarget',
+      params = list(url = 'about:blank')
+    )))
   })
 
   ws$onMessage(function(event) {
@@ -308,66 +361,96 @@ print_page = function(
 
     if (!is.null(id)) switch(
       id,
-      # Command #1 received -> callback: command #2 Page.enable
-      ws$send(to_json(list(id = 2, method = "Page.enable"))),
-      # Command #2 received -> callback: command #3 Runtime.addBinding
+      # Command #1 received -> callback: command #2 Target.attachToTarget in flat mode
       ws$send(to_json(list(
-        id = 3, method = "Runtime.addBinding",
+        id = 2, method = 'Target.attachToTarget',
+        params = list(targetId = msg$result$targetId, flatten = TRUE)
+      ))),
+      # Command #2 received -> store the sessionId; callback: command #3 Runtime.enable
+      {
+        session_id <<- msg$result$sessionId
+        ws$send(to_json(list(
+          id = 3, sessionId = session_id, method = 'Runtime.enable'
+        )))
+      },
+      # Command #3 received -> callback: command #4 Page.enable
+      ws$send(to_json(list(
+        id = 4, sessionId = session_id, method = 'Page.enable'
+      ))),
+      # Command #4 received -> callback: command #5 Runtime.addBinding
+      ws$send(to_json(list(
+        id = 5, sessionId = session_id, method = "Runtime.addBinding",
         params = list(name = "pagedownListener")
       ))),
-      # Command #3 received -> callback: command #4 Network.Enable
-      ws$send(to_json(list(id = 4, method  = "Network.enable"))),
-      # Command #4 received -> callback: command #5 Page.addScriptToEvaluateOnNewDocument
+      # Command #5 received -> callback: command #6 Network.Enable
       ws$send(to_json(list(
-        id = 5, method = "Page.addScriptToEvaluateOnNewDocument",
+        id = 6, sessionId = session_id, method  = 'Network.enable'
+      ))),
+      # Command #6 received -> callback: command #7 Page.addScriptToEvaluateOnNewDocument
+      ws$send(to_json(list(
+        id = 7, sessionId = session_id, method = "Page.addScriptToEvaluateOnNewDocument",
         params = list(source = paste0(readLines(pkg_resource('js', 'chrome_print.js')), collapse = ""))
       ))),
-      # Command #5 received -> callback: command #6 Page.Navigate
+      # Command #7 received -> callback: command #8 Page.Navigate
       ws$send(to_json(list(
-        id = 6, method= "Page.navigate", params = list(url = url)
+        id = 8, sessionId = session_id, method= 'Page.navigate',
+        params = list(url = url)
       ))),
       {
-        # Command #6 received - check if there is an error when navigating to url
+        # Command #8 received - check if there is an error when navigating to url
         if(!is.null(token$error <- msg$result$errorText)) {
           reject(token$error)
         }
       },
       {
-        # Command #7 received - Test if the html document uses the paged.js polyfill
-        # if not, call the binding when fonts are ready
+        # Command #9 received - Test if the html document uses the paged.js polyfill
+        # if not, call the binding when HTMLWidgets, MathJax and fonts are ready
+        # (see inst/resources/js/chrome_print.js)
         if (!isTRUE(msg$result$result$value)) {
           ws$send(to_json(list(
-            id = 8, method = "Runtime.evaluate",
-            params = list(expression = "pagedownReady.then(() => {pagedownListener('');})")
+            id = 10, sessionId = session_id, method = "Runtime.evaluate",
+            params = list(expression = "pagedownReady.then(() => {pagedownListener('{\"pagedjs\":false}');})")
           )))
         }
       },
-      # Command #8 received - No callback
+      # Command #10 received - No callback
       NULL,
-      # Command #9 received -> callback: command #10 DOM.getDocument
-      ws$send(to_json(list(id = 10, method = "DOM.getDocument"))),
-      # Command #10 received -> callback: command #11 DOM.querySelector
+      # Command #11 received -> callback: command #12 DOM.getDocument
+      ws$send(to_json(list(id = 12, sessionId = session_id, method = "DOM.getDocument"))),
+      # Command #12 received -> callback: command #13 DOM.querySelector
       ws$send(to_json(list(
-        id = 11, method = "DOM.querySelector",
+        id = 13, sessionId = session_id, method = "DOM.querySelector",
         params = list(nodeId = msg$result$root$nodeId, selector = selector)
       ))),
       {
-        # Command 11 received -> callback: command #12 DOM.getBoxModel
+        # Command 13 received -> callback: command #14 DOM.getBoxModel
         if (msg$result$nodeId == 0) {
           token$error <- 'No element in the HTML page corresponds to the `selector` value.'
           reject(token$error)
         } else {
           ws$send(to_json(list(
-            id = 12, method = "DOM.getBoxModel",
+            id = 14, sessionId = session_id, method = "DOM.getBoxModel",
             params = list(nodeId = msg$result$nodeId)
           )))
         }
       },
       {
-        # Command 12 received -> callback: command #13 Page.captureScreenshot
+        # Command 14 received -> callback: command #15 Emulation.setDeviceMetricsOverride
+        coords <<- msg$result$model[[box_model]]
+        device_metrics = list(
+          width = ceiling(coords[5]),
+          height = ceiling(coords[6]),
+          deviceScaleFactor = 1,
+          mobile = FALSE
+        )
+        ws$send(to_json(list(
+          id = 15, sessionId = session_id, method = 'Emulation.setDeviceMetricsOverride',
+          params = device_metrics
+        )))
+      },
+      {
+        # Command #15 received -> callback: command #16 Page.captureScreenshot
         opts = as.list(options)
-
-        coords = msg$result$model[[box_model]]
 
         origin = as.list(coords[1:2])
         names(origin) = c('x', 'y')
@@ -384,11 +467,12 @@ print_page = function(
         opts$format = format
 
         ws$send(to_json(list(
-          id = 13, params = opts, method = 'Page.captureScreenshot'
+          id = 16, sessionId = session_id, method = 'Page.captureScreenshot',
+          params = opts
         )))
       },
       {
-        # Command #13 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
+        # Command #16 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
         resolve(output)
         token$done = TRUE
@@ -406,20 +490,24 @@ print_page = function(
       }
       if (method == "Page.loadEventFired") {
         ws$send(to_json(list(
-          id = 7, method = "Runtime.evaluate",
+          id = 9, sessionId = session_id, method = 'Runtime.evaluate',
           params = list(expression = "!!window.PagedPolyfill")
         )))
       }
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
         opts = as.list(options)
+        payload = jsonlite::fromJSON(msg$params$payload)
+        if (verbose >= 1 && payload$pagedjs) {
+          message("Rendered ", payload$pages, " pages in ", payload$elapsedtime, " milliseconds.")
+        }
         if (format == 'pdf') {
           opts = merge_list(list(printBackground = TRUE, preferCSSPageSize = TRUE), opts)
           ws$send(to_json(list(
-            id = 13, params = opts, method = 'Page.printToPDF'
+            id = 16, sessionId = session_id, params = opts, method = 'Page.printToPDF'
           )))
         } else {
-          ws$send(to_json(list(id = 9, method = "DOM.enable")))
+          ws$send(to_json(list(id = 11, sessionId = session_id, method = "DOM.enable")))
         }
       }
     }

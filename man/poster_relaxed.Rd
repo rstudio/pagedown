@@ -5,11 +5,18 @@
 \alias{poster_jacobs}
 \title{Create posters in HTML}
 \usage{
-poster_relaxed(..., css = "poster-relaxed", template = pkg_resource("html", 
-    "poster-relaxed.html"), number_sections = FALSE)
+poster_relaxed(
+  ...,
+  css = "poster-relaxed",
+  template = pkg_resource("html", "poster-relaxed.html"),
+  number_sections = FALSE
+)
 
-poster_jacobs(..., css = "poster-jacobs", template = pkg_resource("html", 
-    "poster-jacobs.html"))
+poster_jacobs(
+  ...,
+  css = "poster-jacobs",
+  template = pkg_resource("html", "poster-jacobs.html")
+)
 }
 \arguments{
 \item{..., css, template, number_sections}{See \code{\link{html_paged}()}.}

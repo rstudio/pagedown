@@ -7,11 +7,12 @@
 #' @return An R Markdown output format.
 #' @export
 #' @examples pagedown::business_card()
-business_card = function() {
+#' @inheritParams html_paged
+business_card = function(template = pkg_resource('html', 'card.html')) {
   rmarkdown::output_format(
     list(opts_chunk = list(echo = FALSE)),
     rmarkdown::pandoc_options('html', 'markdown', args = c(
-      '--template', rmarkdown::pandoc_path_arg(pkg_resource('html', 'card.html')),
+      '--template', rmarkdown::pandoc_path_arg(template),
       '--variable', 'pagetitle=Business Card'
     ))
   )

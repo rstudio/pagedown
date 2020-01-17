@@ -1,3 +1,55 @@
+# CHANGES IN pagedown VERSION 0.8
+
+## BUG FIXES
+
+- In `chrome_print()`, fixed some connection problems to headless Chrome: in some situations, the R session tries to connect to headless Chrome before a target is created. Now, `chrome_print()` controls the target creation by connecting to the `Browser` endpoint (thanks, @gershomtripp, #158).  
+
+# CHANGES IN pagedown VERSION 0.7
+
+## NEW FEATURES
+
+- Added support for pagebreaks: in output formats which use **paged.js**, a pagebreak can be forced using the LaTeX commands `\newpage` and `\pagebreak` or using the CSS classes `page-break-before` and `page-break-after`.
+
+- **reveal.js** presentations can be printed to PDF using `chrome_print()`. 
+
+- Using RStudio, any R Markdown HTML output formats can be directly printed to PDF by adding the line `"knit: pagedown::chrome_print"` to the YAML header: this line modifies the behavior of the "Knit" button of RStudio and produce both HTML and PDF documents.
+
+## BUG FIXES
+
+- In `chrome_print()` with `async = FALSE`, the Chrome processes and the local web server are properly closed when the function exits. This regression was introduced in **pagedown** 0.6.
+
+# CHANGES IN pagedown VERSION 0.6
+
+## MINOR CHANGES
+
+- Added support for MathJax in `html_resume` output format (thanks, @ginolhac, #146).
+
+- The `chrome_print()` function internally uses a private event loop provided by `later` 1.0.0 when `async=FALSE` (thanks, @jcheng5, #127).
+
+# CHANGES IN pagedown VERSION 0.5
+
+## NEW FEATURES
+
+- Added support for lines numbering in `html_paged()`: lines can be numbered using the top-level YAML parameter `number-lines` (thanks, @julientaq, #115 and #129).
+
+- Added support for covers images in `html_paged()`: `html_paged()` gains two arguments, `front_cover` and `back_cover`, to insert images in the front and back covers. Textual contents can also be added in the covers using two special divs of classes `front-cover` and `back-cover` (thanks, @atusy, #134, #136 and #137).
+
+- When `chrome_print()` is used with `verbose >= 1`, some auxiliary informations about Paged.js rendering are printed (number of pages and elapsed time).
+
+- Added a `template` argument to the `business_card()` output format for passing a custom Pandoc template (thanks, @mariakharitonova, #135).
+
+## BUG FIXES
+
+- Remove duplicated footnotes in table of contents (thanks, @pzhaonet and @jdbarillas, #54).
+
+# CHANGES IN pagedown VERSION 0.4
+
+## BUG FIXES
+
+- Fixed several bugs related to MathJax: local version of MathJax is now used when the `mathjax` parameter is set to `"local"` and self contained documents are rendered by default with MathJax without throwing any warning (#130).
+
+- In `html_paged`, the nodes tree is sanitized before Paged.js splits the content into pages. This should avoid duplicated content observed when `break-after: avoid` and `break-before: avoid` are used (#131).
+
 # CHANGES IN pagedown VERSION 0.3
 
 ## NEW FEATURES
@@ -27,6 +79,10 @@
 - `jsonlite::toJSON()` is now used in `chrome_print()` for building all the JSON messages sent to headless Chromium/Chrome: this guarantees that the JSON strings are valid (thanks, @ColinFay, #85 and @cderv, #88).
 
 - In `uri-to-fn.lua`, use a shallow copy of `PANDOC_VERSION`. This is required for Pandoc >= 2.7.3 which changes the type of `PANDOC_VERSION` (thanks, @andreaphsz, #111).
+
+- Insert page numbers after page references (thanks @atusy, #120).
+
+- With Pandoc 2.7.3, page numbers wrongly appear in code blocks.
 
 # CHANGES IN pagedown VERSION 0.2
 
