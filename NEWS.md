@@ -4,6 +4,8 @@
 
 - In `chrome_print()`, fixed some connection problems to headless Chrome: in some situations, the R session tries to connect to headless Chrome before a target is created. Now, `chrome_print()` controls the target creation by connecting to the `Browser` endpoint (thanks, @gershomtripp, #158).  
 
+- In `html_resume()` template, vertical space is removed when details are omitted (thanks, @mrajeev08, #161).
+
 # CHANGES IN pagedown VERSION 0.7
 
 ## NEW FEATURES

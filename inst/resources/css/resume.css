@@ -280,6 +280,10 @@ h1, h2{
   margin: 0.18in 0 0.1in 0;
 }
 
+.main-block:not(.concise) .details div:empty {
+  margin: 0;
+}
+
 .main-block:not(.concise) .blocks:last-child .details div{
   margin-bottom: 0;
 }
