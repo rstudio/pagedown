@@ -67,6 +67,8 @@ Want more poster styles? You may take a look at [Brent Thorne's **posterdown** p
 
 - Thomas Vroylandt's template for the French Scouts and Guides Association: https://github.com/tvroylandt/sgdf_pagedown
 
+- Beatriz Milz's CV: https://beatrizmilz.github.io/resume/resume.html
+
 ## Authors and contributors
 
 The main authors of this package are Yihui Xie (RStudio) and Romain Lesur. Romain has received a grant from the Shuttleworth Foundation for his work on both Paged.js and **pagedown**.
