@@ -697,7 +697,7 @@ links-to-footnotes: true
 
 ## Footnotes
 
-The default behavior of pagedown is to render notes as endnotes because Paged.js does not natively support footnotes for now. However, we introduced an experimental support for footnotes. You can test it by including `paged-footnotes: true` in the YAML header of your document. If you get any trouble with this experimental feature, please open an issue in the **pagedown** repository on GitHub.
+The default behavior of pagedown is to render notes as endnotes because Paged.js does not natively support footnotes for now. However, we introduced an experimental support for footnotes. You can test it by including `paged-footnotes: true` in the YAML header of your document. Please, note that the `paged-footnotes` option only supports inline content^[see <https://github.com/rstudio/pagedown/issues/156>]. If you get any trouble with this experimental feature, please open an issue in the **pagedown** repository on GitHub.
 
 ## Custom running headers {data-short-title="Running headers"}
 
