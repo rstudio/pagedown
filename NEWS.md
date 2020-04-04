@@ -1,5 +1,8 @@
 # CHANGES IN pagedown VERSION 0.10
 
+## BUG FIXES
+
+- In `html_resume()` template, avoid page breaks after section titles and inside subsections (thanks, @kevinrue, #170).
 
 # CHANGES IN pagedown VERSION 0.9
 

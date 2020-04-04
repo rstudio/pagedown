@@ -396,6 +396,16 @@ h1, h2{
   font-style: normal;
 }
 
+/* Page breaks */
+
+h2 {
+  break-after: avoid;
+}
+
+.blocks {
+  break-inside: avoid;
+}
+
 /* Paged.js viewer */
 
 @media screen {
