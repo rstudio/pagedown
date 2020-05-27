@@ -79,7 +79,7 @@ chrome_print = function(
     '--headless', '--no-first-run', '--no-default-browser-check', '--hide-scrollbars'
   ))
 
-  debug_port = random_port()
+  debug_port = servr::random_port()
   ps = processx::process$new(browser, c(
     paste0('--remote-debugging-port=', debug_port),
     paste0('--user-data-dir=', work_dir), extra_args
@@ -132,7 +132,7 @@ chrome_print = function(
       )
       svr = servr::httd(
         dirname(url), daemon = TRUE, browser = FALSE, verbose = verbose >= 1,
-        port = random_port(), initpath = httpuv::encodeURIComponent(basename(url))
+        port = servr::random_port(), initpath = httpuv::encodeURIComponent(basename(url))
       )
       stop_server = function(...) {
         if (verbose >= 1) message('Closing local webserver')
