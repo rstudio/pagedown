@@ -200,7 +200,7 @@ chrome_print = function(
     if (is_rstudio_knit) message('\nOutput created: ', basename(output))
 
     # attach the TOC info
-    attr(output, "toc") = token$toc
+    attr(output, "toc_infos") = token$toc_infos
     invisible(output)
   })
 }
@@ -500,7 +500,8 @@ print_page = function(
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
         opts = as.list(options)
-        payload = jsonlite::fromJSON(msg$params$payload)
+        payload = jsonlite::fromJSON(msg$params$payload, simplifyVector = FALSE)
+        token$toc_infos = payload$tocInfos
         if (verbose >= 1 && payload$pagedjs) {
           message("Rendered ", payload$pages, " pages in ", payload$elapsedtime, " milliseconds.")
         }

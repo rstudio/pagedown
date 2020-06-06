@@ -111,10 +111,13 @@
     if (window.pagedownListener) {
       // the html file is opened for printing
       // call the binding to signal to the R session that Paged.js has finished
+      const tocList = flow.source.querySelector('.toc > ul');
+      const tocInfos = tocEntriesInfos(tocList);
       pagedownListener(JSON.stringify({
         pagedjs: true,
         pages: flow.total,
-        elapsedtime: flow.performance
+        elapsedtime: flow.performance,
+        tocInfos: tocInfos
       }));
       return;
     }
