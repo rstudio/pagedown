@@ -46,6 +46,56 @@
     if (beforePaged) await beforePaged();
   };
 
+  // from https://stackoverflow.com/q/21647928
+  const toUTF16BE = x => {
+    let res = '';
+    for (i=0; i < x.length; i++) {
+      let hex = x.charCodeAt(i).toString(16);
+      hex = ('000' + hex).slice(-4);
+      res += hex
+    }
+    res = 'feff' + res ;
+    return res;
+  }
+
+  const findPage = el => {
+    while (el.parentElement) {
+      el = el.parentElement;
+      if (el.getAttribute('data-page-number')) {
+        return parseInt(el.getAttribute('data-page-number'));
+      }
+    }
+    return null;
+  };
+
+  const tocEntriesInfos = ul => {
+    const tocEntries = ul.children; // tocEntries are 'li' elements
+    let result = []; // where we store the results
+
+    for (const li of tocEntries) {
+      // get the title and encode it in UTF16BE (pdfmark is encoded in UTF16BE with BOM)
+      const title = toUTF16BE(li.querySelector('a').textContent);
+
+      // get the page number
+      const href = li.querySelector('a').getAttribute('href');
+      const el = document.querySelector(href);
+      const page = findPage(el);
+
+      // get the children
+      let children = [];
+      if (li.querySelector('ul')) {
+        children = tocEntriesInfos(li.querySelector('ul'));
+      }
+
+      result.push({
+        title: title,
+        page: page,
+        children: children
+      });
+    }
+
+    return result;
+  };
   window.PagedConfig.after = (flow) => {
     // force redraw, see https://github.com/rstudio/pagedown/issues/35#issuecomment-475905361
     // and https://stackoverflow.com/a/24753578/6500804
