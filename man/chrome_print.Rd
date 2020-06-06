@@ -19,6 +19,7 @@ chrome_print(
   extra_args = c("--disable-gpu"),
   verbose = 0,
   async = FALSE,
+  toc = TRUE,
   encoding
 )
 }

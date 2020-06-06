@@ -53,7 +53,8 @@ chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
   format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
   box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
-  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE, encoding
+  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE,
+  toc = TRUE, encoding
 ) {
   is_rstudio_knit =
     !interactive() && !is.na(Sys.getenv('RSTUDIO', NA)) &&
@@ -199,10 +200,46 @@ chrome_print = function(
 
     if (is_rstudio_knit) message('\nOutput created: ', basename(output))
 
-    # attach the TOC info
-    attr(output, "toc_infos") = token$toc_infos
+    # attach the TOC info to the pdf file
+    if (toc) add_toc(output, token$toc_infos)
     invisible(output)
   })
+}
+
+gen_toc_gs = function(toc) {
+  to_gs = function(x) {
+    stopifnot(setequal(names(x), c('title', 'page', 'children')))
+    template = "[/Count %d /Title <%s> /Page %d /OUT pdfmark"
+    title = x$title
+    page = x$page
+    count = length(x$children)
+    out = sprintf(template, count, title, page)
+    if (any(count > 0L)) {
+      children = lapply(x$children, to_gs)
+      out = unlist(Map(c, out, children), use.names = FALSE)
+    }
+    out
+  }
+  unlist(lapply(toc, to_gs), use.names = FALSE)
+}
+
+## TODO implement this for Windows, linux, and OSX
+find_gs = function() {
+  'gs'
+}
+
+add_toc = function(pdf, toc_infos) {
+  gs_file = tempfile()
+  on.exit(unlink(gs_file), add = TRUE)
+  writeLines(gen_toc_gs(toc_infos), con = gs_file)
+  output = tempfile(fileext = '.pdf')
+  system2(
+    find_gs(),
+    c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', pdf, gs_file),
+    stdout = FALSE, stderr = FALSE
+  )
+  file.rename(output, pdf)
+  invisible(pdf)
 }
 
 #' Find Google Chrome or Chromium in the system
