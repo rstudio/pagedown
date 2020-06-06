@@ -198,6 +198,9 @@ chrome_print = function(
     }
 
     if (is_rstudio_knit) message('\nOutput created: ', basename(output))
+
+    # attach the TOC info
+    attr(output, "toc") = token$toc
     invisible(output)
   })
 }
