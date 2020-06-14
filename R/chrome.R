@@ -43,6 +43,9 @@
 #' @param async Execute \code{chrome_print()} asynchronously? If \code{TRUE},
 #'   \code{chrome_print()} returns a \code{\link[promises]{promise}} value (the
 #'   \pkg{promises} package has to be installed in this case).
+#' @param outline If not \code{FALSE}, \code{chrome_print()} will add the bookmark
+#'   to the generated pdf file, based on the TOC info. It's enabled by default,
+#'   as long as the Ghostscript executable can be detected.
 #' @param encoding Not used. This argument is required by RStudio IDE.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
