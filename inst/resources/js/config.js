@@ -86,10 +86,7 @@
       const page = findPage(el);
 
       // get the children
-      let children = [];
-      if (li.querySelector('ul')) {
-        children = tocEntriesInfos(li.querySelector('ul'));
-      }
+      children = tocEntriesInfos(li.querySelector('ul'));
 
       result.push({
         title: title,
