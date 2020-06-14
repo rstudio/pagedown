@@ -225,7 +225,15 @@ gen_toc_gs = function(toc) {
 
 ## TODO implement this for Windows, linux, and OSX
 find_gs = function() {
-  'gs'
+  gs = tools::find_gs_cmd()
+  # according to the doc of tools::find_gs_cmd, gs should always be a string
+  if (!nzchar(gs)) stop(
+    'Cannot find GhostScript executable automatically. ',
+    "Please pass the full path of the GhostScript executable ",
+    "to the environment variable 'R_GSCMD'. ",
+    "See ?tools::find_gs_cmd for more details."
+  )
+  unname(gs)
 }
 
 add_outline = function(pdf, toc_infos) {
