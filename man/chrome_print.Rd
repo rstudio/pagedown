@@ -80,7 +80,8 @@ from the Chrome processes and WebSocket connections.}
 
 \item{outline}{If not \code{FALSE}, \code{chrome_print()} will add the bookmark
 to the generated pdf file, based on the TOC info. It's enabled by default,
-as long as the Ghostscript executable can be detected.}
+as long as the Ghostscript executable can be detected by
+\code{\link[tools]{find_gs_cmd}}.}
 
 \item{encoding}{Not used. This argument is required by RStudio IDE.}
 }
