@@ -54,7 +54,7 @@ chrome_print = function(
   format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
   box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
   timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE,
-  outline = TRUE, encoding
+  outline = find_gs(), encoding
 ) {
   is_rstudio_knit =
     !interactive() && !is.na(Sys.getenv('RSTUDIO', NA)) &&
@@ -201,7 +201,7 @@ chrome_print = function(
     if (is_rstudio_knit) message('\nOutput created: ', basename(output))
 
     # attach the TOC info to the pdf file
-    if (outline) add_outline(output, token$toc_infos)
+    if (!xfun::isFALSE(outline)) add_outline(output, token$toc_infos)
     invisible(output)
   })
 }
@@ -223,17 +223,14 @@ gen_toc_gs = function(toc) {
   unlist(lapply(toc, to_gs), use.names = FALSE)
 }
 
-## TODO implement this for Windows, linux, and OSX
 find_gs = function() {
   gs = tools::find_gs_cmd()
   # according to the doc of tools::find_gs_cmd, gs should always be a string
-  if (!nzchar(gs)) stop(
-    'Cannot find GhostScript executable automatically. ',
-    "Please pass the full path of the GhostScript executable ",
-    "to the environment variable 'R_GSCMD'. ",
-    "See ?tools::find_gs_cmd for more details."
-  )
-  unname(gs)
+  if (nzchar(gs)) {
+    unname(gs)
+  } else {
+    FALSE # if can't find, return false
+  }
 }
 
 add_outline = function(pdf, toc_infos) {
@@ -241,8 +238,15 @@ add_outline = function(pdf, toc_infos) {
   on.exit(unlink(gs_file), add = TRUE)
   writeLines(gen_toc_gs(toc_infos), con = gs_file)
   output = tempfile(fileext = '.pdf')
+  gs = find_gs()
+  if (xfun::isFALSE(gs)) stop(
+    'Cannot find GhostScript executable automatically. ',
+    "Please pass the full path of the GhostScript executable ",
+    "to the environment variable 'R_GSCMD'. ",
+    "See ?tools::find_gs_cmd for more details."
+  )
   system2(
-    find_gs(),
+    gs,
     c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', pdf, gs_file),
     stdout = FALSE, stderr = FALSE
   )
