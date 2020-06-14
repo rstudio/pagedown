@@ -69,8 +69,12 @@
   };
 
   const tocEntriesInfos = ul => {
-    const tocEntries = ul.children; // tocEntries are 'li' elements
     let result = []; // where we store the results
+    // if there is no element, return an empty array 
+    if (!ul) {
+      return result;
+    }
+    const tocEntries = ul.children; // tocEntries are 'li' elements
 
     for (const li of tocEntries) {
       // get the title and encode it in UTF16BE (pdfmark is encoded in UTF16BE with BOM)
