@@ -237,10 +237,11 @@ find_gs = function() {
 }
 
 add_outline = function(pdf, toc_infos) {
-  gs_file = tempfile()
-  on.exit(unlink(gs_file), add = TRUE)
-  writeLines(gen_toc_gs(toc_infos), con = gs_file)
-  output = tempfile(fileext = '.pdf')
+  gs_content = gen_toc_gs(toc_infos)
+  # when TOC doesn't exist, gs_content will be null
+  if (is.null(gs_content)) return(invisible(pdf))
+  gs_file = tempfile(); on.exit(unlink(gs_file), add = TRUE)
+  writeLines(gs_content, con = gs_file)
   gs = find_gs()
   if (xfun::isFALSE(gs)) stop(
     'Cannot find GhostScript executable automatically. ',
@@ -248,6 +249,7 @@ add_outline = function(pdf, toc_infos) {
     "to the environment variable 'R_GSCMD'. ",
     "See ?tools::find_gs_cmd for more details."
   )
+  output = tempfile(fileext = '.pdf')
   system2(
     gs,
     c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', pdf, gs_file),
