@@ -54,7 +54,7 @@ chrome_print = function(
   format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
   box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
   timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE,
-  toc = TRUE, encoding
+  outline = TRUE, encoding
 ) {
   is_rstudio_knit =
     !interactive() && !is.na(Sys.getenv('RSTUDIO', NA)) &&
@@ -201,7 +201,7 @@ chrome_print = function(
     if (is_rstudio_knit) message('\nOutput created: ', basename(output))
 
     # attach the TOC info to the pdf file
-    if (toc) add_toc(output, token$toc_infos)
+    if (outline) add_outline(output, token$toc_infos)
     invisible(output)
   })
 }
@@ -228,7 +228,7 @@ find_gs = function() {
   'gs'
 }
 
-add_toc = function(pdf, toc_infos) {
+add_outline = function(pdf, toc_infos) {
   gs_file = tempfile()
   on.exit(unlink(gs_file), add = TRUE)
   writeLines(gen_toc_gs(toc_infos), con = gs_file)
