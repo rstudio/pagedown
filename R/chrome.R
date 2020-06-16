@@ -253,7 +253,7 @@ add_outline = function(pdf, toc_infos) {
   output = tempfile(fileext = '.pdf')
   system2(
     gs,
-    c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', pdf, gs_file),
+    shQuote(c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', pdf, gs_file)),
     stdout = FALSE, stderr = FALSE
   )
   file.rename(output, pdf)
