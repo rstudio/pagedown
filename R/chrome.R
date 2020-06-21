@@ -250,11 +250,15 @@ add_outline = function(pdf, toc_infos) {
     "to the environment variable 'R_GSCMD'. ",
     "See ?tools::find_gs_cmd for more details."
   )
-  output = tempfile(fileext = '.pdf')
+  output = tempfile(fileext = '.pdf'); on.exit(unlink(output), add = TRUE)
   args = c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', pdf, gs_file)
   if (verbose < 2) args = c(args, '-q')
-  system2(find_gs(), shQuote(args))
-  file.rename(output, pdf)
+  gs_out = system2(find_gs(), shQuote(args))
+  if (gs_out == 0) {
+    file.rename(output, pdf)
+  } else {
+    warning('GhostScript fails to add the outlines', call. = FALSE)
+  }
   invisible(pdf)
 }
 
