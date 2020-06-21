@@ -219,7 +219,7 @@ gen_toc_gs = function(toc) {
     out = sprintf(template, count, title, page)
     if (any(count > 0L)) {
       children = lapply(x$children, to_gs)
-      out = unlist(Map(c, out, children), use.names = FALSE)
+      out = c(out, unlist(children, use.names = FALSE))
     }
     out
   }
