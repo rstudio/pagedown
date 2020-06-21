@@ -11,6 +11,7 @@ addons:
       - sourceline: 'ppa:cran/poppler'
     packages:
       - libpoppler-cpp-dev
+      - ghostscript
 
 before_install:
   - "curl https://xran.yihui.org/.gitconfig -o ~/.gitconfig"
