@@ -252,11 +252,9 @@ add_outline = function(pdf, toc_infos) {
     "See ?tools::find_gs_cmd for more details."
   )
   output = tempfile(fileext = '.pdf')
-  system2(
-    gs,
-    shQuote(c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', pdf, gs_file)),
-    stdout = FALSE, stderr = FALSE
-  )
+  args = c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', pdf, gs_file)
+  if (verbose < 2) args = c(args, '-q')
+  system2(gs, shQuote(args))
   file.rename(output, pdf)
   invisible(pdf)
 }
