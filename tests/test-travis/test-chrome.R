@@ -65,10 +65,13 @@ assert('chrome_print() generates expected outline', {
   (toc %==% res)
 
   # works for async
+  # not sure it's the right way to test the promise object
   f = print_pdf('test-outline.Rmd', async = TRUE)
-  (is_pdf(f))
-  toc = pdftools::pdf_toc(f)[[2L]]
-  (toc %==% res)
+  out = promises::then(f, function(f) {
+    stopifnot(is_pdf(f))
+    toc = pdftools::pdf_toc(f)[[2L]]
+    stopifnot(toc %==% res)
+  })
 
   # works for output name with non-ASCII & white space
   output = tempfile(pattern = "\u4e2d \u6587")
