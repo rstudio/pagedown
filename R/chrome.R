@@ -236,10 +236,10 @@ gs_available = function() {
   nzchar(find_gs())
 }
 
-add_outline = function(pdf, toc_infos, verbose) {
+add_outline = function(input, toc_infos, verbose) {
   gs_content = gen_toc_gs(toc_infos)
   # when TOC doesn't exist, gs_content will be null
-  if (is.null(gs_content)) return(invisible(pdf))
+  if (is.null(gs_content)) return(invisible(input))
   gs_file = tempfile(); on.exit(unlink(gs_file), add = TRUE)
   writeLines(gs_content, con = gs_file)
   if (!gs_available()) stop(
@@ -249,15 +249,21 @@ add_outline = function(pdf, toc_infos, verbose) {
     "See ?tools::find_gs_cmd for more details."
   )
   output = tempfile(fileext = '.pdf'); on.exit(unlink(output), add = TRUE)
-  args = c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', pdf, gs_file)
+  input2 = input
+  if (!xfun::is_ascii(input2)) {
+    # this is needed when input contain non-ASCII characters
+    input2 = tempfile(fileext = '.pdf'); on.exit(unlink(input2), add = TRUE)
+    file.copy(input, input2)
+  }
+  args = c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', input2, gs_file)
   if (verbose < 2) args = c(args, '-q')
   gs_out = system2(find_gs(), shQuote(args))
   if (gs_out == 0) {
-    file.rename(output, pdf)
+    file.rename(output, input)
   } else {
     warning('GhostScript fails to add the outlines', call. = FALSE)
   }
-  invisible(pdf)
+  invisible(input)
 }
 
 #' Find Google Chrome or Chromium in the system
