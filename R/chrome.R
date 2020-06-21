@@ -59,7 +59,7 @@ chrome_print = function(
   format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
   box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
   timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE,
-  outline = find_gs(), encoding
+  outline = gs_available(), encoding
 ) {
   is_rstudio_knit =
     !interactive() && !is.na(Sys.getenv('RSTUDIO', NA)) &&
@@ -231,11 +231,11 @@ gen_toc_gs = function(toc) {
 find_gs = function() {
   gs = tools::find_gs_cmd()
   # according to the doc of tools::find_gs_cmd, gs should always be a string
-  if (nzchar(gs)) {
-    unname(gs)
-  } else {
-    FALSE # if can't find, return false
-  }
+  unname(gs)
+}
+
+gs_available = function() {
+  nzchar(find_gs())
 }
 
 add_outline = function(pdf, toc_infos) {
@@ -244,8 +244,7 @@ add_outline = function(pdf, toc_infos) {
   if (is.null(gs_content)) return(invisible(pdf))
   gs_file = tempfile(); on.exit(unlink(gs_file), add = TRUE)
   writeLines(gs_content, con = gs_file)
-  gs = find_gs()
-  if (xfun::isFALSE(gs)) stop(
+  if (!gs_available()) stop(
     'Cannot find GhostScript executable automatically. ',
     "Please pass the full path of the GhostScript executable ",
     "to the environment variable 'R_GSCMD'. ",
@@ -254,7 +253,7 @@ add_outline = function(pdf, toc_infos) {
   output = tempfile(fileext = '.pdf')
   args = c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', pdf, gs_file)
   if (verbose < 2) args = c(args, '-q')
-  system2(gs, shQuote(args))
+  system2(find_gs(), shQuote(args))
   file.rename(output, pdf)
   invisible(pdf)
 }
