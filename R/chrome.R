@@ -188,7 +188,7 @@ chrome_print = function(
       kill_chrome()
       if (!is.null(svr)) stop_server()
     })
-    print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun, rej_fun)
+    print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, outline, res_fun, rej_fun)
 
     if (async) {
       on.exit()
@@ -205,8 +205,6 @@ chrome_print = function(
 
     if (is_rstudio_knit) message('\nOutput created: ', basename(output))
 
-    # attach the TOC info to the pdf file
-    if (!xfun::isFALSE(outline)) add_outline(output, token$toc_infos)
     invisible(output)
   })
 }
@@ -238,7 +236,7 @@ gs_available = function() {
   nzchar(find_gs())
 }
 
-add_outline = function(pdf, toc_infos) {
+add_outline = function(pdf, toc_infos, verbose) {
   gs_content = gen_toc_gs(toc_infos)
   # when TOC doesn't exist, gs_content will be null
   if (is.null(gs_content)) return(invisible(pdf))
@@ -388,11 +386,12 @@ get_entrypoint = function(debug_port, verbose) {
 
 print_page = function(
   ws, url, output, wait, verbose, token, format,
-  options = list(), selector, box_model, scale, resolve, reject
+  options = list(), selector, box_model, scale, outline, resolve, reject
 ) {
   # init values
   session_id = NULL
   coords = NULL
+  toc_infos = NULL
 
   ws$onOpen(function(event) {
     # Create a new Target (tab)
@@ -534,6 +533,7 @@ print_page = function(
       {
         # Command #16 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
+        if (!xfun::isFALSE(outline) && length(toc_infos)) add_outline(output, toc_infos, verbose)
         resolve(output)
         token$done = TRUE
       }
@@ -558,7 +558,7 @@ print_page = function(
         Sys.sleep(wait)
         opts = as.list(options)
         payload = jsonlite::fromJSON(msg$params$payload, simplifyVector = FALSE)
-        token$toc_infos = payload$tocInfos
+        toc_infos <<- payload$tocInfos
         if (verbose >= 1 && payload$pagedjs) {
           message("Rendered ", payload$pages, " pages in ", payload$elapsedtime, " milliseconds.")
         }
