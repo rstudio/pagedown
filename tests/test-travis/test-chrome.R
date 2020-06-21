@@ -37,3 +37,30 @@ assert('find_gs() finds Ghostscript executable', {
   (nzchar(find_gs()))
   (gs_available())
 })
+
+assert('chrome_print() generates expected outline', {
+  f = print_pdf('test-outline.Rmd')
+
+  (is_pdf(f))
+
+  toc = pdftools::pdf_toc(f)[[2L]]
+  res = list(
+    list(title = "1 Title 1", children = list()),
+    list(
+      title = "2 Title 2",
+      children = list(
+        list(title = "2.1 Title 2-1", children = list()),
+        list(title = "2.2 Title 2-2", children = list(
+          list(title = "2.2.1 Title 2-2-1", children = list()),
+          list(title = "2.2.2 Title 2-2-2",children = list())
+        ))
+      )
+    ),
+    list(title = "3 \u4e2d\u6587", children = list()),
+    list(title = "4 \u4e2d\u6587 \u5e26\u7a7a\u683c", children = list(
+      list(title = "4.1 \u4e2d\u6587\u6b21\u7ea7\u6807\u9898", children = list())
+    ))
+  )
+
+  (toc %==% res)
+})
