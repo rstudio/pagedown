@@ -15,9 +15,12 @@ assert('check_css() validates CSS file paths', {
 
 assert('gen_toc_gs() works', {
   (gen_toc_gs(list()) %==% NULL)
+
   toc = list(list(title = 'a', page = 3, children = list()))
   res = '[/Count 0 /Title <a> /Page 3 /OUT pdfmark'
+
   (gen_toc_gs(toc) %==% res)
+
   toc = list(
     list(title = 'a', page = 3, children = list(
       list(title = 'a-1', page = 5, children = list()),
@@ -36,6 +39,7 @@ assert('gen_toc_gs() works', {
     "[/Count 0 /Title <a-2-2> /Page 10 /OUT pdfmark",
     "[/Count 0 /Title <b> /Page 20 /OUT pdfmark"
   )
+
   (gen_toc_gs(toc) %==% res)
 })
 
