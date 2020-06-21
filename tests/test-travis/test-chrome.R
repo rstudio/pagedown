@@ -32,3 +32,8 @@ assert('chrome_print() works with reveal.js presentations', {
   first_page_text_content = pdftools::pdf_text(f)[1]
   (identical(first_page_text_content, 'Test reveal.js'))
 })
+
+assert('find_gs() finds Ghostscript executable', {
+  (nzchar(find_gs()))
+  (gs_available())
+})
