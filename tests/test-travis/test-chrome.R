@@ -63,4 +63,25 @@ assert('chrome_print() generates expected outline', {
   )
 
   (toc %==% res)
+
+  # works for async
+  f = print_pdf('test-outline.Rmd', async = TRUE)
+  (is_pdf(f))
+  toc = pdftools::pdf_toc(f)[[2L]]
+  (toc %==% res)
+
+  # works for output name with non-ASCII & white space
+  output = tempfile(pattern = "\u4e2d \u6587")
+  f = print_pdf('test-outline.Rmd', output = output)
+  (is_pdf(f))
+  toc = pdftools::pdf_toc(f)[[2L]]
+  (toc %==% res)
+
+  # works for input name with non-ASCII & white space
+  input = tempfile(pattern = "\u4e2d \u6587", fileext = '.Rmd')
+  file.copy('test-outline.Rmd', input)
+  f = print_pdf(input)
+  (is_pdf(f))
+  toc = pdftools::pdf_toc(f)[[2L]]
+  (toc %==% res)
 })
