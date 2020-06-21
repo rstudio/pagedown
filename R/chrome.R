@@ -256,7 +256,7 @@ add_outline = function(input, toc_infos, verbose) {
     file.copy(input, input2)
   }
   args = c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', input2, gs_file)
-  if (verbose < 2) args = c(args, '-q')
+  if (verbose < 2) args = c('-q', args)
   gs_out = system2(find_gs(), shQuote(args))
   if (gs_out == 0) {
     file.rename(output, input)
