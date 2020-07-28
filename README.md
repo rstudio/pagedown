@@ -35,6 +35,8 @@ Below are some existing R Markdown output formats and examples.
 
 [![An HTML resume](https://user-images.githubusercontent.com/163582/46879762-7a34a500-ce0c-11e8-87e3-496f3577ff05.png)](https://pagedown.rbind.io/html-resume/)
 
+You may want to check out [the **datadrivencv** package](https://github.com/nstrayer/datadrivencv), which allows you to build a CV using data from a spreadsheet and `pagedown::html_resume`.
+
 ## Posters
 
 ### `pagedown::poster_relaxed`
