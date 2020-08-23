@@ -4,6 +4,29 @@ is_pdf = function(file) {
   identical(readBin(file, 'raw', 5L), charToRaw('%PDF-'))
 }
 
+run_promise = function(x) {
+  # There's no easy way to test the promise object so it's based on Romain Lesur's code at
+  # https://github.com/RLesur/crrri/blob/48b5c2c5e0d209d3742720d30ed91694a6e80c12/R/hold.R#L34-L66
+  state <- new.env()
+  state$pending = TRUE
+  promises::then(
+    x,
+    onFulfilled = function(value) {
+      state$pending = FALSE
+      state$value = value
+    },
+    onRejected = function(error) {
+      state$pending = FALSE
+      state$reason = error
+    }
+  )
+  while(state$pending) {
+    later::run_now(all = FALSE)
+  }
+  if (!is.null(state$reason)) stop(state$reason)
+  state$value
+}
+
 assert('find_chrome() finds Chrome executable', {
   (nzchar(find_chrome()))
 })
@@ -65,13 +88,10 @@ assert('chrome_print() generates expected outline', {
   (toc %==% res)
 
   # works for async
-  # not sure it's the right way to test the promise object
-  f = print_pdf('test-outline.Rmd', async = TRUE)
-  out = promises::then(f, function(f) {
-    stopifnot(is_pdf(f))
-    toc = pdftools::pdf_toc(f)[[2L]]
-    stopifnot(toc %==% res)
-  })
+  f = run_promise(print_pdf('test-outline.Rmd', async = TRUE))
+  (is_pdf(f))
+  toc = pdftools::pdf_toc(f)[[2L]]
+  (toc %==% res)
 
   # works for output name with non-ASCII & white space
   output = tempfile(pattern = "\u4e2d \u6587")
