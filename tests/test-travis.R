@@ -1,11 +1,12 @@
 # run tests on Travis (these tests depend on Chrome)
 
-print_pdf = function(input) {
+print_pdf = function(input, output = tempfile(), async = FALSE) {
   chrome_print(
-    input, tempfile(),
+    input, output,
     # use --no-sandbox with travis
     # https://docs.travis-ci.com/user/chrome#sandboxing
-    extra_args = c('--disable-gpu', '--no-sandbox')
+    extra_args = c('--disable-gpu', '--no-sandbox'),
+    async = async
   )
 }
 

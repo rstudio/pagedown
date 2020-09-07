@@ -1,0 +1,47 @@
+---
+title: "A pagedown report with outlines"
+author: "Yihui Xie and Romain Lesur"
+date: "`r Sys.Date()`"
+output:
+  pagedown::html_paged:
+    toc: true
+    self_contained: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Title 1
+
+Some content of title 1
+
+# Title 2
+
+## Title 2-1
+
+Good
+
+## Title 2-2
+
+Wow
+
+### Title 2-2-1
+
+sub section
+
+### Title 2-2-2
+
+some words
+
+# 中文 {#chinese1}
+
+pagedown 不错
+
+# 中文 带空格 {#chinese2}
+
+很喜欢
+
+## 中文次级标题 {#chinese2-1}
+
+nice

@@ -46,6 +46,57 @@
     if (beforePaged) await beforePaged();
   };
 
+  // from https://stackoverflow.com/q/21647928
+  const toUTF16BE = x => {
+    let res = '';
+    for (i=0; i < x.length; i++) {
+      let hex = x.charCodeAt(i).toString(16);
+      hex = ('000' + hex).slice(-4);
+      res += hex
+    }
+    res = 'feff' + res ;
+    return res;
+  }
+
+  const findPage = el => {
+    while (el.parentElement) {
+      el = el.parentElement;
+      if (el.getAttribute('data-page-number')) {
+        return parseInt(el.getAttribute('data-page-number'));
+      }
+    }
+    return null;
+  };
+
+  const tocEntriesInfos = ul => {
+    let result = []; // where we store the results
+    // if there is no element, return an empty array 
+    if (!ul) {
+      return result;
+    }
+    const tocEntries = ul.children; // tocEntries are 'li' elements
+
+    for (const li of tocEntries) {
+      // get the title and encode it in UTF16BE (pdfmark is encoded in UTF16BE with BOM)
+      const title = toUTF16BE(li.querySelector('a').textContent);
+
+      // get the page number
+      const href = li.querySelector('a').getAttribute('href');
+      const el = document.querySelector(href);
+      const page = findPage(el);
+
+      // get the children
+      children = tocEntriesInfos(li.querySelector('ul'));
+
+      result.push({
+        title: title,
+        page: page,
+        children: children
+      });
+    }
+
+    return result;
+  };
   window.PagedConfig.after = (flow) => {
     // force redraw, see https://github.com/rstudio/pagedown/issues/35#issuecomment-475905361
     // and https://stackoverflow.com/a/24753578/6500804
@@ -61,10 +112,13 @@
     if (window.pagedownListener) {
       // the html file is opened for printing
       // call the binding to signal to the R session that Paged.js has finished
+      const tocList = flow.source.querySelector('.toc > ul');
+      const tocInfos = tocEntriesInfos(tocList);
       pagedownListener(JSON.stringify({
         pagedjs: true,
         pages: flow.total,
-        elapsedtime: flow.performance
+        elapsedtime: flow.performance,
+        tocInfos: tocInfos
       }));
       return;
     }

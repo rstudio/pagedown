@@ -19,6 +19,7 @@ chrome_print(
   extra_args = c("--disable-gpu"),
   verbose = 0,
   async = FALSE,
+  outline = gs_available(),
   encoding
 )
 }
@@ -76,6 +77,12 @@ from the Chrome processes and WebSocket connections.}
 \item{async}{Execute \code{chrome_print()} asynchronously? If \code{TRUE},
 \code{chrome_print()} returns a \code{\link[promises]{promise}} value (the
 \pkg{promises} package has to be installed in this case).}
+
+\item{outline}{If not \code{FALSE}, \code{chrome_print()} will add the bookmarks
+to the generated \code{pdf} file, based on the table of contents informations.
+This feature is only available for output formats based on
+\code{\link{html_paged}}. It is enabled by default, as long as the Ghostscript
+executable can be detected by \code{\link[tools]{find_gs_cmd}}.}
 
 \item{encoding}{Not used. This argument is required by RStudio IDE.}
 }

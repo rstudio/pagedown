@@ -43,6 +43,11 @@
 #' @param async Execute \code{chrome_print()} asynchronously? If \code{TRUE},
 #'   \code{chrome_print()} returns a \code{\link[promises]{promise}} value (the
 #'   \pkg{promises} package has to be installed in this case).
+#' @param outline If not \code{FALSE}, \code{chrome_print()} will add the bookmarks
+#'   to the generated \code{pdf} file, based on the table of contents informations.
+#'   This feature is only available for output formats based on
+#'   \code{\link{html_paged}}. It is enabled by default, as long as the Ghostscript
+#'   executable can be detected by \code{\link[tools]{find_gs_cmd}}.
 #' @param encoding Not used. This argument is required by RStudio IDE.
 #' @references
 #' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
@@ -53,7 +58,8 @@ chrome_print = function(
   input, output = xfun::with_ext(input, format), wait = 2, browser = 'google-chrome',
   format = c('pdf', 'png', 'jpeg'), options = list(), selector = 'body',
   box_model = c('border', 'content', 'margin', 'padding'), scale = 1, work_dir = tempfile(),
-  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE, encoding
+  timeout = 30, extra_args = c('--disable-gpu'), verbose = 0, async = FALSE,
+  outline = gs_available(), encoding
 ) {
   is_rstudio_knit =
     !interactive() && !is.na(Sys.getenv('RSTUDIO', NA)) &&
@@ -182,7 +188,7 @@ chrome_print = function(
       kill_chrome()
       if (!is.null(svr)) stop_server()
     })
-    print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, res_fun, rej_fun)
+    print_page(ws, url, output2, wait, verbose, token, format, options, selector, box_model, scale, outline, res_fun, rej_fun)
 
     if (async) {
       on.exit()
@@ -198,8 +204,66 @@ chrome_print = function(
     }
 
     if (is_rstudio_knit) message('\nOutput created: ', basename(output))
+
     invisible(output)
   })
+}
+
+gen_toc_gs = function(toc) {
+  to_gs = function(x) {
+    stopifnot(setequal(names(x), c('title', 'page', 'children')))
+    template = "[/Count %d /Title <%s> /Page %d /OUT pdfmark"
+    title = x$title
+    page = x$page
+    count = length(x$children)
+    out = sprintf(template, count, title, page)
+    if (any(count > 0L)) {
+      children = lapply(x$children, to_gs)
+      out = c(out, unlist(children, use.names = FALSE))
+    }
+    out
+  }
+  unlist(lapply(toc, to_gs), use.names = FALSE)
+}
+
+find_gs = function() {
+  gs = tools::find_gs_cmd()
+  # according to the doc of tools::find_gs_cmd, gs should always be a string
+  unname(gs)
+}
+
+gs_available = function() {
+  nzchar(find_gs())
+}
+
+add_outline = function(input, toc_infos, verbose) {
+  gs_content = gen_toc_gs(toc_infos)
+  # when TOC doesn't exist, gs_content will be null
+  if (is.null(gs_content)) return(invisible(input))
+  gs_file = tempfile(); on.exit(unlink(gs_file), add = TRUE)
+  writeLines(gs_content, con = gs_file)
+  if (!gs_available()) stop(
+    'Cannot find GhostScript executable automatically. ',
+    "Please pass the full path of the GhostScript executable ",
+    "to the environment variable 'R_GSCMD'. ",
+    "See ?tools::find_gs_cmd for more details."
+  )
+  output = tempfile(fileext = '.pdf'); on.exit(unlink(output), add = TRUE)
+  input2 = input
+  if (!xfun::is_ascii(input2)) {
+    # this is needed when input contain non-ASCII characters
+    input2 = tempfile(fileext = '.pdf'); on.exit(unlink(input2), add = TRUE)
+    file.copy(input, input2)
+  }
+  args = c('-o', output, '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', input2, gs_file)
+  if (verbose < 2) args = c('-q', args)
+  gs_out = system2(find_gs(), shQuote(args))
+  if (gs_out == 0) {
+    file.rename(output, input)
+  } else {
+    warning('GhostScript fails to add the outlines', call. = FALSE)
+  }
+  invisible(input)
 }
 
 #' Find Google Chrome or Chromium in the system
@@ -328,11 +392,12 @@ get_entrypoint = function(debug_port, verbose) {
 
 print_page = function(
   ws, url, output, wait, verbose, token, format,
-  options = list(), selector, box_model, scale, resolve, reject
+  options = list(), selector, box_model, scale, outline, resolve, reject
 ) {
   # init values
   session_id = NULL
   coords = NULL
+  toc_infos = NULL
 
   ws$onOpen(function(event) {
     # Create a new Target (tab)
@@ -474,6 +539,7 @@ print_page = function(
       {
         # Command #16 received (printToPDF or captureScreenshot) -> callback: save to file & close Chrome
         writeBin(jsonlite::base64_dec(msg$result$data), output)
+        if (!xfun::isFALSE(outline) && length(toc_infos)) add_outline(output, toc_infos, verbose)
         resolve(output)
         token$done = TRUE
       }
@@ -497,7 +563,8 @@ print_page = function(
       if (method == "Runtime.bindingCalled") {
         Sys.sleep(wait)
         opts = as.list(options)
-        payload = jsonlite::fromJSON(msg$params$payload)
+        payload = jsonlite::fromJSON(msg$params$payload, simplifyVector = FALSE)
+        toc_infos <<- payload$tocInfos
         if (verbose >= 1 && payload$pagedjs) {
           message("Rendered ", payload$pages, " pages in ", payload$elapsedtime, " milliseconds.")
         }
