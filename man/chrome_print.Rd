@@ -84,17 +84,17 @@ from the Chrome processes and WebSocket connections.}
 \code{chrome_print()} returns a \code{\link[promises]{promise}} value (the
 \pkg{promises} package has to be installed in this case).}
 
-\item{outline}{If not \code{FALSE}, \code{chrome_print()} will add the bookmarks
-to the generated \code{pdf} file, based on the table of contents informations.
-This feature is only available for output formats based on
-\code{\link{html_paged}}. It is enabled by default, as long as the Ghostscript
-executable can be detected by \code{\link[tools]{find_gs_cmd}}.}
+\item{outline}{If not \code{FALSE}, \code{chrome_print()} will add the
+bookmarks to the generated \code{pdf} file, based on the table of contents
+informations. This feature is only available for output formats based on
+\code{\link{html_paged}}. It is enabled by default, as long as the
+Ghostscript executable can be detected by \code{\link[tools]{find_gs_cmd}}.}
 
 \item{encoding}{Not used. This argument is required by RStudio IDE.}
 }
 \value{
-Path of the output file (invisibly). If \code{async} is \code{TRUE}, this
-  is a \code{\link[promises]{promise}} value.
+Path of the output file (invisibly). If \code{async} is \code{TRUE},
+  this is a \code{\link[promises]{promise}} value.
 }
 \description{
 Print an HTML page to PDF or capture a PNG/JPEG screenshot through the Chrome
