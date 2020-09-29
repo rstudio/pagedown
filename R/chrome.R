@@ -5,7 +5,13 @@
 #' prior to using this function.
 #' @param input A URL or local file path to an HTML page, or a path to a local
 #'   file that can be rendered to HTML via \code{rmarkdown::\link{render}()}
-#'   (e.g., an R Markdown document or an R script).
+#'   (e.g., an R Markdown document or an R script). If the \code{input} is to be
+#'   rendered via \code{rmarkdown::render()} and you need to pass any arguments
+#'   to it, you can pass the whole \code{render()} call to
+#'   \code{chrome_print()}, e.g., if you need to use the \code{params} argument:
+#'   \code{pagedown::chrome_print(rmarkdown::render('input.Rmd', params =
+#'   list(foo = 1:10)))}. This is because \code{render()} returns the HTML file,
+#'   which can be passed to \code{chrome_print()}.
 #' @param output The output filename. For a local web page \file{foo/bar.html},
 #'   the default PDF output is \file{foo/bar.pdf}; for a remote URL
 #'   \file{https://www.example.org/foo/bar.html}, the default output will be
