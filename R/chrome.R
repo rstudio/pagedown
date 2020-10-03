@@ -361,6 +361,7 @@ is_remote_protocol_ok = function(debug_port,
     return(FALSE)
 
   required_events = list(
+    Inspector = c('targetCrashed'),
     Network = c('responseReceived'),
     Page = c('loadEventFired'),
     Runtime = c('bindingCalled')
@@ -559,6 +560,14 @@ print_page = function(
           )
           reject(token$error)
         }
+      }
+      if (method == 'Inspector.targetCrashed') {
+        token$error = paste(
+          'Chrome crashed.',
+          'This may be caused by insufficient resources.',
+          'Please, try to add "--disable-dev-shm-usage" to the `extra_args` argument.'
+        )
+        reject(token$error)
       }
       if (method == "Page.loadEventFired") {
         ws$send(to_json(list(

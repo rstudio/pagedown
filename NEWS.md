@@ -1,5 +1,8 @@
 # CHANGES IN pagedown VERSION 0.12
 
+## BUG FIXES
+
+- `chrome_print()` no longer ignores the Chrome DevTools event `Inspector.targetCrashed`. An R error is now raised when Chrome crashes (#190). 
 
 # CHANGES IN pagedown VERSION 0.11
 
