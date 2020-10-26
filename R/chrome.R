@@ -265,7 +265,7 @@ add_outline = function(input, toc_infos, verbose) {
   if (verbose < 2) args = c('-q', args)
   gs_out = system2(find_gs(), shQuote(args))
   if (gs_out == 0) {
-    file.rename(output, input)
+    file.copy(output, input, overwrite = TRUE)
   } else {
     warning('GhostScript fails to add the outlines', call. = FALSE)
   }
