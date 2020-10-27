@@ -2,6 +2,8 @@
 
 ## BUG FIXES
 
+- The option `anchor_sections` is disabled internally. This option is for `rmarkdown::html_document()` to generate anchor links for sections and currently it does not work well for **pagedown** format for now (#195).
+
 - In `chrome_print()`, fixed a bug when the R session temporary directory and the current directory are mounted on different Linux file systems. In that case, `chrome_print()` failed to add an outline to the PDF and raised the warning `cannot rename file ..., reason 'Invalid cross-device link'` (#193). 
 
 # CHANGES IN pagedown VERSION 0.12
