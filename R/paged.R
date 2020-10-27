@@ -131,7 +131,7 @@ pagedown_dependency = function(css = NULL, js = FALSE, .test = FALSE) {
 }
 
 html_format = function(
-  ..., self_contained = TRUE, mathjax = 'default', css, template, pandoc_args = NULL,
+  ..., self_contained = TRUE, anchor_sections = FALSE, mathjax = 'default', css, template, pandoc_args = NULL,
   .dependencies = NULL, .pagedjs = FALSE, .pandoc_args = NULL, .test = FALSE
 ) {
   if (!identical(mathjax, 'local')) {
@@ -164,7 +164,7 @@ html_format = function(
     ))
   }
   html_document2(
-    ..., self_contained = self_contained, mathjax = mathjax, css = css,
+    ..., self_contained = self_contained, anchor_sections = anchor_sections, mathjax = mathjax, css = css,
     template = template, pandoc_args = pandoc_args
   )
 }
