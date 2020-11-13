@@ -1,5 +1,9 @@
 # CHANGES IN pagedown VERSION 0.13
 
+## NEW FEATURES
+
+- In `html_paged()`, the title of the list of abbreviations can now be modified with the `loa-title` field in the YAML header (thanks, @jtrecenti, #199).
+
 ## BUG FIXES
 
 - The option `anchor_sections` is disabled internally. This option is for `rmarkdown::html_document()` to generate anchor links for sections and currently it does not work well for **pagedown** format for now (#195).

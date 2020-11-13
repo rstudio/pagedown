@@ -622,6 +622,8 @@ CSS
 :   Cascading Style Sheets
 :::
 
+The title of this list of abbreviations can be customized using the `loa-title` field in the YAML header.
+
 ## Front matter
 
 By default, the front matter is composed of the cover, the table of contents and the lists of figures, tables and abbreviations if any. The only difference between the front matter pages and the main content pages is the style of the page numbers.
