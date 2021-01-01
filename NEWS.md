@@ -1,5 +1,8 @@
 # CHANGES IN pagedown VERSION 0.14
 
+## MAJOR CHANGES
+
+- Paged.js is upgraded from version 0.1.32 to 0.1.43.
 
 # CHANGES IN pagedown VERSION 0.13
 
