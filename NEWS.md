@@ -2,7 +2,11 @@
 
 ## MAJOR CHANGES
 
-- Paged.js is upgraded from version 0.1.32 to 0.1.43.
+- Paged.js is upgraded from version 0.1.32 to 0.1.43. This update speeds up the rendering time and fixes several bugs (see below).
+
+## BUG FIXES
+
+- The default value of the `counter-reset` CSS property is correctly set to 0 instead of 1 (see <https://developer.mozilla.org/fr/docs/Web/CSS/counter-reset>). To reset a `page` CSS counter to 1, the following declaration must be used: `counter-reset: page 1`. 
 
 # CHANGES IN pagedown VERSION 0.13
 

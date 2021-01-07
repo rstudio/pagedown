@@ -137,11 +137,11 @@ h1, h2, h3, h4, h5, h6 {
   break-inside: avoid;
 }
 #TOC {
-  counter-reset: page;
+  counter-reset: page 1;
 }
 /* reset page numbering after front matter */
 .front-matter-container+.level1 h1 {
-  counter-reset: page;
+  counter-reset: page 1;
 }
 
 a[href^="http"]:not([class="uri"])::after {
@@ -161,7 +161,7 @@ div.acknowledge {
 }
 div.signpage {
   break-before: page;
-  counter-reset: page;
+  counter-reset: page 1;
 }
 .front-page {
   padding-top: 1in;
