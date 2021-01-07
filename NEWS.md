@@ -6,7 +6,9 @@
 
 ## BUG FIXES
 
-- The default value of the `counter-reset` CSS property is correctly set to 0 instead of 1 (see <https://developer.mozilla.org/fr/docs/Web/CSS/counter-reset>). To reset a `page` CSS counter to 1, the following declaration must be used: `counter-reset: page 1`. 
+- The default value of the `counter-reset` CSS property is correctly set to 0 instead of 1 (see <https://developer.mozilla.org/fr/docs/Web/CSS/counter-reset>). To reset a `page` CSS counter to 1, the following declaration must be used: `counter-reset: page 1`.
+
+- Numbered example lists (<https://pandoc.org/MANUAL.html#numbered-example-lists>) are correctly numbered (thanks, @atusy, #122).
 
 # CHANGES IN pagedown VERSION 0.13
 
