@@ -128,7 +128,7 @@
       return;
     }
     if (window.location.hash) {
-      const id = window.location.hash.replace(/^#/, '');
+      const id = decodeURIComponent(window.location.hash).replace(/^#/, '');
       document.getElementById(id).scrollIntoView({behavior: 'smooth'});
     }
   };
