@@ -82,7 +82,7 @@
 
       // get the page number
       const href = li.querySelector('a').getAttribute('href');
-      const el = document.querySelector(href);
+      const el = document.getElementById(href.substring(1));
       const page = findPage(el);
 
       // get the children
