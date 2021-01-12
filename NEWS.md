@@ -12,6 +12,8 @@
 
 - Periods are now supported in titles (thanks, @yves-amevoin and @martinschmelzer, #84, #185 and #202).
 
+- Parts titles in the table of contents no longer crash `chrome_print()`.
+
 # CHANGES IN pagedown VERSION 0.13
 
 ## NEW FEATURES
