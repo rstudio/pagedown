@@ -160,6 +160,31 @@ docker run -e PASSWORD=yourpassword --rm -p 8787:8787 --security-opt seccomp="$(
 
 With this seccomp file, you do not have to use the `"--no-sandbox"` option: this is much more secure!
 
+### Troubleshooting with large PDF files generation
+
+If your document contains a lot of images `chrome_print()` can fail to generate your PDF.  
+For example, you may obtain the following error message:
+
+```
+[error] consume error: websocketpp.processor.4 (A message was too large)
+```
+
+In that case, you need to use a different mean of communication between Chrome and R by changing the `transferMode` option:
+
+```r
+chrome_print(..., options = list(transferMode = "ReturnAsStream"))
+```
+
+On Linux environments with minimal resources (like a container), you also can get this error message:
+
+```
+Chrome crashed.
+This may be caused by insufficient resources.
+Please, try to add "--disable-dev-shm-usage" to the `extra_args` argument.
+```
+
+Here, you just have to follow the advice and add `"--disable-dev-shm-usage"` to the `extra_args` argument of `chrome_print()`. 
+
 # Applications 
 
 ## Resume

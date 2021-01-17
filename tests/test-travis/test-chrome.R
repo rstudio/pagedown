@@ -41,6 +41,13 @@ assert('chrome_print() works with a local file path', {
   (is_pdf(print_pdf(r_faq_html)))
 })
 
+assert('chrome_print() supports PDF streaming', {
+  r_faq_html = file.path(R.home('doc'), 'manual', 'R-FAQ.html')
+
+  (is_pdf(print_pdf(r_faq_html, options = list(transferMode = 'ReturnAsStream'))))
+})
+
+
 assert('chrome_print() works with html_paged format', {
   (is_pdf(print_pdf('test-chrome.Rmd')))
 })
