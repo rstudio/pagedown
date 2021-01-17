@@ -571,6 +571,9 @@ print_page = function(
         # Command #17 received
         # if there is another chunk to read -> callback: IO.read
         # if EOF -> callback: command #18 IO.close
+        if (verbose >= 1) message(
+          'Stream chunk received\n'
+        )
         if (isTRUE(msg$result$base64Encoded)) {
           writeBin(jsonlite::base64_dec(msg$result$data), con)
         } else {
@@ -578,6 +581,9 @@ print_page = function(
         }
 
         if (isTRUE(msg$result$eof)) {
+          if (verbose >= 1) message(
+            'No more stream chunk to read: closing Chrome stream\n'
+          )
           close(con)
           ws$send(to_json(list(
             id = 18, sessionId = session_id, method = 'IO.close',
