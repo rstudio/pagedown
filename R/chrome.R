@@ -555,9 +555,7 @@ print_page = function(
           resolve(output)
           token$done = TRUE
         } else {
-          if (verbose >= 1) message(
-            'Reading PDF from a stream\n'
-          )
+          if (verbose >= 1) message('Reading PDF from a stream')
           # open a connection
           con <<- file(output, 'wb')
           # read the first chunk of the stream
@@ -571,9 +569,7 @@ print_page = function(
         # Command #17 received
         # if there is another chunk to read -> callback: IO.read
         # if EOF -> callback: command #18 IO.close
-        if (verbose >= 1) message(
-          'Stream chunk received\n'
-        )
+        if (verbose >= 1) message('Stream chunk received')
         if (isTRUE(msg$result$base64Encoded)) {
           writeBin(jsonlite::base64_dec(msg$result$data), con)
         } else {
@@ -582,7 +578,7 @@ print_page = function(
 
         if (isTRUE(msg$result$eof)) {
           if (verbose >= 1) message(
-            'No more stream chunk to read: closing Chrome stream\n'
+            'No more stream chunk to read: closing Chrome stream'
           )
           close(con)
           ws$send(to_json(list(
