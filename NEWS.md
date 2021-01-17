@@ -14,6 +14,8 @@
 
 - Parts titles in the table of contents no longer crash `chrome_print()`.
 
+- `chrome_print()` is now compatible with the stream transfer mode which can be used to generate large PDF files (#205).
+
 # CHANGES IN pagedown VERSION 0.13
 
 ## NEW FEATURES
