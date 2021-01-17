@@ -364,7 +364,7 @@ is_remote_protocol_ok = function(debug_port,
     Inspector = c('targetCrashed'),
     Network = c('responseReceived'),
     Page = c('loadEventFired'),
-    Runtime = c('bindingCalled')
+    Runtime = c('bindingCalled', 'exceptionThrown')
   )
 
   remote_commands = sapply(names(required_commands), function(domain) {
@@ -615,6 +615,14 @@ print_page = function(
           'Chrome crashed.',
           'This may be caused by insufficient resources.',
           'Please, try to add "--disable-dev-shm-usage" to the `extra_args` argument.'
+        )
+        reject(token$error)
+      }
+      if (method == 'Runtime.exceptionThrown') {
+        token$error = paste0(
+          'A runtime exception has occured in Chrome\n',
+          '  Runtime exception message:\n    ',
+          msg$params$exceptionDetails$exception$description
         )
         reject(token$error)
       }
