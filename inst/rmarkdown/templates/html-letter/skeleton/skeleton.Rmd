@@ -68,6 +68,6 @@ Creative, enthusiastic, excellent taste of design, with great attention to detai
 ![Yihui's signature](https://user-images.githubusercontent.com/163582/47831497-c6656c00-dd5e-11e8-87b3-1f03fa97baa0.png)  
 Yihui Xie  
 Software Engineer  
-RStudio, Inc.
+RStudio, PBC
 
 <script src="https://yihui.name/js/center-img.js"></script>

@@ -1,8 +1,66 @@
+# CHANGES IN pagedown VERSION 0.14
+
+## MAJOR CHANGES
+
+- Paged.js is upgraded from version 0.1.32 to 0.1.43. This update speeds up the rendering time and fixes several bugs (see also <https://www.pagedjs.org/posts/2020-02-25-weekly/>, <https://www.pagedjs.org/posts/2020-03-03-update-pagedjs-0-1-39/>, <https://www.pagedjs.org/posts/2020-04-01-pagedjs-0-1-40/> and <https://www.pagedjs.org/posts/2020-06-22-pagedjs-0-1-42/>) (#202).
+
+## BUG FIXES
+
+- The default value of the `counter-reset` CSS property is correctly set to 0 instead of 1 (see <https://developer.mozilla.org/en-US/docs/Web/CSS/counter-reset>). To reset a `page` CSS counter to 1, the following declaration must be used: `counter-reset: page 1` (#202).
+
+- Numbered example lists (<https://pandoc.org/MANUAL.html#numbered-example-lists>) are correctly numbered (thanks, @atusy, #122 and #202).
+
+- Periods are now supported in titles (thanks, @yves-amevoin and @martinschmelzer, #84, #185 and #202).
+
+- Parts titles in the table of contents no longer crash `chrome_print()`.
+
+- `chrome_print()` is now compatible with the stream transfer mode which can be used to generate large PDF files (#205).
+
+- `chrome_print()` no longer ignores runtime exceptions in Chrome. An R warning is now raised when Chrome encounters a runtime exception (#203).
+
+# CHANGES IN pagedown VERSION 0.13
+
+## NEW FEATURES
+
+- In `html_paged()`, the title of the list of abbreviations can now be modified with the `loa-title` field in the YAML header (thanks, @jtrecenti, #199).
+
+## BUG FIXES
+
+- The option `anchor_sections` is disabled internally. This option is for `rmarkdown::html_document()` to generate anchor links for sections and currently it does not work well for **pagedown** format for now (#195).
+
+- In `chrome_print()`, fixed a bug when the R session temporary directory and the current directory are mounted on different Linux file systems. In that case, `chrome_print()` failed to add an outline to the PDF and raised the warning `cannot rename file ..., reason 'Invalid cross-device link'` (#193). 
+
+# CHANGES IN pagedown VERSION 0.12
+
+## BUG FIXES
+
+- `chrome_print()` no longer ignores the Chrome DevTools event `Inspector.targetCrashed`. An R error is now raised when Chrome crashes (#190). 
+
+# CHANGES IN pagedown VERSION 0.11
+
+## NEW FEATURES
+
+- `chrome_print()` now has a new argument `outline`, with which the user can generate the outline bookmarks for the PDF file. Note, this feature requires [Ghostscript](https://www.ghostscript.com) being installed and detected by `tools::find_gs_cmd()` (thanks, @shrektan, #174 and #179).
+
+# CHANGES IN pagedown VERSION 0.10
+
+## BUG FIXES
+
+- In `html_resume()` template, avoid page breaks after section titles and inside subsections (thanks, @kevinrue, #170).
+
+# CHANGES IN pagedown VERSION 0.9
+
+## BUG FIXES
+
+- In `html_resume()` template, an icon inserted using inline HTML in a section title takes precedence over the default icon and the `data-icon` property (thanks, @Tazinho, #168).
+
 # CHANGES IN pagedown VERSION 0.8
 
 ## BUG FIXES
 
 - In `chrome_print()`, fixed some connection problems to headless Chrome: in some situations, the R session tries to connect to headless Chrome before a target is created. Now, `chrome_print()` controls the target creation by connecting to the `Browser` endpoint (thanks, @gershomtripp, #158).  
+
+- In `html_resume()` template, vertical space is removed when details are omitted (thanks, @mrajeev08, #161).
 
 # CHANGES IN pagedown VERSION 0.7
 

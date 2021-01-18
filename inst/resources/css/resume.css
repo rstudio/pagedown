@@ -280,6 +280,10 @@ h1, h2{
   margin: 0.18in 0 0.1in 0;
 }
 
+.main-block:not(.concise) .details div:empty {
+  margin: 0;
+}
+
 .main-block:not(.concise) .blocks:last-child .details div{
   margin-bottom: 0;
 }
@@ -390,6 +394,16 @@ h1, h2{
   font-family: "Source Code Pro";
   font-weight: 400;
   font-style: normal;
+}
+
+/* Page breaks */
+
+h2 {
+  break-after: avoid;
+}
+
+.blocks {
+  break-inside: avoid;
 }
 
 /* Paged.js viewer */

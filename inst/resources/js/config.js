@@ -50,6 +50,63 @@
     if (beforePaged) await beforePaged();
   };
 
+  // from https://stackoverflow.com/q/21647928
+  const toUTF16BE = x => {
+    let res = '';
+    for (i=0; i < x.length; i++) {
+      let hex = x.charCodeAt(i).toString(16);
+      hex = ('000' + hex).slice(-4);
+      res += hex
+    }
+    res = 'feff' + res ;
+    return res;
+  }
+
+  const findPage = el => {
+    while (el.parentElement) {
+      el = el.parentElement;
+      if (el.getAttribute('data-page-number')) {
+        return parseInt(el.getAttribute('data-page-number'));
+      }
+    }
+    return null;
+  };
+
+  const tocEntriesInfos = ul => {
+    let result = []; // where we store the results
+    // if there is no element, return an empty array
+    if (!ul) {
+      return result;
+    }
+    const tocEntries = ul.children; // tocEntries are 'li' elements
+
+    for (const li of tocEntries) {
+      // Since parts entries in TOC have no anchor,
+      // do not use them in the PDF outline.
+      if (li.classList.contains('part')) {
+        continue;
+      }
+
+      // get the title and encode it in UTF16BE (pdfmark is encoded in UTF16BE with BOM)
+      const title = toUTF16BE(li.querySelector('a').textContent);
+
+      // get the page number
+      const href = li.querySelector('a').getAttribute('href');
+      const el = document.getElementById(href.substring(1));
+      const page = findPage(el);
+
+      // get the children
+      children = tocEntriesInfos(li.querySelector('ul'));
+
+      result.push({
+        title: title,
+        page: page,
+        children: children
+      });
+    }
+
+    return result;
+  };
   window.PagedConfig.after = (flow) => {
     let iframeHTMLWidgets = document.getElementsByTagName('autoscaling-iframe');
     let widgetsReady = Promise.all([...iframeHTMLWidgets].map(el => {return el['ready'];}));
@@ -68,10 +125,13 @@
       if (window.pagedownListener) {
         // the html file is opened for printing
         // call the binding to signal to the R session that Paged.js has finished
+        const tocList = flow.source.querySelector('.toc > ul');
+        const tocInfos = tocEntriesInfos(tocList);
         pagedownListener(JSON.stringify({
           pagedjs: true,
           pages: flow.total,
-          elapsedtime: flow.performance
+          elapsedtime: flow.performance,
+          tocInfos: tocInfos
         }));
         return;
       }
@@ -81,7 +141,7 @@
         return;
       }
       if (window.location.hash) {
-        const id = window.location.hash.replace(/^#/, '');
+        const id = decodeURIComponent(window.location.hash).replace(/^#/, '');
         document.getElementById(id).scrollIntoView({behavior: 'smooth'});
       }
     });

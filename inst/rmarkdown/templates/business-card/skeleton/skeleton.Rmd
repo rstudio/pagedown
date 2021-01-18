@@ -7,7 +7,7 @@ address: |
 logo: "https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png"
 person: 
   - name: Tareef Kawaf
-    title: President of RStudio, Inc.
+    title: President of RStudio, PBC
     repeat: 12
   - name: Yihui Xie
     title: Responsible for `r head(grep('(?<!shut)down$', unique(.packages(T)), value=T, perl=T), 2)`
