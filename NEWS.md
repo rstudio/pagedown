@@ -16,7 +16,7 @@
 
 - `chrome_print()` is now compatible with the stream transfer mode which can be used to generate large PDF files (#205).
 
-- `chrome_print()` no longer ignores runtime errors in Chrome. An R error is now raised when Chrome encounters a runtime error (#203).
+- `chrome_print()` no longer ignores runtime exceptions in Chrome. An R warning is now raised when Chrome encounters a runtime exception (#203).
 
 # CHANGES IN pagedown VERSION 0.13
 

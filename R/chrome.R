@@ -619,12 +619,12 @@ print_page = function(
         reject(token$error)
       }
       if (method == 'Runtime.exceptionThrown') {
-        token$error = paste0(
+        warning(
           'A runtime exception has occured in Chrome\n',
           '  Runtime exception message:\n    ',
-          msg$params$exceptionDetails$exception$description
+          msg$params$exceptionDetails$exception$description,
+          call. = FALSE, immediate. = TRUE
         )
-        reject(token$error)
       }
       if (method == "Page.loadEventFired") {
         ws$send(to_json(list(
