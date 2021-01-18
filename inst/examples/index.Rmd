@@ -30,7 +30,7 @@ Although most web browsers have not implemented the W3C specs for Paged Media, a
 remotes::install_github('rstudio/pagedown')
 ```
 
-To learn more about paged.js and CSS for Paged Media, you may check out [the cheatsheet of paged.js](https://www.pagedmedia.org/about-paged-media/pagedjs-cheatsheet/).
+To learn more about paged.js and CSS for Paged Media, you may check out [the cheatsheet of paged.js](https://www.pagedjs.org/documentation/cheatsheet/).
 
 The **pagedown** package contains output formats for paged HTML documents, letters, resumes, posters, business cards, and so on. Usually there is an R Markdown template for each output format, which you can access from RStudio's menu `File -> New File -> R Markdown -> From Template`.
 
@@ -59,7 +59,10 @@ We have provided a few default CSS stylesheets in this output format:
 ```yaml
 output:
   pagedown::html_paged: 
-    css: ["default-fonts", "default-page", "default"]
+    css:
+      - default-fonts
+      - default-page
+      - default
 ```
 
 To find the actual CSS files behind these names, use `pagedown:::list_css()`. For example, `default-fonts` means the file `resources/css/default-fonts.css` in the installation directory of **pagedown**. The stylesheet `default-fonts` defines the typefaces of the document, `default-page` defines some page properties (such as the page size, running headers and footers, and rules for page breaks), and `default` defines the style of various elements (such as the table of contents).
@@ -68,7 +71,9 @@ If you do not like any of these default stylesheets, you can use a subset of the
 
 ```css
 body {
-  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-family: 
+    "Palatino Linotype", "Book Antiqua",
+    Palatino, serif;
 }
 ```
 
@@ -77,7 +82,10 @@ Then include this CSS file via the `css` option:
 ```yaml
 output:
   pagedown::html_paged: 
-    css: ["my-fonts.css", "default-page", "default"]
+    css:
+      - my-fonts.css
+      - default-page
+      - default
 ```
 
 Note that this overriding mechanism also works for other output formats in **pagedown**.
@@ -88,7 +96,7 @@ There are three ways to print to PDF:
 
 1. with Google Chrome or Chromium using the menu "Print" or by pressing `Ctrl + P` (or `Command + P` on macOS). Remember to allow background graphics to be printed.
 
-1. using the function `pagedown::chrome_print()`. Its first argument (`input`) accepts a path to a local Rmd or HTML file or an URL. Google Chrome or Chromium must be installed on your system.
+1. using the function `chrome_print()`. Its first argument (`input`) accepts a path to a local Rmd or HTML file or an URL. Google Chrome or Chromium must be installed on your system.
 
 1. in RStudio, adding the following line in the YAML header of your Rmd file:
 
@@ -137,9 +145,10 @@ Here is a minimal Dockerfile using a popular image from the [Rocker project](htt
 ```bash
 FROM rocker/verse:3.6.0
 
-RUN apt-get update -qq && apt-get -y install \
-  libssl-dev \
-  chromium
+RUN apt-get update -qq && \
+    apt-get -y install \
+    libssl-dev \
+    chromium
 
 RUN install2.r pagedown
 ```
@@ -172,18 +181,19 @@ For example, you may obtain the following error message:
 In that case, you need to use a different mean of communication between Chrome and R by changing the `transferMode` option:
 
 ```r
-chrome_print(..., options = list(transferMode = "ReturnAsStream"))
+chrome_print(
+  ...,
+  options = list(transferMode = "ReturnAsStream")
+)
 ```
 
 On Linux environments with minimal resources (like a container), you also can get this error message:
 
 ```
-Chrome crashed.
-This may be caused by insufficient resources.
-Please, try to add "--disable-dev-shm-usage" to the `extra_args` argument.
+Chrome crashed. This may be caused by insufficient resources. Please, try to add "--disable-dev-shm-usage" to the `extra_args` argument.
 ```
 
-Here, you just have to follow the advice and add `"--disable-dev-shm-usage"` to the `extra_args` argument of `chrome_print()`. 
+Here, you just have to follow the advice!
 
 # Applications 
 
@@ -198,7 +208,7 @@ knitr::include_graphics('https://user-images.githubusercontent.com/163582/499836
 
 The R Markdown source document should contain two parts titled "Aside" (for the sidebar) and "Main" (for the main body), respectively. Each part can contain any numbers of sections (e.g., education background and working experience). Each section can contain any numbers of subsections, and you can write more content in a subsection.^[In case you are not very familiar with the Markdown syntax for section headings, a series of `=` under a heading is equivalent to `#` before a heading, and a series of `-` is equivalent to `##`. See Pandoc's manual for details: https://pandoc.org/MANUAL.html#headers.] Below is a quick example:
 
-```markdown
+```sourceCode
 ---
 title: "Someone's resume"
 author: Your Name
@@ -279,7 +289,7 @@ You can write arbitrary content after the third paragraph (e.g., more paragraphs
 
 If you want to write a side note, use an "aside" block, e.g.,
 
-```markdown
+```sourceCode
 Section
 ---------------
 
@@ -341,7 +351,7 @@ To create a simple business card, you can use the `pagedown::business_card` form
 
 A single business card can be created with the following R Markdown file (this file contains only a YAML header).
 
-```yaml
+```sourceCode
 ---
 name: Jane Doe
 title: Miss Nobody
@@ -398,7 +408,7 @@ output: pagedown::business_card
 
 You also can use markdown to define a card. Be aware to use the `slot` attributes as follows.
 
-```markdown
+```sourceCode
 ---
 logo: "logo.png"
 paperwidth: 8.5in
@@ -427,7 +437,7 @@ Sunshine, CA 90000
 You can produce business cards for members of an organization sharing some informations (address, website...).  
 Common informations are declared as top level variables in the YAML header. Custom cards are defined using the `person` variable: each `key: value` pair of a `person` block overrides the corresponding top level pair.
 
-```yaml
+```sourceCode
 ---
 phone: "+1 123-456-7890"
 url: www.example.com
@@ -551,7 +561,7 @@ If you render this card, you will see that the default style does not suit well 
 Finally, you can modify the style of the card using CSS rules.  
 The markup of a card can be represented as follows^[This is technically incorrect since the card template use a shadow DOM.]:
 
-```html
+```sourceCode
 <div class="wrapper" data-repeat="1">
   <img class="logo" src="logo.png" alt="Logo" />
   <div class="me">
@@ -761,7 +771,7 @@ They can be used as value for the `background-image` CSS property:
 You also can add textual content on the front and back covers using two special divs of classes `front-cover` and `back-cover`:
 
 
-```markdown
+```sourceCode
 ---
 output:
   pagedown::html_paged:
@@ -884,7 +894,7 @@ $$
 
 Here is an example of an inline expression: $p(x|y) = \frac{p(y|x)p(x)}{p(y)}$.
 
-## Figures and tables
+## Figures and tables {.page-break-before}
 
 Table \@ref(tab:test-table):
 
