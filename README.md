@@ -71,7 +71,7 @@ Want more poster styles? You may take a look at [Brent Thorne's **posterdown** p
 
 - Beatriz Milz's CV: https://beatrizmilz.github.io/resume/resume.html
 
-- `pagedreport` by Thomas Vroylandt and David Keyes, which help using `pagedown` with some templates proposals : https://github.com/rfortherestofus/pagedreport
+- **pagedreport** by Thomas Vroylandt and David Keyes which helps using **pagedown** with some templates proposals: https://github.com/rfortherestofus/pagedreport
 
 ## Authors and contributors
 
