@@ -15,7 +15,7 @@ You may install this package from Github:
 remotes::install_github('rstudio/pagedown')
 ```
 
-This package requires a recent version of Pandoc (>= 2.2.3). If you use RStudio, you are recommended to install the [latest version](https://www.rstudio.com/products/rstudio/download/) (>= 1.2.1335), which has bundled Pandoc 2.x, otherwise you need to install Pandoc separately.
+This package requires a recent version of Pandoc (>= 2.2.3). If you use RStudio, you are recommended to install the [latest version](https://rstudio.com/products/rstudio/download/) (>= 1.2.1335), which has bundled Pandoc 2.x, otherwise you need to install Pandoc separately.
 
 Below are some existing R Markdown output formats and examples.
 
@@ -34,6 +34,8 @@ Below are some existing R Markdown output formats and examples.
 ## Resume (`pagedown::html_resume`)
 
 [![An HTML resume](https://user-images.githubusercontent.com/163582/46879762-7a34a500-ce0c-11e8-87e3-496f3577ff05.png)](https://pagedown.rbind.io/html-resume/)
+
+You may want to check out [the **datadrivencv** package](https://github.com/nstrayer/datadrivencv), which allows you to build a CV using data from a spreadsheet and `pagedown::html_resume`.
 
 ## Posters
 

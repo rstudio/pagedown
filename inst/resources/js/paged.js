@@ -1,15 +1,19 @@
+/**
+ * @license Paged.js v0.1.43 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
+ */
+
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
-	global.PagedPolyfill = factory();
-}(typeof self !== 'undefined' ? self : this, function () { 'use strict';
+	(global = global || self, global.PagedPolyfill = factory());
+}(this, (function () { 'use strict';
 
 	function createCommonjsModule(fn, module) {
 		return module = { exports: {} }, fn(module, module.exports), module.exports;
 	}
 
 	function getCjsExportFromNamespace (n) {
-		return n && n.default || n;
+		return n && n['default'] || n;
 	}
 
 	var isImplemented = function () {
@@ -22,6 +26,7 @@
 
 	var isImplemented$1 = function () {
 		try {
+			Object.keys("primitive");
 			return true;
 		} catch (e) {
 	 return false;
@@ -313,6 +318,95 @@
 	});
 	var eventEmitter_1 = eventEmitter.methods;
 
+	/**
+	 * Hooks allow for injecting functions that must all complete in order before finishing
+	 * They will execute in parallel but all must finish before continuing
+	 * Functions may return a promise if they are asycn.
+	 * From epubjs/src/utils/hooks
+	 * @param {any} context scope of this
+	 * @example this.content = new Hook(this);
+	 */
+	class Hook {
+		constructor(context){
+			this.context = context || this;
+			this.hooks = [];
+		}
+
+		/**
+		 * Adds a function to be run before a hook completes
+		 * @example this.content.register(function(){...});
+		 * @return {undefined} void
+		 */
+		register(){
+			for(var i = 0; i < arguments.length; ++i) {
+				if (typeof arguments[i]  === "function") {
+					this.hooks.push(arguments[i]);
+				} else {
+					// unpack array
+					for(var j = 0; j < arguments[i].length; ++j) {
+						this.hooks.push(arguments[i][j]);
+					}
+				}
+			}
+		}
+
+		/**
+		 * Triggers a hook to run all functions
+		 * @example this.content.trigger(args).then(function(){...});
+		 * @return {Promise} results
+		 */
+		trigger(){
+			var args = arguments;
+			var context = this.context;
+			var promises = [];
+
+			this.hooks.forEach(function(task) {
+				var executing = task.apply(context, args);
+
+				if(executing && typeof executing["then"] === "function") {
+					// Task is a function that returns a promise
+					promises.push(executing);
+				}
+				// Otherwise Task resolves immediately, add resolved promise with result
+				promises.push(new Promise((resolve, reject) => {
+					resolve(executing);
+				}));
+			});
+
+
+			return Promise.all(promises);
+		}
+
+		/**
+	   * Triggers a hook to run all functions synchronously
+	   * @example this.content.trigger(args).then(function(){...});
+	   * @return {Array} results
+	   */
+		triggerSync(){
+			var args = arguments;
+			var context = this.context;
+			var results = [];
+
+			this.hooks.forEach(function(task) {
+				var executing = task.apply(context, args);
+
+				results.push(executing);
+			});
+
+
+			return results;
+		}
+
+		// Adds a function to be run before a hook completes
+		list(){
+			return this.hooks;
+		}
+
+		clear(){
+			return this.hooks = [];
+		}
+	}
+
 	function getBoundingClientRect(element) {
 		if (!element) {
 			return;
@@ -350,7 +444,7 @@
 	 */
 	function UUID() {
 		var d = new Date().getTime();
-		if (typeof performance !== "undefined" && typeof performance.now === "function"){
+		if (typeof performance !== "undefined" && typeof performance.now === "function") {
 			d += performance.now(); //use high-precision timer if available
 		}
 		return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -362,7 +456,7 @@
 
 	function attr(element, attributes) {
 		for (var i = 0; i < attributes.length; i++) {
-			if(element.hasAttribute(attributes[i])) {
+			if (element.hasAttribute(attributes[i])) {
 				return element.getAttribute(attributes[i]);
 			}
 		}
@@ -376,6 +470,7 @@
 			throw new TypeError("`CSS.escape` requires an argument.");
 		}
 		var string = String(value);
+
 		var length = string.length;
 		var index = -1;
 		var codeUnit;
@@ -383,6 +478,9 @@
 		var firstCodeUnit = string.charCodeAt(0);
 		while (++index < length) {
 			codeUnit = string.charCodeAt(index);
+
+
+
 			// Note: there’s no need to special-case astral symbols, surrogate
 			// pairs, or lone surrogates.
 
@@ -423,6 +521,15 @@
 				result += "\\" + string.charAt(index);
 				continue;
 			}
+
+			// support for period character in id
+			if (codeUnit == 0x002E) {
+				if (string.charAt(0) == "#") {
+					result += "\\.";
+					continue;
+				}
+			}
+
 
 			// If the character is not handled by one of the above rules and is
 			// greater than or equal to U+0080, is `-` (U+002D) or `_` (U+005F), or
@@ -517,62 +624,85 @@
 	}
 
 	function nodeAfter(node, limiter) {
-		let after = node;
+		if (limiter && node === limiter) {
+			return;
+		}
+		let significantNode = nextSignificantNode(node);
+		if (significantNode) {
+			return significantNode;
+		}
+		if (node.parentNode) {
+			while ((node = node.parentNode)) {
+				if (limiter && node === limiter) {
+					return;
+				}
+				significantNode = nextSignificantNode(node);
+				if (significantNode) {
+					return significantNode;
+				}
+			}
+		}
+	}
 
-		if (after.nextSibling) {
-			if (limiter && node === limiter) {
-				return;
-			}
-			after = after.nextSibling;
-		} else {
-			while (after) {
-				after = after.parentNode;
-				if (limiter && after === limiter) {
-					after = undefined;
-					break;
+	function nodeBefore(node, limiter) {
+		if (limiter && node === limiter) {
+			return;
+		}
+		let significantNode = previousSignificantNode(node);
+		if (significantNode) {
+			return significantNode;
+		}
+		if (node.parentNode) {
+			while ((node = node.parentNode)) {
+				if (limiter && node === limiter) {
+					return;
 				}
-				if (after && after.nextSibling) {
-					after = after.nextSibling;
-					break;
+				significantNode = previousSignificantNode(node);
+				if (significantNode) {
+					return significantNode;
 				}
 			}
+		}
+	}
+
+	function elementAfter(node, limiter) {
+		let after = nodeAfter(node, limiter);
+
+		while (after && after.nodeType !== 1) {
+			after = nodeAfter(after, limiter);
 		}
 
 		return after;
 	}
 
-	function nodeBefore(node, limiter) {
-		let before = node;
-		if (before.previousSibling) {
-			if (limiter && node === limiter) {
-				return;
-			}
-			before = before.previousSibling;
-		} else {
-			while (before) {
-				before = before.parentNode;
-				if (limiter && before === limiter) {
-					before = undefined;
-					break;
-				}
-				if (before && before.previousSibling) {
-					before = before.previousSibling;
-					break;
-				}
-			}
+	function elementBefore(node, limiter) {
+		let before = nodeBefore(node, limiter);
+
+		while (before && before.nodeType !== 1) {
+			before = nodeBefore(before, limiter);
 		}
 
 		return before;
 	}
 
-	function elementAfter(node, limiter) {
-		let after = nodeAfter(node);
+	function displayedElementAfter(node, limiter) {
+		let after = elementAfter(node, limiter);
 
-		while (after && after.nodeType !== 1) {
-			after = nodeAfter(after);
+		while (after && after.dataset.undisplayed) {
+			after = elementAfter(after);
 		}
 
 		return after;
+	}
+
+	function displayedElementBefore(node, limiter) {
+		let before = elementBefore(node, limiter);
+
+		while (before && before.dataset.undisplayed) {
+			before = elementBefore(before);
+		}
+
+		return before;
 	}
 
 	function rebuildAncestors(node) {
@@ -707,15 +837,16 @@
 		return false;
 	}
 
-	function needsPageBreak(node) {
-		if( typeof node !== "undefined" &&
-				typeof node.dataset !== "undefined" &&
-				(node.dataset.page || node.dataset.afterPage)
-			 ) {
-			return true;
+	function needsPageBreak(node, previousSignificantNode) {
+		if (typeof node === "undefined" || !previousSignificantNode || isIgnorable(node)) {
+			return false;
 		}
-
-		return false;
+		if (node.dataset && node.dataset.undisplayed) {
+			return false;
+		}
+		const previousSignificantNodePage = previousSignificantNode.dataset ? previousSignificantNode.dataset.page : undefined;
+		const currentNodePage = node.dataset ? node.dataset.page : undefined;
+		return currentNodePage !== previousSignificantNodePage;
 	}
 
 	function *words(node) {
@@ -778,7 +909,7 @@
 			return true;
 		}
 
-		if (node.style.display === "none") {
+		if (node.style && node.style.display === "none") {
 			return false;
 		}
 
@@ -926,93 +1057,156 @@
 		return index;
 	}
 
-	/**
-	 * Hooks allow for injecting functions that must all complete in order before finishing
-	 * They will execute in parallel but all must finish before continuing
-	 * Functions may return a promise if they are asycn.
-	 * From epubjs/src/utils/hooks
-	 * @param {any} context scope of this
-	 * @example this.content = new Hook(this);
-	 */
-	class Hook {
-		constructor(context){
-			this.context = context || this;
-			this.hooks = [];
-		}
 
-		/**
-		 * Adds a function to be run before a hook completes
-		 * @example this.content.register(function(){...});
-		 * @return {undefined} void
-		 */
-		register(){
-			for(var i = 0; i < arguments.length; ++i) {
-				if (typeof arguments[i]  === "function") {
-					this.hooks.push(arguments[i]);
-				} else {
-					// unpack array
-					for(var j = 0; j < arguments[i].length; ++j) {
-						this.hooks.push(arguments[i][j]);
-					}
+	/**
+	 * Throughout, whitespace is defined as one of the characters
+	 *  "\t" TAB \u0009
+	 *  "\n" LF  \u000A
+	 *  "\r" CR  \u000D
+	 *  " "  SPC \u0020
+	 *
+	 * This does not use Javascript's "\s" because that includes non-breaking
+	 * spaces (and also some other characters).
+	 */
+
+	/**
+	 * Determine if a node should be ignored by the iterator functions.
+	 * taken from https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Whitespace#Whitespace_helper_functions
+	 *
+	 * @param {Node} node An object implementing the DOM1 |Node| interface.
+	 * @return {boolean} true if the node is:
+	 *  1) A |Text| node that is all whitespace
+	 *  2) A |Comment| node
+	 *  and otherwise false.
+	 */
+	function isIgnorable(node) {
+		return (node.nodeType === 8) || // A comment node
+			((node.nodeType === 3) && isAllWhitespace(node)); // a text node, all whitespace
+	}
+
+	/**
+	 * Determine whether a node's text content is entirely whitespace.
+	 *
+	 * @param {Node} node  A node implementing the |CharacterData| interface (i.e., a |Text|, |Comment|, or |CDATASection| node
+	 * @return {boolean} true if all of the text content of |nod| is whitespace, otherwise false.
+	 */
+	function isAllWhitespace(node) {
+		return !(/[^\t\n\r ]/.test(node.textContent));
+	}
+
+	/**
+	 * Version of |previousSibling| that skips nodes that are entirely
+	 * whitespace or comments.  (Normally |previousSibling| is a property
+	 * of all DOM nodes that gives the sibling node, the node that is
+	 * a child of the same parent, that occurs immediately before the
+	 * reference node.)
+	 *
+	 * @param {ChildNode} sib  The reference node.
+	 * @return {Node|null} Either:
+	 *  1) The closest previous sibling to |sib| that is not ignorable according to |is_ignorable|, or
+	 *  2) null if no such node exists.
+	 */
+	function previousSignificantNode(sib) {
+		while ((sib = sib.previousSibling)) {
+			if (!isIgnorable(sib)) return sib;
+		}
+		return null;
+	}
+
+	function breakInsideAvoidParentNode(node) {
+		while ((node = node.parentNode)) {
+			if (node && node.dataset && node.dataset.breakInside === "avoid") {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Find a parent with a given node name.
+	 * @param {Node} node - initial Node
+	 * @param {string} nodeName - node name (eg. "TD", "TABLE", "STRONG"...)
+	 * @param {Node} limiter - go up to the parent until there's no more parent or the current node is equals to the limiter
+	 * @returns {Node|undefined} - Either:
+	 *  1) The closest parent for a the given node name, or
+	 *  2) undefined if no such node exists.
+	 */
+	function parentOf(node, nodeName, limiter) {
+		if (limiter && node === limiter) {
+			return;
+		}
+		if (node.parentNode) {
+			while ((node = node.parentNode)) {
+				if (limiter && node === limiter) {
+					return;
+				}
+				if (node.nodeName === nodeName) {
+					return node;
 				}
 			}
 		}
+	}
 
-		/**
-		 * Triggers a hook to run all functions
-		 * @example this.content.trigger(args).then(function(){...});
-		 * @return {Promise} results
-		 */
-		trigger(){
-			var args = arguments;
-			var context = this.context;
-			var promises = [];
+	/**
+	 * Version of |nextSibling| that skips nodes that are entirely
+	 * whitespace or comments.
+	 *
+	 * @param {ChildNode} sib  The reference node.
+	 * @return {Node|null} Either:
+	 *  1) The closest next sibling to |sib| that is not ignorable according to |is_ignorable|, or
+	 *  2) null if no such node exists.
+	 */
+	function nextSignificantNode(sib) {
+		while ((sib = sib.nextSibling)) {
+			if (!isIgnorable(sib)) return sib;
+		}
+		return null;
+	}
 
-			this.hooks.forEach(function(task) {
-				var executing = task.apply(context, args);
+	function filterTree(content, func, what) {
+		const treeWalker = document.createTreeWalker(
+			content || this.dom,
+			what || NodeFilter.SHOW_ALL,
+			func ? { acceptNode: func } : null,
+			false
+		);
 
-				if(executing && typeof executing["then"] === "function") {
-					// Task is a function that returns a promise
-					promises.push(executing);
-				}
-				// Otherwise Task resolves immediately, add resolved promise with result
-				promises.push(new Promise((resolve, reject) => {
-					resolve(executing);
-				}));
-			});
+		let node;
+		let current;
+		node = treeWalker.nextNode();
+		while(node) {
+			current = node;
+			node = treeWalker.nextNode();
+			current.parentNode.removeChild(current);
+		}
+	}
 
+	/**
+	 * Layout
+	 * @class
+	 */
+	class BreakToken {
 
-			return Promise.all(promises);
+		constructor(node, offset) {
+			this.node = node;
+			this.offset = offset;
 		}
 
-	  /**
-	   * Triggers a hook to run all functions synchronously
-	   * @example this.content.trigger(args).then(function(){...});
-	   * @return {Array} results
-	   */
-	  triggerSync(){
-	    var args = arguments;
-	    var context = this.context;
-	    var results = [];
-
-	    this.hooks.forEach(function(task) {
-	      var executing = task.apply(context, args);
-
-	      results.push(executing);
-	    });
-
-
-	    return results;
-	  }
-
-		// Adds a function to be run before a hook completes
-		list(){
-			return this.hooks;
+		equals(otherBreakToken) {
+			if (!otherBreakToken) {
+				return false;
+			}
+			if (this["node"] && otherBreakToken["node"] &&
+				this["node"] !== otherBreakToken["node"]) {
+				return false;
+			}
+			if (this["offset"] && otherBreakToken["offset"] &&
+				this["offset"] !== otherBreakToken["offset"]) {
+				return false;
+			}
+			return true;
 		}
 
-		clear(){
-			return this.hooks = [];
-		}
 	}
 
 	const MAX_CHARS_PER_BREAK = 1500;
@@ -1023,7 +1217,7 @@
 	 */
 	class Layout {
 
-		constructor(element, hooks, maxChars) {
+		constructor(element, hooks, options) {
 			this.element = element;
 
 			this.bounds = this.element.getBoundingClientRect();
@@ -1040,14 +1234,18 @@
 				this.hooks.onBreakToken = new Hook();
 			}
 
-			this.maxChars = maxChars || MAX_CHARS_PER_BREAK;
+			this.settings = options || {};
+
+			this.maxChars = this.settings.maxChars || MAX_CHARS_PER_BREAK;
+			this.forceRenderBreak = false;
 		}
 
-		async renderTo(wrapper, source, breakToken, bounds=this.bounds) {
+		async renderTo(wrapper, source, breakToken, bounds = this.bounds) {
 			let start = this.getStart(source, breakToken);
 			let walker = walk(start, source);
 
 			let node;
+			let prevNode;
 			let done;
 			let next;
 
@@ -1056,8 +1254,11 @@
 
 			let length = 0;
 
+			let prevBreakToken = breakToken || new BreakToken(start);
+
 			while (!done && !newBreakToken) {
 				next = walker.next();
+				prevNode = node;
 				node = next.value;
 				done = next.done;
 
@@ -1069,7 +1270,12 @@
 						await this.waitForImages(imgs);
 					}
 
-					newBreakToken = this.findBreakToken(wrapper, source, bounds);
+					newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
+
+					if (newBreakToken && newBreakToken.equals(prevBreakToken)) {
+						console.warn("Unable to layout item: ", prevNode);
+						return undefined;
+					}
 					return newBreakToken;
 				}
 
@@ -1077,7 +1283,6 @@
 
 				// Check if the rendered element has a break set
 				if (hasRenderedContent && this.shouldBreak(node)) {
-
 					this.hooks && this.hooks.layout.trigger(wrapper, this);
 
 					let imgs = wrapper.querySelectorAll("img");
@@ -1085,10 +1290,15 @@
 						await this.waitForImages(imgs);
 					}
 
-					newBreakToken = this.findBreakToken(wrapper, source, bounds);
+					newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
 
 					if (!newBreakToken) {
 						newBreakToken = this.breakAt(node);
+					}
+
+					if (newBreakToken && newBreakToken.equals(prevBreakToken)) {
+						console.warn("Unable to layout item: ", node);
+						return undefined;
 					}
 
 					length = 0;
@@ -1113,6 +1323,21 @@
 					walker = walk(nodeAfter(node, source), source);
 				}
 
+				if (this.forceRenderBreak) {
+					this.hooks && this.hooks.layout.trigger(wrapper, this);
+
+					newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
+
+					if (!newBreakToken) {
+						newBreakToken = this.breakAt(node);
+					}
+
+					length = 0;
+					this.forceRenderBreak = false;
+
+					break;
+				}
+
 				// Only check x characters
 				if (length >= this.maxChars) {
 
@@ -1123,7 +1348,12 @@
 						await this.waitForImages(imgs);
 					}
 
-					newBreakToken = this.findBreakToken(wrapper, source, bounds);
+					newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
+
+					if (newBreakToken && newBreakToken.equals(prevBreakToken)) {
+						console.warn("Unable to layout item: ", node);
+						return undefined;
+					}
 
 					if (newBreakToken) {
 						length = 0;
@@ -1135,15 +1365,23 @@
 			return newBreakToken;
 		}
 
-		breakAt(node, offset=0) {
-			return {
+		breakAt(node, offset = 0) {
+			let newBreakToken = new BreakToken(
 				node,
 				offset
-			};
+			);
+			let breakHooks = this.hooks.onBreakToken.triggerSync(newBreakToken, undefined, node, this);
+			breakHooks.forEach((newToken) => {
+				if (typeof newToken != "undefined") {
+					newBreakToken = newToken;
+				}
+			});
+
+			return newBreakToken;
 		}
 
 		shouldBreak(node) {
-			let previousSibling = node.previousSibling;
+			let previousSibling = previousSignificantNode(node);
 			let parentNode = node.parentNode;
 			let parentBreakBefore = needsBreakBefore(node) && parentNode && !previousSibling && needsBreakBefore(parentNode);
 			let doubleBreakBefore;
@@ -1152,7 +1390,11 @@
 				doubleBreakBefore = node.dataset.breakBefore === parentNode.dataset.breakBefore;
 			}
 
-			return !doubleBreakBefore && needsBreakBefore(node) || needsPreviousBreakAfter(node) || needsPageBreak(node);
+			return !doubleBreakBefore && needsBreakBefore(node) || needsPreviousBreakAfter(node) || needsPageBreak(node, previousSibling);
+		}
+
+		forceBreak() {
+			this.forceRenderBreak = true;
 		}
 
 		getStart(source, breakToken) {
@@ -1168,7 +1410,7 @@
 			return start;
 		}
 
-		append(node, dest, breakToken, shallow=true, rebuild=true) {
+		append(node, dest, breakToken, shallow = true, rebuild = true) {
 
 			let clone = cloneNode(node, !shallow);
 
@@ -1199,7 +1441,7 @@
 				dest.appendChild(clone);
 			}
 
-			let nodeHooks = this.hooks.renderNode.triggerSync(clone, node);
+			let nodeHooks = this.hooks.renderNode.triggerSync(clone, node, this);
 			nodeHooks.forEach((newNode) => {
 				if (typeof newNode != "undefined") {
 					clone = newNode;
@@ -1219,16 +1461,16 @@
 		async awaitImageLoaded(image) {
 			return new Promise(resolve => {
 				if (image.complete !== true) {
-					image.onload = function() {
-						let { width, height } = window.getComputedStyle(image);
+					image.onload = function () {
+						let {width, height} = window.getComputedStyle(image);
 						resolve(width, height);
 					};
-					image.onerror = function(e) {
-						let { width, height } = window.getComputedStyle(image);
+					image.onerror = function (e) {
+						let {width, height} = window.getComputedStyle(image);
 						resolve(width, height, e);
 					};
 				} else {
-					let { width, height } = window.getComputedStyle(image);
+					let {width, height} = window.getComputedStyle(image);
 					resolve(width, height);
 				}
 			});
@@ -1248,7 +1490,7 @@
 					break;
 				}
 
-				if(window.getComputedStyle(node)["break-inside"] === "avoid") {
+				if (window.getComputedStyle(node)["break-inside"] === "avoid") {
 					breakNode = node;
 					break;
 				}
@@ -1270,12 +1512,33 @@
 
 					if (!renderedNode) {
 						// Find closest element with data-ref
-						renderedNode = findElement(prevValidNode(temp), rendered);
-						return;
+						let prevNode = prevValidNode(temp);
+						if (!isElement(prevNode)) {
+							prevNode = prevNode.parentElement;
+						}
+						renderedNode = findElement(prevNode, rendered);
+						// Check if temp is the last rendered node at its level.
+						if (!temp.nextSibling) {
+							// We need to ensure that the previous sibling of temp is fully rendered.
+							const renderedNodeFromSource = findElement(renderedNode, source);
+							const walker = document.createTreeWalker(renderedNodeFromSource, NodeFilter.SHOW_ELEMENT);
+							const lastChildOfRenderedNodeFromSource = walker.lastChild();
+							const lastChildOfRenderedNodeMatchingFromRendered = findElement(lastChildOfRenderedNodeFromSource, rendered);
+							// Check if we found that the last child in source
+							if (!lastChildOfRenderedNodeMatchingFromRendered) {
+								// Pending content to be rendered before virtual break token
+								return;
+							}
+							// Otherwise we will return a break token as per below
+						}
+						// renderedNode is actually the last unbroken box that does not overflow.
+						// Break Token is therefore the next sibling of renderedNode within source node.
+						node = findElement(renderedNode, source).nextSibling;
+						offset = 0;
+					} else {
+						node = findElement(renderedNode, source);
+						offset = 0;
 					}
-
-					node = findElement(renderedNode, source);
-					offset = 0;
 				} else {
 					renderedNode = findElement(container, rendered);
 
@@ -1285,8 +1548,14 @@
 
 					parent = findElement(renderedNode, source);
 					index = indexOfTextNode(temp, parent);
-					node = child(parent, index);
-					offset = 0;
+					// No seperatation for the first textNode of an element
+					if(index === 0) {
+						node = parent;
+						offset = 0;
+					} else {
+						node = child(parent, index);
+						offset = 0;
+					}
 				}
 			} else {
 				renderedNode = findElement(container.parentNode, rendered);
@@ -1311,16 +1580,16 @@
 				return;
 			}
 
-			return {
+			return new BreakToken(
 				node,
 				offset
-			};
+			);
 
 		}
 
-		findBreakToken(rendered, source, bounds=this.bounds, extract=true) {
+		findBreakToken(rendered, source, bounds = this.bounds, prevBreakToken, extract = true) {
 			let overflow = this.findOverflow(rendered, bounds);
-			let breakToken;
+			let breakToken, breakLetter;
 
 			let overflowHooks = this.hooks.onOverflow.triggerSync(overflow, rendered, bounds, this);
 			overflowHooks.forEach((newOverflow) => {
@@ -1331,7 +1600,7 @@
 
 			if (overflow) {
 				breakToken = this.createBreakToken(overflow, rendered, source);
-
+				// breakToken is nullable
 				let breakHooks = this.hooks.onBreakToken.triggerSync(breakToken, overflow, rendered, this);
 				breakHooks.forEach((newToken) => {
 					if (typeof newToken != "undefined") {
@@ -1339,27 +1608,37 @@
 					}
 				});
 
+				// Stop removal if we are in a loop
+				if (breakToken && breakToken.equals(prevBreakToken)) {
+					return breakToken;
+				}
+
+				if (breakToken && breakToken["node"] && breakToken["offset"] && breakToken["node"].textContent) {
+					breakLetter = breakToken["node"].textContent.charAt(breakToken["offset"]);
+				} else {
+					breakLetter = undefined;
+				}
 
 				if (breakToken && breakToken.node && extract) {
-					this.removeOverflow(overflow);
+					this.removeOverflow(overflow, breakLetter);
 				}
 
 			}
 			return breakToken;
 		}
 
-		hasOverflow(element, bounds=this.bounds) {
+		hasOverflow(element, bounds = this.bounds) {
 			let constrainingElement = element && element.parentNode; // this gets the element, instead of the wrapper for the width workaround
-			let { width } = element.getBoundingClientRect();
+			let {width} = element.getBoundingClientRect();
 			let scrollWidth = constrainingElement ? constrainingElement.scrollWidth : 0;
 			return Math.max(Math.floor(width), scrollWidth) > Math.round(bounds.width);
 		}
 
-		findOverflow(rendered, bounds=this.bounds) {
+		findOverflow(rendered, bounds = this.bounds) {
 			if (!this.hasOverflow(rendered, bounds)) return;
 
 			let start = Math.round(bounds.left);
-			let end =  Math.round(bounds.right);
+			let end = Math.round(bounds.right);
 			let range;
 
 			let walker = walk(rendered.firstChild, rendered);
@@ -1377,14 +1656,19 @@
 
 				if (node) {
 					let pos = getBoundingClientRect(node);
-					let left = Math.floor(pos.left);
+					let left = Math.round(pos.left);
 					let right = Math.floor(pos.right);
 
 					if (!range && left >= end) {
 						// Check if it is a float
 						let isFloat = false;
 
-						if (isElement(node) ) {
+						// Check if the node is inside a break-inside: avoid table cell
+						const insideTableCell = parentOf(node, "TD", rendered);
+						if (insideTableCell && window.getComputedStyle(insideTableCell)["break-inside"] === "avoid") {
+							// breaking inside a table cell produces unexpected result, as a workaround, we forcibly avoid break inside in a cell.
+							prev = insideTableCell;
+						} else if (isElement(node)) {
 							let styles = window.getComputedStyle(node);
 							isFloat = styles.getPropertyValue("float") !== "none";
 							skip = styles.getPropertyValue("break-inside") === "avoid";
@@ -1395,27 +1679,27 @@
 
 						if (prev) {
 							range = document.createRange();
-							range.setStartBefore(prev);
+							range.selectNode(prev);
 							break;
 						}
 
 						if (!br && !isFloat && isElement(node)) {
 							range = document.createRange();
-							range.setStartBefore(node);
+							range.selectNode(node);
 							break;
 						}
 
 						if (isText(node) && node.textContent.trim().length) {
 							range = document.createRange();
-							range.setStartBefore(node);
+							range.selectNode(node);
 							break;
 						}
 
 					}
 
 					if (!range && isText(node) &&
-							node.textContent.trim().length &&
-							window.getComputedStyle(node.parentNode)["break-inside"] !== "avoid") {
+						node.textContent.trim().length &&
+						!breakInsideAvoidParentNode(node.parentNode)) {
 
 						let rects = getClientRects(node);
 						let rect;
@@ -1427,7 +1711,7 @@
 							}
 						}
 
-						if(left >= end) {
+						if (left >= end) {
 							range = document.createRange();
 							offset = this.textBreak(node, start, end);
 							if (!offset) {
@@ -1440,7 +1724,7 @@
 					}
 
 					// Skip children
-					if (skip || right < end) {
+					if (skip || right <= end) {
 						next = nodeAfter(node, rendered);
 						if (next) {
 							walker = walk(next, rendered);
@@ -1459,7 +1743,7 @@
 
 		}
 
-		findEndToken(rendered, source, bounds=this.bounds) {
+		findEndToken(rendered, source, bounds = this.bounds) {
 			if (rendered.childNodes.length === 0) {
 				return;
 			}
@@ -1471,7 +1755,7 @@
 				if (!validNode(lastChild)) {
 					// Only get elements with refs
 					lastChild = lastChild.previousSibling;
-				} else if(!validNode(lastChild.lastChild)) {
+				} else if (!validNode(lastChild.lastChild)) {
 					// Deal with invalid dom items
 					lastChild = prevValidNode(lastChild.lastChild);
 					break;
@@ -1556,26 +1840,42 @@
 			return offset;
 		}
 
-		removeOverflow(overflow) {
+		removeOverflow(overflow, breakLetter) {
 			let {startContainer} = overflow;
 			let extracted = overflow.extractContents();
 
-			this.hyphenateAtBreak(startContainer);
+			this.hyphenateAtBreak(startContainer, breakLetter);
 
 			return extracted;
 		}
 
-		hyphenateAtBreak(startContainer) {
+		hyphenateAtBreak(startContainer, breakLetter) {
 			if (isText(startContainer)) {
 				let startText = startContainer.textContent;
-				let prevLetter = startText[startText.length-1];
+				let prevLetter = startText[startText.length - 1];
 
 				// Add a hyphen if previous character is a letter or soft hyphen
-				if (/^\w|\u00AD$/.test(prevLetter)) {
+				if (
+					(breakLetter && /^\w|\u00AD$/.test(prevLetter) && /^\w|\u00AD$/.test(breakLetter)) ||
+					(!breakLetter && /^\w|\u00AD$/.test(prevLetter))
+				) {
 					startContainer.parentNode.classList.add("pagedjs_hyphen");
-					startContainer.textContent += "\u2011";
+					startContainer.textContent += this.settings.hyphenGlyph || "\u2011";
 				}
 			}
+		}
+
+		equalTokens(a, b) {
+			if (!a || !b) {
+				return false;
+			}
+			if (a["node"] && b["node"] && a["node"] !== b["node"]) {
+				return false;
+			}
+			if (a["offset"] && b["offset"] && a["offset"] !== b["offset"]) {
+				return false;
+			}
+			return true;
 		}
 	}
 
@@ -1651,7 +1951,7 @@
 			let page = this.element;
 			// let pagebox = this.pagebox;
 
-			let index = pgnum+1;
+			let index = pgnum + 1;
 
 			let id = `page-${index}`;
 
@@ -1660,7 +1960,7 @@
 			// page.dataset.pageNumber = index;
 
 			page.dataset.pageNumber = index;
-			page.setAttribute('id', id);
+			page.setAttribute("id", id);
 
 			if (this.name) {
 				page.classList.add("pagedjs_" + this.name + "_page");
@@ -1706,7 +2006,7 @@
 			this.layoutMethod = new Layout(this.area, this.hooks, maxChars);
 
 			let newBreakToken = await this.layoutMethod.renderTo(this.wrapper, contents, breakToken);
-
+			
 			this.addListeners(contents);
 
 			this.endToken = newBreakToken;
@@ -1731,7 +2031,7 @@
 			let e;
 			for (var i = 0; i < entries.length; i++) {
 				e = entries[i];
-				if(e.dataset.ref === ref) {
+				if (e.dataset.ref === ref) {
 					return e;
 				}
 			}
@@ -1761,8 +2061,8 @@
 			}
 			// TODO: fall back to mutation observer?
 
-			this._onScroll = function() {
-				if(this.listening) {
+			this._onScroll = function () {
+				if (this.listening) {
 					this.element.scrollLeft = 0;
 				}
 			}.bind(this);
@@ -1785,30 +2085,31 @@
 				this.element.removeEventListener("underflow", this._checkOverflowAfterResize, false);
 			}
 
-			this.element &&this.element.removeEventListener("scroll", this._onScroll);
+			this.element && this.element.removeEventListener("scroll", this._onScroll);
 
 		}
 
 		addResizeObserver(contents) {
 			let wrapper = this.wrapper;
 			let prevHeight = wrapper.getBoundingClientRect().height;
-			this.ro = new ResizeObserver( entries => {
+			this.ro = new ResizeObserver(entries => {
 
 				if (!this.listening) {
 					return;
 				}
+				requestAnimationFrame(() => {
+					for (let entry of entries) {
+						const cr = entry.contentRect;
 
-				for (let entry of entries) {
-					const cr = entry.contentRect;
-
-					if (cr.height > prevHeight) {
-						this.checkOverflowAfterResize(contents);
-						prevHeight = wrapper.getBoundingClientRect().height;
-					} else if (cr.height < prevHeight ) { // TODO: calc line height && (prevHeight - cr.height) >= 22
-						this.checkUnderflowAfterResize(contents);
-						prevHeight = cr.height;
+						if (cr.height > prevHeight) {
+							this.checkOverflowAfterResize(contents);
+							prevHeight = wrapper.getBoundingClientRect().height;
+						} else if (cr.height < prevHeight) { // TODO: calc line height && (prevHeight - cr.height) >= 22
+							this.checkUnderflowAfterResize(contents);
+							prevHeight = cr.height;
+						}
 					}
-				}
+				});
 			});
 
 			this.ro.observe(wrapper);
@@ -1819,7 +2120,7 @@
 				return;
 			}
 
-			let newBreakToken = this.layoutMethod.findBreakToken(this.wrapper, contents);
+			let newBreakToken = this.layoutMethod.findBreakToken(this.wrapper, contents, this.startToken);
 
 			if (newBreakToken) {
 				this.endToken = newBreakToken;
@@ -1833,8 +2134,6 @@
 			}
 
 			let endToken = this.layoutMethod.findEndToken(this.wrapper, contents);
-
-			// let newBreakToken = this.layoutMethod.findBreakToken(this.wrapper, contents);
 
 			if (endToken) {
 				this._onUnderflow && this._onUnderflow(endToken);
@@ -1876,7 +2175,6 @@
 			let fragment = range.createContextualFragment(markup);
 
 			this.addRefs(fragment);
-			this.removeEmpty(fragment);
 
 			return fragment;
 		}
@@ -1891,7 +2189,6 @@
 			// }
 
 			this.addRefs(contents);
-			this.removeEmpty(contents);
 
 			return contents;
 		}
@@ -1900,7 +2197,7 @@
 			var treeWalker = document.createTreeWalker(
 				content,
 				NodeFilter.SHOW_ELEMENT,
-				{ acceptNode: function(node) { return NodeFilter.FILTER_ACCEPT; } },
+				null,
 				false
 			);
 
@@ -1923,61 +2220,9 @@
 			}
 		}
 
-		removeEmpty(content) {
-			var treeWalker = document.createTreeWalker(
-				content,
-				NodeFilter.SHOW_TEXT,
-				{ acceptNode: function(node) {
-					// Only remove more than a single space
-					if (node.textContent.length > 1 && !node.textContent.trim()) {
-
-						// Don't touch whitespace if text is preformated
-						let parent = node.parentNode;
-						let pre = isElement(parent) && parent.closest("pre");
-						if (pre) {
-							return NodeFilter.FILTER_REJECT;
-						}
-
-						return NodeFilter.FILTER_ACCEPT;
-					} else {
-						return NodeFilter.FILTER_REJECT;
-					}
-				} },
-				false
-			);
-
-			let node;
-			let current;
-			node = treeWalker.nextNode();
-			while(node) {
-				current = node;
-				node = treeWalker.nextNode();
-				// if (!current.nextSibling || (current.nextSibling && current.nextSibling.nodeType === 1)) {
-				current.parentNode.removeChild(current);
-				// }
-			}
-		}
-
 		find(ref) {
 			return this.refs[ref];
 		}
-
-		// isWrapper(element) {
-		//   return wrappersRegex.test(element.nodeName);
-		// }
-
-		isText(node) {
-			return node.tagName === "TAG";
-		}
-
-		isElement(node) {
-			return node.nodeType === 1;
-		}
-
-		hasChildren(node) {
-			return node.childNodes && node.childNodes.length;
-		}
-
 
 		destroy() {
 			this.refs = undefined;
@@ -2264,11 +2509,14 @@
 	 * @class
 	 */
 	class Chunker {
-		constructor(content, renderTo) {
+		constructor(content, renderTo, options) {
 			// this.preview = preview;
+
+			this.settings = options || {};
 
 			this.hooks = {};
 			this.hooks.beforeParsed = new Hook(this);
+			this.hooks.filter = new Hook(this);
 			this.hooks.afterParsed = new Hook(this);
 			this.hooks.beforePageLayout = new Hook(this);
 			this.hooks.layout = new Hook(this);
@@ -2280,7 +2528,7 @@
 			this.hooks.afterRendered = new Hook(this);
 
 			this.pages = [];
-			this._total = 0;
+			this.total = 0;
 
 			this.q = new Queue(this);
 			this.stopped = false;
@@ -2318,6 +2566,8 @@
 
 			parsed = new ContentParser(content);
 
+			this.hooks.filter.triggerSync(parsed);
+
 			this.source = parsed;
 			this.breakToken = undefined;
 
@@ -2328,7 +2578,7 @@
 				this.setup(renderTo);
 			}
 
-			this.emit("rendering", content);
+			this.emit("rendering", parsed);
 
 			await this.hooks.afterParsed.trigger(parsed, this);
 
@@ -2341,10 +2591,13 @@
 			}
 
 			this.rendered = true;
+			this.pagesArea.style.setProperty("--pagedjs-page-count", this.total);
 
 			await this.hooks.afterRendered.trigger(this.pages, this);
 
 			this.emit("rendered", this.pages);
+
+
 
 			return this;
 		}
@@ -2378,11 +2631,10 @@
 		// }
 
 		async render(parsed, startAt) {
-			let renderer = this.layout(parsed, startAt);
+			let renderer = this.layout(parsed, startAt, this.settings);
 
 			let done = false;
 			let result;
-
 			while (!done) {
 				result = await this.q.enqueue(() => { return this.renderAsync(renderer); });
 				done = result.done;
@@ -2484,7 +2736,7 @@
 		async *layout(content, startAt) {
 			let breakToken = startAt || false;
 
-			while (breakToken !== undefined && (true)) {
+			while (breakToken !== undefined && ( true)) {
 
 				if (breakToken && breakToken.node) {
 					await this.handleBreaks(breakToken.node);
@@ -2509,6 +2761,8 @@
 
 				// Stop if we get undefined, showing we have reached the end of the content
 			}
+
+
 		}
 
 		recoredCharLength(length) {
@@ -2542,6 +2796,8 @@
 			} else {
 				this.pages = [];
 			}
+
+			this.total = this.pages.length;
 		}
 
 		addPage(blank) {
@@ -2645,18 +2901,11 @@
 		}
 		*/
 
-		get total() {
-			return this._total;
-		}
 
-		set total(num) {
-			this.pagesArea.style.setProperty("--pagedjs-page-count", num);
-			this._total = num;
-		}
 
 		loadFonts() {
 			let fontPromises = [];
-			document.fonts.forEach((fontFace) => {
+			(document.fonts || []).forEach((fontFace) => {
 				if (fontFace.status !== "loaded") {
 					let fontLoaded = fontFace.load().then((r) => {
 						return fontFace.family;
@@ -2682,18 +2931,19 @@
 	eventEmitter(Chunker.prototype);
 
 	//
+	//                              list
+	//                            ┌──────┐
+	//             ┌──────────────┼─head │
+	//             │              │ tail─┼──────────────┐
+	//             │              └──────┘              │
+	//             ▼                                    ▼
 	//            item        item        item        item
-	//          /------\    /------\    /------\    /------\
-	//          | data |    | data |    | data |    | data |
-	//  null <--+-prev |<---+-prev |<---+-prev |<---+-prev |
-	//          | next-+--->| next-+--->| next-+--->| next-+--> null
-	//          \------/    \------/    \------/    \------/
-	//             ^                                    ^
-	//             |                list                |
-	//             |              /------\              |
-	//             \--------------+-head |              |
-	//                            | tail-+--------------/
-	//                            \------/
+	//          ┌──────┐    ┌──────┐    ┌──────┐    ┌──────┐
+	//  null ◀──┼─prev │◀───┼─prev │◀───┼─prev │◀───┼─prev │
+	//          │ next─┼───▶│ next─┼───▶│ next─┼───▶│ next─┼──▶ null
+	//          ├──────┤    ├──────┤    ├──────┤    ├──────┤
+	//          │ data │    │ data │    │ data │    │ data │
+	//          └──────┘    └──────┘    └──────┘    └──────┘
 	//
 
 	function createItem(data) {
@@ -3207,7 +3457,7 @@
 	    this.remove(oldItem);
 	};
 
-	var list = List;
+	var List_1 = List;
 
 	var createCustomError = function createCustomError(name, message) {
 	    // use Object.create(), because some VMs prevent setting line/column otherwise
@@ -3277,8 +3527,8 @@
 	    ].filter(Boolean).join('\n');
 	}
 
-	var CssSyntaxError = function(message, source, offset, line, column) {
-	    var error = createCustomError('CssSyntaxError', message);
+	var SyntaxError$1 = function(message, source, offset, line, column) {
+	    var error = createCustomError('SyntaxError', message);
 
 	    error.source = source;
 	    error.offset = offset;
@@ -3307,74 +3557,37 @@
 	    return error;
 	};
 
-	var error = CssSyntaxError;
+	var _SyntaxError = SyntaxError$1;
 
-	// token types (note: value shouldn't intersect with used char codes)
-	var WHITESPACE = 1;
-	var IDENTIFIER = 2;
-	var NUMBER = 3;
-	var STRING = 4;
-	var COMMENT = 5;
-	var PUNCTUATOR = 6;
-	var CDO = 7;
-	var CDC = 8;
-	var ATKEYWORD = 14;
-	var FUNCTION = 15;
-	var URL$1 = 16;
-	var RAW = 17;
-
-	var TAB = 9;
-	var N = 10;
-	var F = 12;
-	var R = 13;
-	var SPACE = 32;
-
+	// CSS Syntax Module Level 3
+	// https://www.w3.org/TR/css-syntax-3/
 	var TYPE = {
-	    WhiteSpace:   WHITESPACE,
-	    Identifier:   IDENTIFIER,
-	    Number:           NUMBER,
-	    String:           STRING,
-	    Comment:         COMMENT,
-	    Punctuator:   PUNCTUATOR,
-	    CDO:                 CDO,
-	    CDC:                 CDC,
-	    AtKeyword:     ATKEYWORD,
-	    Function:       FUNCTION,
-	    Url:                 URL$1,
-	    Raw:                 RAW,
-
-	    ExclamationMark:      33,  // !
-	    QuotationMark:        34,  // "
-	    NumberSign:           35,  // #
-	    DollarSign:           36,  // $
-	    PercentSign:          37,  // %
-	    Ampersand:            38,  // &
-	    Apostrophe:           39,  // '
-	    LeftParenthesis:      40,  // (
-	    RightParenthesis:     41,  // )
-	    Asterisk:             42,  // *
-	    PlusSign:             43,  // +
-	    Comma:                44,  // ,
-	    HyphenMinus:          45,  // -
-	    FullStop:             46,  // .
-	    Solidus:              47,  // /
-	    Colon:                58,  // :
-	    Semicolon:            59,  // ;
-	    LessThanSign:         60,  // <
-	    EqualsSign:           61,  // =
-	    GreaterThanSign:      62,  // >
-	    QuestionMark:         63,  // ?
-	    CommercialAt:         64,  // @
-	    LeftSquareBracket:    91,  // [
-	    Backslash:            92,  // \
-	    RightSquareBracket:   93,  // ]
-	    CircumflexAccent:     94,  // ^
-	    LowLine:              95,  // _
-	    GraveAccent:          96,  // `
-	    LeftCurlyBracket:    123,  // {
-	    VerticalLine:        124,  // |
-	    RightCurlyBracket:   125,  // }
-	    Tilde:               126   // ~
+	    EOF: 0,                 // <EOF-token>
+	    Ident: 1,               // <ident-token>
+	    Function: 2,            // <function-token>
+	    AtKeyword: 3,           // <at-keyword-token>
+	    Hash: 4,                // <hash-token>
+	    String: 5,              // <string-token>
+	    BadString: 6,           // <bad-string-token>
+	    Url: 7,                 // <url-token>
+	    BadUrl: 8,              // <bad-url-token>
+	    Delim: 9,               // <delim-token>
+	    Number: 10,             // <number-token>
+	    Percentage: 11,         // <percentage-token>
+	    Dimension: 12,          // <dimension-token>
+	    WhiteSpace: 13,         // <whitespace-token>
+	    CDO: 14,                // <CDO-token>
+	    CDC: 15,                // <CDC-token>
+	    Colon: 16,              // <colon-token>     :
+	    Semicolon: 17,          // <semicolon-token> ;
+	    Comma: 18,              // <comma-token>     ,
+	    LeftSquareBracket: 19,  // <[-token>
+	    RightSquareBracket: 20, // <]-token>
+	    LeftParenthesis: 21,    // <(-token>
+	    RightParenthesis: 22,   // <)-token>
+	    LeftCurlyBracket: 23,   // <{-token>
+	    RightCurlyBracket: 24,  // <}-token>
+	    Comment: 25
 	};
 
 	var NAME = Object.keys(TYPE).reduce(function(result, key) {
@@ -3382,6 +3595,199 @@
 	    return result;
 	}, {});
 
+	var _const = {
+	    TYPE: TYPE,
+	    NAME: NAME
+	};
+
+	var EOF = 0;
+
+	// https://drafts.csswg.org/css-syntax-3/
+	// § 4.2. Definitions
+
+	// digit
+	// A code point between U+0030 DIGIT ZERO (0) and U+0039 DIGIT NINE (9).
+	function isDigit(code) {
+	    return code >= 0x0030 && code <= 0x0039;
+	}
+
+	// hex digit
+	// A digit, or a code point between U+0041 LATIN CAPITAL LETTER A (A) and U+0046 LATIN CAPITAL LETTER F (F),
+	// or a code point between U+0061 LATIN SMALL LETTER A (a) and U+0066 LATIN SMALL LETTER F (f).
+	function isHexDigit(code) {
+	    return (
+	        isDigit(code) || // 0 .. 9
+	        (code >= 0x0041 && code <= 0x0046) || // A .. F
+	        (code >= 0x0061 && code <= 0x0066)    // a .. f
+	    );
+	}
+
+	// uppercase letter
+	// A code point between U+0041 LATIN CAPITAL LETTER A (A) and U+005A LATIN CAPITAL LETTER Z (Z).
+	function isUppercaseLetter(code) {
+	    return code >= 0x0041 && code <= 0x005A;
+	}
+
+	// lowercase letter
+	// A code point between U+0061 LATIN SMALL LETTER A (a) and U+007A LATIN SMALL LETTER Z (z).
+	function isLowercaseLetter(code) {
+	    return code >= 0x0061 && code <= 0x007A;
+	}
+
+	// letter
+	// An uppercase letter or a lowercase letter.
+	function isLetter(code) {
+	    return isUppercaseLetter(code) || isLowercaseLetter(code);
+	}
+
+	// non-ASCII code point
+	// A code point with a value equal to or greater than U+0080 <control>.
+	function isNonAscii(code) {
+	    return code >= 0x0080;
+	}
+
+	// name-start code point
+	// A letter, a non-ASCII code point, or U+005F LOW LINE (_).
+	function isNameStart(code) {
+	    return isLetter(code) || isNonAscii(code) || code === 0x005F;
+	}
+
+	// name code point
+	// A name-start code point, a digit, or U+002D HYPHEN-MINUS (-).
+	function isName(code) {
+	    return isNameStart(code) || isDigit(code) || code === 0x002D;
+	}
+
+	// non-printable code point
+	// A code point between U+0000 NULL and U+0008 BACKSPACE, or U+000B LINE TABULATION,
+	// or a code point between U+000E SHIFT OUT and U+001F INFORMATION SEPARATOR ONE, or U+007F DELETE.
+	function isNonPrintable(code) {
+	    return (
+	        (code >= 0x0000 && code <= 0x0008) ||
+	        (code === 0x000B) ||
+	        (code >= 0x000E && code <= 0x001F) ||
+	        (code === 0x007F)
+	    );
+	}
+
+	// newline
+	// U+000A LINE FEED. Note that U+000D CARRIAGE RETURN and U+000C FORM FEED are not included in this definition,
+	// as they are converted to U+000A LINE FEED during preprocessing.
+	// TODO: we doesn't do a preprocessing, so check a code point for U+000D CARRIAGE RETURN and U+000C FORM FEED
+	function isNewline(code) {
+	    return code === 0x000A || code === 0x000D || code === 0x000C;
+	}
+
+	// whitespace
+	// A newline, U+0009 CHARACTER TABULATION, or U+0020 SPACE.
+	function isWhiteSpace(code) {
+	    return isNewline(code) || code === 0x0020 || code === 0x0009;
+	}
+
+	// § 4.3.8. Check if two code points are a valid escape
+	function isValidEscape(first, second) {
+	    // If the first code point is not U+005C REVERSE SOLIDUS (\), return false.
+	    if (first !== 0x005C) {
+	        return false;
+	    }
+
+	    // Otherwise, if the second code point is a newline or EOF, return false.
+	    if (isNewline(second) || second === EOF) {
+	        return false;
+	    }
+
+	    // Otherwise, return true.
+	    return true;
+	}
+
+	// § 4.3.9. Check if three code points would start an identifier
+	function isIdentifierStart(first, second, third) {
+	    // Look at the first code point:
+
+	    // U+002D HYPHEN-MINUS
+	    if (first === 0x002D) {
+	        // If the second code point is a name-start code point or a U+002D HYPHEN-MINUS,
+	        // or the second and third code points are a valid escape, return true. Otherwise, return false.
+	        return (
+	            isNameStart(second) ||
+	            second === 0x002D ||
+	            isValidEscape(second, third)
+	        );
+	    }
+
+	    // name-start code point
+	    if (isNameStart(first)) {
+	        // Return true.
+	        return true;
+	    }
+
+	    // U+005C REVERSE SOLIDUS (\)
+	    if (first === 0x005C) {
+	        // If the first and second code points are a valid escape, return true. Otherwise, return false.
+	        return isValidEscape(first, second);
+	    }
+
+	    // anything else
+	    // Return false.
+	    return false;
+	}
+
+	// § 4.3.10. Check if three code points would start a number
+	function isNumberStart(first, second, third) {
+	    // Look at the first code point:
+
+	    // U+002B PLUS SIGN (+)
+	    // U+002D HYPHEN-MINUS (-)
+	    if (first === 0x002B || first === 0x002D) {
+	        // If the second code point is a digit, return true.
+	        if (isDigit(second)) {
+	            return 2;
+	        }
+
+	        // Otherwise, if the second code point is a U+002E FULL STOP (.)
+	        // and the third code point is a digit, return true.
+	        // Otherwise, return false.
+	        return second === 0x002E && isDigit(third) ? 3 : 0;
+	    }
+
+	    // U+002E FULL STOP (.)
+	    if (first === 0x002E) {
+	        // If the second code point is a digit, return true. Otherwise, return false.
+	        return isDigit(second) ? 2 : 0;
+	    }
+
+	    // digit
+	    if (isDigit(first)) {
+	        // Return true.
+	        return 1;
+	    }
+
+	    // anything else
+	    // Return false.
+	    return 0;
+	}
+
+	//
+	// Misc
+	//
+
+	// detect BOM (https://en.wikipedia.org/wiki/Byte_order_mark)
+	function isBOM(code) {
+	    // UTF-16BE
+	    if (code === 0xFEFF) {
+	        return 1;
+	    }
+
+	    // UTF-16LE
+	    if (code === 0xFFFE) {
+	        return 1;
+	    }
+
+	    return 0;
+	}
+
+	// Fast code category
+	//
 	// https://drafts.csswg.org/css-syntax/#tokenizer-definitions
 	// > non-ASCII code point
 	// >   A code point with a value equal to or greater than U+0080 <control>
@@ -3389,156 +3795,84 @@
 	// >   A letter, a non-ASCII code point, or U+005F LOW LINE (_).
 	// > name code point
 	// >   A name-start code point, a digit, or U+002D HYPHEN-MINUS (-)
-	// That means only ASCII code points has a special meaning and we a maps for 0..127 codes only
-	var SafeUint32Array = typeof Uint32Array !== 'undefined' ? Uint32Array : Array; // fallback on Array when TypedArray is not supported
-	var SYMBOL_TYPE = new SafeUint32Array(0x80);
-	var PUNCTUATION = new SafeUint32Array(0x80);
-	var STOP_URL_RAW = new SafeUint32Array(0x80);
+	// That means only ASCII code points has a special meaning and we define a maps for 0..127 codes only
+	var CATEGORY = new Array(0x80);
+	charCodeCategory.Eof = 0x80;
+	charCodeCategory.WhiteSpace = 0x82;
+	charCodeCategory.Digit = 0x83;
+	charCodeCategory.NameStart = 0x84;
+	charCodeCategory.NonPrintable = 0x85;
 
-	for (var i = 0; i < SYMBOL_TYPE.length; i++) {
-	    SYMBOL_TYPE[i] = IDENTIFIER;
+	for (var i = 0; i < CATEGORY.length; i++) {
+	    switch (true) {
+	        case isWhiteSpace(i):
+	            CATEGORY[i] = charCodeCategory.WhiteSpace;
+	            break;
+
+	        case isDigit(i):
+	            CATEGORY[i] = charCodeCategory.Digit;
+	            break;
+
+	        case isNameStart(i):
+	            CATEGORY[i] = charCodeCategory.NameStart;
+	            break;
+
+	        case isNonPrintable(i):
+	            CATEGORY[i] = charCodeCategory.NonPrintable;
+	            break;
+
+	        default:
+	            CATEGORY[i] = i || charCodeCategory.Eof;
+	    }
 	}
 
-	// fill categories
-	[
-	    TYPE.ExclamationMark,    // !
-	    TYPE.QuotationMark,      // "
-	    TYPE.NumberSign,         // #
-	    TYPE.DollarSign,         // $
-	    TYPE.PercentSign,        // %
-	    TYPE.Ampersand,          // &
-	    TYPE.Apostrophe,         // '
-	    TYPE.LeftParenthesis,    // (
-	    TYPE.RightParenthesis,   // )
-	    TYPE.Asterisk,           // *
-	    TYPE.PlusSign,           // +
-	    TYPE.Comma,              // ,
-	    TYPE.HyphenMinus,        // -
-	    TYPE.FullStop,           // .
-	    TYPE.Solidus,            // /
-	    TYPE.Colon,              // :
-	    TYPE.Semicolon,          // ;
-	    TYPE.LessThanSign,       // <
-	    TYPE.EqualsSign,         // =
-	    TYPE.GreaterThanSign,    // >
-	    TYPE.QuestionMark,       // ?
-	    TYPE.CommercialAt,       // @
-	    TYPE.LeftSquareBracket,  // [
-	    // TYPE.Backslash,          // \
-	    TYPE.RightSquareBracket, // ]
-	    TYPE.CircumflexAccent,   // ^
-	    // TYPE.LowLine,            // _
-	    TYPE.GraveAccent,        // `
-	    TYPE.LeftCurlyBracket,   // {
-	    TYPE.VerticalLine,       // |
-	    TYPE.RightCurlyBracket,  // }
-	    TYPE.Tilde               // ~
-	].forEach(function(key) {
-	    SYMBOL_TYPE[Number(key)] = PUNCTUATOR;
-	    PUNCTUATION[Number(key)] = PUNCTUATOR;
-	});
-
-	for (var i = 48; i <= 57; i++) {
-	    SYMBOL_TYPE[i] = NUMBER;
+	function charCodeCategory(code) {
+	    return code < 0x80 ? CATEGORY[code] : charCodeCategory.NameStart;
 	}
+	var charCodeDefinitions = {
+	    isDigit: isDigit,
+	    isHexDigit: isHexDigit,
+	    isUppercaseLetter: isUppercaseLetter,
+	    isLowercaseLetter: isLowercaseLetter,
+	    isLetter: isLetter,
+	    isNonAscii: isNonAscii,
+	    isNameStart: isNameStart,
+	    isName: isName,
+	    isNonPrintable: isNonPrintable,
+	    isNewline: isNewline,
+	    isWhiteSpace: isWhiteSpace,
+	    isValidEscape: isValidEscape,
+	    isIdentifierStart: isIdentifierStart,
+	    isNumberStart: isNumberStart,
 
-	SYMBOL_TYPE[SPACE] = WHITESPACE;
-	SYMBOL_TYPE[TAB] = WHITESPACE;
-	SYMBOL_TYPE[N] = WHITESPACE;
-	SYMBOL_TYPE[R] = WHITESPACE;
-	SYMBOL_TYPE[F] = WHITESPACE;
-
-	SYMBOL_TYPE[TYPE.Apostrophe] = STRING;
-	SYMBOL_TYPE[TYPE.QuotationMark] = STRING;
-
-	STOP_URL_RAW[SPACE] = 1;
-	STOP_URL_RAW[TAB] = 1;
-	STOP_URL_RAW[N] = 1;
-	STOP_URL_RAW[R] = 1;
-	STOP_URL_RAW[F] = 1;
-	STOP_URL_RAW[TYPE.Apostrophe] = 1;
-	STOP_URL_RAW[TYPE.QuotationMark] = 1;
-	STOP_URL_RAW[TYPE.LeftParenthesis] = 1;
-	STOP_URL_RAW[TYPE.RightParenthesis] = 1;
-
-	// whitespace is punctuation ...
-	PUNCTUATION[SPACE] = PUNCTUATOR;
-	PUNCTUATION[TAB] = PUNCTUATOR;
-	PUNCTUATION[N] = PUNCTUATOR;
-	PUNCTUATION[R] = PUNCTUATOR;
-	PUNCTUATION[F] = PUNCTUATOR;
-	// ... hyper minus is not
-	PUNCTUATION[TYPE.HyphenMinus] = 0;
-
-	var _const = {
-	    TYPE: TYPE,
-	    NAME: NAME,
-
-	    SYMBOL_TYPE: SYMBOL_TYPE,
-	    PUNCTUATION: PUNCTUATION,
-	    STOP_URL_RAW: STOP_URL_RAW
+	    isBOM: isBOM,
+	    charCodeCategory: charCodeCategory
 	};
 
-	var PUNCTUATION$1 = _const.PUNCTUATION;
-	var STOP_URL_RAW$1 = _const.STOP_URL_RAW;
-	var TYPE$1 = _const.TYPE;
-	var FULLSTOP = TYPE$1.FullStop;
-	var PLUSSIGN = TYPE$1.PlusSign;
-	var HYPHENMINUS = TYPE$1.HyphenMinus;
-	var PUNCTUATOR$1 = TYPE$1.Punctuator;
-	var TAB$1 = 9;
-	var N$1 = 10;
-	var F$1 = 12;
-	var R$1 = 13;
-	var SPACE$1 = 32;
-	var BACK_SLASH = 92;
-	var E = 101; // 'e'.charCodeAt(0)
+	var isDigit$1 = charCodeDefinitions.isDigit;
+	var isHexDigit$1 = charCodeDefinitions.isHexDigit;
+	var isUppercaseLetter$1 = charCodeDefinitions.isUppercaseLetter;
+	var isName$1 = charCodeDefinitions.isName;
+	var isWhiteSpace$1 = charCodeDefinitions.isWhiteSpace;
+	var isValidEscape$1 = charCodeDefinitions.isValidEscape;
 
-	function firstCharOffset(source) {
-	    // detect BOM (https://en.wikipedia.org/wiki/Byte_order_mark)
-	    if (source.charCodeAt(0) === 0xFEFF ||  // UTF-16BE
-	        source.charCodeAt(0) === 0xFFFE) {  // UTF-16LE
-	        return 1;
-	    }
-
-	    return 0;
-	}
-
-	function isHex(code) {
-	    return (code >= 48 && code <= 57) || // 0 .. 9
-	           (code >= 65 && code <= 70) || // A .. F
-	           (code >= 97 && code <= 102);  // a .. f
-	}
-
-	function isNumber(code) {
-	    return code >= 48 && code <= 57;
-	}
-
-	function isWhiteSpace(code) {
-	    return code === SPACE$1 || code === TAB$1 || isNewline(code);
-	}
-
-	function isNewline(code) {
-	    return code === R$1 || code === N$1 || code === F$1;
+	function getCharCode(source, offset) {
+	    return offset < source.length ? source.charCodeAt(offset) : 0;
 	}
 
 	function getNewlineLength(source, offset, code) {
-	    if (isNewline(code)) {
-	        if (code === R$1 && offset + 1 < source.length && source.charCodeAt(offset + 1) === N$1) {
-	            return 2;
-	        }
-
-	        return 1;
+	    if (code === 13 /* \r */ && getCharCode(source, offset + 1) === 10 /* \n */) {
+	        return 2;
 	    }
 
-	    return 0;
+	    return 1;
 	}
 
 	function cmpChar(testStr, offset, referenceCode) {
 	    var code = testStr.charCodeAt(offset);
 
 	    // code.toLowerCase() for A..Z
-	    if (code >= 65 && code <= 90) {
+	    if (isUppercaseLetter$1(code)) {
 	        code = code | 32;
 	    }
 
@@ -3556,14 +3890,14 @@
 
 	    for (var i = start; i < end; i++) {
 	        var testCode = testStr.charCodeAt(i);
-	        var refCode = referenceStr.charCodeAt(i - start);
+	        var referenceCode = referenceStr.charCodeAt(i - start);
 
 	        // testCode.toLowerCase() for A..Z
-	        if (testCode >= 65 && testCode <= 90) {
+	        if (isUppercaseLetter$1(testCode)) {
 	            testCode = testCode | 32;
 	        }
 
-	        if (testCode !== refCode) {
+	        if (testCode !== referenceCode) {
 	            return false;
 	        }
 	    }
@@ -3572,40 +3906,18 @@
 	}
 
 	function findWhiteSpaceStart(source, offset) {
-	    while (offset >= 0 && isWhiteSpace(source.charCodeAt(offset))) {
-	        offset--;
+	    for (; offset >= 0; offset--) {
+	        if (!isWhiteSpace$1(source.charCodeAt(offset))) {
+	            break;
+	        }
 	    }
 
 	    return offset + 1;
 	}
 
 	function findWhiteSpaceEnd(source, offset) {
-	    while (offset < source.length && isWhiteSpace(source.charCodeAt(offset))) {
-	        offset++;
-	    }
-
-	    return offset;
-	}
-
-	function findCommentEnd(source, offset) {
-	    var commentEnd = source.indexOf('*/', offset);
-
-	    if (commentEnd === -1) {
-	        return source.length;
-	    }
-
-	    return commentEnd + 2;
-	}
-
-	function findStringEnd(source, offset, quote) {
 	    for (; offset < source.length; offset++) {
-	        var code = source.charCodeAt(offset);
-
-	        // TODO: bad string
-	        if (code === BACK_SLASH) {
-	            offset++;
-	        } else if (code === quote) {
-	            offset++;
+	        if (!isWhiteSpace$1(source.charCodeAt(offset))) {
 	            break;
 	        }
 	    }
@@ -3614,92 +3926,152 @@
 	}
 
 	function findDecimalNumberEnd(source, offset) {
-	    while (offset < source.length && isNumber(source.charCodeAt(offset))) {
-	        offset++;
-	    }
-
-	    return offset;
-	}
-
-	function findNumberEnd(source, offset, allowFraction) {
-	    var code;
-
-	    offset = findDecimalNumberEnd(source, offset);
-
-	    // fraction: .\d+
-	    if (allowFraction && offset + 1 < source.length && source.charCodeAt(offset) === FULLSTOP) {
-	        code = source.charCodeAt(offset + 1);
-
-	        if (isNumber(code)) {
-	            offset = findDecimalNumberEnd(source, offset + 1);
-	        }
-	    }
-
-	    // exponent: e[+-]\d+
-	    if (offset + 1 < source.length) {
-	        if ((source.charCodeAt(offset) | 32) === E) { // case insensitive check for `e`
-	            code = source.charCodeAt(offset + 1);
-
-	            if (code === PLUSSIGN || code === HYPHENMINUS) {
-	                if (offset + 2 < source.length) {
-	                    code = source.charCodeAt(offset + 2);
-	                }
-	            }
-
-	            if (isNumber(code)) {
-	                offset = findDecimalNumberEnd(source, offset + 2);
-	            }
+	    for (; offset < source.length; offset++) {
+	        if (!isDigit$1(source.charCodeAt(offset))) {
+	            break;
 	        }
 	    }
 
 	    return offset;
 	}
 
-	// skip escaped unicode sequence that can ends with space
-	// [0-9a-f]{1,6}(\r\n|[ \n\r\t\f])?
-	function findEscapeEnd(source, offset) {
-	    for (var i = 0; i < 7 && offset + i < source.length; i++) {
-	        var code = source.charCodeAt(offset + i);
+	// § 4.3.7. Consume an escaped code point
+	function consumeEscaped(source, offset) {
+	    // It assumes that the U+005C REVERSE SOLIDUS (\) has already been consumed and
+	    // that the next input code point has already been verified to be part of a valid escape.
+	    offset += 2;
 
-	        if (i !== 6 && isHex(code)) {
+	    // hex digit
+	    if (isHexDigit$1(getCharCode(source, offset - 1))) {
+	        // Consume as many hex digits as possible, but no more than 5.
+	        // Note that this means 1-6 hex digits have been consumed in total.
+	        for (var maxOffset = Math.min(source.length, offset + 5); offset < maxOffset; offset++) {
+	            if (!isHexDigit$1(getCharCode(source, offset))) {
+	                break;
+	            }
+	        }
+
+	        // If the next input code point is whitespace, consume it as well.
+	        var code = getCharCode(source, offset);
+	        if (isWhiteSpace$1(code)) {
+	            offset += getNewlineLength(source, offset, code);
+	        }
+	    }
+
+	    return offset;
+	}
+
+	// §4.3.11. Consume a name
+	// Note: This algorithm does not do the verification of the first few code points that are necessary
+	// to ensure the returned code points would constitute an <ident-token>. If that is the intended use,
+	// ensure that the stream starts with an identifier before calling this algorithm.
+	function consumeName(source, offset) {
+	    // Let result initially be an empty string.
+	    // Repeatedly consume the next input code point from the stream:
+	    for (; offset < source.length; offset++) {
+	        var code = source.charCodeAt(offset);
+
+	        // name code point
+	        if (isName$1(code)) {
+	            // Append the code point to result.
 	            continue;
 	        }
 
-	        if (i > 0) {
-	            offset += i - 1 + getNewlineLength(source, offset + i, code);
-	            if (code === SPACE$1 || code === TAB$1) {
-	                offset++;
-	            }
+	        // the stream starts with a valid escape
+	        if (isValidEscape$1(code, getCharCode(source, offset + 1))) {
+	            // Consume an escaped code point. Append the returned code point to result.
+	            offset = consumeEscaped(source, offset) - 1;
+	            continue;
 	        }
 
+	        // anything else
+	        // Reconsume the current input code point. Return result.
 	        break;
 	    }
 
 	    return offset;
 	}
 
-	function findIdentifierEnd(source, offset) {
-	    for (; offset < source.length; offset++) {
-	        var code = source.charCodeAt(offset);
+	// §4.3.12. Consume a number
+	function consumeNumber(source, offset) {
+	    var code = source.charCodeAt(offset);
 
-	        if (code === BACK_SLASH) {
-	            offset = findEscapeEnd(source, offset + 1);
-	        } else if (code < 0x80 && PUNCTUATION$1[code] === PUNCTUATOR$1) {
-	            break;
+	    // 2. If the next input code point is U+002B PLUS SIGN (+) or U+002D HYPHEN-MINUS (-),
+	    // consume it and append it to repr.
+	    if (code === 0x002B || code === 0x002D) {
+	        code = source.charCodeAt(offset += 1);
+	    }
+
+	    // 3. While the next input code point is a digit, consume it and append it to repr.
+	    if (isDigit$1(code)) {
+	        offset = findDecimalNumberEnd(source, offset + 1);
+	        code = source.charCodeAt(offset);
+	    }
+
+	    // 4. If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then:
+	    if (code === 0x002E && isDigit$1(source.charCodeAt(offset + 1))) {
+	        // 4.1 Consume them.
+	        // 4.2 Append them to repr.
+	        code = source.charCodeAt(offset += 2);
+
+	        // 4.3 Set type to "number".
+	        // TODO
+
+	        // 4.4 While the next input code point is a digit, consume it and append it to repr.
+
+	        offset = findDecimalNumberEnd(source, offset);
+	    }
+
+	    // 5. If the next 2 or 3 input code points are U+0045 LATIN CAPITAL LETTER E (E)
+	    // or U+0065 LATIN SMALL LETTER E (e), ... , followed by a digit, then:
+	    if (cmpChar(source, offset, 101 /* e */)) {
+	        var sign = 0;
+	        code = source.charCodeAt(offset + 1);
+
+	        // ... optionally followed by U+002D HYPHEN-MINUS (-) or U+002B PLUS SIGN (+) ...
+	        if (code === 0x002D || code === 0x002B) {
+	            sign = 1;
+	            code = source.charCodeAt(offset + 2);
+	        }
+
+	        // ... followed by a digit
+	        if (isDigit$1(code)) {
+	            // 5.1 Consume them.
+	            // 5.2 Append them to repr.
+
+	            // 5.3 Set type to "number".
+	            // TODO
+
+	            // 5.4 While the next input code point is a digit, consume it and append it to repr.
+	            offset = findDecimalNumberEnd(source, offset + 1 + sign + 1);
 	        }
 	    }
 
 	    return offset;
 	}
 
-	function findUrlRawEnd(source, offset) {
+	// § 4.3.14. Consume the remnants of a bad url
+	// ... its sole use is to consume enough of the input stream to reach a recovery point
+	// where normal tokenizing can resume.
+	function consumeBadUrlRemnants(source, offset) {
+	    // Repeatedly consume the next input code point from the stream:
 	    for (; offset < source.length; offset++) {
 	        var code = source.charCodeAt(offset);
 
-	        if (code === BACK_SLASH) {
-	            offset = findEscapeEnd(source, offset + 1);
-	        } else if (code < 0x80 && STOP_URL_RAW$1[code] === 1) {
+	        // U+0029 RIGHT PARENTHESIS ())
+	        // EOF
+	        if (code === 0x0029) {
+	            // Return.
+	            offset++;
 	            break;
+	        }
+
+	        if (isValidEscape$1(code, getCharCode(source, offset + 1))) {
+	            // Consume an escaped code point.
+	            // Note: This allows an escaped right parenthesis ("\)") to be encountered
+	            // without ending the <bad-url-token>. This is otherwise identical to
+	            // the "anything else" clause.
+	            offset = consumeEscaped(source, offset);
 	        }
 	    }
 
@@ -3707,381 +4079,68 @@
 	}
 
 	var utils = {
-	    firstCharOffset: firstCharOffset,
-
-	    isHex: isHex,
-	    isNumber: isNumber,
-	    isWhiteSpace: isWhiteSpace,
-	    isNewline: isNewline,
-	    getNewlineLength: getNewlineLength,
+	    consumeEscaped: consumeEscaped,
+	    consumeName: consumeName,
+	    consumeNumber: consumeNumber,
+	    consumeBadUrlRemnants: consumeBadUrlRemnants,
 
 	    cmpChar: cmpChar,
 	    cmpStr: cmpStr,
 
+	    getNewlineLength: getNewlineLength,
 	    findWhiteSpaceStart: findWhiteSpaceStart,
-	    findWhiteSpaceEnd: findWhiteSpaceEnd,
-	    findCommentEnd: findCommentEnd,
-	    findStringEnd: findStringEnd,
-	    findDecimalNumberEnd: findDecimalNumberEnd,
-	    findNumberEnd: findNumberEnd,
-	    findEscapeEnd: findEscapeEnd,
-	    findIdentifierEnd: findIdentifierEnd,
-	    findUrlRawEnd: findUrlRawEnd
+	    findWhiteSpaceEnd: findWhiteSpaceEnd
 	};
 
-	var TYPE$2 = _const.TYPE;
+	var TYPE$1 = _const.TYPE;
 	var NAME$1 = _const.NAME;
-	var SYMBOL_TYPE$1 = _const.SYMBOL_TYPE;
 
 
-	var firstCharOffset$1 = utils.firstCharOffset;
 	var cmpStr$1 = utils.cmpStr;
-	var isNumber$1 = utils.isNumber;
-	var findWhiteSpaceStart$1 = utils.findWhiteSpaceStart;
-	var findWhiteSpaceEnd$1 = utils.findWhiteSpaceEnd;
-	var findCommentEnd$1 = utils.findCommentEnd;
-	var findStringEnd$1 = utils.findStringEnd;
-	var findNumberEnd$1 = utils.findNumberEnd;
-	var findIdentifierEnd$1 = utils.findIdentifierEnd;
-	var findUrlRawEnd$1 = utils.findUrlRawEnd;
 
-	var NULL = 0;
-	var WHITESPACE$1 = TYPE$2.WhiteSpace;
-	var IDENTIFIER$1 = TYPE$2.Identifier;
-	var NUMBER$1 = TYPE$2.Number;
-	var STRING$1 = TYPE$2.String;
-	var COMMENT$1 = TYPE$2.Comment;
-	var PUNCTUATOR$2 = TYPE$2.Punctuator;
-	var CDO$1 = TYPE$2.CDO;
-	var CDC$1 = TYPE$2.CDC;
-	var ATKEYWORD$1 = TYPE$2.AtKeyword;
-	var FUNCTION$1 = TYPE$2.Function;
-	var URL$2 = TYPE$2.Url;
-	var RAW$1 = TYPE$2.Raw;
+	var EOF$1 = TYPE$1.EOF;
+	var WHITESPACE = TYPE$1.WhiteSpace;
+	var COMMENT = TYPE$1.Comment;
 
-	var N$2 = 10;
-	var F$2 = 12;
-	var R$2 = 13;
-	var STAR = TYPE$2.Asterisk;
-	var SLASH = TYPE$2.Solidus;
-	var FULLSTOP$1 = TYPE$2.FullStop;
-	var PLUSSIGN$1 = TYPE$2.PlusSign;
-	var HYPHENMINUS$1 = TYPE$2.HyphenMinus;
-	var GREATERTHANSIGN = TYPE$2.GreaterThanSign;
-	var LESSTHANSIGN = TYPE$2.LessThanSign;
-	var EXCLAMATIONMARK = TYPE$2.ExclamationMark;
-	var COMMERCIALAT = TYPE$2.CommercialAt;
-	var QUOTATIONMARK = TYPE$2.QuotationMark;
-	var APOSTROPHE = TYPE$2.Apostrophe;
-	var LEFTPARENTHESIS = TYPE$2.LeftParenthesis;
-	var RIGHTPARENTHESIS = TYPE$2.RightParenthesis;
-	var LEFTCURLYBRACKET = TYPE$2.LeftCurlyBracket;
-	var RIGHTCURLYBRACKET = TYPE$2.RightCurlyBracket;
-	var LEFTSQUAREBRACKET = TYPE$2.LeftSquareBracket;
-	var RIGHTSQUAREBRACKET = TYPE$2.RightSquareBracket;
-
-	var MIN_BUFFER_SIZE = 16 * 1024;
 	var OFFSET_MASK = 0x00FFFFFF;
 	var TYPE_SHIFT = 24;
-	var SafeUint32Array$1 = typeof Uint32Array !== 'undefined' ? Uint32Array : Array; // fallback on Array when TypedArray is not supported
 
-	function computeLinesAndColumns(tokenizer, source) {
-	    var sourceLength = source.length;
-	    var start = firstCharOffset$1(source);
-	    var lines = tokenizer.lines;
-	    var line = tokenizer.startLine;
-	    var columns = tokenizer.columns;
-	    var column = tokenizer.startColumn;
-
-	    if (lines === null || lines.length < sourceLength + 1) {
-	        lines = new SafeUint32Array$1(Math.max(sourceLength + 1024, MIN_BUFFER_SIZE));
-	        columns = new SafeUint32Array$1(lines.length);
-	    }
-
-	    for (var i = start; i < sourceLength; i++) {
-	        var code = source.charCodeAt(i);
-
-	        lines[i] = line;
-	        columns[i] = column++;
-
-	        if (code === N$2 || code === R$2 || code === F$2) {
-	            if (code === R$2 && i + 1 < sourceLength && source.charCodeAt(i + 1) === N$2) {
-	                i++;
-	                lines[i] = line;
-	                columns[i] = column;
-	            }
-
-	            line++;
-	            column = 1;
-	        }
-	    }
-
-	    lines[i] = line;
-	    columns[i] = column;
-
-	    tokenizer.linesAnsColumnsComputed = true;
-	    tokenizer.lines = lines;
-	    tokenizer.columns = columns;
-	}
-
-	function tokenLayout(tokenizer, source, startPos) {
-	    var sourceLength = source.length;
-	    var offsetAndType = tokenizer.offsetAndType;
-	    var balance = tokenizer.balance;
-	    var tokenCount = 0;
-	    var prevType = 0;
-	    var offset = startPos;
-	    var anchor = 0;
-	    var balanceCloseCode = 0;
-	    var balanceStart = 0;
-	    var balancePrev = 0;
-
-	    if (offsetAndType === null || offsetAndType.length < sourceLength + 1) {
-	        offsetAndType = new SafeUint32Array$1(sourceLength + 1024);
-	        balance = new SafeUint32Array$1(sourceLength + 1024);
-	    }
-
-	    while (offset < sourceLength) {
-	        var code = source.charCodeAt(offset);
-	        var type = code < 0x80 ? SYMBOL_TYPE$1[code] : IDENTIFIER$1;
-
-	        balance[tokenCount] = sourceLength;
-
-	        switch (type) {
-	            case WHITESPACE$1:
-	                offset = findWhiteSpaceEnd$1(source, offset + 1);
-	                break;
-
-	            case PUNCTUATOR$2:
-	                switch (code) {
-	                    case balanceCloseCode:
-	                        balancePrev = balanceStart & OFFSET_MASK;
-	                        balanceStart = balance[balancePrev];
-	                        balanceCloseCode = balanceStart >> TYPE_SHIFT;
-	                        balance[tokenCount] = balancePrev;
-	                        balance[balancePrev++] = tokenCount;
-	                        for (; balancePrev < tokenCount; balancePrev++) {
-	                            if (balance[balancePrev] === sourceLength) {
-	                                balance[balancePrev] = tokenCount;
-	                            }
-	                        }
-	                        break;
-
-	                    case LEFTSQUAREBRACKET:
-	                        balance[tokenCount] = balanceStart;
-	                        balanceCloseCode = RIGHTSQUAREBRACKET;
-	                        balanceStart = (balanceCloseCode << TYPE_SHIFT) | tokenCount;
-	                        break;
-
-	                    case LEFTCURLYBRACKET:
-	                        balance[tokenCount] = balanceStart;
-	                        balanceCloseCode = RIGHTCURLYBRACKET;
-	                        balanceStart = (balanceCloseCode << TYPE_SHIFT) | tokenCount;
-	                        break;
-
-	                    case LEFTPARENTHESIS:
-	                        balance[tokenCount] = balanceStart;
-	                        balanceCloseCode = RIGHTPARENTHESIS;
-	                        balanceStart = (balanceCloseCode << TYPE_SHIFT) | tokenCount;
-	                        break;
-	                }
-
-	                // /*
-	                if (code === STAR && prevType === SLASH) {
-	                    type = COMMENT$1;
-	                    offset = findCommentEnd$1(source, offset + 1);
-	                    tokenCount--; // rewrite prev token
-	                    break;
-	                }
-
-	                // edge case for -.123 and +.123
-	                if (code === FULLSTOP$1 && (prevType === PLUSSIGN$1 || prevType === HYPHENMINUS$1)) {
-	                    if (offset + 1 < sourceLength && isNumber$1(source.charCodeAt(offset + 1))) {
-	                        type = NUMBER$1;
-	                        offset = findNumberEnd$1(source, offset + 2, false);
-	                        tokenCount--; // rewrite prev token
-	                        break;
-	                    }
-	                }
-
-	                // <!--
-	                if (code === EXCLAMATIONMARK && prevType === LESSTHANSIGN) {
-	                    if (offset + 2 < sourceLength &&
-	                        source.charCodeAt(offset + 1) === HYPHENMINUS$1 &&
-	                        source.charCodeAt(offset + 2) === HYPHENMINUS$1) {
-	                        type = CDO$1;
-	                        offset = offset + 3;
-	                        tokenCount--; // rewrite prev token
-	                        break;
-	                    }
-	                }
-
-	                // -->
-	                if (code === HYPHENMINUS$1 && prevType === HYPHENMINUS$1) {
-	                    if (offset + 1 < sourceLength && source.charCodeAt(offset + 1) === GREATERTHANSIGN) {
-	                        type = CDC$1;
-	                        offset = offset + 2;
-	                        tokenCount--; // rewrite prev token
-	                        break;
-	                    }
-	                }
-
-	                // ident(
-	                if (code === LEFTPARENTHESIS && prevType === IDENTIFIER$1) {
-	                    offset = offset + 1;
-	                    tokenCount--; // rewrite prev token
-	                    balance[tokenCount] = balance[tokenCount + 1];
-	                    balanceStart--;
-
-	                    // 4 char length identifier and equal to `url(` (case insensitive)
-	                    if (offset - anchor === 4 && cmpStr$1(source, anchor, offset, 'url(')) {
-	                        // special case for url() because it can contain any symbols sequence with few exceptions
-	                        anchor = findWhiteSpaceEnd$1(source, offset);
-	                        code = source.charCodeAt(anchor);
-	                        if (code !== LEFTPARENTHESIS &&
-	                            code !== RIGHTPARENTHESIS &&
-	                            code !== QUOTATIONMARK &&
-	                            code !== APOSTROPHE) {
-	                            // url(
-	                            offsetAndType[tokenCount++] = (URL$2 << TYPE_SHIFT) | offset;
-	                            balance[tokenCount] = sourceLength;
-
-	                            // ws*
-	                            if (anchor !== offset) {
-	                                offsetAndType[tokenCount++] = (WHITESPACE$1 << TYPE_SHIFT) | anchor;
-	                                balance[tokenCount] = sourceLength;
-	                            }
-
-	                            // raw
-	                            type = RAW$1;
-	                            offset = findUrlRawEnd$1(source, anchor);
-	                        } else {
-	                            type = URL$2;
-	                        }
-	                    } else {
-	                        type = FUNCTION$1;
-	                    }
-	                    break;
-	                }
-
-	                type = code;
-	                offset = offset + 1;
-	                break;
-
-	            case NUMBER$1:
-	                offset = findNumberEnd$1(source, offset + 1, prevType !== FULLSTOP$1);
-
-	                // merge number with a preceding dot, dash or plus
-	                if (prevType === FULLSTOP$1 ||
-	                    prevType === HYPHENMINUS$1 ||
-	                    prevType === PLUSSIGN$1) {
-	                    tokenCount--; // rewrite prev token
-	                }
-
-	                break;
-
-	            case STRING$1:
-	                offset = findStringEnd$1(source, offset + 1, code);
-	                break;
-
-	            default:
-	                anchor = offset;
-	                offset = findIdentifierEnd$1(source, offset);
-
-	                // merge identifier with a preceding dash
-	                if (prevType === HYPHENMINUS$1) {
-	                    // rewrite prev token
-	                    tokenCount--;
-	                    // restore prev prev token type
-	                    // for case @-prefix-ident
-	                    prevType = tokenCount === 0 ? 0 : offsetAndType[tokenCount - 1] >> TYPE_SHIFT;
-	                }
-
-	                if (prevType === COMMERCIALAT) {
-	                    // rewrite prev token and change type to <at-keyword-token>
-	                    tokenCount--;
-	                    type = ATKEYWORD$1;
-	                }
-	        }
-
-	        offsetAndType[tokenCount++] = (type << TYPE_SHIFT) | offset;
-	        prevType = type;
-	    }
-
-	    // finalize arrays
-	    offsetAndType[tokenCount] = offset;
-	    balance[tokenCount] = sourceLength;
-	    balance[sourceLength] = sourceLength; // prevents false positive balance match with any token
-	    while (balanceStart !== 0) {
-	        balancePrev = balanceStart & OFFSET_MASK;
-	        balanceStart = balance[balancePrev];
-	        balance[balancePrev] = sourceLength;
-	    }
-
-	    tokenizer.offsetAndType = offsetAndType;
-	    tokenizer.tokenCount = tokenCount;
-	    tokenizer.balance = balance;
-	}
-
-	//
-	// tokenizer
-	//
-
-	var Tokenizer = function(source, startOffset, startLine, startColumn) {
+	var TokenStream = function() {
 	    this.offsetAndType = null;
 	    this.balance = null;
-	    this.lines = null;
-	    this.columns = null;
 
-	    this.setSource(source, startOffset, startLine, startColumn);
+	    this.reset();
 	};
 
-	Tokenizer.prototype = {
-	    setSource: function(source, startOffset, startLine, startColumn) {
-	        var safeSource = String(source || '');
-	        var start = firstCharOffset$1(safeSource);
-
-	        this.source = safeSource;
-	        this.firstCharOffset = start;
-	        this.startOffset = typeof startOffset === 'undefined' ? 0 : startOffset;
-	        this.startLine = typeof startLine === 'undefined' ? 1 : startLine;
-	        this.startColumn = typeof startColumn === 'undefined' ? 1 : startColumn;
-	        this.linesAnsColumnsComputed = false;
-
+	TokenStream.prototype = {
+	    reset: function() {
 	        this.eof = false;
-	        this.currentToken = -1;
+	        this.tokenIndex = -1;
 	        this.tokenType = 0;
-	        this.tokenStart = start;
-	        this.tokenEnd = start;
-
-	        tokenLayout(this, safeSource, start);
-	        this.next();
+	        this.tokenStart = this.firstCharOffset;
+	        this.tokenEnd = this.firstCharOffset;
 	    },
 
 	    lookupType: function(offset) {
-	        offset += this.currentToken;
+	        offset += this.tokenIndex;
 
 	        if (offset < this.tokenCount) {
 	            return this.offsetAndType[offset] >> TYPE_SHIFT;
 	        }
 
-	        return NULL;
+	        return EOF$1;
 	    },
-	    lookupNonWSType: function(offset) {
-	        offset += this.currentToken;
+	    lookupOffset: function(offset) {
+	        offset += this.tokenIndex;
 
-	        for (var type; offset < this.tokenCount; offset++) {
-	            type = this.offsetAndType[offset] >> TYPE_SHIFT;
-
-	            if (type !== WHITESPACE$1) {
-	                return type;
-	            }
+	        if (offset < this.tokenCount) {
+	            return this.offsetAndType[offset - 1] & OFFSET_MASK;
 	        }
 
-	        return NULL;
+	        return this.source.length;
 	    },
 	    lookupValue: function(offset, referenceStr) {
-	        offset += this.currentToken;
+	        offset += this.tokenIndex;
 
 	        if (offset < this.tokenCount) {
 	            return cmpStr$1(
@@ -4094,79 +4153,89 @@
 
 	        return false;
 	    },
-	    getTokenStart: function(tokenNum) {
-	        if (tokenNum === this.currentToken) {
+	    getTokenStart: function(tokenIndex) {
+	        if (tokenIndex === this.tokenIndex) {
 	            return this.tokenStart;
 	        }
 
-	        if (tokenNum > 0) {
-	            return tokenNum < this.tokenCount
-	                ? this.offsetAndType[tokenNum - 1] & OFFSET_MASK
+	        if (tokenIndex > 0) {
+	            return tokenIndex < this.tokenCount
+	                ? this.offsetAndType[tokenIndex - 1] & OFFSET_MASK
 	                : this.offsetAndType[this.tokenCount] & OFFSET_MASK;
 	        }
 
 	        return this.firstCharOffset;
 	    },
-	    getOffsetExcludeWS: function() {
-	        if (this.currentToken > 0) {
-	            if ((this.offsetAndType[this.currentToken - 1] >> TYPE_SHIFT) === WHITESPACE$1) {
-	                return this.currentToken > 1
-	                    ? this.offsetAndType[this.currentToken - 2] & OFFSET_MASK
-	                    : this.firstCharOffset;
-	            }
-	        }
-	        return this.tokenStart;
-	    },
-	    getRawLength: function(startToken, endTokenType1, endTokenType2, includeTokenType2) {
+
+	    // TODO: -> skipUntilBalanced
+	    getRawLength: function(startToken, mode) {
 	        var cursor = startToken;
 	        var balanceEnd;
+	        var offset = this.offsetAndType[Math.max(cursor - 1, 0)] & OFFSET_MASK;
+	        var type;
 
 	        loop:
 	        for (; cursor < this.tokenCount; cursor++) {
 	            balanceEnd = this.balance[cursor];
 
-	            // belance end points to offset before start
+	            // stop scanning on balance edge that points to offset before start token
 	            if (balanceEnd < startToken) {
 	                break loop;
 	            }
 
+	            type = this.offsetAndType[cursor] >> TYPE_SHIFT;
+
 	            // check token is stop type
-	            switch (this.offsetAndType[cursor] >> TYPE_SHIFT) {
-	                case endTokenType1:
+	            switch (mode(type, this.source, offset)) {
+	                case 1:
 	                    break loop;
 
-	                case endTokenType2:
-	                    if (includeTokenType2) {
-	                        cursor++;
-	                    }
+	                case 2:
+	                    cursor++;
 	                    break loop;
 
 	                default:
+	                    offset = this.offsetAndType[cursor] & OFFSET_MASK;
+
 	                    // fast forward to the end of balanced block
 	                    if (this.balance[balanceEnd] === cursor) {
 	                        cursor = balanceEnd;
 	                    }
 	            }
-
 	        }
 
-	        return cursor - this.currentToken;
+	        return cursor - this.tokenIndex;
 	    },
 	    isBalanceEdge: function(pos) {
-	        var balanceStart = this.balance[this.currentToken];
-	        return balanceStart < pos;
+	        return this.balance[this.tokenIndex] < pos;
+	    },
+	    isDelim: function(code, offset) {
+	        if (offset) {
+	            return (
+	                this.lookupType(offset) === TYPE$1.Delim &&
+	                this.source.charCodeAt(this.lookupOffset(offset)) === code
+	            );
+	        }
+
+	        return (
+	            this.tokenType === TYPE$1.Delim &&
+	            this.source.charCodeAt(this.tokenStart) === code
+	        );
 	    },
 
 	    getTokenValue: function() {
 	        return this.source.substring(this.tokenStart, this.tokenEnd);
+	    },
+	    getTokenLength: function() {
+	        return this.tokenEnd - this.tokenStart;
 	    },
 	    substrToCursor: function(start) {
 	        return this.source.substring(start, this.tokenStart);
 	    },
 
 	    skipWS: function() {
-	        for (var i = this.currentToken, skipTokenCount = 0; i < this.tokenCount; i++, skipTokenCount++) {
-	            if ((this.offsetAndType[i] >> TYPE_SHIFT) !== WHITESPACE$1) {
+	        for (var i = this.tokenIndex, skipTokenCount = 0; i < this.tokenCount; i++, skipTokenCount++) {
+	            if ((this.offsetAndType[i] >> TYPE_SHIFT) !== WHITESPACE) {
 	                break;
 	            }
 	        }
@@ -4176,150 +4245,43 @@
 	        }
 	    },
 	    skipSC: function() {
-	        while (this.tokenType === WHITESPACE$1 || this.tokenType === COMMENT$1) {
+	        while (this.tokenType === WHITESPACE || this.tokenType === COMMENT) {
 	            this.next();
 	        }
 	    },
 	    skip: function(tokenCount) {
-	        var next = this.currentToken + tokenCount;
+	        var next = this.tokenIndex + tokenCount;
 
 	        if (next < this.tokenCount) {
-	            this.currentToken = next;
+	            this.tokenIndex = next;
 	            this.tokenStart = this.offsetAndType[next - 1] & OFFSET_MASK;
 	            next = this.offsetAndType[next];
 	            this.tokenType = next >> TYPE_SHIFT;
 	            this.tokenEnd = next & OFFSET_MASK;
 	        } else {
-	            this.currentToken = this.tokenCount;
+	            this.tokenIndex = this.tokenCount;
 	            this.next();
 	        }
 	    },
 	    next: function() {
-	        var next = this.currentToken + 1;
+	        var next = this.tokenIndex + 1;
 
 	        if (next < this.tokenCount) {
-	            this.currentToken = next;
+	            this.tokenIndex = next;
 	            this.tokenStart = this.tokenEnd;
 	            next = this.offsetAndType[next];
 	            this.tokenType = next >> TYPE_SHIFT;
 	            this.tokenEnd = next & OFFSET_MASK;
 	        } else {
-	            this.currentToken = this.tokenCount;
+	            this.tokenIndex = this.tokenCount;
 	            this.eof = true;
-	            this.tokenType = NULL;
+	            this.tokenType = EOF$1;
 	            this.tokenStart = this.tokenEnd = this.source.length;
 	        }
 	    },
 
-	    eat: function(tokenType) {
-	        if (this.tokenType !== tokenType) {
-	            var offset = this.tokenStart;
-	            var message = NAME$1[tokenType] + ' is expected';
-
-	            // tweak message and offset
-	            if (tokenType === IDENTIFIER$1) {
-	                // when identifier is expected but there is a function or url
-	                if (this.tokenType === FUNCTION$1 || this.tokenType === URL$2) {
-	                    offset = this.tokenEnd - 1;
-	                    message += ' but function found';
-	                }
-	            } else {
-	                // when test type is part of another token show error for current position + 1
-	                // e.g. eat(HYPHENMINUS) will fail on "-foo", but pointing on "-" is odd
-	                if (this.source.charCodeAt(this.tokenStart) === tokenType) {
-	                    offset = offset + 1;
-	                }
-	            }
-
-	            this.error(message, offset);
-	        }
-
-	        this.next();
-	    },
-	    eatNonWS: function(tokenType) {
-	        this.skipWS();
-	        this.eat(tokenType);
-	    },
-
-	    consume: function(tokenType) {
-	        var value = this.getTokenValue();
-
-	        this.eat(tokenType);
-
-	        return value;
-	    },
-	    consumeFunctionName: function() {
-	        var name = this.source.substring(this.tokenStart, this.tokenEnd - 1);
-
-	        this.eat(FUNCTION$1);
-
-	        return name;
-	    },
-	    consumeNonWS: function(tokenType) {
-	        this.skipWS();
-
-	        return this.consume(tokenType);
-	    },
-
-	    expectIdentifier: function(name) {
-	        if (this.tokenType !== IDENTIFIER$1 || cmpStr$1(this.source, this.tokenStart, this.tokenEnd, name) === false) {
-	            this.error('Identifier `' + name + '` is expected');
-	        }
-
-	        this.next();
-	    },
-
-	    getLocation: function(offset, filename) {
-	        if (!this.linesAnsColumnsComputed) {
-	            computeLinesAndColumns(this, this.source);
-	        }
-
-	        return {
-	            source: filename,
-	            offset: this.startOffset + offset,
-	            line: this.lines[offset],
-	            column: this.columns[offset]
-	        };
-	    },
-
-	    getLocationRange: function(start, end, filename) {
-	        if (!this.linesAnsColumnsComputed) {
-	            computeLinesAndColumns(this, this.source);
-	        }
-
-	        return {
-	            source: filename,
-	            start: {
-	                offset: this.startOffset + start,
-	                line: this.lines[start],
-	                column: this.columns[start]
-	            },
-	            end: {
-	                offset: this.startOffset + end,
-	                line: this.lines[end],
-	                column: this.columns[end]
-	            }
-	        };
-	    },
-
-	    error: function(message, offset) {
-	        var location = typeof offset !== 'undefined' && offset < this.source.length
-	            ? this.getLocation(offset)
-	            : this.eof
-	                ? this.getLocation(findWhiteSpaceStart$1(this.source, this.source.length - 1))
-	                : this.getLocation(this.tokenStart);
-
-	        throw new error(
-	            message || 'Unexpected input',
-	            this.source,
-	            location.offset,
-	            location.line,
-	            location.column
-	        );
-	    },
-
 	    dump: function() {
-	        var offset = 0;
+	        var offset = this.firstCharOffset;
 
 	        return Array.prototype.slice.call(this.offsetAndType, 0, this.tokenCount).map(function(item, idx) {
 	            var start = offset;
@@ -4337,26 +4299,7 @@
 	    }
 	};
 
-	// extend with error class
-	Tokenizer.CssSyntaxError = error;
-
-	// extend tokenizer with constants
-	Object.keys(_const).forEach(function(key) {
-	    Tokenizer[key] = _const[key];
-	});
-
-	// extend tokenizer with static methods from utils
-	Object.keys(utils).forEach(function(key) {
-	    Tokenizer[key] = utils[key];
-	});
-
-	// warm up tokenizer to elimitate code branches that never execute
-	// fix soft deoptimizations (insufficient type feedback)
-	new Tokenizer('\n\r\r\n\f<!---->//""\'\'/*\r\n\f*/1a;.\\31\t\+2{url(a);func();+1.2e3 -.4e-5 .6e+7}').getLocation();
-
-	var Tokenizer_1 = Tokenizer;
-
-	var tokenizer = Tokenizer_1;
+	var TokenStream_1 = TokenStream;
 
 	function noop$1(value) {
 	    return value;
@@ -4388,37 +4331,54 @@
 	    );
 	}
 
-	function generateSequence(node, forceBraces, decorate) {
+	function generateTypeOpts(node) {
+	    switch (node.type) {
+	        case 'Range':
+	            return (
+	                ' [' +
+	                (node.min === null ? '-∞' : node.min) +
+	                ',' +
+	                (node.max === null ? '∞' : node.max) +
+	                ']'
+	            );
+
+	        default:
+	            throw new Error('Unknown node type `' + node.type + '`');
+	    }
+	}
+
+	function generateSequence(node, decorate, forceBraces, compact) {
+	    var combinator = node.combinator === ' ' || compact ? node.combinator : ' ' + node.combinator + ' ';
 	    var result = node.terms.map(function(term) {
-	        return generate(term, forceBraces, decorate);
-	    }).join(node.combinator === ' ' ? ' ' : ' ' + node.combinator + ' ');
+	        return generate(term, decorate, forceBraces, compact);
+	    }).join(combinator);
 
 	    if (node.explicit || forceBraces) {
-	        result = (result[0] !== ',' ? '[ ' : '[') + result + ' ]';
+	        result = (compact || result[0] === ',' ? '[' : '[ ') + result + (compact ? ']' : ' ]');
 	    }
 
 	    return result;
 	}
 
-	function generate(node, forceBraces, decorate) {
+	function generate(node, decorate, forceBraces, compact) {
 	    var result;
 
 	    switch (node.type) {
 	        case 'Group':
 	            result =
-	                generateSequence(node, forceBraces, decorate) +
+	                generateSequence(node, decorate, forceBraces, compact) +
 	                (node.disallowEmpty ? '!' : '');
 	            break;
 
 	        case 'Multiplier':
 	            // return since node is a composition
 	            return (
-	                generate(node.term, forceBraces, decorate) +
+	                generate(node.term, decorate, forceBraces, compact) +
 	                decorate(generateMultiplier(node), node)
 	            );
 
 	        case 'Type':
-	            result = '<' + node.name + '>';
+	            result = '<' + node.name + (node.opts ? decorate(generateTypeOpts(node.opts), node.opts) : '') + '>';
 	            break;
 
 	        case 'Property':
@@ -4456,24 +4416,26 @@
 	var generate_1 = function(node, options) {
 	    var decorate = noop$1;
 	    var forceBraces = false;
+	    var compact = false;
 
 	    if (typeof options === 'function') {
 	        decorate = options;
 	    } else if (options) {
 	        forceBraces = Boolean(options.forceBraces);
+	        compact = Boolean(options.compact);
 	        if (typeof options.decorate === 'function') {
 	            decorate = options.decorate;
 	        }
 	    }
 
-	    return generate(node, forceBraces, decorate);
+	    return generate(node, decorate, forceBraces, compact);
 	};
 
 	function fromMatchResult(matchResult) {
 	    var tokens = matchResult.tokens;
 	    var longestMatch = matchResult.longestMatch;
 	    var node = longestMatch < tokens.length ? tokens[longestMatch].node : null;
-	    var mismatchOffset = 0;
+	    var mismatchOffset = -1;
 	    var entries = 0;
 	    var css = '';
 
@@ -4493,14 +4455,10 @@
 	        css += tokens[i].value;
 	    }
 
-	    if (node === null) {
-	        mismatchOffset = css.length;
-	    }
-
 	    return {
 	        node: node,
 	        css: css,
-	        mismatchOffset: mismatchOffset,
+	        mismatchOffset: mismatchOffset === -1 ? css.length : mismatchOffset,
 	        last: node === null || entries > 1
 	    };
 	}
@@ -4530,7 +4488,7 @@
 	    return error;
 	};
 
-	var MatchError = function(message, lexer, syntax, node, matchResult) {
+	var MatchError = function(message, syntax, node, matchResult) {
 	    var error = createCustomError('SyntaxMatchError', message);
 	    var details = fromMatchResult(matchResult);
 	    var mismatchOffset = details.mismatchOffset || 0;
@@ -4559,7 +4517,7 @@
 	    return error;
 	};
 
-	var error$1 = {
+	var error = {
 	    SyntaxReferenceError: SyntaxReferenceError,
 	    MatchError: MatchError
 	};
@@ -4567,14 +4525,14 @@
 	var hasOwnProperty = Object.prototype.hasOwnProperty;
 	var keywords = Object.create(null);
 	var properties = Object.create(null);
-	var HYPHENMINUS$2 = 45; // '-'.charCodeAt()
+	var HYPHENMINUS = 45; // '-'.charCodeAt()
 
 	function isCustomProperty(str, offset) {
 	    offset = offset || 0;
 
 	    return str.length - offset >= 2 &&
-	           str.charCodeAt(offset) === HYPHENMINUS$2 &&
-	           str.charCodeAt(offset + 1) === HYPHENMINUS$2;
+	           str.charCodeAt(offset) === HYPHENMINUS &&
+	           str.charCodeAt(offset + 1) === HYPHENMINUS;
 	}
 
 	function getVendorPrefix(str, offset) {
@@ -4583,8 +4541,8 @@
 	    // verdor prefix should be at least 3 chars length
 	    if (str.length - offset >= 3) {
 	        // vendor prefix starts with hyper minus following non-hyper minus
-	        if (str.charCodeAt(offset) === HYPHENMINUS$2 &&
-	            str.charCodeAt(offset + 1) !== HYPHENMINUS$2) {
+	        if (str.charCodeAt(offset) === HYPHENMINUS &&
+	            str.charCodeAt(offset + 1) !== HYPHENMINUS) {
 	            // vendor prefix should contain a hyper minus at the ending
 	            var secondDashIndex = str.indexOf('-', offset + 2);
 
@@ -4634,7 +4592,8 @@
 	               hack !== '*' &&
 	               hack !== '$' &&
 	               hack !== '#' &&
-	               hack !== '+') {
+	               hack !== '+' &&
+	               hack !== '&') {
 	        hack = '';
 	    }
 
@@ -4668,20 +4627,1012 @@
 	    vendorPrefix: getVendorPrefix
 	};
 
-	var findIdentifierEnd$2 = utils.findIdentifierEnd;
-	var findNumberEnd$2 = utils.findNumberEnd;
-	var findDecimalNumberEnd$1 = utils.findDecimalNumberEnd;
-	var isHex$1 = utils.isHex;
+	var MIN_SIZE = 16 * 1024;
+	var SafeUint32Array = typeof Uint32Array !== 'undefined' ? Uint32Array : Array; // fallback on Array when TypedArray is not supported
 
-	var SYMBOL_TYPE$2 = _const.SYMBOL_TYPE;
-	var IDENTIFIER$2 = _const.TYPE.Identifier;
-	var PLUSSIGN$2 = _const.TYPE.PlusSign;
-	var HYPHENMINUS$3 = _const.TYPE.HyphenMinus;
-	var NUMBERSIGN = _const.TYPE.NumberSign;
+	var adoptBuffer = function adoptBuffer(buffer, size) {
+	    if (buffer === null || buffer.length < size) {
+	        return new SafeUint32Array(Math.max(size + 1024, MIN_SIZE));
+	    }
 
-	var PERCENTAGE = {
-	    '%': true
+	    return buffer;
 	};
+
+	var TYPE$2 = _const.TYPE;
+
+
+	var isNewline$1 = charCodeDefinitions.isNewline;
+	var isName$2 = charCodeDefinitions.isName;
+	var isValidEscape$2 = charCodeDefinitions.isValidEscape;
+	var isNumberStart$1 = charCodeDefinitions.isNumberStart;
+	var isIdentifierStart$1 = charCodeDefinitions.isIdentifierStart;
+	var charCodeCategory$1 = charCodeDefinitions.charCodeCategory;
+	var isBOM$1 = charCodeDefinitions.isBOM;
+
+
+	var cmpStr$2 = utils.cmpStr;
+	var getNewlineLength$1 = utils.getNewlineLength;
+	var findWhiteSpaceEnd$1 = utils.findWhiteSpaceEnd;
+	var consumeEscaped$1 = utils.consumeEscaped;
+	var consumeName$1 = utils.consumeName;
+	var consumeNumber$1 = utils.consumeNumber;
+	var consumeBadUrlRemnants$1 = utils.consumeBadUrlRemnants;
+
+	var OFFSET_MASK$1 = 0x00FFFFFF;
+	var TYPE_SHIFT$1 = 24;
+
+	function tokenize(source, stream) {
+	    function getCharCode(offset) {
+	        return offset < sourceLength ? source.charCodeAt(offset) : 0;
+	    }
+
+	    // § 4.3.3. Consume a numeric token
+	    function consumeNumericToken() {
+	        // Consume a number and let number be the result.
+	        offset = consumeNumber$1(source, offset);
+
+	        // If the next 3 input code points would start an identifier, then:
+	        if (isIdentifierStart$1(getCharCode(offset), getCharCode(offset + 1), getCharCode(offset + 2))) {
+	            // Create a <dimension-token> with the same value and type flag as number, and a unit set initially to the empty string.
+	            // Consume a name. Set the <dimension-token>’s unit to the returned value.
+	            // Return the <dimension-token>.
+	            type = TYPE$2.Dimension;
+	            offset = consumeName$1(source, offset);
+	            return;
+	        }
+
+	        // Otherwise, if the next input code point is U+0025 PERCENTAGE SIGN (%), consume it.
+	        if (getCharCode(offset) === 0x0025) {
+	            // Create a <percentage-token> with the same value as number, and return it.
+	            type = TYPE$2.Percentage;
+	            offset++;
+	            return;
+	        }
+
+	        // Otherwise, create a <number-token> with the same value and type flag as number, and return it.
+	        type = TYPE$2.Number;
+	    }
+
+	    // § 4.3.4. Consume an ident-like token
+	    function consumeIdentLikeToken() {
+	        const nameStartOffset = offset;
+
+	        // Consume a name, and let string be the result.
+	        offset = consumeName$1(source, offset);
+
+	        // If string’s value is an ASCII case-insensitive match for "url",
+	        // and the next input code point is U+0028 LEFT PARENTHESIS ((), consume it.
+	        if (cmpStr$2(source, nameStartOffset, offset, 'url') && getCharCode(offset) === 0x0028) {
+	            // While the next two input code points are whitespace, consume the next input code point.
+	            offset = findWhiteSpaceEnd$1(source, offset + 1);
+
+	            // If the next one or two input code points are U+0022 QUOTATION MARK ("), U+0027 APOSTROPHE ('),
+	            // or whitespace followed by U+0022 QUOTATION MARK (") or U+0027 APOSTROPHE ('),
+	            // then create a <function-token> with its value set to string and return it.
+	            if (getCharCode(offset) === 0x0022 ||
+	                getCharCode(offset) === 0x0027) {
+	                type = TYPE$2.Function;
+	                offset = nameStartOffset + 4;
+	                return;
+	            }
+
+	            // Otherwise, consume a url token, and return it.
+	            consumeUrlToken();
+	            return;
+	        }
+
+	        // Otherwise, if the next input code point is U+0028 LEFT PARENTHESIS ((), consume it.
+	        // Create a <function-token> with its value set to string and return it.
+	        if (getCharCode(offset) === 0x0028) {
+	            type = TYPE$2.Function;
+	            offset++;
+	            return;
+	        }
+
+	        // Otherwise, create an <ident-token> with its value set to string and return it.
+	        type = TYPE$2.Ident;
+	    }
+
+	    // § 4.3.5. Consume a string token
+	    function consumeStringToken(endingCodePoint) {
+	        // This algorithm may be called with an ending code point, which denotes the code point
+	        // that ends the string. If an ending code point is not specified,
+	        // the current input code point is used.
+	        if (!endingCodePoint) {
+	            endingCodePoint = getCharCode(offset++);
+	        }
+
+	        // Initially create a <string-token> with its value set to the empty string.
+	        type = TYPE$2.String;
+
+	        // Repeatedly consume the next input code point from the stream:
+	        for (; offset < source.length; offset++) {
+	            var code = source.charCodeAt(offset);
+
+	            switch (charCodeCategory$1(code)) {
+	                // ending code point
+	                case endingCodePoint:
+	                    // Return the <string-token>.
+	                    offset++;
+	                    return;
+
+	                // EOF
+	                case charCodeCategory$1.Eof:
+	                    // This is a parse error. Return the <string-token>.
+	                    return;
+
+	                // newline
+	                case charCodeCategory$1.WhiteSpace:
+	                    if (isNewline$1(code)) {
+	                        // This is a parse error. Reconsume the current input code point,
+	                        // create a <bad-string-token>, and return it.
+	                        offset += getNewlineLength$1(source, offset, code);
+	                        type = TYPE$2.BadString;
+	                        return;
+	                    }
+	                    break;
+
+	                // U+005C REVERSE SOLIDUS (\)
+	                case 0x005C:
+	                    // If the next input code point is EOF, do nothing.
+	                    if (offset === source.length - 1) {
+	                        break;
+	                    }
+
+	                    var nextCode = getCharCode(offset + 1);
+
+	                    // Otherwise, if the next input code point is a newline, consume it.
+	                    if (isNewline$1(nextCode)) {
+	                        offset += getNewlineLength$1(source, offset + 1, nextCode);
+	                    } else if (isValidEscape$2(code, nextCode)) {
+	                        // Otherwise, (the stream starts with a valid escape) consume
+	                        // an escaped code point and append the returned code point to
+	                        // the <string-token>’s value.
+	                        offset = consumeEscaped$1(source, offset) - 1;
+	                    }
+	                    break;
+
+	                // anything else
+	                // Append the current input code point to the <string-token>’s value.
+	            }
+	        }
+	    }
+
+	    // § 4.3.6. Consume a url token
+	    // Note: This algorithm assumes that the initial "url(" has already been consumed.
+	    // This algorithm also assumes that it’s being called to consume an "unquoted" value, like url(foo).
+	    // A quoted value, like url("foo"), is parsed as a <function-token>. Consume an ident-like token
+	    // automatically handles this distinction; this algorithm shouldn’t be called directly otherwise.
+	    function consumeUrlToken() {
+	        // Initially create a <url-token> with its value set to the empty string.
+	        type = TYPE$2.Url;
+
+	        // Consume as much whitespace as possible.
+	        offset = findWhiteSpaceEnd$1(source, offset);
+
+	        // Repeatedly consume the next input code point from the stream:
+	        for (; offset < source.length; offset++) {
+	            var code = source.charCodeAt(offset);
+
+	            switch (charCodeCategory$1(code)) {
+	                // U+0029 RIGHT PARENTHESIS ())
+	                case 0x0029:
+	                    // Return the <url-token>.
+	                    offset++;
+	                    return;
+
+	                // EOF
+	                case charCodeCategory$1.Eof:
+	                    // This is a parse error. Return the <url-token>.
+	                    return;
+
+	                // whitespace
+	                case charCodeCategory$1.WhiteSpace:
+	                    // Consume as much whitespace as possible.
+	                    offset = findWhiteSpaceEnd$1(source, offset);
+
+	                    // If the next input code point is U+0029 RIGHT PARENTHESIS ()) or EOF,
+	                    // consume it and return the <url-token>
+	                    // (if EOF was encountered, this is a parse error);
+	                    if (getCharCode(offset) === 0x0029 || offset >= source.length) {
+	                        if (offset < source.length) {
+	                            offset++;
+	                        }
+	                        return;
+	                    }
+
+	                    // otherwise, consume the remnants of a bad url, create a <bad-url-token>,
+	                    // and return it.
+	                    offset = consumeBadUrlRemnants$1(source, offset);
+	                    type = TYPE$2.BadUrl;
+	                    return;
+
+	                // U+0022 QUOTATION MARK (")
+	                // U+0027 APOSTROPHE (')
+	                // U+0028 LEFT PARENTHESIS (()
+	                // non-printable code point
+	                case 0x0022:
+	                case 0x0027:
+	                case 0x0028:
+	                case charCodeCategory$1.NonPrintable:
+	                    // This is a parse error. Consume the remnants of a bad url,
+	                    // create a <bad-url-token>, and return it.
+	                    offset = consumeBadUrlRemnants$1(source, offset);
+	                    type = TYPE$2.BadUrl;
+	                    return;
+
+	                // U+005C REVERSE SOLIDUS (\)
+	                case 0x005C:
+	                    // If the stream starts with a valid escape, consume an escaped code point and
+	                    // append the returned code point to the <url-token>’s value.
+	                    if (isValidEscape$2(code, getCharCode(offset + 1))) {
+	                        offset = consumeEscaped$1(source, offset) - 1;
+	                        break;
+	                    }
+
+	                    // Otherwise, this is a parse error. Consume the remnants of a bad url,
+	                    // create a <bad-url-token>, and return it.
+	                    offset = consumeBadUrlRemnants$1(source, offset);
+	                    type = TYPE$2.BadUrl;
+	                    return;
+
+	                // anything else
+	                // Append the current input code point to the <url-token>’s value.
+	            }
+	        }
+	    }
+
+	    if (!stream) {
+	        stream = new TokenStream_1();
+	    }
+
+	    // ensure source is a string
+	    source = String(source || '');
+
+	    var sourceLength = source.length;
+	    var offsetAndType = adoptBuffer(stream.offsetAndType, sourceLength + 1); // +1 because of eof-token
+	    var balance = adoptBuffer(stream.balance, sourceLength + 1);
+	    var tokenCount = 0;
+	    var start = isBOM$1(getCharCode(0));
+	    var offset = start;
+	    var balanceCloseType = 0;
+	    var balanceStart = 0;
+	    var balancePrev = 0;
+
+	    // https://drafts.csswg.org/css-syntax-3/#consume-token
+	    // § 4.3.1. Consume a token
+	    while (offset < sourceLength) {
+	        var code = source.charCodeAt(offset);
+	        var type = 0;
+
+	        balance[tokenCount] = sourceLength;
+
+	        switch (charCodeCategory$1(code)) {
+	            // whitespace
+	            case charCodeCategory$1.WhiteSpace:
+	                // Consume as much whitespace as possible. Return a <whitespace-token>.
+	                type = TYPE$2.WhiteSpace;
+	                offset = findWhiteSpaceEnd$1(source, offset + 1);
+	                break;
+
+	            // U+0022 QUOTATION MARK (")
+	            case 0x0022:
+	                // Consume a string token and return it.
+	                consumeStringToken();
+	                break;
+
+	            // U+0023 NUMBER SIGN (#)
+	            case 0x0023:
+	                // If the next input code point is a name code point or the next two input code points are a valid escape, then:
+	                if (isName$2(getCharCode(offset + 1)) || isValidEscape$2(getCharCode(offset + 1), getCharCode(offset + 2))) {
+	                    // Create a <hash-token>.
+	                    type = TYPE$2.Hash;
+
+	                    // If the next 3 input code points would start an identifier, set the <hash-token>’s type flag to "id".
+	                    // if (isIdentifierStart(getCharCode(offset + 1), getCharCode(offset + 2), getCharCode(offset + 3))) {
+	                    //     // TODO: set id flag
+	                    // }
+
+	                    // Consume a name, and set the <hash-token>’s value to the returned string.
+	                    offset = consumeName$1(source, offset + 1);
+
+	                    // Return the <hash-token>.
+	                } else {
+	                    // Otherwise, return a <delim-token> with its value set to the current input code point.
+	                    type = TYPE$2.Delim;
+	                    offset++;
+	                }
+
+	                break;
+
+	            // U+0027 APOSTROPHE (')
+	            case 0x0027:
+	                // Consume a string token and return it.
+	                consumeStringToken();
+	                break;
+
+	            // U+0028 LEFT PARENTHESIS (()
+	            case 0x0028:
+	                // Return a <(-token>.
+	                type = TYPE$2.LeftParenthesis;
+	                offset++;
+	                break;
+
+	            // U+0029 RIGHT PARENTHESIS ())
+	            case 0x0029:
+	                // Return a <)-token>.
+	                type = TYPE$2.RightParenthesis;
+	                offset++;
+	                break;
+
+	            // U+002B PLUS SIGN (+)
+	            case 0x002B:
+	                // If the input stream starts with a number, ...
+	                if (isNumberStart$1(code, getCharCode(offset + 1), getCharCode(offset + 2))) {
+	                    // ... reconsume the current input code point, consume a numeric token, and return it.
+	                    consumeNumericToken();
+	                } else {
+	                    // Otherwise, return a <delim-token> with its value set to the current input code point.
+	                    type = TYPE$2.Delim;
+	                    offset++;
+	                }
+	                break;
+
+	            // U+002C COMMA (,)
+	            case 0x002C:
+	                // Return a <comma-token>.
+	                type = TYPE$2.Comma;
+	                offset++;
+	                break;
+
+	            // U+002D HYPHEN-MINUS (-)
+	            case 0x002D:
+	                // If the input stream starts with a number, reconsume the current input code point, consume a numeric token, and return it.
+	                if (isNumberStart$1(code, getCharCode(offset + 1), getCharCode(offset + 2))) {
+	                    consumeNumericToken();
+	                } else {
+	                    // Otherwise, if the next 2 input code points are U+002D HYPHEN-MINUS U+003E GREATER-THAN SIGN (->), consume them and return a <CDC-token>.
+	                    if (getCharCode(offset + 1) === 0x002D &&
+	                        getCharCode(offset + 2) === 0x003E) {
+	                        type = TYPE$2.CDC;
+	                        offset = offset + 3;
+	                    } else {
+	                        // Otherwise, if the input stream starts with an identifier, ...
+	                        if (isIdentifierStart$1(code, getCharCode(offset + 1), getCharCode(offset + 2))) {
+	                            // ... reconsume the current input code point, consume an ident-like token, and return it.
+	                            consumeIdentLikeToken();
+	                        } else {
+	                            // Otherwise, return a <delim-token> with its value set to the current input code point.
+	                            type = TYPE$2.Delim;
+	                            offset++;
+	                        }
+	                    }
+	                }
+	                break;
+
+	            // U+002E FULL STOP (.)
+	            case 0x002E:
+	                // If the input stream starts with a number, ...
+	                if (isNumberStart$1(code, getCharCode(offset + 1), getCharCode(offset + 2))) {
+	                    // ... reconsume the current input code point, consume a numeric token, and return it.
+	                    consumeNumericToken();
+	                } else {
+	                    // Otherwise, return a <delim-token> with its value set to the current input code point.
+	                    type = TYPE$2.Delim;
+	                    offset++;
+	                }
+
+	                break;
+
+	            // U+002F SOLIDUS (/)
+	            case 0x002F:
+	                // If the next two input code point are U+002F SOLIDUS (/) followed by a U+002A ASTERISK (*),
+	                if (getCharCode(offset + 1) === 0x002A) {
+	                    // ... consume them and all following code points up to and including the first U+002A ASTERISK (*)
+	                    // followed by a U+002F SOLIDUS (/), or up to an EOF code point.
+	                    type = TYPE$2.Comment;
+	                    offset = source.indexOf('*/', offset + 2) + 2;
+	                    if (offset === 1) {
+	                        offset = source.length;
+	                    }
+	                } else {
+	                    type = TYPE$2.Delim;
+	                    offset++;
+	                }
+	                break;
+
+	            // U+003A COLON (:)
+	            case 0x003A:
+	                // Return a <colon-token>.
+	                type = TYPE$2.Colon;
+	                offset++;
+	                break;
+
+	            // U+003B SEMICOLON (;)
+	            case 0x003B:
+	                // Return a <semicolon-token>.
+	                type = TYPE$2.Semicolon;
+	                offset++;
+	                break;
+
+	            // U+003C LESS-THAN SIGN (<)
+	            case 0x003C:
+	                // If the next 3 input code points are U+0021 EXCLAMATION MARK U+002D HYPHEN-MINUS U+002D HYPHEN-MINUS (!--), ...
+	                if (getCharCode(offset + 1) === 0x0021 &&
+	                    getCharCode(offset + 2) === 0x002D &&
+	                    getCharCode(offset + 3) === 0x002D) {
+	                    // ... consume them and return a <CDO-token>.
+	                    type = TYPE$2.CDO;
+	                    offset = offset + 4;
+	                } else {
+	                    // Otherwise, return a <delim-token> with its value set to the current input code point.
+	                    type = TYPE$2.Delim;
+	                    offset++;
+	                }
+
+	                break;
+
+	            // U+0040 COMMERCIAL AT (@)
+	            case 0x0040:
+	                // If the next 3 input code points would start an identifier, ...
+	                if (isIdentifierStart$1(getCharCode(offset + 1), getCharCode(offset + 2), getCharCode(offset + 3))) {
+	                    // ... consume a name, create an <at-keyword-token> with its value set to the returned value, and return it.
+	                    type = TYPE$2.AtKeyword;
+	                    offset = consumeName$1(source, offset + 1);
+	                } else {
+	                    // Otherwise, return a <delim-token> with its value set to the current input code point.
+	                    type = TYPE$2.Delim;
+	                    offset++;
+	                }
+
+	                break;
+
+	            // U+005B LEFT SQUARE BRACKET ([)
+	            case 0x005B:
+	                // Return a <[-token>.
+	                type = TYPE$2.LeftSquareBracket;
+	                offset++;
+	                break;
+
+	            // U+005C REVERSE SOLIDUS (\)
+	            case 0x005C:
+	                // If the input stream starts with a valid escape, ...
+	                if (isValidEscape$2(code, getCharCode(offset + 1))) {
+	                    // ... reconsume the current input code point, consume an ident-like token, and return it.
+	                    consumeIdentLikeToken();
+	                } else {
+	                    // Otherwise, this is a parse error. Return a <delim-token> with its value set to the current input code point.
+	                    type = TYPE$2.Delim;
+	                    offset++;
+	                }
+	                break;
+
+	            // U+005D RIGHT SQUARE BRACKET (])
+	            case 0x005D:
+	                // Return a <]-token>.
+	                type = TYPE$2.RightSquareBracket;
+	                offset++;
+	                break;
+
+	            // U+007B LEFT CURLY BRACKET ({)
+	            case 0x007B:
+	                // Return a <{-token>.
+	                type = TYPE$2.LeftCurlyBracket;
+	                offset++;
+	                break;
+
+	            // U+007D RIGHT CURLY BRACKET (})
+	            case 0x007D:
+	                // Return a <}-token>.
+	                type = TYPE$2.RightCurlyBracket;
+	                offset++;
+	                break;
+
+	            // digit
+	            case charCodeCategory$1.Digit:
+	                // Reconsume the current input code point, consume a numeric token, and return it.
+	                consumeNumericToken();
+	                break;
+
+	            // name-start code point
+	            case charCodeCategory$1.NameStart:
+	                // Reconsume the current input code point, consume an ident-like token, and return it.
+	                consumeIdentLikeToken();
+	                break;
+
+	            // EOF
+	            case charCodeCategory$1.Eof:
+	                // Return an <EOF-token>.
+	                break;
+
+	            // anything else
+	            default:
+	                // Return a <delim-token> with its value set to the current input code point.
+	                type = TYPE$2.Delim;
+	                offset++;
+	        }
+
+	        switch (type) {
+	            case balanceCloseType:
+	                balancePrev = balanceStart & OFFSET_MASK$1;
+	                balanceStart = balance[balancePrev];
+	                balanceCloseType = balanceStart >> TYPE_SHIFT$1;
+	                balance[tokenCount] = balancePrev;
+	                balance[balancePrev++] = tokenCount;
+	                for (; balancePrev < tokenCount; balancePrev++) {
+	                    if (balance[balancePrev] === sourceLength) {
+	                        balance[balancePrev] = tokenCount;
+	                    }
+	                }
+	                break;
+
+	            case TYPE$2.LeftParenthesis:
+	            case TYPE$2.Function:
+	                balance[tokenCount] = balanceStart;
+	                balanceCloseType = TYPE$2.RightParenthesis;
+	                balanceStart = (balanceCloseType << TYPE_SHIFT$1) | tokenCount;
+	                break;
+
+	            case TYPE$2.LeftSquareBracket:
+	                balance[tokenCount] = balanceStart;
+	                balanceCloseType = TYPE$2.RightSquareBracket;
+	                balanceStart = (balanceCloseType << TYPE_SHIFT$1) | tokenCount;
+	                break;
+
+	            case TYPE$2.LeftCurlyBracket:
+	                balance[tokenCount] = balanceStart;
+	                balanceCloseType = TYPE$2.RightCurlyBracket;
+	                balanceStart = (balanceCloseType << TYPE_SHIFT$1) | tokenCount;
+	                break;
+	        }
+
+	        offsetAndType[tokenCount++] = (type << TYPE_SHIFT$1) | offset;
+	    }
+
+	    // finalize buffers
+	    offsetAndType[tokenCount] = (TYPE$2.EOF << TYPE_SHIFT$1) | offset; // <EOF-token>
+	    balance[tokenCount] = sourceLength;
+	    balance[sourceLength] = sourceLength; // prevents false positive balance match with any token
+	    while (balanceStart !== 0) {
+	        balancePrev = balanceStart & OFFSET_MASK$1;
+	        balanceStart = balance[balancePrev];
+	        balance[balancePrev] = sourceLength;
+	    }
+
+	    // update stream
+	    stream.source = source;
+	    stream.firstCharOffset = start;
+	    stream.offsetAndType = offsetAndType;
+	    stream.tokenCount = tokenCount;
+	    stream.balance = balance;
+	    stream.reset();
+	    stream.next();
+
+	    return stream;
+	}
+
+	// extend tokenizer with constants
+	Object.keys(_const).forEach(function(key) {
+	    tokenize[key] = _const[key];
+	});
+
+	// extend tokenizer with static methods from utils
+	Object.keys(charCodeDefinitions).forEach(function(key) {
+	    tokenize[key] = charCodeDefinitions[key];
+	});
+	Object.keys(utils).forEach(function(key) {
+	    tokenize[key] = utils[key];
+	});
+
+	var tokenizer = tokenize;
+
+	var isDigit$2 = tokenizer.isDigit;
+	var cmpChar$1 = tokenizer.cmpChar;
+	var TYPE$3 = tokenizer.TYPE;
+
+	var DELIM = TYPE$3.Delim;
+	var WHITESPACE$1 = TYPE$3.WhiteSpace;
+	var COMMENT$1 = TYPE$3.Comment;
+	var IDENT = TYPE$3.Ident;
+	var NUMBER = TYPE$3.Number;
+	var DIMENSION = TYPE$3.Dimension;
+	var PLUSSIGN = 0x002B;    // U+002B PLUS SIGN (+)
+	var HYPHENMINUS$1 = 0x002D; // U+002D HYPHEN-MINUS (-)
+	var N = 0x006E;           // U+006E LATIN SMALL LETTER N (n)
+	var DISALLOW_SIGN = true;
+	var ALLOW_SIGN = false;
+
+	function isDelim(token, code) {
+	    return token !== null && token.type === DELIM && token.value.charCodeAt(0) === code;
+	}
+
+	function skipSC(token, offset, getNextToken) {
+	    while (token !== null && (token.type === WHITESPACE$1 || token.type === COMMENT$1)) {
+	        token = getNextToken(++offset);
+	    }
+
+	    return offset;
+	}
+
+	function checkInteger(token, valueOffset, disallowSign, offset) {
+	    if (!token) {
+	        return 0;
+	    }
+
+	    var code = token.value.charCodeAt(valueOffset);
+
+	    if (code === PLUSSIGN || code === HYPHENMINUS$1) {
+	        if (disallowSign) {
+	            // Number sign is not allowed
+	            return 0;
+	        }
+	        valueOffset++;
+	    }
+
+	    for (; valueOffset < token.value.length; valueOffset++) {
+	        if (!isDigit$2(token.value.charCodeAt(valueOffset))) {
+	            // Integer is expected
+	            return 0;
+	        }
+	    }
+
+	    return offset + 1;
+	}
+
+	// ... <signed-integer>
+	// ... ['+' | '-'] <signless-integer>
+	function consumeB(token, offset_, getNextToken) {
+	    var sign = false;
+	    var offset = skipSC(token, offset_, getNextToken);
+
+	    token = getNextToken(offset);
+
+	    if (token === null) {
+	        return offset_;
+	    }
+
+	    if (token.type !== NUMBER) {
+	        if (isDelim(token, PLUSSIGN) || isDelim(token, HYPHENMINUS$1)) {
+	            sign = true;
+	            offset = skipSC(getNextToken(++offset), offset, getNextToken);
+	            token = getNextToken(offset);
+
+	            if (token === null && token.type !== NUMBER) {
+	                return 0;
+	            }
+	        } else {
+	            return offset_;
+	        }
+	    }
+
+	    if (!sign) {
+	        var code = token.value.charCodeAt(0);
+	        if (code !== PLUSSIGN && code !== HYPHENMINUS$1) {
+	            // Number sign is expected
+	            return 0;
+	        }
+	    }
+
+	    return checkInteger(token, sign ? 0 : 1, sign, offset);
+	}
+
+	// An+B microsyntax https://www.w3.org/TR/css-syntax-3/#anb
+	var genericAnPlusB = function anPlusB(token, getNextToken) {
+	    /* eslint-disable brace-style*/
+	    var offset = 0;
+
+	    if (!token) {
+	        return 0;
+	    }
+
+	    // <integer>
+	    if (token.type === NUMBER) {
+	        return checkInteger(token, 0, ALLOW_SIGN, offset); // b
+	    }
+
+	    // -n
+	    // -n <signed-integer>
+	    // -n ['+' | '-'] <signless-integer>
+	    // -n- <signless-integer>
+	    // <dashndashdigit-ident>
+	    else if (token.type === IDENT && token.value.charCodeAt(0) === HYPHENMINUS$1) {
+	        // expect 1st char is N
+	        if (!cmpChar$1(token.value, 1, N)) {
+	            return 0;
+	        }
+
+	        switch (token.value.length) {
+	            // -n
+	            // -n <signed-integer>
+	            // -n ['+' | '-'] <signless-integer>
+	            case 2:
+	                return consumeB(getNextToken(++offset), offset, getNextToken);
+
+	            // -n- <signless-integer>
+	            case 3:
+	                if (token.value.charCodeAt(2) !== HYPHENMINUS$1) {
+	                    return 0;
+	                }
+
+	                offset = skipSC(getNextToken(++offset), offset, getNextToken);
+	                token = getNextToken(offset);
+
+	                return checkInteger(token, 0, DISALLOW_SIGN, offset);
+
+	            // <dashndashdigit-ident>
+	            default:
+	                if (token.value.charCodeAt(2) !== HYPHENMINUS$1) {
+	                    return 0;
+	                }
+
+	                return checkInteger(token, 3, DISALLOW_SIGN, offset);
+	        }
+	    }
+
+	    // '+'? n
+	    // '+'? n <signed-integer>
+	    // '+'? n ['+' | '-'] <signless-integer>
+	    // '+'? n- <signless-integer>
+	    // '+'? <ndashdigit-ident>
+	    else if (token.type === IDENT || (isDelim(token, PLUSSIGN) && getNextToken(offset + 1).type === IDENT)) {
+	        // just ignore a plus
+	        if (token.type !== IDENT) {
+	            token = getNextToken(++offset);
+	        }
+
+	        if (token === null || !cmpChar$1(token.value, 0, N)) {
+	            return 0;
+	        }
+
+	        switch (token.value.length) {
+	            // '+'? n
+	            // '+'? n <signed-integer>
+	            // '+'? n ['+' | '-'] <signless-integer>
+	            case 1:
+	                return consumeB(getNextToken(++offset), offset, getNextToken);
+
+	            // '+'? n- <signless-integer>
+	            case 2:
+	                if (token.value.charCodeAt(1) !== HYPHENMINUS$1) {
+	                    return 0;
+	                }
+
+	                offset = skipSC(getNextToken(++offset), offset, getNextToken);
+	                token = getNextToken(offset);
+
+	                return checkInteger(token, 0, DISALLOW_SIGN, offset);
+
+	            // '+'? <ndashdigit-ident>
+	            default:
+	                if (token.value.charCodeAt(1) !== HYPHENMINUS$1) {
+	                    return 0;
+	                }
+
+	                return checkInteger(token, 2, DISALLOW_SIGN, offset);
+	        }
+	    }
+
+	    // <ndashdigit-dimension>
+	    // <ndash-dimension> <signless-integer>
+	    // <n-dimension>
+	    // <n-dimension> <signed-integer>
+	    // <n-dimension> ['+' | '-'] <signless-integer>
+	    else if (token.type === DIMENSION) {
+	        var code = token.value.charCodeAt(0);
+	        var sign = code === PLUSSIGN || code === HYPHENMINUS$1 ? 1 : 0;
+
+	        for (var i = sign; i < token.value.length; i++) {
+	            if (!isDigit$2(token.value.charCodeAt(i))) {
+	                break;
+	            }
+	        }
+
+	        if (i === sign) {
+	            // Integer is expected
+	            return 0;
+	        }
+
+	        if (!cmpChar$1(token.value, i, N)) {
+	            return 0;
+	        }
+
+	        // <n-dimension>
+	        // <n-dimension> <signed-integer>
+	        // <n-dimension> ['+' | '-'] <signless-integer>
+	        if (i + 1 === token.value.length) {
+	            return consumeB(getNextToken(++offset), offset, getNextToken);
+	        } else {
+	            if (token.value.charCodeAt(i + 1) !== HYPHENMINUS$1) {
+	                return 0;
+	            }
+
+	            // <ndash-dimension> <signless-integer>
+	            if (i + 2 === token.value.length) {
+	                offset = skipSC(getNextToken(++offset), offset, getNextToken);
+	                token = getNextToken(offset);
+
+	                return checkInteger(token, 0, DISALLOW_SIGN, offset);
+	            }
+	            // <ndashdigit-dimension>
+	            else {
+	                return checkInteger(token, i + 2, DISALLOW_SIGN, offset);
+	            }
+	        }
+	    }
+
+	    return 0;
+	};
+
+	var isHexDigit$2 = tokenizer.isHexDigit;
+	var cmpChar$2 = tokenizer.cmpChar;
+	var TYPE$4 = tokenizer.TYPE;
+
+	var IDENT$1 = TYPE$4.Ident;
+	var DELIM$1 = TYPE$4.Delim;
+	var NUMBER$1 = TYPE$4.Number;
+	var DIMENSION$1 = TYPE$4.Dimension;
+	var PLUSSIGN$1 = 0x002B;     // U+002B PLUS SIGN (+)
+	var HYPHENMINUS$2 = 0x002D;  // U+002D HYPHEN-MINUS (-)
+	var QUESTIONMARK = 0x003F; // U+003F QUESTION MARK (?)
+	var U = 0x0075;            // U+0075 LATIN SMALL LETTER U (u)
+
+	function isDelim$1(token, code) {
+	    return token !== null && token.type === DELIM$1 && token.value.charCodeAt(0) === code;
+	}
+
+	function startsWith(token, code) {
+	    return token.value.charCodeAt(0) === code;
+	}
+
+	function hexSequence(token, offset, allowDash) {
+	    for (var pos = offset, hexlen = 0; pos < token.value.length; pos++) {
+	        var code = token.value.charCodeAt(pos);
+
+	        if (code === HYPHENMINUS$2 && allowDash && hexlen !== 0) {
+	            if (hexSequence(token, offset + hexlen + 1, false) > 0) {
+	                return 6; // dissallow following question marks
+	            }
+
+	            return 0; // dash at the ending of a hex sequence is not allowed
+	        }
+
+	        if (!isHexDigit$2(code)) {
+	            return 0; // not a hex digit
+	        }
+
+	        if (++hexlen > 6) {
+	            return 0; // too many hex digits
+	        }    }
+
+	    return hexlen;
+	}
+
+	function withQuestionMarkSequence(consumed, length, getNextToken) {
+	    if (!consumed) {
+	        return 0; // nothing consumed
+	    }
+
+	    while (isDelim$1(getNextToken(length), QUESTIONMARK)) {
+	        if (++consumed > 6) {
+	            return 0; // too many question marks
+	        }
+
+	        length++;
+	    }
+
+	    return length;
+	}
+
+	// https://drafts.csswg.org/css-syntax/#urange
+	// Informally, the <urange> production has three forms:
+	// U+0001
+	//      Defines a range consisting of a single code point, in this case the code point "1".
+	// U+0001-00ff
+	//      Defines a range of codepoints between the first and the second value, in this case
+	//      the range between "1" and "ff" (255 in decimal) inclusive.
+	// U+00??
+	//      Defines a range of codepoints where the "?" characters range over all hex digits,
+	//      in this case defining the same as the value U+0000-00ff.
+	// In each form, a maximum of 6 digits is allowed for each hexadecimal number (if you treat "?" as a hexadecimal digit).
+	//
+	// <urange> =
+	//   u '+' <ident-token> '?'* |
+	//   u <dimension-token> '?'* |
+	//   u <number-token> '?'* |
+	//   u <number-token> <dimension-token> |
+	//   u <number-token> <number-token> |
+	//   u '+' '?'+
+	var genericUrange = function urange(token, getNextToken) {
+	    var length = 0;
+
+	    // should start with `u` or `U`
+	    if (token === null || token.type !== IDENT$1 || !cmpChar$2(token.value, 0, U)) {
+	        return 0;
+	    }
+
+	    token = getNextToken(++length);
+	    if (token === null) {
+	        return 0;
+	    }
+
+	    // u '+' <ident-token> '?'*
+	    // u '+' '?'+
+	    if (isDelim$1(token, PLUSSIGN$1)) {
+	        token = getNextToken(++length);
+	        if (token === null) {
+	            return 0;
+	        }
+
+	        if (token.type === IDENT$1) {
+	            // u '+' <ident-token> '?'*
+	            return withQuestionMarkSequence(hexSequence(token, 0, true), ++length, getNextToken);
+	        }
+
+	        if (isDelim$1(token, QUESTIONMARK)) {
+	            // u '+' '?'+
+	            return withQuestionMarkSequence(1, ++length, getNextToken);
+	        }
+
+	        // Hex digit or question mark is expected
+	        return 0;
+	    }
+
+	    // u <number-token> '?'*
+	    // u <number-token> <dimension-token>
+	    // u <number-token> <number-token>
+	    if (token.type === NUMBER$1) {
+	        if (!startsWith(token, PLUSSIGN$1)) {
+	            return 0;
+	        }
+
+	        var consumedHexLength = hexSequence(token, 1, true);
+	        if (consumedHexLength === 0) {
+	            return 0;
+	        }
+
+	        token = getNextToken(++length);
+	        if (token === null) {
+	            // u <number-token> <eof>
+	            return length;
+	        }
+
+	        if (token.type === DIMENSION$1 || token.type === NUMBER$1) {
+	            // u <number-token> <dimension-token>
+	            // u <number-token> <number-token>
+	            if (!startsWith(token, HYPHENMINUS$2) || !hexSequence(token, 1, false)) {
+	                return 0;
+	            }
+
+	            return length + 1;
+	        }
+
+	        // u <number-token> '?'*
+	        return withQuestionMarkSequence(consumedHexLength, length, getNextToken);
+	    }
+
+	    // u <dimension-token> '?'*
+	    if (token.type === DIMENSION$1) {
+	        if (!startsWith(token, PLUSSIGN$1)) {
+	            return 0;
+	        }
+
+	        return withQuestionMarkSequence(hexSequence(token, 1, true), ++length, getNextToken);
+	    }
+
+	    return 0;
+	};
+
+	var isIdentifierStart$2 = tokenizer.isIdentifierStart;
+	var isHexDigit$3 = tokenizer.isHexDigit;
+	var isDigit$3 = tokenizer.isDigit;
+	var cmpStr$3 = tokenizer.cmpStr;
+	var consumeNumber$2 = tokenizer.consumeNumber;
+	var TYPE$5 = tokenizer.TYPE;
+
+
+
+	var cssWideKeywords = ['unset', 'initial', 'inherit'];
+	var calcFunctionNames = ['calc(', '-moz-calc(', '-webkit-calc('];
 
 	// https://www.w3.org/TR/css-values-3/#lengths
 	var LENGTH = {
@@ -4748,343 +5699,516 @@
 	    'st': true
 	};
 
-	function consumeFunction(token, addTokenToMatch, getNextToken) {
-	    var length = 1;
-	    var cursor;
+	// safe char code getter
+	function charCode(str, index) {
+	    return index < str.length ? str.charCodeAt(index) : 0;
+	}
 
-	    do {
-	        cursor = getNextToken(length++);
-	    } while (cursor !== null && cursor.node !== token.node);
+	function eqStr(actual, expected) {
+	    return cmpStr$3(actual, 0, actual.length, expected);
+	}
 
-	    if (cursor === null) {
-	        return false;
-	    }
-
-	    while (true) {
-	        // consume tokens until cursor
-	        if (addTokenToMatch() === cursor) {
-	            break;
+	function eqStrAny(actual, expected) {
+	    for (var i = 0; i < expected.length; i++) {
+	        if (eqStr(actual, expected[i])) {
+	            return true;
 	        }
 	    }
 
-	    return true;
+	    return false;
+	}
+
+	// IE postfix hack, i.e. 123\0 or 123px\9
+	function isPostfixIeHack(str, offset) {
+	    if (offset !== str.length - 2) {
+	        return false;
+	    }
+
+	    return (
+	        str.charCodeAt(offset) === 0x005C &&  // U+005C REVERSE SOLIDUS (\)
+	        isDigit$3(str.charCodeAt(offset + 1))
+	    );
+	}
+
+	function outOfRange(opts, value, numEnd) {
+	    if (opts && opts.type === 'Range') {
+	        var num = Number(
+	            numEnd !== undefined && numEnd !== value.length
+	                ? value.substr(0, numEnd)
+	                : value
+	        );
+
+	        if (isNaN(num)) {
+	            return true;
+	        }
+
+	        if (opts.min !== null && num < opts.min) {
+	            return true;
+	        }
+
+	        if (opts.max !== null && num > opts.max) {
+	            return true;
+	        }
+	    }
+
+	    return false;
+	}
+
+	function consumeFunction(token, getNextToken) {
+	    var startIdx = token.index;
+	    var length = 0;
+
+	    // balanced token consuming
+	    do {
+	        length++;
+
+	        if (token.balance <= startIdx) {
+	            break;
+	        }
+	    } while (token = getNextToken(length));
+
+	    return length;
 	}
 
 	// TODO: implement
 	// can be used wherever <length>, <frequency>, <angle>, <time>, <percentage>, <number>, or <integer> values are allowed
 	// https://drafts.csswg.org/css-values/#calc-notation
-	function calc(token, addTokenToMatch, getNextToken) {
-	    if (token === null) {
-	        return false;
-	    }
-
-	    var name = token.value.toLowerCase();
-	    if (name !== 'calc(' &&
-	        name !== '-moz-calc(' &&
-	        name !== '-webkit-calc(') {
-	        return false;
-	    }
-
-	    return consumeFunction(token, addTokenToMatch, getNextToken);
-	}
-
-	function attr$1(token, addTokenToMatch, getNextToken) {
-	    if (token === null || token.value.toLowerCase() !== 'attr(') {
-	        return false;
-	    }
-
-	    return consumeFunction(token, addTokenToMatch, getNextToken);
-	}
-
-	function expression(token, addTokenToMatch, getNextToken) {
-	    if (token === null || token.value.toLowerCase() !== 'expression(') {
-	        return false;
-	    }
-
-	    return consumeFunction(token, addTokenToMatch, getNextToken);
-	}
-
-	function url(token, addTokenToMatch, getNextToken) {
-	    if (token === null || token.value.toLowerCase() !== 'url(') {
-	        return false;
-	    }
-
-	    return consumeFunction(token, addTokenToMatch, getNextToken);
-	}
-
-	function idSelector(token, addTokenToMatch) {
-	    if (token === null) {
-	        return false;
-	    }
-
-	    if (token.value.charCodeAt(0) !== NUMBERSIGN) {
-	        return false;
-	    }
-
-	    if (consumeIdentifier(token.value, 1) !== token.value.length) {
-	        return false;
-	    }
-
-	    addTokenToMatch();
-	    return true;
-	}
-
-	function isNumber$2(str) {
-	    return /^[-+]?(\d+|\d*\.\d+)([eE][-+]?\d+)?$/.test(str);
-	}
-
-	function consumeNumber(str, allowFraction) {
-	    var code = str.charCodeAt(0);
-
-	    return findNumberEnd$2(str, code === PLUSSIGN$2 || code === HYPHENMINUS$3 ? 1 : 0, allowFraction);
-	}
-
-	function consumeIdentifier(str, offset) {
-	    var code = str.charCodeAt(offset);
-
-	    if (code < 0x80 && SYMBOL_TYPE$2[code] !== IDENTIFIER$2 && code !== HYPHENMINUS$3) {
-	        return offset;
-	    }
-
-	    return findIdentifierEnd$2(str, offset + 1);
-	}
-
-	function astNode(type) {
-	    return function(token, addTokenToMatch) {
-	        if (token === null || token.node.type !== type) {
-	            return false;
-	        }
-
-	        addTokenToMatch();
-	        return true;
-	    };
-	}
-
-	function dimension(type) {
-	    return function(token, addTokenToMatch, getNextToken) {
-	        if (calc(token, addTokenToMatch, getNextToken)) {
-	            return true;
-	        }
-
+	function calc(next) {
+	    return function(token, getNextToken, opts) {
 	        if (token === null) {
-	            return false;
+	            return 0;
 	        }
 
-	        var numberEnd = consumeNumber(token.value, true);
-	        if (numberEnd === 0) {
-	            return false;
+	        if (token.type === TYPE$5.Function && eqStrAny(token.value, calcFunctionNames)) {
+	            return consumeFunction(token, getNextToken);
 	        }
 
-	        if (type) {
-	            if (!type.hasOwnProperty(token.value.substr(numberEnd).toLowerCase())) {
-	                return false;
-	            }
-	        } else {
-	            var unitEnd = consumeIdentifier(token.value, numberEnd);
-	            if (unitEnd === numberEnd || unitEnd !== token.value.length) {
-	                return false;
-	            }
-	        }
-
-	        addTokenToMatch();
-	        return true;
+	        return next(token, getNextToken, opts);
 	    };
 	}
 
-	function zeroUnitlessDimension(type) {
-	    var isDimension = dimension(type);
-
-	    return function(token, addTokenToMatch, getNextToken) {
-	        if (isDimension(token, addTokenToMatch, getNextToken)) {
-	            return true;
+	function tokenType(expectedTokenType) {
+	    return function(token) {
+	        if (token === null || token.type !== expectedTokenType) {
+	            return 0;
 	        }
 
-	        if (token === null || Number(token.value) !== 0) {
-	            return false;
-	        }
-
-	        addTokenToMatch();
-	        return true;
+	        return 1;
 	    };
 	}
 
-	function number(token, addTokenToMatch, getNextToken) {
-	    if (calc(token, addTokenToMatch, getNextToken)) {
-	        return true;
-	    }
+	function func(name) {
+	    name = name + '(';
 
-	    if (token === null) {
-	        return false;
-	    }
-
-	    var numberEnd = consumeNumber(token.value, true);
-	    if (numberEnd !== token.value.length) {
-	        return false;
-	    }
-
-	    addTokenToMatch();
-	    return true;
-	}
-
-	function numberZeroOne(token, addTokenToMatch, getNextToken) {
-	    if (calc(token, addTokenToMatch, getNextToken)) {
-	        return true;
-	    }
-
-	    if (token === null || !isNumber$2(token.value)) {
-	        return false;
-	    }
-
-	    var value = Number(token.value);
-	    if (value < 0 || value > 1) {
-	        return false;
-	    }
-
-	    addTokenToMatch();
-	    return true;
-	}
-
-	function numberOneOrGreater(token, addTokenToMatch, getNextToken) {
-	    if (calc(token, addTokenToMatch, getNextToken)) {
-	        return true;
-	    }
-
-	    if (token === null || !isNumber$2(token.value)) {
-	        return false;
-	    }
-
-	    var value = Number(token.value);
-	    if (value < 1) {
-	        return false;
-	    }
-
-	    addTokenToMatch();
-	    return true;
-	}
-
-	// TODO: fail on 10e-2
-	function integer(token, addTokenToMatch, getNextToken) {
-	    if (calc(token, addTokenToMatch, getNextToken)) {
-	        return true;
-	    }
-
-	    if (token === null) {
-	        return false;
-	    }
-
-	    var numberEnd = consumeNumber(token.value, false);
-	    if (numberEnd !== token.value.length) {
-	        return false;
-	    }
-
-	    addTokenToMatch();
-	    return true;
-	}
-
-	// TODO: fail on 10e-2
-	function positiveInteger(token, addTokenToMatch, getNextToken) {
-	    if (calc(token, addTokenToMatch, getNextToken)) {
-	        return true;
-	    }
-
-	    if (token === null) {
-	        return false;
-	    }
-
-	    var numberEnd = findDecimalNumberEnd$1(token.value, 0);
-	    if (numberEnd !== token.value.length || token.value.charCodeAt(0) === HYPHENMINUS$3) {
-	        return false;
-	    }
-
-	    addTokenToMatch();
-	    return true;
-	}
-
-	function hexColor(token, addTokenToMatch) {
-	    if (token === null || token.value.charCodeAt(0) !== NUMBERSIGN) {
-	        return false;
-	    }
-
-	    var length = token.value.length - 1;
-
-	    // valid length is 3, 4, 6 and 8 (+1 for #)
-	    if (length !== 3 && length !== 4 && length !== 6 && length !== 8) {
-	        return false;
-	    }
-
-	    for (var i = 1; i < length; i++) {
-	        if (!isHex$1(token.value.charCodeAt(i))) {
-	            return false;
+	    return function(token, getNextToken) {
+	        if (token !== null && eqStr(token.value, name)) {
+	            return consumeFunction(token, getNextToken);
 	        }
-	    }
 
-	    addTokenToMatch();
-	    return true;
+	        return 0;
+	    };
 	}
 
-	// https://developer.mozilla.org/en-US/docs/Web/CSS/custom-ident
-	// https://drafts.csswg.org/css-values-4/#identifier-value
-	function customIdent(token, addTokenToMatch) {
-	    if (token === null) {
-	        return false;
-	    }
+	// =========================
+	// Complex types
+	//
 
-	    var identEnd = consumeIdentifier(token.value, 0);
-	    if (identEnd !== token.value.length) {
-	        return false;
+	// https://drafts.csswg.org/css-values-4/#custom-idents
+	// 4.2. Author-defined Identifiers: the <custom-ident> type
+	// Some properties accept arbitrary author-defined identifiers as a component value.
+	// This generic data type is denoted by <custom-ident>, and represents any valid CSS identifier
+	// that would not be misinterpreted as a pre-defined keyword in that property’s value definition.
+	//
+	// See also: https://developer.mozilla.org/en-US/docs/Web/CSS/custom-ident
+	function customIdent(token) {
+	    if (token === null || token.type !== TYPE$5.Ident) {
+	        return 0;
 	    }
 
 	    var name = token.value.toLowerCase();
 
-	    // § 3.2. Author-defined Identifiers: the <custom-ident> type
 	    // The CSS-wide keywords are not valid <custom-ident>s
-	    if (name === 'unset' || name === 'initial' || name === 'inherit') {
-	        return false;
+	    if (eqStrAny(name, cssWideKeywords)) {
+	        return 0;
 	    }
 
 	    // The default keyword is reserved and is also not a valid <custom-ident>
-	    if (name === 'default') {
-	        return false;
+	    if (eqStr(name, 'default')) {
+	        return 0;
 	    }
 
 	    // TODO: ignore property specific keywords (as described https://developer.mozilla.org/en-US/docs/Web/CSS/custom-ident)
+	    // Specifications using <custom-ident> must specify clearly what other keywords
+	    // are excluded from <custom-ident>, if any—for example by saying that any pre-defined keywords
+	    // in that property’s value definition are excluded. Excluded keywords are excluded
+	    // in all ASCII case permutations.
 
-	    addTokenToMatch();
-	    return true;
+	    return 1;
+	}
+
+	// https://drafts.csswg.org/css-variables/#typedef-custom-property-name
+	// A custom property is any property whose name starts with two dashes (U+002D HYPHEN-MINUS), like --foo.
+	// The <custom-property-name> production corresponds to this: it’s defined as any valid identifier
+	// that starts with two dashes, except -- itself, which is reserved for future use by CSS.
+	// NOTE: Current implementation treat `--` as a valid name since most (all?) major browsers treat it as valid.
+	function customPropertyName(token) {
+	    // ... defined as any valid identifier
+	    if (token === null || token.type !== TYPE$5.Ident) {
+	        return 0;
+	    }
+
+	    // ... that starts with two dashes (U+002D HYPHEN-MINUS)
+	    if (charCode(token.value, 0) !== 0x002D || charCode(token.value, 1) !== 0x002D) {
+	        return 0;
+	    }
+
+	    return 1;
+	}
+
+	// https://drafts.csswg.org/css-color-4/#hex-notation
+	// The syntax of a <hex-color> is a <hash-token> token whose value consists of 3, 4, 6, or 8 hexadecimal digits.
+	// In other words, a hex color is written as a hash character, "#", followed by some number of digits 0-9 or
+	// letters a-f (the case of the letters doesn’t matter - #00ff00 is identical to #00FF00).
+	function hexColor(token) {
+	    if (token === null || token.type !== TYPE$5.Hash) {
+	        return 0;
+	    }
+
+	    var length = token.value.length;
+
+	    // valid values (length): #rgb (4), #rgba (5), #rrggbb (7), #rrggbbaa (9)
+	    if (length !== 4 && length !== 5 && length !== 7 && length !== 9) {
+	        return 0;
+	    }
+
+	    for (var i = 1; i < length; i++) {
+	        if (!isHexDigit$3(token.value.charCodeAt(i))) {
+	            return 0;
+	        }
+	    }
+
+	    return 1;
+	}
+
+	function idSelector(token) {
+	    if (token === null || token.type !== TYPE$5.Hash) {
+	        return 0;
+	    }
+
+	    if (!isIdentifierStart$2(charCode(token.value, 1), charCode(token.value, 2), charCode(token.value, 3))) {
+	        return 0;
+	    }
+
+	    return 1;
+	}
+
+	// https://drafts.csswg.org/css-syntax/#any-value
+	// It represents the entirety of what a valid declaration can have as its value.
+	function declarationValue(token, getNextToken) {
+	    if (!token) {
+	        return 0;
+	    }
+
+	    var length = 0;
+	    var level = 0;
+	    var startIdx = token.index;
+
+	    // The <declaration-value> production matches any sequence of one or more tokens,
+	    // so long as the sequence ...
+	    scan:
+	    do {
+	        switch (token.type) {
+	            // ... does not contain <bad-string-token>, <bad-url-token>,
+	            case TYPE$5.BadString:
+	            case TYPE$5.BadUrl:
+	                break scan;
+
+	            // ... unmatched <)-token>, <]-token>, or <}-token>,
+	            case TYPE$5.RightCurlyBracket:
+	            case TYPE$5.RightParenthesis:
+	            case TYPE$5.RightSquareBracket:
+	                if (token.balance > token.index || token.balance < startIdx) {
+	                    break scan;
+	                }
+
+	                level--;
+	                break;
+
+	            // ... or top-level <semicolon-token> tokens
+	            case TYPE$5.Semicolon:
+	                if (level === 0) {
+	                    break scan;
+	                }
+
+	                break;
+
+	            // ... or <delim-token> tokens with a value of "!"
+	            case TYPE$5.Delim:
+	                if (token.value === '!' && level === 0) {
+	                    break scan;
+	                }
+
+	                break;
+
+	            case TYPE$5.Function:
+	            case TYPE$5.LeftParenthesis:
+	            case TYPE$5.LeftSquareBracket:
+	            case TYPE$5.LeftCurlyBracket:
+	                level++;
+	                break;
+	        }
+
+	        length++;
+
+	        // until balance closing
+	        if (token.balance <= startIdx) {
+	            break;
+	        }
+	    } while (token = getNextToken(length));
+
+	    return length;
+	}
+
+	// https://drafts.csswg.org/css-syntax/#any-value
+	// The <any-value> production is identical to <declaration-value>, but also
+	// allows top-level <semicolon-token> tokens and <delim-token> tokens
+	// with a value of "!". It represents the entirety of what valid CSS can be in any context.
+	function anyValue(token, getNextToken) {
+	    if (!token) {
+	        return 0;
+	    }
+
+	    var startIdx = token.index;
+	    var length = 0;
+
+	    // The <any-value> production matches any sequence of one or more tokens,
+	    // so long as the sequence ...
+	    scan:
+	    do {
+	        switch (token.type) {
+	            // ... does not contain <bad-string-token>, <bad-url-token>,
+	            case TYPE$5.BadString:
+	            case TYPE$5.BadUrl:
+	                break scan;
+
+	            // ... unmatched <)-token>, <]-token>, or <}-token>,
+	            case TYPE$5.RightCurlyBracket:
+	            case TYPE$5.RightParenthesis:
+	            case TYPE$5.RightSquareBracket:
+	                if (token.balance > token.index || token.balance < startIdx) {
+	                    break scan;
+	                }
+
+	                break;
+	        }
+
+	        length++;
+
+	        // until balance closing
+	        if (token.balance <= startIdx) {
+	            break;
+	        }
+	    } while (token = getNextToken(length));
+
+	    return length;
+	}
+
+	// =========================
+	// Dimensions
+	//
+
+	function dimension(type) {
+	    return function(token, getNextToken, opts) {
+	        if (token === null || token.type !== TYPE$5.Dimension) {
+	            return 0;
+	        }
+
+	        var numberEnd = consumeNumber$2(token.value, 0);
+
+	        // check unit
+	        if (type !== null) {
+	            // check for IE postfix hack, i.e. 123px\0 or 123px\9
+	            var reverseSolidusOffset = token.value.indexOf('\\', numberEnd);
+	            var unit = reverseSolidusOffset === -1 || !isPostfixIeHack(token.value, reverseSolidusOffset)
+	                ? token.value.substr(numberEnd)
+	                : token.value.substring(numberEnd, reverseSolidusOffset);
+
+	            if (type.hasOwnProperty(unit.toLowerCase()) === false) {
+	                return 0;
+	            }
+	        }
+
+	        // check range if specified
+	        if (outOfRange(opts, token.value, numberEnd)) {
+	            return 0;
+	        }
+
+	        return 1;
+	    };
+	}
+
+	// =========================
+	// Percentage
+	//
+
+	// §5.5. Percentages: the <percentage> type
+	// https://drafts.csswg.org/css-values-4/#percentages
+	function percentage(token, getNextToken, opts) {
+	    // ... corresponds to the <percentage-token> production
+	    if (token === null || token.type !== TYPE$5.Percentage) {
+	        return 0;
+	    }
+
+	    // check range if specified
+	    if (outOfRange(opts, token.value, token.value.length - 1)) {
+	        return 0;
+	    }
+
+	    return 1;
+	}
+
+	// =========================
+	// Numeric
+	//
+
+	// https://drafts.csswg.org/css-values-4/#numbers
+	// The value <zero> represents a literal number with the value 0. Expressions that merely
+	// evaluate to a <number> with the value 0 (for example, calc(0)) do not match <zero>;
+	// only literal <number-token>s do.
+	function zero(next) {
+	    if (typeof next !== 'function') {
+	        next = function() {
+	            return 0;
+	        };
+	    }
+
+	    return function(token, getNextToken, opts) {
+	        if (token !== null && token.type === TYPE$5.Number) {
+	            if (Number(token.value) === 0) {
+	                return 1;
+	            }
+	        }
+
+	        return next(token, getNextToken, opts);
+	    };
+	}
+
+	// § 5.3. Real Numbers: the <number> type
+	// https://drafts.csswg.org/css-values-4/#numbers
+	// Number values are denoted by <number>, and represent real numbers, possibly with a fractional component.
+	// ... It corresponds to the <number-token> production
+	function number(token, getNextToken, opts) {
+	    if (token === null) {
+	        return 0;
+	    }
+
+	    var numberEnd = consumeNumber$2(token.value, 0);
+	    var isNumber = numberEnd === token.value.length;
+	    if (!isNumber && !isPostfixIeHack(token.value, numberEnd)) {
+	        return 0;
+	    }
+
+	    // check range if specified
+	    if (outOfRange(opts, token.value, numberEnd)) {
+	        return 0;
+	    }
+
+	    return 1;
+	}
+
+	// §5.2. Integers: the <integer> type
+	// https://drafts.csswg.org/css-values-4/#integers
+	function integer(token, getNextToken, opts) {
+	    // ... corresponds to a subset of the <number-token> production
+	    if (token === null || token.type !== TYPE$5.Number) {
+	        return 0;
+	    }
+
+	    // The first digit of an integer may be immediately preceded by `-` or `+` to indicate the integer’s sign.
+	    var i = token.value.charCodeAt(0) === 0x002B ||       // U+002B PLUS SIGN (+)
+	            token.value.charCodeAt(0) === 0x002D ? 1 : 0; // U+002D HYPHEN-MINUS (-)
+
+	    // When written literally, an integer is one or more decimal digits 0 through 9 ...
+	    for (; i < token.value.length; i++) {
+	        if (!isDigit$3(token.value.charCodeAt(i))) {
+	            return 0;
+	        }
+	    }
+
+	    // check range if specified
+	    if (outOfRange(opts, token.value, i)) {
+	        return 0;
+	    }
+
+	    return 1;
 	}
 
 	var generic = {
-	    'angle': zeroUnitlessDimension(ANGLE),
-	    'attr()': attr$1,
+	    // token types
+	    'ident-token': tokenType(TYPE$5.Ident),
+	    'function-token': tokenType(TYPE$5.Function),
+	    'at-keyword-token': tokenType(TYPE$5.AtKeyword),
+	    'hash-token': tokenType(TYPE$5.Hash),
+	    'string-token': tokenType(TYPE$5.String),
+	    'bad-string-token': tokenType(TYPE$5.BadString),
+	    'url-token': tokenType(TYPE$5.Url),
+	    'bad-url-token': tokenType(TYPE$5.BadUrl),
+	    'delim-token': tokenType(TYPE$5.Delim),
+	    'number-token': tokenType(TYPE$5.Number),
+	    'percentage-token': tokenType(TYPE$5.Percentage),
+	    'dimension-token': tokenType(TYPE$5.Dimension),
+	    'whitespace-token': tokenType(TYPE$5.WhiteSpace),
+	    'CDO-token': tokenType(TYPE$5.CDO),
+	    'CDC-token': tokenType(TYPE$5.CDC),
+	    'colon-token': tokenType(TYPE$5.Colon),
+	    'semicolon-token': tokenType(TYPE$5.Semicolon),
+	    'comma-token': tokenType(TYPE$5.Comma),
+	    '[-token': tokenType(TYPE$5.LeftSquareBracket),
+	    ']-token': tokenType(TYPE$5.RightSquareBracket),
+	    '(-token': tokenType(TYPE$5.LeftParenthesis),
+	    ')-token': tokenType(TYPE$5.RightParenthesis),
+	    '{-token': tokenType(TYPE$5.LeftCurlyBracket),
+	    '}-token': tokenType(TYPE$5.RightCurlyBracket),
+
+	    // token type aliases
+	    'string': tokenType(TYPE$5.String),
+	    'ident': tokenType(TYPE$5.Ident),
+
+	    // complex types
 	    'custom-ident': customIdent,
-	    'decibel': dimension(DECIBEL),
-	    'dimension': dimension(),
-	    'frequency': dimension(FREQUENCY),
-	    'flex': dimension(FLEX),
+	    'custom-property-name': customPropertyName,
 	    'hex-color': hexColor,
 	    'id-selector': idSelector, // element( <id-selector> )
-	    'ident': astNode('Identifier'),
-	    'integer': integer,
-	    'length': zeroUnitlessDimension(LENGTH),
-	    'number': number,
-	    'number-zero-one': numberZeroOne,
-	    'number-one-or-greater': numberOneOrGreater,
-	    'percentage': dimension(PERCENTAGE),
-	    'positive-integer': positiveInteger,
-	    'resolution': dimension(RESOLUTION),
-	    'semitones': dimension(SEMITONES),
-	    'string': astNode('String'),
-	    'time': dimension(TIME),
-	    'unicode-range': astNode('UnicodeRange'),
-	    'url': url,
+	    'an-plus-b': genericAnPlusB,
+	    'urange': genericUrange,
+	    'declaration-value': declarationValue,
+	    'any-value': anyValue,
+
+	    // dimensions
+	    'dimension': calc(dimension(null)),
+	    'angle': calc(dimension(ANGLE)),
+	    'decibel': calc(dimension(DECIBEL)),
+	    'frequency': calc(dimension(FREQUENCY)),
+	    'flex': calc(dimension(FLEX)),
+	    'length': calc(zero(dimension(LENGTH))),
+	    'resolution': calc(dimension(RESOLUTION)),
+	    'semitones': calc(dimension(SEMITONES)),
+	    'time': calc(dimension(TIME)),
+
+	    // percentage
+	    'percentage': calc(percentage),
+
+	    // numeric
+	    'zero': zero(),
+	    'number': calc(number),
+	    'integer': calc(integer),
 
 	    // old IE stuff
-	    'progid': astNode('Raw'),
-	    'expression': expression
+	    '-ms-legacy-expression': func('expression')
 	};
 
-	var SyntaxParseError = function(message, input, offset) {
-	    var error = createCustomError('SyntaxParseError', message);
+	var _SyntaxError$1 = function SyntaxError(message, input, offset) {
+	    var error = createCustomError('SyntaxError', message);
 
 	    error.input = input;
 	    error.offset = offset;
@@ -5096,24 +6220,18 @@
 	    return error;
 	};
 
-	var error$2 = {
-	    SyntaxParseError: SyntaxParseError
-	};
+	var TAB = 9;
+	var N$1 = 10;
+	var F = 12;
+	var R = 13;
+	var SPACE = 32;
 
-	var SyntaxParseError$1 = error$2.SyntaxParseError;
-
-	var TAB$2 = 9;
-	var N$3 = 10;
-	var F$3 = 12;
-	var R$3 = 13;
-	var SPACE$2 = 32;
-
-	var Tokenizer$1 = function(str) {
+	var Tokenizer = function(str) {
 	    this.str = str;
 	    this.pos = 0;
 	};
 
-	Tokenizer$1.prototype = {
+	Tokenizer.prototype = {
 	    charCodeAt: function(pos) {
 	        return pos < this.str.length ? this.str.charCodeAt(pos) : 0;
 	    },
@@ -5129,7 +6247,7 @@
 	    findWsEnd: function(pos) {
 	        for (; pos < this.str.length; pos++) {
 	            var code = this.str.charCodeAt(pos);
-	            if (code !== R$3 && code !== N$3 && code !== F$3 && code !== SPACE$2 && code !== TAB$2) {
+	            if (code !== R && code !== N$1 && code !== F && code !== SPACE && code !== TAB) {
 	                break;
 	            }
 	        }
@@ -5150,35 +6268,37 @@
 	        return this.pos < this.str.length ? this.str.charAt(this.pos++) : '';
 	    },
 	    error: function(message) {
-	        throw new SyntaxParseError$1(message, this.str, this.pos);
+	        throw new _SyntaxError$1(message, this.str, this.pos);
 	    }
 	};
 
-	var tokenizer$1 = Tokenizer$1;
+	var tokenizer$1 = Tokenizer;
 
-	var TAB$3 = 9;
-	var N$4 = 10;
-	var F$4 = 12;
-	var R$4 = 13;
-	var SPACE$3 = 32;
-	var EXCLAMATIONMARK$1 = 33;    // !
-	var NUMBERSIGN$1 = 35;         // #
+	var TAB$1 = 9;
+	var N$2 = 10;
+	var F$1 = 12;
+	var R$1 = 13;
+	var SPACE$1 = 32;
+	var EXCLAMATIONMARK = 33;    // !
+	var NUMBERSIGN = 35;         // #
 	var AMPERSAND = 38;          // &
-	var APOSTROPHE$1 = 39;         // '
-	var LEFTPARENTHESIS$1 = 40;    // (
-	var RIGHTPARENTHESIS$1 = 41;   // )
+	var APOSTROPHE = 39;         // '
+	var LEFTPARENTHESIS = 40;    // (
+	var RIGHTPARENTHESIS = 41;   // )
 	var ASTERISK = 42;           // *
-	var PLUSSIGN$3 = 43;           // +
+	var PLUSSIGN$2 = 43;           // +
 	var COMMA = 44;              // ,
-	var LESSTHANSIGN$1 = 60;       // <
-	var GREATERTHANSIGN$1 = 62;    // >
-	var QUESTIONMARK = 63;       // ?
-	var COMMERCIALAT$1 = 64;       // @
-	var LEFTSQUAREBRACKET$1 = 91;  // [
-	var RIGHTSQUAREBRACKET$1 = 93; // ]
-	var LEFTCURLYBRACKET$1 = 123;  // {
+	var HYPERMINUS = 45;         // -
+	var LESSTHANSIGN = 60;       // <
+	var GREATERTHANSIGN = 62;    // >
+	var QUESTIONMARK$1 = 63;       // ?
+	var COMMERCIALAT = 64;       // @
+	var LEFTSQUAREBRACKET = 91;  // [
+	var RIGHTSQUAREBRACKET = 93; // ]
+	var LEFTCURLYBRACKET = 123;  // {
 	var VERTICALLINE = 124;      // |
-	var RIGHTCURLYBRACKET$1 = 125; // }
+	var RIGHTCURLYBRACKET = 125; // }
+	var INFINITY = 8734;         // ∞
 	var NAME_CHAR = createCharMap(function(ch) {
 	    return /[a-zA-Z0-9\-]/.test(ch);
 	});
@@ -5199,7 +6319,7 @@
 
 	function scanSpaces(tokenizer) {
 	    return tokenizer.substringToPos(
-	        tokenizer.findWsEnd(tokenizer.pos + 1)
+	        tokenizer.findWsEnd(tokenizer.pos)
 	    );
 	}
 
@@ -5252,20 +6372,20 @@
 	    var min = null;
 	    var max = null;
 
-	    tokenizer.eat(LEFTCURLYBRACKET$1);
+	    tokenizer.eat(LEFTCURLYBRACKET);
 
 	    min = scanNumber(tokenizer);
 
 	    if (tokenizer.charCode() === COMMA) {
 	        tokenizer.pos++;
-	        if (tokenizer.charCode() !== RIGHTCURLYBRACKET$1) {
+	        if (tokenizer.charCode() !== RIGHTCURLYBRACKET) {
 	            max = scanNumber(tokenizer);
 	        }
 	    } else {
 	        max = min;
 	    }
 
-	    tokenizer.eat(RIGHTCURLYBRACKET$1);
+	    tokenizer.eat(RIGHTCURLYBRACKET);
 
 	    return {
 	        min: Number(min),
@@ -5288,7 +6408,7 @@
 
 	            break;
 
-	        case PLUSSIGN$3:
+	        case PLUSSIGN$2:
 	            tokenizer.pos++;
 
 	            range = {
@@ -5298,7 +6418,7 @@
 
 	            break;
 
-	        case QUESTIONMARK:
+	        case QUESTIONMARK$1:
 	            tokenizer.pos++;
 
 	            range = {
@@ -5308,12 +6428,12 @@
 
 	            break;
 
-	        case NUMBERSIGN$1:
+	        case NUMBERSIGN:
 	            tokenizer.pos++;
 
 	            comma = true;
 
-	            if (tokenizer.charCode() === LEFTCURLYBRACKET$1) {
+	            if (tokenizer.charCode() === LEFTCURLYBRACKET) {
 	                range = readMultiplierRange(tokenizer);
 	            } else {
 	                range = {
@@ -5324,7 +6444,7 @@
 
 	            break;
 
-	        case LEFTCURLYBRACKET$1:
+	        case LEFTCURLYBRACKET:
 	            range = readMultiplierRange(tokenizer);
 	            break;
 
@@ -5368,13 +6488,13 @@
 	function readProperty(tokenizer) {
 	    var name;
 
-	    tokenizer.eat(LESSTHANSIGN$1);
-	    tokenizer.eat(APOSTROPHE$1);
+	    tokenizer.eat(LESSTHANSIGN);
+	    tokenizer.eat(APOSTROPHE);
 
 	    name = scanWord(tokenizer);
 
-	    tokenizer.eat(APOSTROPHE$1);
-	    tokenizer.eat(GREATERTHANSIGN$1);
+	    tokenizer.eat(APOSTROPHE);
+	    tokenizer.eat(GREATERTHANSIGN);
 
 	    return maybeMultiplied(tokenizer, {
 	        type: 'Property',
@@ -5382,23 +6502,88 @@
 	    });
 	}
 
+	// https://drafts.csswg.org/css-values-3/#numeric-ranges
+	// 4.1. Range Restrictions and Range Definition Notation
+	//
+	// Range restrictions can be annotated in the numeric type notation using CSS bracketed
+	// range notation—[min,max]—within the angle brackets, after the identifying keyword,
+	// indicating a closed range between (and including) min and max.
+	// For example, <integer [0, 10]> indicates an integer between 0 and 10, inclusive.
+	function readTypeRange(tokenizer) {
+	    // use null for Infinity to make AST format JSON serializable/deserializable
+	    var min = null; // -Infinity
+	    var max = null; // Infinity
+	    var sign = 1;
+
+	    tokenizer.eat(LEFTSQUAREBRACKET);
+
+	    if (tokenizer.charCode() === HYPERMINUS) {
+	        tokenizer.peek();
+	        sign = -1;
+	    }
+
+	    if (sign == -1 && tokenizer.charCode() === INFINITY) {
+	        tokenizer.peek();
+	    } else {
+	        min = sign * Number(scanNumber(tokenizer));
+	    }
+
+	    scanSpaces(tokenizer);
+	    tokenizer.eat(COMMA);
+	    scanSpaces(tokenizer);
+
+	    if (tokenizer.charCode() === INFINITY) {
+	        tokenizer.peek();
+	    } else {
+	        sign = 1;
+
+	        if (tokenizer.charCode() === HYPERMINUS) {
+	            tokenizer.peek();
+	            sign = -1;
+	        }
+
+	        max = sign * Number(scanNumber(tokenizer));
+	    }
+
+	    tokenizer.eat(RIGHTSQUAREBRACKET);
+
+	    // If no range is indicated, either by using the bracketed range notation
+	    // or in the property description, then [−∞,∞] is assumed.
+	    if (min === null && max === null) {
+	        return null;
+	    }
+
+	    return {
+	        type: 'Range',
+	        min: min,
+	        max: max
+	    };
+	}
+
 	function readType(tokenizer) {
 	    var name;
+	    var opts = null;
 
-	    tokenizer.eat(LESSTHANSIGN$1);
+	    tokenizer.eat(LESSTHANSIGN);
 	    name = scanWord(tokenizer);
 
-	    if (tokenizer.charCode() === LEFTPARENTHESIS$1 &&
-	        tokenizer.nextCharCode() === RIGHTPARENTHESIS$1) {
+	    if (tokenizer.charCode() === LEFTPARENTHESIS &&
+	        tokenizer.nextCharCode() === RIGHTPARENTHESIS) {
 	        tokenizer.pos += 2;
 	        name += '()';
 	    }
 
-	    tokenizer.eat(GREATERTHANSIGN$1);
+	    if (tokenizer.charCodeAt(tokenizer.findWsEnd(tokenizer.pos)) === LEFTSQUAREBRACKET) {
+	        scanSpaces(tokenizer);
+	        opts = readTypeRange(tokenizer);
+	    }
+
+	    tokenizer.eat(GREATERTHANSIGN);
 
 	    return maybeMultiplied(tokenizer, {
 	        type: 'Type',
-	        name: name
+	        name: name,
+	        opts: opts
 	    });
 	}
 
@@ -5407,7 +6592,7 @@
 
 	    name = scanWord(tokenizer);
 
-	    if (tokenizer.charCode() === LEFTPARENTHESIS$1) {
+	    if (tokenizer.charCode() === LEFTPARENTHESIS) {
 	        tokenizer.pos++;
 
 	        return {
@@ -5523,13 +6708,13 @@
 	function readGroup(tokenizer) {
 	    var result;
 
-	    tokenizer.eat(LEFTSQUAREBRACKET$1);
+	    tokenizer.eat(LEFTSQUAREBRACKET);
 	    result = readImplicitGroup(tokenizer);
-	    tokenizer.eat(RIGHTSQUAREBRACKET$1);
+	    tokenizer.eat(RIGHTSQUAREBRACKET);
 
 	    result.explicit = true;
 
-	    if (tokenizer.charCode() === EXCLAMATIONMARK$1) {
+	    if (tokenizer.charCode() === EXCLAMATIONMARK) {
 	        tokenizer.pos++;
 	        result.disallowEmpty = true;
 	    }
@@ -5545,15 +6730,15 @@
 	    }
 
 	    switch (code) {
-	        case RIGHTSQUAREBRACKET$1:
+	        case RIGHTSQUAREBRACKET:
 	            // don't eat, stop scan a group
 	            break;
 
-	        case LEFTSQUAREBRACKET$1:
+	        case LEFTSQUAREBRACKET:
 	            return maybeMultiplied(tokenizer, readGroup(tokenizer));
 
-	        case LESSTHANSIGN$1:
-	            return tokenizer.nextCharCode() === APOSTROPHE$1
+	        case LESSTHANSIGN:
+	            return tokenizer.nextCharCode() === APOSTROPHE
 	                ? readProperty(tokenizer)
 	                : readType(tokenizer);
 
@@ -5582,23 +6767,23 @@
 	                type: 'Comma'
 	            };
 
-	        case APOSTROPHE$1:
+	        case APOSTROPHE:
 	            return maybeMultiplied(tokenizer, {
 	                type: 'String',
 	                value: scanString(tokenizer)
 	            });
 
-	        case SPACE$3:
-	        case TAB$3:
-	        case N$4:
-	        case R$4:
-	        case F$4:
+	        case SPACE$1:
+	        case TAB$1:
+	        case N$2:
+	        case R$1:
+	        case F$1:
 	            return {
 	                type: 'Spaces',
 	                value: scanSpaces(tokenizer)
 	            };
 
-	        case COMMERCIALAT$1:
+	        case COMMERCIALAT:
 	            code = tokenizer.nextCharCode();
 
 	            if (code < 128 && NAME_CHAR[code] === 1) {
@@ -5612,14 +6797,14 @@
 	            return maybeToken(tokenizer);
 
 	        case ASTERISK:
-	        case PLUSSIGN$3:
-	        case QUESTIONMARK:
-	        case NUMBERSIGN$1:
-	        case EXCLAMATIONMARK$1:
+	        case PLUSSIGN$2:
+	        case QUESTIONMARK$1:
+	        case NUMBERSIGN:
+	        case EXCLAMATIONMARK:
 	            // prohibited tokens (used as a multiplier start)
 	            break;
 
-	        case LEFTCURLYBRACKET$1:
+	        case LEFTCURLYBRACKET:
 	            // LEFTCURLYBRACKET is allowed since mdn/data uses it w/o quoting
 	            // check next char isn't a number, because it's likely a disjoined multiplier
 	            code = tokenizer.nextCharCode();
@@ -5635,11 +6820,11 @@
 	    }
 	}
 
-	function parse(str) {
-	    var tokenizer = new tokenizer$1(str);
+	function parse(source) {
+	    var tokenizer = new tokenizer$1(source);
 	    var result = readImplicitGroup(tokenizer);
 
-	    if (tokenizer.pos !== str.length) {
+	    if (tokenizer.pos !== source.length) {
 	        tokenizer.error('Unexpected input');
 	    }
 
@@ -5707,14 +6892,16 @@
 	        throw new Error('Neither `enter` nor `leave` walker handler is set or both aren\'t a function');
 	    }
 
-	    walk(node, context);
+	    walk(node);
 	};
 
+	var tokenStream = new TokenStream_1();
 	var astToTokens = {
 	    decorator: function(handlers) {
 	        var curNode = null;
-	        var prev = null;
-	        var tokens = [];
+	        var prev = { len: 0, node: null };
+	        var nodes = [prev];
+	        var buffer = '';
 
 	        return {
 	            children: handlers.children,
@@ -5725,54 +6912,66 @@
 	                curNode = tmp;
 	            },
 	            chunk: function(chunk) {
-	                if (tokens.length > 0) {
-	                    switch (curNode.type) {
-	                        case 'Dimension':
-	                        case 'HexColor':
-	                        case 'IdSelector':
-	                        case 'Percentage':
-	                            if (prev.node === curNode) {
-	                                prev.value += chunk;
-	                                return;
-	                            }
-	                            break;
-
-	                        case 'Function':
-	                        case 'PseudoClassSelector':
-	                        case 'PseudoElementSelector':
-	                        case 'Url':
-	                            if (chunk === '(') {
-	                                prev.value += chunk;
-	                                return;
-	                            }
-	                            break;
-
-	                        case 'Atrule':
-	                            if (prev.node === curNode && prev.value === '@') {
-	                                prev.value += chunk;
-	                                return;
-	                            }
-	                            break;
-	                    }
+	                buffer += chunk;
+	                if (prev.node !== curNode) {
+	                    nodes.push({
+	                        len: chunk.length,
+	                        node: curNode
+	                    });
+	                } else {
+	                    prev.len += chunk.length;
 	                }
-
-	                tokens.push(prev = {
-	                    value: chunk,
-	                    node: curNode
-	                });
 	            },
 	            result: function() {
-	                return tokens;
+	                return prepareTokens(buffer, nodes);
 	            }
 	        };
 	    }
 	};
 
+	function prepareTokens(str, nodes) {
+	    var tokens = [];
+	    var nodesOffset = 0;
+	    var nodesIndex = 0;
+	    var currentNode = nodes ? nodes[nodesIndex].node : null;
+
+	    tokenizer(str, tokenStream);
+
+	    while (!tokenStream.eof) {
+	        if (nodes) {
+	            while (nodesIndex < nodes.length && nodesOffset + nodes[nodesIndex].len <= tokenStream.tokenStart) {
+	                nodesOffset += nodes[nodesIndex++].len;
+	                currentNode = nodes[nodesIndex].node;
+	            }
+	        }
+
+	        tokens.push({
+	            type: tokenStream.tokenType,
+	            value: tokenStream.getTokenValue(),
+	            index: tokenStream.tokenIndex, // TODO: remove it, temporary solution
+	            balance: tokenStream.balance[tokenStream.tokenIndex], // TODO: remove it, temporary solution
+	            node: currentNode
+	        });
+	        tokenStream.next();
+	        // console.log({ ...tokens[tokens.length - 1], node: undefined });
+	    }
+
+	    return tokens;
+	}
+
+	var prepareTokens_1 = function(value, syntax) {
+	    if (typeof value === 'string') {
+	        return prepareTokens(value, null);
+	    }
+
+	    return syntax.generate(value, astToTokens);
+	};
+
 	var MATCH = { type: 'Match' };
 	var MISMATCH = { type: 'Mismatch' };
 	var DISALLOW_EMPTY = { type: 'DisallowEmpty' };
-	var LEFTPARENTHESIS$2 = 40;  // (
-	var RIGHTPARENTHESIS$2 = 41; // )
+	var LEFTPARENTHESIS$1 = 40;  // (
+	var RIGHTPARENTHESIS$1 = 41; // )
 
 	function createCondition(match, thenBranch, elseBranch) {
 	    // reduce node count
@@ -5800,8 +6999,8 @@
 	function isFunctionType(name) {
 	    return (
 	        name.length > 2 &&
-	        name.charCodeAt(name.length - 2) === LEFTPARENTHESIS$2 &&
-	        name.charCodeAt(name.length - 1) === RIGHTPARENTHESIS$2
+	        name.charCodeAt(name.length - 2) === LEFTPARENTHESIS$1 &&
+	        name.charCodeAt(name.length - 1) === RIGHTPARENTHESIS$1
 	    );
 	}
 
@@ -5968,7 +7167,8 @@
 	                    type: 'MatchOnce',
 	                    terms: terms,
 	                    all: false
-	                };            }
+	                };
+	            }
 
 	            // Use a combination tree for groups with small number of terms
 	            //
@@ -6177,7 +7377,7 @@
 	            // otherwise use it as is
 	            return {
 	                type: node.type,
-	                value: node.value,
+	                value: node.value.substr(1, node.value.length - 2).replace(/\\'/g, '\''),
 	                syntax: node
 	            };
 
@@ -6222,7 +7422,9 @@
 	var MATCH$1 = matchGraph.MATCH;
 	var MISMATCH$1 = matchGraph.MISMATCH;
 	var DISALLOW_EMPTY$1 = matchGraph.DISALLOW_EMPTY;
+	var TYPE$6 = _const.TYPE;
 
+	var STUB = 0;
 	var TOKEN = 1;
 	var OPEN_SYNTAX = 2;
 	var CLOSE_SYNTAX = 3;
@@ -6231,18 +7433,44 @@
 	var EXIT_REASON_MISMATCH = 'Mismatch';
 	var EXIT_REASON_ITERATION_LIMIT = 'Maximum iteration number exceeded (please fill an issue on https://github.com/csstree/csstree/issues)';
 
-	var ITERATION_LIMIT = 10000;
+	var ITERATION_LIMIT = 15000;
 	var totalIterationCount = 0;
 
-	function mapList(list, fn) {
-	    var result = [];
+	function reverseList(list) {
+	    var prev = null;
+	    var next = null;
+	    var item = list;
 
-	    while (list) {
-	        result.unshift(fn(list));
-	        list = list.prev;
+	    while (item !== null) {
+	        next = item.prev;
+	        item.prev = prev;
+	        prev = item;
+	        item = next;
 	    }
 
-	    return result;
+	    return prev;
+	}
+
+	function areStringsEqualCaseInsensitive(testStr, referenceStr) {
+	    if (testStr.length !== referenceStr.length) {
+	        return false;
+	    }
+
+	    for (var i = 0; i < testStr.length; i++) {
+	        var testCode = testStr.charCodeAt(i);
+	        var referenceCode = referenceStr.charCodeAt(i);
+
+	        // testCode.toLowerCase() for U+0041 LATIN CAPITAL LETTER A (A) .. U+005A LATIN CAPITAL LETTER Z (Z).
+	        if (testCode >= 0x0041 && testCode <= 0x005A) {
+	            testCode = testCode | 32;
+	        }
+
+	        if (testCode !== referenceCode) {
+	            return false;
+	        }
+	    }
+
+	    return true;
 	}
 
 	function isCommaContextStart(token) {
@@ -6250,13 +7478,13 @@
 	        return true;
 	    }
 
-	    token = token.value.charAt(token.value.length - 1);
-
 	    return (
-	        token === ',' ||
-	        token === '(' ||
-	        token === '[' ||
-	        token === '/'
+	        token.type === TYPE$6.Comma ||
+	        token.type === TYPE$6.Function ||
+	        token.type === TYPE$6.LeftParenthesis ||
+	        token.type === TYPE$6.LeftSquareBracket ||
+	        token.type === TYPE$6.LeftCurlyBracket ||
+	        token.type === TYPE$6.Delim
 	    );
 	}
 
@@ -6265,76 +7493,78 @@
 	        return true;
 	    }
 
-	    token = token.value.charAt(0);
-
 	    return (
-	        token === ')' ||
-	        token === ']' ||
-	        token === '/'
+	        token.type === TYPE$6.RightParenthesis ||
+	        token.type === TYPE$6.RightSquareBracket ||
+	        token.type === TYPE$6.RightCurlyBracket ||
+	        token.type === TYPE$6.Delim
 	    );
 	}
 
-	function internalMatch(tokens, syntax, syntaxes) {
+	function internalMatch(tokens, state, syntaxes) {
 	    function moveToNextToken() {
 	        do {
-	            tokenCursor++;
-	            token = tokenCursor < tokens.length ? tokens[tokenCursor] : null;
-	        } while (token !== null && !/\S/.test(token.value));
+	            tokenIndex++;
+	            token = tokenIndex < tokens.length ? tokens[tokenIndex] : null;
+	        } while (token !== null && (token.type === TYPE$6.WhiteSpace || token.type === TYPE$6.Comment));
 	    }
 
 	    function getNextToken(offset) {
-	        var nextIndex = tokenCursor + offset;
+	        var nextIndex = tokenIndex + offset;
 
 	        return nextIndex < tokens.length ? tokens[nextIndex] : null;
 	    }
 
-	    function pushThenStack(nextSyntax) {
+	    function stateSnapshotFromSyntax(nextState, prev) {
+	        return {
+	            nextState: nextState,
+	            matchStack: matchStack,
+	            syntaxStack: syntaxStack,
+	            thenStack: thenStack,
+	            tokenIndex: tokenIndex,
+	            prev: prev
+	        };
+	    }
+
+	    function pushThenStack(nextState) {
 	        thenStack = {
-	            nextSyntax: nextSyntax,
+	            nextState: nextState,
 	            matchStack: matchStack,
 	            syntaxStack: syntaxStack,
 	            prev: thenStack
 	        };
 	    }
 
-	    function pushElseStack(nextSyntax) {
-	        elseStack = {
-	            nextSyntax: nextSyntax,
-	            matchStack: matchStack,
-	            syntaxStack: syntaxStack,
-	            thenStack: thenStack,
-	            tokenCursor: tokenCursor,
-	            token: token,
-	            prev: elseStack
-	        };
+	    function pushElseStack(nextState) {
+	        elseStack = stateSnapshotFromSyntax(nextState, elseStack);
 	    }
 
 	    function addTokenToMatch() {
 	        matchStack = {
 	            type: TOKEN,
-	            syntax: syntax.syntax,
+	            syntax: state.syntax,
 	            token: token,
 	            prev: matchStack
 	        };
 
 	        moveToNextToken();
+	        syntaxStash = null;
 
-	        if (tokenCursor > longestMatch) {
-	            longestMatch = tokenCursor;
+	        if (tokenIndex > longestMatch) {
+	            longestMatch = tokenIndex;
 	        }
-
-	        return matchStack.token;
 	    }
 
 	    function openSyntax() {
 	        syntaxStack = {
-	            syntax: syntax,
+	            syntax: state.syntax,
+	            opts: state.syntax.opts || (syntaxStack !== null && syntaxStack.opts) || null,
 	            prev: syntaxStack
 	        };
 
 	        matchStack = {
 	            type: OPEN_SYNTAX,
-	            syntax: syntax.syntax,
+	            syntax: state.syntax,
 	            token: matchStack.token,
 	            prev: matchStack
 	        };
@@ -6359,231 +7589,267 @@
 	    var thenStack = null;
 	    var elseStack = null;
 
-	    var iterationCount = 0;
-	    var exitReason = EXIT_REASON_MATCH;
+	    // null – stashing allowed, nothing stashed
+	    // false – stashing disabled, nothing stashed
+	    // anithing else – fail stashable syntaxes, some syntax stashed
+	    var syntaxStash = null;
 
-	    var matchStack = { type: 'Stub', syntax: null, token: null, tokenCursor: -1, prev: null };
-	    var longestMatch = 0;
-	    var tokenCursor = -1;
+	    var iterationCount = 0; // count iterations and prevent infinite loop
+	    var exitReason = null;
+
 	    var token = null;
+	    var tokenIndex = -1;
+	    var longestMatch = 0;
+	    var matchStack = {
+	        type: STUB,
+	        syntax: null,
+	        token: null,
+	        prev: null
+	    };
 
 	    moveToNextToken();
 
-	    while (true) {
+	    while (exitReason === null && ++iterationCount < ITERATION_LIMIT) {
+	        // function mapList(list, fn) {
+	        //     var result = [];
+	        //     while (list) {
+	        //         result.unshift(fn(list));
+	        //         list = list.prev;
+	        //     }
+	        //     return result;
+	        // }
 	        // console.log('--\n',
 	        //     '#' + iterationCount,
 	        //     require('util').inspect({
-	        //         match: mapList(matchStack, x => x.type === TOKEN ? x.token && x.token.value : x.syntax ? x.type + '!' + x.syntax.name : null),
-	        //         elseStack: mapList(elseStack, x => x.id),
-	        //         thenStack: mapList(thenStack, x => x.id),
+	        //         match: mapList(matchStack, x => x.type === TOKEN ? x.token && x.token.value : x.syntax ? ({ [OPEN_SYNTAX]: '<', [CLOSE_SYNTAX]: '</' }[x.type] || x.type) + '!' + x.syntax.name : null),
 	        //         token: token && token.value,
-	        //         tokenCursor,
-	        //         syntax
+	        //         tokenIndex,
+	        //         syntax: syntax.type + (syntax.id ? ' #' + syntax.id : '')
 	        //     }, { depth: null })
 	        // );
+	        switch (state.type) {
+	            case 'Match':
+	                if (thenStack === null) {
+	                    // turn to MISMATCH when some tokens left unmatched
+	                    if (token !== null) {
+	                        // doesn't mismatch if just one token left and it's an IE hack
+	                        if (tokenIndex !== tokens.length - 1 || (token.value !== '\\0' && token.value !== '\\9')) {
+	                            state = MISMATCH$1;
+	                            break;
+	                        }
+	                    }
 
-	        // prevent infinite loop
-	        if (++iterationCount === ITERATION_LIMIT) {
-	            console.warn('[csstree-match] BREAK after ' + ITERATION_LIMIT + ' iterations');
-	            exitReason = EXIT_REASON_ITERATION_LIMIT;
-	            break;
-	        }
+	                    // break the main loop, return a result - MATCH
+	                    exitReason = EXIT_REASON_MATCH;
+	                    break;
+	                }
 
-	        if (syntax === MATCH$1) {
-	            if (thenStack === null) {
-	                // turn to MISMATCH when some tokens left unmatched
-	                if (token !== null) {
-	                    // doesn't mismatch if just one token left and it's an IE hack
-	                    if (tokenCursor !== tokens.length - 1 || (token.value !== '\\0' && token.value !== '\\9')) {
-	                        syntax = MISMATCH$1;
-	                        continue;
+	                // go to next syntax (`then` branch)
+	                state = thenStack.nextState;
+
+	                // check match is not empty
+	                if (state === DISALLOW_EMPTY$1) {
+	                    if (thenStack.matchStack === matchStack) {
+	                        state = MISMATCH$1;
+	                        break;
+	                    } else {
+	                        state = MATCH$1;
 	                    }
 	                }
 
-	                // break the main loop, return a result - MATCH
-	                exitReason = EXIT_REASON_MATCH;
-	                break;
-	            }
-
-	            // go to next syntax (`then` branch)
-	            syntax = thenStack.nextSyntax;
-
-	            // check match is not empty
-	            if (syntax === DISALLOW_EMPTY$1) {
-	                if (thenStack.matchStack.token === matchStack.token) {
-	                    syntax = MISMATCH$1;
-	                    continue;
-	                } else {
-	                    syntax = MATCH$1;
+	                // close syntax if needed
+	                while (thenStack.syntaxStack !== syntaxStack) {
+	                    closeSyntax();
 	                }
-	            }
 
-	            // close syntax if needed
-	            while (syntaxStack !== null && thenStack.syntaxStack !== syntaxStack) {
-	                closeSyntax();
-	            }
-
-	            // pop stack
-	            thenStack = thenStack.prev;
-	            continue;
-	        }
-
-	        if (syntax === MISMATCH$1) {
-	            if (elseStack === null) {
-	                // break the main loop, return a result - MISMATCH
-	                exitReason = EXIT_REASON_MISMATCH;
+	                // pop stack
+	                thenStack = thenStack.prev;
 	                break;
-	            }
 
-	            // go to next syntax (`else` branch)
-	            syntax = elseStack.nextSyntax;
+	            case 'Mismatch':
+	                // when some syntax is stashed
+	                if (syntaxStash !== null && syntaxStash !== false) {
+	                    // there is no else branches or a branch reduce match stack
+	                    if (elseStack === null || tokenIndex > elseStack.tokenIndex) {
+	                        // restore state from the stash
+	                        elseStack = syntaxStash;
+	                        syntaxStash = false; // disable stashing
+	                    }
+	                } else if (elseStack === null) {
+	                    // no else branches -> break the main loop
+	                    // return a result - MISMATCH
+	                    exitReason = EXIT_REASON_MISMATCH;
+	                    break;
+	                }
 
-	            // restore all the rest stack states
-	            thenStack = elseStack.thenStack;
-	            syntaxStack = elseStack.syntaxStack;
-	            matchStack = elseStack.matchStack;
-	            tokenCursor = elseStack.tokenCursor;
-	            token = elseStack.token;
+	                // go to next syntax (`else` branch)
+	                state = elseStack.nextState;
 
-	            // pop stack
-	            elseStack = elseStack.prev;
-	            continue;
-	        }
+	                // restore all the rest stack states
+	                thenStack = elseStack.thenStack;
+	                syntaxStack = elseStack.syntaxStack;
+	                matchStack = elseStack.matchStack;
+	                tokenIndex = elseStack.tokenIndex;
+	                token = tokenIndex < tokens.length ? tokens[tokenIndex] : null;
 
-	        switch (syntax.type) {
+	                // pop stack
+	                elseStack = elseStack.prev;
+	                break;
+
 	            case 'MatchGraph':
-	                syntax = syntax.match;
+	                state = state.match;
 	                break;
 
 	            case 'If':
 	                // IMPORTANT: else stack push must go first,
 	                // since it stores the state of thenStack before changes
-	                if (syntax.else !== MISMATCH$1) {
-	                    pushElseStack(syntax.else);
+	                if (state.else !== MISMATCH$1) {
+	                    pushElseStack(state.else);
 	                }
 
-	                if (syntax.then !== MATCH$1) {
-	                    pushThenStack(syntax.then);
+	                if (state.then !== MATCH$1) {
+	                    pushThenStack(state.then);
 	                }
 
-	                syntax = syntax.match;
+	                state = state.match;
 	                break;
 
 	            case 'MatchOnce':
-	                syntax = {
+	                state = {
 	                    type: 'MatchOnceBuffer',
-	                    terms: syntax.terms,
-	                    all: syntax.all,
-	                    matchStack: matchStack,
+	                    syntax: state,
 	                    index: 0,
 	                    mask: 0
 	                };
 	                break;
 
 	            case 'MatchOnceBuffer':
-	                if (syntax.index === syntax.terms.length) {
-	                    // if no matches during a cycle
-	                    if (syntax.matchStack === matchStack) {
-	                        // no matches at all or it's required all terms to be matched
-	                        if (syntax.mask === 0 || syntax.all) {
-	                            syntax = MISMATCH$1;
-	                            break;
-	                        }
+	                var terms = state.syntax.terms;
 
-	                        // a partial match is ok
-	                        syntax = MATCH$1;
+	                if (state.index === terms.length) {
+	                    // no matches at all or it's required all terms to be matched
+	                    if (state.mask === 0 || state.syntax.all) {
+	                        state = MISMATCH$1;
 	                        break;
-	                    } else {
-	                        // start trying to match from the start
-	                        syntax.index = 0;
-	                        syntax.matchStack = matchStack;
 	                    }
+
+	                    // a partial match is ok
+	                    state = MATCH$1;
+	                    break;
 	                }
 
-	                for (; syntax.index < syntax.terms.length; syntax.index++) {
-	                    if ((syntax.mask & (1 << syntax.index)) === 0) {
+	                // all terms are matched
+	                if (state.mask === (1 << terms.length) - 1) {
+	                    state = MATCH$1;
+	                    break;
+	                }
+
+	                for (; state.index < terms.length; state.index++) {
+	                    var matchFlag = 1 << state.index;
+
+	                    if ((state.mask & matchFlag) === 0) {
 	                        // IMPORTANT: else stack push must go first,
 	                        // since it stores the state of thenStack before changes
-	                        pushElseStack(syntax);
+	                        pushElseStack(state);
 	                        pushThenStack({
 	                            type: 'AddMatchOnce',
-	                            buffer: syntax
+	                            syntax: state.syntax,
+	                            mask: state.mask | matchFlag
 	                        });
 
 	                        // match
-	                        syntax = syntax.terms[syntax.index++];
+	                        state = terms[state.index++];
 	                        break;
 	                    }
 	                }
 	                break;
 
 	            case 'AddMatchOnce':
-	                syntax = syntax.buffer;
-
-	                var newMask = syntax.mask | (1 << (syntax.index - 1));
-
-	                // all terms are matched
-	                if (newMask === (1 << syntax.terms.length) - 1) {
-	                    syntax = MATCH$1;
-	                    continue;
-	                }
-
-	                syntax = {
+	                state = {
 	                    type: 'MatchOnceBuffer',
-	                    terms: syntax.terms,
-	                    all: syntax.all,
-	                    matchStack: syntax.matchStack,
-	                    index: syntax.index,
-	                    mask: newMask
+	                    syntax: state.syntax,
+	                    index: 0,
+	                    mask: state.mask
 	                };
-
 	                break;
 
 	            case 'Enum':
-	                var name = token !== null ? token.value.toLowerCase() : '';
+	                if (token !== null) {
+	                    var name = token.value.toLowerCase();
 
-	                // drop \0 and \9 hack from keyword name
-	                if (name.indexOf('\\') !== -1) {
-	                    name = name.replace(/\\[09].*$/, '');
+	                    // drop \0 and \9 hack from keyword name
+	                    if (name.indexOf('\\') !== -1) {
+	                        name = name.replace(/\\[09].*$/, '');
+	                    }
+
+	                    if (hasOwnProperty$1.call(state.map, name)) {
+	                        state = state.map[name];
+	                        break;
+	                    }
 	                }
 
-	                if (hasOwnProperty$1.call(syntax.map, name)) {
-	                    syntax = syntax.map[name];
-	                } else {
-	                    syntax = MISMATCH$1;
-	                }
-
+	                state = MISMATCH$1;
 	                break;
 
 	            case 'Generic':
-	                syntax = syntax.fn(token, addTokenToMatch, getNextToken) ? MATCH$1 : MISMATCH$1;
+	                var opts = syntaxStack !== null ? syntaxStack.opts : null;
+	                var lastTokenIndex = tokenIndex + Math.floor(state.fn(token, getNextToken, opts));
+
+	                if (!isNaN(lastTokenIndex) && lastTokenIndex > tokenIndex) {
+	                    while (tokenIndex < lastTokenIndex) {
+	                        addTokenToMatch();
+	                    }
+
+	                    state = MATCH$1;
+	                } else {
+	                    state = MISMATCH$1;
+	                }
+
 	                break;
 
 	            case 'Type':
 	            case 'Property':
-	                openSyntax();
+	                var syntaxDict = state.type === 'Type' ? 'types' : 'properties';
+	                var dictSyntax = hasOwnProperty$1.call(syntaxes, syntaxDict) ? syntaxes[syntaxDict][state.name] : null;
 
-	                var syntaxDict = syntax.type === 'Type' ? 'types' : 'properties';
-
-	                if (hasOwnProperty$1.call(syntaxes, syntaxDict) && syntaxes[syntaxDict][syntax.name]) {
-	                    syntax = syntaxes[syntaxDict][syntax.name].match;
-	                } else {
-	                    syntax = undefined;
-	                }
-
-	                if (!syntax) {
+	                if (!dictSyntax || !dictSyntax.match) {
 	                    throw new Error(
 	                        'Bad syntax reference: ' +
-	                        (syntaxStack.syntax.type === 'Type'
-	                            ? '<' + syntaxStack.syntax.name + '>'
-	                            : '<\'' + syntaxStack.syntax.name + '\'>')
+	                        (state.type === 'Type'
+	                            ? '<' + state.name + '>'
+	                            : '<\'' + state.name + '\'>')
 	                    );
 	                }
 
+	                // stash a syntax for types with low priority
+	                if (syntaxStash !== false && token !== null && state.type === 'Type') {
+	                    var lowPriorityMatching =
+	                        // https://drafts.csswg.org/css-values-4/#custom-idents
+	                        // When parsing positionally-ambiguous keywords in a property value, a <custom-ident> production
+	                        // can only claim the keyword if no other unfulfilled production can claim it.
+	                        (state.name === 'custom-ident' && token.type === TYPE$6.Ident) ||
+
+	                        // https://drafts.csswg.org/css-values-4/#lengths
+	                        // ... if a `0` could be parsed as either a <number> or a <length> in a property (such as line-height),
+	                        // it must parse as a <number>
+	                        (state.name === 'length' && token.value === '0');
+
+	                    if (lowPriorityMatching) {
+	                        if (syntaxStash === null) {
+	                            syntaxStash = stateSnapshotFromSyntax(state, elseStack);
+	                        }
+
+	                        state = MISMATCH$1;
+	                        break;
+	                    }
+	                }
+
+	                openSyntax();
+	                state = dictSyntax.match;
 	                break;
 
 	            case 'Keyword':
-	                var name = syntax.name;
+	                var name = state.name;
 
 	                if (token !== null) {
 	                    var keywordName = token.value;
@@ -6593,70 +7859,92 @@
 	                        keywordName = keywordName.replace(/\\[09].*$/, '');
 	                    }
 
-	                    if (keywordName.toLowerCase() === name) {
+	                    if (areStringsEqualCaseInsensitive(keywordName, name)) {
 	                        addTokenToMatch();
-
-	                        syntax = MATCH$1;
+	                        state = MATCH$1;
 	                        break;
 	                    }
 	                }
 
-	                syntax = MISMATCH$1;
+	                state = MISMATCH$1;
 	                break;
 
 	            case 'AtKeyword':
 	            case 'Function':
-	                if (token !== null && token.value.toLowerCase() === syntax.name) {
+	                if (token !== null && areStringsEqualCaseInsensitive(token.value, state.name)) {
 	                    addTokenToMatch();
-
-	                    syntax = MATCH$1;
+	                    state = MATCH$1;
 	                    break;
 	                }
 
-	                syntax = MISMATCH$1;
+	                state = MISMATCH$1;
 	                break;
 
 	            case 'Token':
-	                if (token !== null && token.value === syntax.value) {
+	                if (token !== null && token.value === state.value) {
 	                    addTokenToMatch();
-
-	                    syntax = MATCH$1;
+	                    state = MATCH$1;
 	                    break;
 	                }
 
-	                syntax = MISMATCH$1;
+	                state = MISMATCH$1;
 	                break;
 
 	            case 'Comma':
-	                if (token !== null && token.value === ',') {
+	                if (token !== null && token.type === TYPE$6.Comma) {
 	                    if (isCommaContextStart(matchStack.token)) {
-	                        syntax = MISMATCH$1;
+	                        state = MISMATCH$1;
 	                    } else {
 	                        addTokenToMatch();
-	                        syntax = isCommaContextEnd(token) ? MISMATCH$1 : MATCH$1;
+	                        state = isCommaContextEnd(token) ? MISMATCH$1 : MATCH$1;
 	                    }
 	                } else {
-	                    syntax = isCommaContextStart(matchStack.token) || isCommaContextEnd(token) ? MATCH$1 : MISMATCH$1;
+	                    state = isCommaContextStart(matchStack.token) || isCommaContextEnd(token) ? MATCH$1 : MISMATCH$1;
 	                }
 
 	                break;
 
-	            // case 'String':
-	            // TODO: strings with length other than 1 char
+	            case 'String':
+	                var string = '';
+
+	                for (var lastTokenIndex = tokenIndex; lastTokenIndex < tokens.length && string.length < state.value.length; lastTokenIndex++) {
+	                    string += tokens[lastTokenIndex].value;
+	                }
+
+	                if (areStringsEqualCaseInsensitive(string, state.value)) {
+	                    while (tokenIndex < lastTokenIndex) {
+	                        addTokenToMatch();
+	                    }
+
+	                    state = MATCH$1;
+	                } else {
+	                    state = MISMATCH$1;
+	                }
+
+	                break;
 
 	            default:
-	                throw new Error('Unknown node type: ' + syntax.type);
+	                throw new Error('Unknown node type: ' + state.type);
 	        }
 	    }
 
 	    totalIterationCount += iterationCount;
 
-	    if (exitReason === EXIT_REASON_MATCH) {
-	        while (syntaxStack !== null) {
-	            closeSyntax();
-	        }
-	    } else {
-	        matchStack = null;
+	    switch (exitReason) {
+	        case null:
+	            console.warn('[csstree-match] BREAK after ' + ITERATION_LIMIT + ' iterations');
+	            exitReason = EXIT_REASON_ITERATION_LIMIT;
+	            matchStack = null;
+	            break;
+
+	        case EXIT_REASON_MATCH:
+	            while (syntaxStack !== null) {
+	                closeSyntax();
+	            }
+	            break;
+
+	        default:
+	            matchStack = null;
 	    }
 
 	    return {
@@ -6668,80 +7956,84 @@
 	    };
 	}
 
-	function matchAsList(tokens, matchGraph$$1, syntaxes) {
-	    var matchResult = internalMatch(tokens, matchGraph$$1, syntaxes || {});
+	function matchAsList(tokens, matchGraph, syntaxes) {
+	    var matchResult = internalMatch(tokens, matchGraph, syntaxes || {});
 
 	    if (matchResult.match !== null) {
-	        matchResult.match = mapList(matchResult.match, function(item) {
-	            if (item.type === OPEN_SYNTAX || item.type === CLOSE_SYNTAX) {
-	                return { type: item.type, syntax: item.syntax };
+	        var item = reverseList(matchResult.match).prev;
+
+	        matchResult.match = [];
+
+	        while (item !== null) {
+	            switch (item.type) {
+	                case STUB:
+	                    break;
+
+	                case OPEN_SYNTAX:
+	                case CLOSE_SYNTAX:
+	                    matchResult.match.push({
+	                        type: item.type,
+	                        syntax: item.syntax
+	                    });
+	                    break;
+
+	                default:
+	                    matchResult.match.push({
+	                        token: item.token.value,
+	                        node: item.token.node
+	                    });
+	                    break;
 	            }
 
-	            return {
-	                syntax: item.syntax,
-	                token: item.token && item.token.value,
-	                node: item.token && item.token.node
-	            };
-	        }).slice(1);
+	            item = item.prev;
+	        }
 	    }
 
 	    return matchResult;
 	}
 
-	function matchAsTree(tokens, matchGraph$$1, syntaxes) {
-	    var matchResult = internalMatch(tokens, matchGraph$$1, syntaxes || {});
+	function matchAsTree(tokens, matchGraph, syntaxes) {
+	    var matchResult = internalMatch(tokens, matchGraph, syntaxes || {});
 
 	    if (matchResult.match === null) {
 	        return matchResult;
 	    }
 
-	    var cursor = matchResult.match;
+	    var item = matchResult.match;
 	    var host = matchResult.match = {
-	        syntax: matchGraph$$1.syntax || null,
+	        syntax: matchGraph.syntax || null,
 	        match: []
 	    };
-	    var stack = [host];
+	    var hostStack = [host];
 
-	    // revert a list
-	    var prev = null;
-	    var next = null;
-	    while (cursor !== null) {
-	        next = cursor.prev;
-	        cursor.prev = prev;
-	        prev = cursor;
-	        cursor = next;
-	    }
-
-	    // init the cursor to start with 2nd item since 1st is a stub item
-	    cursor = prev.prev;
+	    // revert a list and start with 2nd item since 1st is a stub item
+	    item = reverseList(item).prev;
 
 	    // build a tree
-	    while (cursor !== null && cursor.syntax !== null) {
-	        var entry = cursor;
-
-	        switch (entry.type) {
+	    while (item !== null) {
+	        switch (item.type) {
 	            case OPEN_SYNTAX:
 	                host.match.push(host = {
-	                    syntax: entry.syntax,
+	                    syntax: item.syntax,
 	                    match: []
 	                });
-	                stack.push(host);
+	                hostStack.push(host);
 	                break;
 
 	            case CLOSE_SYNTAX:
-	                stack.pop();
-	                host = stack[stack.length - 1];
+	                hostStack.pop();
+	                host = hostStack[hostStack.length - 1];
 	                break;
 
 	            default:
 	                host.match.push({
-	                    syntax: entry.syntax || null,
-	                    token: entry.token.value,
-	                    node: entry.token.node
+	                    syntax: item.syntax || null,
+	                    token: item.token.value,
+	                    node: item.token.node
 	                });
 	        }
 
-	        cursor = cursor.prev;
+	        item = item.prev;
 	    }
 
 	    return matchResult;
@@ -6859,9 +8151,9 @@
 	            var start = getFirstMatchNode(matchNode);
 	            var end = getLastMatchNode(matchNode);
 
-	            lexer.syntax.walk(ast, function(node, item, list$$1) {
+	            lexer.syntax.walk(ast, function(node, item, list) {
 	                if (node === start) {
-	                    var nodes = new list();
+	                    var nodes = new List_1();
 
 	                    do {
 	                        nodes.appendData(item.data);
@@ -6874,7 +8166,7 @@
 	                    } while (item !== null);
 
 	                    fragments.push({
-	                        parent: list$$1,
+	                        parent: list,
 	                        nodes: nodes
 	                    });
 	                }
@@ -6974,7 +8266,7 @@
 	                            if (typeof fieldType === 'string') {
 	                                valid = node[key] && node[key].type === fieldType;
 	                            } else if (Array.isArray(fieldType)) {
-	                                valid = node[key] instanceof list;
+	                                valid = node[key] instanceof List_1;
 	                            }
 	                    }
 	                }
@@ -7062,8 +8354,8 @@
 	    }
 	};
 
-	var SyntaxReferenceError$1 = error$1.SyntaxReferenceError;
-	var MatchError$1 = error$1.MatchError;
+	var SyntaxReferenceError$1 = error.SyntaxReferenceError;
+	var MatchError$1 = error.MatchError;
 
 
 
@@ -7075,36 +8367,36 @@
 
 
 	var getStructureFromConfig = structure.getStructureFromConfig;
-	var cssWideKeywords = buildMatchGraph$1(parse_1('inherit | initial | unset'));
-	var cssWideKeywordsWithExpression = buildMatchGraph$1(parse_1('inherit | initial | unset | <expression>'));
+	var cssWideKeywords$1 = buildMatchGraph$1('inherit | initial | unset');
+	var cssWideKeywordsWithExpression = buildMatchGraph$1('inherit | initial | unset | <-ms-legacy-expression>');
 
-	function dumpMapSyntax(map, syntaxAsAst) {
+	function dumpMapSyntax(map, compact, syntaxAsAst) {
 	    var result = {};
 
 	    for (var name in map) {
 	        if (map[name].syntax) {
-	            result[name] = syntaxAsAst ? map[name].syntax : generate_1(map[name].syntax);
+	            result[name] = syntaxAsAst
+	                ? map[name].syntax
+	                : generate_1(map[name].syntax, { compact: compact });
 	        }
 	    }
 
 	    return result;
 	}
 
-	function valueHasVar(value) {
-	    var hasVar = false;
-
-	    this.syntax.walk(value, function(node) {
-	        if (node.type === 'Function' && node.name.toLowerCase() === 'var') {
-	            hasVar = true;
+	function valueHasVar(tokens) {
+	    for (var i = 0; i < tokens.length; i++) {
+	        if (tokens[i].value.toLowerCase() === 'var(') {
+	            return true;
 	        }
-	    });
+	    }
 
-	    return hasVar;
+	    return false;
 	}
 
-	function buildMatchResult(match$$1, error, iterations) {
+	function buildMatchResult(match, error, iterations) {
 	    return {
-	        matched: match$$1,
+	        matched: match,
 	        iterations: iterations,
 	        error: error,
 	        getTrace: trace.getTrace,
@@ -7114,17 +8406,13 @@
 	    };
 	}
 
-	function matchSyntax(lexer, syntax, node, useCommon) {
-	    if (!node) {
-	        return buildMatchResult(null, new Error('Node is undefined'));
-	    }
+	function matchSyntax(lexer, syntax, value, useCommon) {
+	    var tokens = prepareTokens_1(value, lexer.syntax);
+	    var result;
 
-	    if (valueHasVar.call(lexer, node)) {
+	    if (valueHasVar(tokens)) {
 	        return buildMatchResult(null, new Error('Matching for a tree with var() is not supported'));
 	    }
-
-	    var tokens = lexer.syntax.generate(node, astToTokens);
-	    var result;
 
 	    if (useCommon) {
 	        result = matchAsTree$1(tokens, lexer.valueCommonSyntax, lexer);
@@ -7135,7 +8423,7 @@
 	        if (!result.match) {
 	            return buildMatchResult(
 	                null,
-	                new MatchError$1(result.reason, lexer, syntax.syntax, node, result),
+	                new MatchError$1(result.reason, syntax.syntax, value, result),
 	                result.iterations
 	            );
 	        }
@@ -7144,15 +8432,22 @@
 	    return buildMatchResult(result.match, null, result.iterations);
 	}
 
-	var Lexer = function(config, syntax, structure$$1) {
-	    this.valueCommonSyntax = cssWideKeywords;
+	var Lexer = function(config, syntax, structure) {
+	    this.valueCommonSyntax = cssWideKeywords$1;
 	    this.syntax = syntax;
 	    this.generic = false;
+	    this.atrules = {};
 	    this.properties = {};
 	    this.types = {};
-	    this.structure = structure$$1 || getStructureFromConfig(config);
+	    this.structure = structure || getStructureFromConfig(config);
 
 	    if (config) {
+	        if (config.types) {
+	            for (var name in config.types) {
+	                this.addType_(name, config.types[name]);
+	            }
+	        }
+
 	        if (config.generic) {
 	            this.generic = true;
 	            for (var name in generic) {
@@ -7160,9 +8455,9 @@
 	            }
 	        }
 
-	        if (config.types) {
-	            for (var name in config.types) {
-	                this.addType_(name, config.types[name]);
+	        if (config.atrules) {
+	            for (var name in config.atrules) {
+	                this.addAtrule_(name, config.atrules[name]);
 	            }
 	        }
 
@@ -7184,12 +8479,12 @@
 	            });
 	        }
 
-	        var structure$$1 = this.structure;
+	        var structure = this.structure;
 	        var warns = [];
 
 	        this.syntax.walk(ast, function(node) {
-	            if (structure$$1.hasOwnProperty(node.type)) {
-	                structure$$1[node.type].check(node, collectWarning);
+	            if (structure.hasOwnProperty(node.type)) {
+	                structure[node.type].check(node, collectWarning);
 	            } else {
 	                collectWarning(node, 'Unknown node type `' + node.type + '`');
 	            }
@@ -7228,6 +8523,7 @@
 	                descriptor.syntax = syntax;
 	            }
 
+	            // lazy graph build on first access
 	            Object.defineProperty(descriptor, 'match', {
 	                get: function() {
 	                    Object.defineProperty(descriptor, 'match', {
@@ -7241,17 +8537,71 @@
 
 	        return descriptor;
 	    },
+	    addAtrule_: function(name, syntax) {
+	        this.atrules[name] = {
+	            prelude: syntax.prelude ? this.createDescriptor(syntax.prelude, 'AtrulePrelude', name) : null,
+	            descriptors: syntax.descriptors
+	                ? Object.keys(syntax.descriptors).reduce((res, name) => {
+	                    res[name] = this.createDescriptor(syntax.descriptors[name], 'AtruleDescriptor', name);
+	                    return res;
+	                }, {})
+	                : null
+	        };
+	    },
 	    addProperty_: function(name, syntax) {
 	        this.properties[name] = this.createDescriptor(syntax, 'Property', name);
 	    },
 	    addType_: function(name, syntax) {
 	        this.types[name] = this.createDescriptor(syntax, 'Type', name);
 
-	        if (syntax === generic.expression) {
+	        if (syntax === generic['-ms-legacy-expression']) {
 	            this.valueCommonSyntax = cssWideKeywordsWithExpression;
 	        }
 	    },
 
+	    matchAtrulePrelude: function(atruleName, prelude) {
+	        var atrule = names.keyword(atruleName);
+
+	        var atrulePreludeSyntax = atrule.vendor
+	            ? this.getAtrulePrelude(atrule.name) || this.getAtrulePrelude(atrule.basename)
+	            : this.getAtrulePrelude(atrule.name);
+
+	        if (!atrulePreludeSyntax) {
+	            if (atrule.basename in this.atrules) {
+	                return buildMatchResult(null, new Error('At-rule `' + atruleName + '` should not contain a prelude'));
+	            }
+
+	            return buildMatchResult(null, new SyntaxReferenceError$1('Unknown at-rule', atruleName));
+	        }
+
+	        return matchSyntax(this, atrulePreludeSyntax, prelude, true);
+	    },
+	    matchAtruleDescriptor: function(atruleName, descriptorName, value) {
+	        var atrule = names.keyword(atruleName);
+	        var descriptor = names.keyword(descriptorName);
+
+	        var atruleEntry = atrule.vendor
+	            ? this.atrules[atrule.name] || this.atrules[atrule.basename]
+	            : this.atrules[atrule.name];
+
+	        if (!atruleEntry) {
+	            return buildMatchResult(null, new SyntaxReferenceError$1('Unknown at-rule', atruleName));
+	        }
+
+	        if (!atruleEntry.descriptors) {
+	            return buildMatchResult(null, new Error('At-rule `' + atruleName + '` has no known descriptors'));
+	        }
+
+	        var atruleDescriptorSyntax = descriptor.vendor
+	            ? atruleEntry.descriptors[descriptor.name] || atruleEntry.descriptors[descriptor.basename]
+	            : atruleEntry.descriptors[descriptor.name];
+
+	        if (!atruleDescriptorSyntax) {
+	            return buildMatchResult(null, new SyntaxReferenceError$1('Unknown at-rule descriptor', descriptorName));
+	        }
+
+	        return matchSyntax(this, atruleDescriptorSyntax, value, true);
+	    },
 	    matchDeclaration: function(node) {
 	        if (node.type !== 'Declaration') {
 	            return buildMatchResult(null, new Error('Not a Declaration node'));
@@ -7287,12 +8637,12 @@
 	        return matchSyntax(this, typeSyntax, value, false);
 	    },
 	    match: function(syntax, value) {
-	        if (!syntax || !syntax.type) {
+	        if (typeof syntax !== 'string' && (!syntax || !syntax.type)) {
 	            return buildMatchResult(null, new SyntaxReferenceError$1('Bad syntax'));
 	        }
 
-	        if (!syntax.match) {
-	            syntax = this.createDescriptor(syntax);
+	        if (typeof syntax === 'string' || !syntax.match) {
+	            syntax = this.createDescriptor(syntax, 'Type', 'anonymous');
 	        }
 
 	        return matchSyntax(this, syntax, value, false);
@@ -7317,6 +8667,14 @@
 	        return result;
 	    },
 
+	    getAtrulePrelude: function(atruleName) {
+	        return this.atrules.hasOwnProperty(atruleName) ? this.atrules[atruleName].prelude : null;
+	    },
+	    getAtruleDescriptor: function(atruleName, name) {
+	        return this.atrules.hasOwnProperty(atruleName) && this.atrules.declarators
+	            ? this.atrules[atruleName].declarators[name] || null
+	            : null;
+	    },
 	    getProperty: function(name) {
 	        return this.properties.hasOwnProperty(name) ? this.properties[name] : null;
 	    },
@@ -7374,11 +8732,11 @@
 
 	        return null;
 	    },
-	    dump: function(syntaxAsAst) {
+	    dump: function(syntaxAsAst, pretty) {
 	        return {
 	            generic: this.generic,
-	            types: dumpMapSyntax(this.types, syntaxAsAst),
-	            properties: dumpMapSyntax(this.properties, syntaxAsAst)
+	            types: dumpMapSyntax(this.types, !pretty, syntaxAsAst),
+	            properties: dumpMapSyntax(this.properties, !pretty, syntaxAsAst)
 	        };
 	    },
 	    toString: function() {
@@ -7388,16 +8746,107 @@
 
 	var Lexer_1 = Lexer;
 
-	var grammar = {
-	    SyntaxParseError: error$2.SyntaxParseError,
+	var definitionSyntax = {
+	    SyntaxError: _SyntaxError$1,
 	    parse: parse_1,
 	    generate: generate_1,
 	    walk: walk$1
 	};
 
-	var TYPE$3 = tokenizer.TYPE;
-	var WHITESPACE$2 = TYPE$3.WhiteSpace;
-	var COMMENT$2 = TYPE$3.Comment;
+	var isBOM$2 = tokenizer.isBOM;
+
+	var N$3 = 10;
+	var F$2 = 12;
+	var R$2 = 13;
+
+	function computeLinesAndColumns(host, source) {
+	    var sourceLength = source.length;
+	    var lines = adoptBuffer(host.lines, sourceLength); // +1
+	    var line = host.startLine;
+	    var columns = adoptBuffer(host.columns, sourceLength);
+	    var column = host.startColumn;
+	    var startOffset = source.length > 0 ? isBOM$2(source.charCodeAt(0)) : 0;
+
+	    for (var i = startOffset; i < sourceLength; i++) { // -1
+	        var code = source.charCodeAt(i);
+
+	        lines[i] = line;
+	        columns[i] = column++;
+
+	        if (code === N$3 || code === R$2 || code === F$2) {
+	            if (code === R$2 && i + 1 < sourceLength && source.charCodeAt(i + 1) === N$3) {
+	                i++;
+	                lines[i] = line;
+	                columns[i] = column;
+	            }
+
+	            line++;
+	            column = 1;
+	        }
+	    }
+
+	    lines[i] = line;
+	    columns[i] = column;
+
+	    host.lines = lines;
+	    host.columns = columns;
+	}
+
+	var OffsetToLocation = function() {
+	    this.lines = null;
+	    this.columns = null;
+	    this.linesAndColumnsComputed = false;
+	};
+
+	OffsetToLocation.prototype = {
+	    setSource: function(source, startOffset, startLine, startColumn) {
+	        this.source = source;
+	        this.startOffset = typeof startOffset === 'undefined' ? 0 : startOffset;
+	        this.startLine = typeof startLine === 'undefined' ? 1 : startLine;
+	        this.startColumn = typeof startColumn === 'undefined' ? 1 : startColumn;
+	        this.linesAndColumnsComputed = false;
+	    },
+
+	    ensureLinesAndColumnsComputed: function() {
+	        if (!this.linesAndColumnsComputed) {
+	            computeLinesAndColumns(this, this.source);
+	            this.linesAndColumnsComputed = true;
+	        }
+	    },
+	    getLocation: function(offset, filename) {
+	        this.ensureLinesAndColumnsComputed();
+
+	        return {
+	            source: filename,
+	            offset: this.startOffset + offset,
+	            line: this.lines[offset],
+	            column: this.columns[offset]
+	        };
+	    },
+	    getLocationRange: function(start, end, filename) {
+	        this.ensureLinesAndColumnsComputed();
+
+	        return {
+	            source: filename,
+	            start: {
+	                offset: this.startOffset + start,
+	                line: this.lines[start],
+	                column: this.columns[start]
+	            },
+	            end: {
+	                offset: this.startOffset + end,
+	                line: this.lines[end],
+	                column: this.columns[end]
+	            }
+	        };
+	    }
+	};
+
+	var OffsetToLocation_1 = OffsetToLocation;
+
+	var TYPE$7 = tokenizer.TYPE;
+	var WHITESPACE$2 = TYPE$7.WhiteSpace;
+	var COMMENT$2 = TYPE$7.Comment;
 
 	var sequence = function readSequence(recognizer) {
 	    var children = this.createList();
@@ -7450,7 +8899,21 @@
 	    return children;
 	};
 
+	var findWhiteSpaceStart$1 = utils.findWhiteSpaceStart;
+
 	var noop$3 = function() {};
+
+	var TYPE$8 = _const.TYPE;
+	var NAME$2 = _const.NAME;
+	var WHITESPACE$3 = TYPE$8.WhiteSpace;
+	var IDENT$2 = TYPE$8.Ident;
+	var FUNCTION = TYPE$8.Function;
+	var URL$1 = TYPE$8.Url;
+	var HASH = TYPE$8.Hash;
+	var PERCENTAGE = TYPE$8.Percentage;
+	var NUMBER$2 = TYPE$8.Number;
+	var NUMBERSIGN$1 = 0x0023; // U+0023 NUMBER SIGN (#)
+	var NULL = 0;
 
 	function createParseContext(name) {
 	    return function() {
@@ -7517,7 +8980,9 @@
 
 	var create$1 = function createParser(config) {
 	    var parser = {
-	        scanner: new tokenizer(),
+	        scanner: new TokenStream_1(),
+	        locationMap: new OffsetToLocation_1(),
+
 	        filename: '<unknown>',
 	        needPositions: false,
 	        onParseError: noop$3,
@@ -7530,20 +8995,20 @@
 	        readSequence: sequence,
 
 	        createList: function() {
-	            return new list();
+	            return new List_1();
 	        },
 	        createSingleNodeList: function(node) {
-	            return new list().appendData(node);
+	            return new List_1().appendData(node);
 	        },
-	        getFirstListNode: function(list$$1) {
-	            return list$$1 && list$$1.first();
+	        getFirstListNode: function(list) {
+	            return list && list.first();
 	        },
-	        getLastListNode: function(list$$1) {
-	            return list$$1.last();
+	        getLastListNode: function(list) {
+	            return list.last();
 	        },
 
 	        parseWithFallback: function(consumer, fallback) {
-	            var startToken = this.scanner.currentToken;
+	            var startToken = this.scanner.tokenIndex;
 
 	            try {
 	                return consumer.call(this);
@@ -7562,9 +9027,81 @@
 	            }
 	        },
 
+	        lookupNonWSType: function(offset) {
+	            do {
+	                var type = this.scanner.lookupType(offset++);
+	                if (type !== WHITESPACE$3) {
+	                    return type;
+	                }
+	            } while (type !== NULL);
+
+	            return NULL;
+	        },
+
+	        eat: function(tokenType) {
+	            if (this.scanner.tokenType !== tokenType) {
+	                var offset = this.scanner.tokenStart;
+	                var message = NAME$2[tokenType] + ' is expected';
+
+	                // tweak message and offset
+	                switch (tokenType) {
+	                    case IDENT$2:
+	                        // when identifier is expected but there is a function or url
+	                        if (this.scanner.tokenType === FUNCTION || this.scanner.tokenType === URL$1) {
+	                            offset = this.scanner.tokenEnd - 1;
+	                            message = 'Identifier is expected but function found';
+	                        } else {
+	                            message = 'Identifier is expected';
+	                        }
+	                        break;
+
+	                    case HASH:
+	                        if (this.scanner.isDelim(NUMBERSIGN$1)) {
+	                            this.scanner.next();
+	                            offset++;
+	                            message = 'Name is expected';
+	                        }
+	                        break;
+
+	                    case PERCENTAGE:
+	                        if (this.scanner.tokenType === NUMBER$2) {
+	                            offset = this.scanner.tokenEnd;
+	                            message = 'Percent sign is expected';
+	                        }
+	                        break;
+
+	                    default:
+	                        // when test type is part of another token show error for current position + 1
+	                        // e.g. eat(HYPHENMINUS) will fail on "-foo", but pointing on "-" is odd
+	                        if (this.scanner.source.charCodeAt(this.scanner.tokenStart) === tokenType) {
+	                            offset = offset + 1;
+	                        }
+	                }
+
+	                this.error(message, offset);
+	            }
+
+	            this.scanner.next();
+	        },
+
+	        consume: function(tokenType) {
+	            var value = this.scanner.getTokenValue();
+
+	            this.eat(tokenType);
+
+	            return value;
+	        },
+	        consumeFunctionName: function() {
+	            var name = this.scanner.source.substring(this.scanner.tokenStart, this.scanner.tokenEnd - 1);
+
+	            this.eat(FUNCTION);
+
+	            return name;
+	        },
+
 	        getLocation: function(start, end) {
 	            if (this.needPositions) {
-	                return this.scanner.getLocationRange(
+	                return this.locationMap.getLocationRange(
 	                    start,
 	                    end,
 	                    this.filename
@@ -7573,18 +9110,34 @@
 
 	            return null;
 	        },
-	        getLocationFromList: function(list$$1) {
+	        getLocationFromList: function(list) {
 	            if (this.needPositions) {
-	                var head = this.getFirstListNode(list$$1);
-	                var tail = this.getLastListNode(list$$1);
-	                return this.scanner.getLocationRange(
-	                    head !== null ? head.loc.start.offset - this.scanner.startOffset : this.scanner.tokenStart,
-	                    tail !== null ? tail.loc.end.offset - this.scanner.startOffset : this.scanner.tokenStart,
+	                var head = this.getFirstListNode(list);
+	                var tail = this.getLastListNode(list);
+	                return this.locationMap.getLocationRange(
+	                    head !== null ? head.loc.start.offset - this.locationMap.startOffset : this.scanner.tokenStart,
+	                    tail !== null ? tail.loc.end.offset - this.locationMap.startOffset : this.scanner.tokenStart,
 	                    this.filename
 	                );
 	            }
 
 	            return null;
+	        },
+
+	        error: function(message, offset) {
+	            var location = typeof offset !== 'undefined' && offset < this.scanner.source.length
+	                ? this.locationMap.getLocation(offset)
+	                : this.scanner.eof
+	                    ? this.locationMap.getLocation(findWhiteSpaceStart$1(this.scanner.source, this.scanner.source.length - 1))
+	                    : this.locationMap.getLocation(this.scanner.tokenStart);
+
+	            throw new _SyntaxError(
+	                message || 'Unexpected input',
+	                this.scanner.source,
+	                location.offset,
+	                location.line,
+	                location.column
+	            );
 	        }
 	    };
 
@@ -7599,7 +9152,14 @@
 	        var context = options.context || 'default';
 	        var ast;
 
-	        parser.scanner.setSource(source, options.offset, options.line, options.column);
+	        tokenizer(source, parser.scanner);
+	        parser.locationMap.setSource(
+	            source,
+	            options.offset,
+	            options.line,
+	            options.column
+	        );
+
 	        parser.filename = options.filename || '<unknown>';
 	        parser.needPositions = Boolean(options.positions);
 	        parser.onParseError = typeof options.onParseError === 'function' ? options.onParseError : noop$3;
@@ -7616,7 +9176,7 @@
 	        ast = parser.context[context].call(parser, options);
 
 	        if (!parser.scanner.eof) {
-	            parser.scanner.error();
+	            parser.error();
 	        }
 
 	        return ast;
@@ -7871,7 +9431,7 @@
 	}
 	exports.getArg = getArg;
 
-	var urlRegexp = /^(?:([\w+\-.]+):)?\/\/(?:(\w+:\w+)@)?([\w.]*)(?::(\d+))?(\S*)$/;
+	var urlRegexp = /^(?:([\w+\-.]+):)?\/\/(?:(\w+:\w+)@)?([\w.-]*)(?::(\d+))?(.*)$/;
 	var dataUrlRegexp = /^data:.+\,.+$/;
 
 	function urlParse(aUrl) {
@@ -8027,7 +9587,7 @@
 	exports.join = join;
 
 	exports.isAbsolute = function (aPath) {
-	  return aPath.charAt(0) === '/' || !!aPath.match(urlRegexp);
+	  return aPath.charAt(0) === '/' || urlRegexp.test(aPath);
 	};
 
 	/**
@@ -8147,7 +9707,7 @@
 	 * stubbed out mapping.
 	 */
 	function compareByOriginalPositions(mappingA, mappingB, onlyCompareOriginal) {
-	  var cmp = mappingA.source - mappingB.source;
+	  var cmp = strcmp(mappingA.source, mappingB.source);
 	  if (cmp !== 0) {
 	    return cmp;
 	  }
@@ -8172,7 +9732,7 @@
 	    return cmp;
 	  }
 
-	  return mappingA.name - mappingB.name;
+	  return strcmp(mappingA.name, mappingB.name);
 	}
 	exports.compareByOriginalPositions = compareByOriginalPositions;
 
@@ -8196,7 +9756,7 @@
 	    return cmp;
 	  }
 
-	  cmp = mappingA.source - mappingB.source;
+	  cmp = strcmp(mappingA.source, mappingB.source);
 	  if (cmp !== 0) {
 	    return cmp;
 	  }
@@ -8211,13 +9771,21 @@
 	    return cmp;
 	  }
 
-	  return mappingA.name - mappingB.name;
+	  return strcmp(mappingA.name, mappingB.name);
 	}
 	exports.compareByGeneratedPositionsDeflated = compareByGeneratedPositionsDeflated;
 
 	function strcmp(aStr1, aStr2) {
 	  if (aStr1 === aStr2) {
 	    return 0;
+	  }
+
+	  if (aStr1 === null) {
+	    return 1; // aStr2 !== null
+	  }
+
+	  if (aStr2 === null) {
+	    return -1; // aStr1 !== null
 	  }
 
 	  if (aStr1 > aStr2) {
@@ -8260,6 +9828,69 @@
 	  return strcmp(mappingA.name, mappingB.name);
 	}
 	exports.compareByGeneratedPositionsInflated = compareByGeneratedPositionsInflated;
+
+	/**
+	 * Strip any JSON XSSI avoidance prefix from the string (as documented
+	 * in the source maps specification), and then parse the string as
+	 * JSON.
+	 */
+	function parseSourceMapInput(str) {
+	  return JSON.parse(str.replace(/^\)]}'[^\n]*\n/, ''));
+	}
+	exports.parseSourceMapInput = parseSourceMapInput;
+
+	/**
+	 * Compute the URL of a source given the the source root, the source's
+	 * URL, and the source map's URL.
+	 */
+	function computeSourceURL(sourceRoot, sourceURL, sourceMapURL) {
+	  sourceURL = sourceURL || '';
+
+	  if (sourceRoot) {
+	    // This follows what Chrome does.
+	    if (sourceRoot[sourceRoot.length - 1] !== '/' && sourceURL[0] !== '/') {
+	      sourceRoot += '/';
+	    }
+	    // The spec says:
+	    //   Line 4: An optional source root, useful for relocating source
+	    //   files on a server or removing repeated values in the
+	    //   “sources” entry.  This value is prepended to the individual
+	    //   entries in the “source” field.
+	    sourceURL = sourceRoot + sourceURL;
+	  }
+
+	  // Historically, SourceMapConsumer did not take the sourceMapURL as
+	  // a parameter.  This mode is still somewhat supported, which is why
+	  // this code block is conditional.  However, it's preferable to pass
+	  // the source map URL to SourceMapConsumer, so that this function
+	  // can implement the source URL resolution algorithm as outlined in
+	  // the spec.  This block is basically the equivalent of:
+	  //    new URL(sourceURL, sourceMapURL).toString()
+	  // ... except it avoids using URL, which wasn't available in the
+	  // older releases of node still supported by this library.
+	  //
+	  // The spec says:
+	  //   If the sources are not absolute URLs after prepending of the
+	  //   “sourceRoot”, the sources are resolved relative to the
+	  //   SourceMap (like resolving script src in a html document).
+	  if (sourceMapURL) {
+	    var parsed = urlParse(sourceMapURL);
+	    if (!parsed) {
+	      throw new Error("sourceMapURL could not be parsed");
+	    }
+	    if (parsed.path) {
+	      // Strip the last path component, but keep the "/".
+	      var index = parsed.path.lastIndexOf('/');
+	      if (index >= 0) {
+	        parsed.path = parsed.path.substring(0, index + 1);
+	      }
+	    }
+	    sourceURL = join(urlGenerate(parsed), sourceURL);
+	  }
+
+	  return normalize(sourceURL);
+	}
+	exports.computeSourceURL = computeSourceURL;
 	});
 	var util_1 = util.getArg;
 	var util_2 = util.urlParse;
@@ -8273,6 +9904,8 @@
 	var util_10 = util.compareByOriginalPositions;
 	var util_11 = util.compareByGeneratedPositionsDeflated;
 	var util_12 = util.compareByGeneratedPositionsInflated;
+	var util_13 = util.parseSourceMapInput;
+	var util_14 = util.computeSourceURL;
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
 	/*
@@ -8558,6 +10191,15 @@
 	      generator.addMapping(newMapping);
 	    });
 	    aSourceMapConsumer.sources.forEach(function (sourceFile) {
+	      var sourceRelative = sourceFile;
+	      if (sourceRoot !== null) {
+	        sourceRelative = util.relative(sourceRoot, sourceFile);
+	      }
+
+	      if (!generator._sources.has(sourceRelative)) {
+	        generator._sources.add(sourceRelative);
+	      }
+
 	      var content = aSourceMapConsumer.sourceContentFor(sourceFile);
 	      if (content != null) {
 	        generator.setSourceContent(sourceFile, content);
@@ -8905,1773 +10547,15 @@
 		SourceMapGenerator: SourceMapGenerator_1
 	};
 
-	var binarySearch = createCommonjsModule(function (module, exports) {
-	/* -*- Mode: js; js-indent-level: 2; -*- */
-	/*
-	 * Copyright 2011 Mozilla Foundation and contributors
-	 * Licensed under the New BSD license. See LICENSE or:
-	 * http://opensource.org/licenses/BSD-3-Clause
-	 */
-
-	exports.GREATEST_LOWER_BOUND = 1;
-	exports.LEAST_UPPER_BOUND = 2;
-
-	/**
-	 * Recursive implementation of binary search.
-	 *
-	 * @param aLow Indices here and lower do not contain the needle.
-	 * @param aHigh Indices here and higher do not contain the needle.
-	 * @param aNeedle The element being searched for.
-	 * @param aHaystack The non-empty array being searched.
-	 * @param aCompare Function which takes two elements and returns -1, 0, or 1.
-	 * @param aBias Either 'binarySearch.GREATEST_LOWER_BOUND' or
-	 *     'binarySearch.LEAST_UPPER_BOUND'. Specifies whether to return the
-	 *     closest element that is smaller than or greater than the one we are
-	 *     searching for, respectively, if the exact element cannot be found.
-	 */
-	function recursiveSearch(aLow, aHigh, aNeedle, aHaystack, aCompare, aBias) {
-	  // This function terminates when one of the following is true:
-	  //
-	  //   1. We find the exact element we are looking for.
-	  //
-	  //   2. We did not find the exact element, but we can return the index of
-	  //      the next-closest element.
-	  //
-	  //   3. We did not find the exact element, and there is no next-closest
-	  //      element than the one we are searching for, so we return -1.
-	  var mid = Math.floor((aHigh - aLow) / 2) + aLow;
-	  var cmp = aCompare(aNeedle, aHaystack[mid], true);
-	  if (cmp === 0) {
-	    // Found the element we are looking for.
-	    return mid;
-	  }
-	  else if (cmp > 0) {
-	    // Our needle is greater than aHaystack[mid].
-	    if (aHigh - mid > 1) {
-	      // The element is in the upper half.
-	      return recursiveSearch(mid, aHigh, aNeedle, aHaystack, aCompare, aBias);
-	    }
-
-	    // The exact needle element was not found in this haystack. Determine if
-	    // we are in termination case (3) or (2) and return the appropriate thing.
-	    if (aBias == exports.LEAST_UPPER_BOUND) {
-	      return aHigh < aHaystack.length ? aHigh : -1;
-	    } else {
-	      return mid;
-	    }
-	  }
-	  else {
-	    // Our needle is less than aHaystack[mid].
-	    if (mid - aLow > 1) {
-	      // The element is in the lower half.
-	      return recursiveSearch(aLow, mid, aNeedle, aHaystack, aCompare, aBias);
-	    }
-
-	    // we are in termination case (3) or (2) and return the appropriate thing.
-	    if (aBias == exports.LEAST_UPPER_BOUND) {
-	      return mid;
-	    } else {
-	      return aLow < 0 ? -1 : aLow;
-	    }
-	  }
-	}
-
-	/**
-	 * This is an implementation of binary search which will always try and return
-	 * the index of the closest element if there is no exact hit. This is because
-	 * mappings between original and generated line/col pairs are single points,
-	 * and there is an implicit region between each of them, so a miss just means
-	 * that you aren't on the very start of a region.
-	 *
-	 * @param aNeedle The element you are looking for.
-	 * @param aHaystack The array that is being searched.
-	 * @param aCompare A function which takes the needle and an element in the
-	 *     array and returns -1, 0, or 1 depending on whether the needle is less
-	 *     than, equal to, or greater than the element, respectively.
-	 * @param aBias Either 'binarySearch.GREATEST_LOWER_BOUND' or
-	 *     'binarySearch.LEAST_UPPER_BOUND'. Specifies whether to return the
-	 *     closest element that is smaller than or greater than the one we are
-	 *     searching for, respectively, if the exact element cannot be found.
-	 *     Defaults to 'binarySearch.GREATEST_LOWER_BOUND'.
-	 */
-	exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
-	  if (aHaystack.length === 0) {
-	    return -1;
-	  }
-
-	  var index = recursiveSearch(-1, aHaystack.length, aNeedle, aHaystack,
-	                              aCompare, aBias || exports.GREATEST_LOWER_BOUND);
-	  if (index < 0) {
-	    return -1;
-	  }
-
-	  // We have found either the exact element, or the next-closest element than
-	  // the one we are searching for. However, there may be more than one such
-	  // element. Make sure we always return the smallest of these.
-	  while (index - 1 >= 0) {
-	    if (aCompare(aHaystack[index], aHaystack[index - 1], true) !== 0) {
-	      break;
-	    }
-	    --index;
-	  }
-
-	  return index;
-	};
-	});
-	var binarySearch_1 = binarySearch.GREATEST_LOWER_BOUND;
-	var binarySearch_2 = binarySearch.LEAST_UPPER_BOUND;
-	var binarySearch_3 = binarySearch.search;
-
-	/* -*- Mode: js; js-indent-level: 2; -*- */
-	/*
-	 * Copyright 2011 Mozilla Foundation and contributors
-	 * Licensed under the New BSD license. See LICENSE or:
-	 * http://opensource.org/licenses/BSD-3-Clause
-	 */
-
-	// It turns out that some (most?) JavaScript engines don't self-host
-	// `Array.prototype.sort`. This makes sense because C++ will likely remain
-	// faster than JS when doing raw CPU-intensive sorting. However, when using a
-	// custom comparator function, calling back and forth between the VM's C++ and
-	// JIT'd JS is rather slow *and* loses JIT type information, resulting in
-	// worse generated code for the comparator function than would be optimal. In
-	// fact, when sorting with a comparator, these costs outweigh the benefits of
-	// sorting in C++. By using our own JS-implemented Quick Sort (below), we get
-	// a ~3500ms mean speed-up in `bench/bench.html`.
-
-	/**
-	 * Swap the elements indexed by `x` and `y` in the array `ary`.
-	 *
-	 * @param {Array} ary
-	 *        The array.
-	 * @param {Number} x
-	 *        The index of the first item.
-	 * @param {Number} y
-	 *        The index of the second item.
-	 */
-	function swap(ary, x, y) {
-	  var temp = ary[x];
-	  ary[x] = ary[y];
-	  ary[y] = temp;
-	}
-
-	/**
-	 * Returns a random integer within the range `low .. high` inclusive.
-	 *
-	 * @param {Number} low
-	 *        The lower bound on the range.
-	 * @param {Number} high
-	 *        The upper bound on the range.
-	 */
-	function randomIntInRange(low, high) {
-	  return Math.round(low + (Math.random() * (high - low)));
-	}
-
-	/**
-	 * The Quick Sort algorithm.
-	 *
-	 * @param {Array} ary
-	 *        An array to sort.
-	 * @param {function} comparator
-	 *        Function to use to compare two items.
-	 * @param {Number} p
-	 *        Start index of the array
-	 * @param {Number} r
-	 *        End index of the array
-	 */
-	function doQuickSort(ary, comparator, p, r) {
-	  // If our lower bound is less than our upper bound, we (1) partition the
-	  // array into two pieces and (2) recurse on each half. If it is not, this is
-	  // the empty array and our base case.
-
-	  if (p < r) {
-	    // (1) Partitioning.
-	    //
-	    // The partitioning chooses a pivot between `p` and `r` and moves all
-	    // elements that are less than or equal to the pivot to the before it, and
-	    // all the elements that are greater than it after it. The effect is that
-	    // once partition is done, the pivot is in the exact place it will be when
-	    // the array is put in sorted order, and it will not need to be moved
-	    // again. This runs in O(n) time.
-
-	    // Always choose a random pivot so that an input array which is reverse
-	    // sorted does not cause O(n^2) running time.
-	    var pivotIndex = randomIntInRange(p, r);
-	    var i = p - 1;
-
-	    swap(ary, pivotIndex, r);
-	    var pivot = ary[r];
-
-	    // Immediately after `j` is incremented in this loop, the following hold
-	    // true:
-	    //
-	    //   * Every element in `ary[p .. i]` is less than or equal to the pivot.
-	    //
-	    //   * Every element in `ary[i+1 .. j-1]` is greater than the pivot.
-	    for (var j = p; j < r; j++) {
-	      if (comparator(ary[j], pivot) <= 0) {
-	        i += 1;
-	        swap(ary, i, j);
-	      }
-	    }
-
-	    swap(ary, i + 1, j);
-	    var q = i + 1;
-
-	    // (2) Recurse on each half.
-
-	    doQuickSort(ary, comparator, p, q - 1);
-	    doQuickSort(ary, comparator, q + 1, r);
-	  }
-	}
-
-	/**
-	 * Sort the given array in-place with the given comparator function.
-	 *
-	 * @param {Array} ary
-	 *        An array to sort.
-	 * @param {function} comparator
-	 *        Function to use to compare two items.
-	 */
-	var quickSort_1 = function (ary, comparator) {
-	  doQuickSort(ary, comparator, 0, ary.length - 1);
-	};
-
-	var quickSort = {
-		quickSort: quickSort_1
-	};
-
-	/* -*- Mode: js; js-indent-level: 2; -*- */
-	/*
-	 * Copyright 2011 Mozilla Foundation and contributors
-	 * Licensed under the New BSD license. See LICENSE or:
-	 * http://opensource.org/licenses/BSD-3-Clause
-	 */
-
-
-
-	var ArraySet$2 = arraySet.ArraySet;
-
-	var quickSort$1 = quickSort.quickSort;
-
-	function SourceMapConsumer(aSourceMap) {
-	  var sourceMap = aSourceMap;
-	  if (typeof aSourceMap === 'string') {
-	    sourceMap = JSON.parse(aSourceMap.replace(/^\)\]\}'/, ''));
-	  }
-
-	  return sourceMap.sections != null
-	    ? new IndexedSourceMapConsumer(sourceMap)
-	    : new BasicSourceMapConsumer(sourceMap);
-	}
-
-	SourceMapConsumer.fromSourceMap = function(aSourceMap) {
-	  return BasicSourceMapConsumer.fromSourceMap(aSourceMap);
-	};
-
-	/**
-	 * The version of the source mapping spec that we are consuming.
-	 */
-	SourceMapConsumer.prototype._version = 3;
-
-	// `__generatedMappings` and `__originalMappings` are arrays that hold the
-	// parsed mapping coordinates from the source map's "mappings" attribute. They
-	// are lazily instantiated, accessed via the `_generatedMappings` and
-	// `_originalMappings` getters respectively, and we only parse the mappings
-	// and create these arrays once queried for a source location. We jump through
-	// these hoops because there can be many thousands of mappings, and parsing
-	// them is expensive, so we only want to do it if we must.
-	//
-	// Each object in the arrays is of the form:
-	//
-	//     {
-	//       generatedLine: The line number in the generated code,
-	//       generatedColumn: The column number in the generated code,
-	//       source: The path to the original source file that generated this
-	//               chunk of code,
-	//       originalLine: The line number in the original source that
-	//                     corresponds to this chunk of generated code,
-	//       originalColumn: The column number in the original source that
-	//                       corresponds to this chunk of generated code,
-	//       name: The name of the original symbol which generated this chunk of
-	//             code.
-	//     }
-	//
-	// All properties except for `generatedLine` and `generatedColumn` can be
-	// `null`.
-	//
-	// `_generatedMappings` is ordered by the generated positions.
-	//
-	// `_originalMappings` is ordered by the original positions.
-
-	SourceMapConsumer.prototype.__generatedMappings = null;
-	Object.defineProperty(SourceMapConsumer.prototype, '_generatedMappings', {
-	  get: function () {
-	    if (!this.__generatedMappings) {
-	      this._parseMappings(this._mappings, this.sourceRoot);
-	    }
-
-	    return this.__generatedMappings;
-	  }
-	});
-
-	SourceMapConsumer.prototype.__originalMappings = null;
-	Object.defineProperty(SourceMapConsumer.prototype, '_originalMappings', {
-	  get: function () {
-	    if (!this.__originalMappings) {
-	      this._parseMappings(this._mappings, this.sourceRoot);
-	    }
-
-	    return this.__originalMappings;
-	  }
-	});
-
-	SourceMapConsumer.prototype._charIsMappingSeparator =
-	  function SourceMapConsumer_charIsMappingSeparator(aStr, index) {
-	    var c = aStr.charAt(index);
-	    return c === ";" || c === ",";
-	  };
-
-	/**
-	 * Parse the mappings in a string in to a data structure which we can easily
-	 * query (the ordered arrays in the `this.__generatedMappings` and
-	 * `this.__originalMappings` properties).
-	 */
-	SourceMapConsumer.prototype._parseMappings =
-	  function SourceMapConsumer_parseMappings(aStr, aSourceRoot) {
-	    throw new Error("Subclasses must implement _parseMappings");
-	  };
-
-	SourceMapConsumer.GENERATED_ORDER = 1;
-	SourceMapConsumer.ORIGINAL_ORDER = 2;
-
-	SourceMapConsumer.GREATEST_LOWER_BOUND = 1;
-	SourceMapConsumer.LEAST_UPPER_BOUND = 2;
-
-	/**
-	 * Iterate over each mapping between an original source/line/column and a
-	 * generated line/column in this source map.
-	 *
-	 * @param Function aCallback
-	 *        The function that is called with each mapping.
-	 * @param Object aContext
-	 *        Optional. If specified, this object will be the value of `this` every
-	 *        time that `aCallback` is called.
-	 * @param aOrder
-	 *        Either `SourceMapConsumer.GENERATED_ORDER` or
-	 *        `SourceMapConsumer.ORIGINAL_ORDER`. Specifies whether you want to
-	 *        iterate over the mappings sorted by the generated file's line/column
-	 *        order or the original's source/line/column order, respectively. Defaults to
-	 *        `SourceMapConsumer.GENERATED_ORDER`.
-	 */
-	SourceMapConsumer.prototype.eachMapping =
-	  function SourceMapConsumer_eachMapping(aCallback, aContext, aOrder) {
-	    var context = aContext || null;
-	    var order = aOrder || SourceMapConsumer.GENERATED_ORDER;
-
-	    var mappings;
-	    switch (order) {
-	    case SourceMapConsumer.GENERATED_ORDER:
-	      mappings = this._generatedMappings;
-	      break;
-	    case SourceMapConsumer.ORIGINAL_ORDER:
-	      mappings = this._originalMappings;
-	      break;
-	    default:
-	      throw new Error("Unknown order of iteration.");
-	    }
-
-	    var sourceRoot = this.sourceRoot;
-	    mappings.map(function (mapping) {
-	      var source = mapping.source === null ? null : this._sources.at(mapping.source);
-	      if (source != null && sourceRoot != null) {
-	        source = util.join(sourceRoot, source);
-	      }
-	      return {
-	        source: source,
-	        generatedLine: mapping.generatedLine,
-	        generatedColumn: mapping.generatedColumn,
-	        originalLine: mapping.originalLine,
-	        originalColumn: mapping.originalColumn,
-	        name: mapping.name === null ? null : this._names.at(mapping.name)
-	      };
-	    }, this).forEach(aCallback, context);
-	  };
-
-	/**
-	 * Returns all generated line and column information for the original source,
-	 * line, and column provided. If no column is provided, returns all mappings
-	 * corresponding to a either the line we are searching for or the next
-	 * closest line that has any mappings. Otherwise, returns all mappings
-	 * corresponding to the given line and either the column we are searching for
-	 * or the next closest column that has any offsets.
-	 *
-	 * The only argument is an object with the following properties:
-	 *
-	 *   - source: The filename of the original source.
-	 *   - line: The line number in the original source.
-	 *   - column: Optional. the column number in the original source.
-	 *
-	 * and an array of objects is returned, each with the following properties:
-	 *
-	 *   - line: The line number in the generated source, or null.
-	 *   - column: The column number in the generated source, or null.
-	 */
-	SourceMapConsumer.prototype.allGeneratedPositionsFor =
-	  function SourceMapConsumer_allGeneratedPositionsFor(aArgs) {
-	    var line = util.getArg(aArgs, 'line');
-
-	    // When there is no exact match, BasicSourceMapConsumer.prototype._findMapping
-	    // returns the index of the closest mapping less than the needle. By
-	    // setting needle.originalColumn to 0, we thus find the last mapping for
-	    // the given line, provided such a mapping exists.
-	    var needle = {
-	      source: util.getArg(aArgs, 'source'),
-	      originalLine: line,
-	      originalColumn: util.getArg(aArgs, 'column', 0)
-	    };
-
-	    if (this.sourceRoot != null) {
-	      needle.source = util.relative(this.sourceRoot, needle.source);
-	    }
-	    if (!this._sources.has(needle.source)) {
-	      return [];
-	    }
-	    needle.source = this._sources.indexOf(needle.source);
-
-	    var mappings = [];
-
-	    var index = this._findMapping(needle,
-	                                  this._originalMappings,
-	                                  "originalLine",
-	                                  "originalColumn",
-	                                  util.compareByOriginalPositions,
-	                                  binarySearch.LEAST_UPPER_BOUND);
-	    if (index >= 0) {
-	      var mapping = this._originalMappings[index];
-
-	      if (aArgs.column === undefined) {
-	        var originalLine = mapping.originalLine;
-
-	        // Iterate until either we run out of mappings, or we run into
-	        // a mapping for a different line than the one we found. Since
-	        // mappings are sorted, this is guaranteed to find all mappings for
-	        // the line we found.
-	        while (mapping && mapping.originalLine === originalLine) {
-	          mappings.push({
-	            line: util.getArg(mapping, 'generatedLine', null),
-	            column: util.getArg(mapping, 'generatedColumn', null),
-	            lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
-	          });
-
-	          mapping = this._originalMappings[++index];
-	        }
-	      } else {
-	        var originalColumn = mapping.originalColumn;
-
-	        // Iterate until either we run out of mappings, or we run into
-	        // a mapping for a different line than the one we were searching for.
-	        // Since mappings are sorted, this is guaranteed to find all mappings for
-	        // the line we are searching for.
-	        while (mapping &&
-	               mapping.originalLine === line &&
-	               mapping.originalColumn == originalColumn) {
-	          mappings.push({
-	            line: util.getArg(mapping, 'generatedLine', null),
-	            column: util.getArg(mapping, 'generatedColumn', null),
-	            lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
-	          });
-
-	          mapping = this._originalMappings[++index];
-	        }
-	      }
-	    }
-
-	    return mappings;
-	  };
-
-	var SourceMapConsumer_1 = SourceMapConsumer;
-
-	/**
-	 * A BasicSourceMapConsumer instance represents a parsed source map which we can
-	 * query for information about the original file positions by giving it a file
-	 * position in the generated source.
-	 *
-	 * The only parameter is the raw source map (either as a JSON string, or
-	 * already parsed to an object). According to the spec, source maps have the
-	 * following attributes:
-	 *
-	 *   - version: Which version of the source map spec this map is following.
-	 *   - sources: An array of URLs to the original source files.
-	 *   - names: An array of identifiers which can be referrenced by individual mappings.
-	 *   - sourceRoot: Optional. The URL root from which all sources are relative.
-	 *   - sourcesContent: Optional. An array of contents of the original source files.
-	 *   - mappings: A string of base64 VLQs which contain the actual mappings.
-	 *   - file: Optional. The generated file this source map is associated with.
-	 *
-	 * Here is an example source map, taken from the source map spec[0]:
-	 *
-	 *     {
-	 *       version : 3,
-	 *       file: "out.js",
-	 *       sourceRoot : "",
-	 *       sources: ["foo.js", "bar.js"],
-	 *       names: ["src", "maps", "are", "fun"],
-	 *       mappings: "AA,AB;;ABCDE;"
-	 *     }
-	 *
-	 * [0]: https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?pli=1#
-	 */
-	function BasicSourceMapConsumer(aSourceMap) {
-	  var sourceMap = aSourceMap;
-	  if (typeof aSourceMap === 'string') {
-	    sourceMap = JSON.parse(aSourceMap.replace(/^\)\]\}'/, ''));
-	  }
-
-	  var version = util.getArg(sourceMap, 'version');
-	  var sources = util.getArg(sourceMap, 'sources');
-	  // Sass 3.3 leaves out the 'names' array, so we deviate from the spec (which
-	  // requires the array) to play nice here.
-	  var names = util.getArg(sourceMap, 'names', []);
-	  var sourceRoot = util.getArg(sourceMap, 'sourceRoot', null);
-	  var sourcesContent = util.getArg(sourceMap, 'sourcesContent', null);
-	  var mappings = util.getArg(sourceMap, 'mappings');
-	  var file = util.getArg(sourceMap, 'file', null);
-
-	  // Once again, Sass deviates from the spec and supplies the version as a
-	  // string rather than a number, so we use loose equality checking here.
-	  if (version != this._version) {
-	    throw new Error('Unsupported version: ' + version);
-	  }
-
-	  sources = sources
-	    .map(String)
-	    // Some source maps produce relative source paths like "./foo.js" instead of
-	    // "foo.js".  Normalize these first so that future comparisons will succeed.
-	    // See bugzil.la/1090768.
-	    .map(util.normalize)
-	    // Always ensure that absolute sources are internally stored relative to
-	    // the source root, if the source root is absolute. Not doing this would
-	    // be particularly problematic when the source root is a prefix of the
-	    // source (valid, but why??). See github issue #199 and bugzil.la/1188982.
-	    .map(function (source) {
-	      return sourceRoot && util.isAbsolute(sourceRoot) && util.isAbsolute(source)
-	        ? util.relative(sourceRoot, source)
-	        : source;
-	    });
-
-	  // Pass `true` below to allow duplicate names and sources. While source maps
-	  // are intended to be compressed and deduplicated, the TypeScript compiler
-	  // sometimes generates source maps with duplicates in them. See Github issue
-	  // #72 and bugzil.la/889492.
-	  this._names = ArraySet$2.fromArray(names.map(String), true);
-	  this._sources = ArraySet$2.fromArray(sources, true);
-
-	  this.sourceRoot = sourceRoot;
-	  this.sourcesContent = sourcesContent;
-	  this._mappings = mappings;
-	  this.file = file;
-	}
-
-	BasicSourceMapConsumer.prototype = Object.create(SourceMapConsumer.prototype);
-	BasicSourceMapConsumer.prototype.consumer = SourceMapConsumer;
-
-	/**
-	 * Create a BasicSourceMapConsumer from a SourceMapGenerator.
-	 *
-	 * @param SourceMapGenerator aSourceMap
-	 *        The source map that will be consumed.
-	 * @returns BasicSourceMapConsumer
-	 */
-	BasicSourceMapConsumer.fromSourceMap =
-	  function SourceMapConsumer_fromSourceMap(aSourceMap) {
-	    var smc = Object.create(BasicSourceMapConsumer.prototype);
-
-	    var names = smc._names = ArraySet$2.fromArray(aSourceMap._names.toArray(), true);
-	    var sources = smc._sources = ArraySet$2.fromArray(aSourceMap._sources.toArray(), true);
-	    smc.sourceRoot = aSourceMap._sourceRoot;
-	    smc.sourcesContent = aSourceMap._generateSourcesContent(smc._sources.toArray(),
-	                                                            smc.sourceRoot);
-	    smc.file = aSourceMap._file;
-
-	    // Because we are modifying the entries (by converting string sources and
-	    // names to indices into the sources and names ArraySets), we have to make
-	    // a copy of the entry or else bad things happen. Shared mutable state
-	    // strikes again! See github issue #191.
-
-	    var generatedMappings = aSourceMap._mappings.toArray().slice();
-	    var destGeneratedMappings = smc.__generatedMappings = [];
-	    var destOriginalMappings = smc.__originalMappings = [];
-
-	    for (var i = 0, length = generatedMappings.length; i < length; i++) {
-	      var srcMapping = generatedMappings[i];
-	      var destMapping = new Mapping;
-	      destMapping.generatedLine = srcMapping.generatedLine;
-	      destMapping.generatedColumn = srcMapping.generatedColumn;
-
-	      if (srcMapping.source) {
-	        destMapping.source = sources.indexOf(srcMapping.source);
-	        destMapping.originalLine = srcMapping.originalLine;
-	        destMapping.originalColumn = srcMapping.originalColumn;
-
-	        if (srcMapping.name) {
-	          destMapping.name = names.indexOf(srcMapping.name);
-	        }
-
-	        destOriginalMappings.push(destMapping);
-	      }
-
-	      destGeneratedMappings.push(destMapping);
-	    }
-
-	    quickSort$1(smc.__originalMappings, util.compareByOriginalPositions);
-
-	    return smc;
-	  };
-
-	/**
-	 * The version of the source mapping spec that we are consuming.
-	 */
-	BasicSourceMapConsumer.prototype._version = 3;
-
-	/**
-	 * The list of original sources.
-	 */
-	Object.defineProperty(BasicSourceMapConsumer.prototype, 'sources', {
-	  get: function () {
-	    return this._sources.toArray().map(function (s) {
-	      return this.sourceRoot != null ? util.join(this.sourceRoot, s) : s;
-	    }, this);
-	  }
-	});
-
-	/**
-	 * Provide the JIT with a nice shape / hidden class.
-	 */
-	function Mapping() {
-	  this.generatedLine = 0;
-	  this.generatedColumn = 0;
-	  this.source = null;
-	  this.originalLine = null;
-	  this.originalColumn = null;
-	  this.name = null;
-	}
-
-	/**
-	 * Parse the mappings in a string in to a data structure which we can easily
-	 * query (the ordered arrays in the `this.__generatedMappings` and
-	 * `this.__originalMappings` properties).
-	 */
-	BasicSourceMapConsumer.prototype._parseMappings =
-	  function SourceMapConsumer_parseMappings(aStr, aSourceRoot) {
-	    var generatedLine = 1;
-	    var previousGeneratedColumn = 0;
-	    var previousOriginalLine = 0;
-	    var previousOriginalColumn = 0;
-	    var previousSource = 0;
-	    var previousName = 0;
-	    var length = aStr.length;
-	    var index = 0;
-	    var cachedSegments = {};
-	    var temp = {};
-	    var originalMappings = [];
-	    var generatedMappings = [];
-	    var mapping, str, segment, end, value;
-
-	    while (index < length) {
-	      if (aStr.charAt(index) === ';') {
-	        generatedLine++;
-	        index++;
-	        previousGeneratedColumn = 0;
-	      }
-	      else if (aStr.charAt(index) === ',') {
-	        index++;
-	      }
-	      else {
-	        mapping = new Mapping();
-	        mapping.generatedLine = generatedLine;
-
-	        // Because each offset is encoded relative to the previous one,
-	        // many segments often have the same encoding. We can exploit this
-	        // fact by caching the parsed variable length fields of each segment,
-	        // allowing us to avoid a second parse if we encounter the same
-	        // segment again.
-	        for (end = index; end < length; end++) {
-	          if (this._charIsMappingSeparator(aStr, end)) {
-	            break;
-	          }
-	        }
-	        str = aStr.slice(index, end);
-
-	        segment = cachedSegments[str];
-	        if (segment) {
-	          index += str.length;
-	        } else {
-	          segment = [];
-	          while (index < end) {
-	            base64Vlq.decode(aStr, index, temp);
-	            value = temp.value;
-	            index = temp.rest;
-	            segment.push(value);
-	          }
-
-	          if (segment.length === 2) {
-	            throw new Error('Found a source, but no line and column');
-	          }
-
-	          if (segment.length === 3) {
-	            throw new Error('Found a source and line, but no column');
-	          }
-
-	          cachedSegments[str] = segment;
-	        }
-
-	        // Generated column.
-	        mapping.generatedColumn = previousGeneratedColumn + segment[0];
-	        previousGeneratedColumn = mapping.generatedColumn;
-
-	        if (segment.length > 1) {
-	          // Original source.
-	          mapping.source = previousSource + segment[1];
-	          previousSource += segment[1];
-
-	          // Original line.
-	          mapping.originalLine = previousOriginalLine + segment[2];
-	          previousOriginalLine = mapping.originalLine;
-	          // Lines are stored 0-based
-	          mapping.originalLine += 1;
-
-	          // Original column.
-	          mapping.originalColumn = previousOriginalColumn + segment[3];
-	          previousOriginalColumn = mapping.originalColumn;
-
-	          if (segment.length > 4) {
-	            // Original name.
-	            mapping.name = previousName + segment[4];
-	            previousName += segment[4];
-	          }
-	        }
-
-	        generatedMappings.push(mapping);
-	        if (typeof mapping.originalLine === 'number') {
-	          originalMappings.push(mapping);
-	        }
-	      }
-	    }
-
-	    quickSort$1(generatedMappings, util.compareByGeneratedPositionsDeflated);
-	    this.__generatedMappings = generatedMappings;
-
-	    quickSort$1(originalMappings, util.compareByOriginalPositions);
-	    this.__originalMappings = originalMappings;
-	  };
-
-	/**
-	 * Find the mapping that best matches the hypothetical "needle" mapping that
-	 * we are searching for in the given "haystack" of mappings.
-	 */
-	BasicSourceMapConsumer.prototype._findMapping =
-	  function SourceMapConsumer_findMapping(aNeedle, aMappings, aLineName,
-	                                         aColumnName, aComparator, aBias) {
-	    // To return the position we are searching for, we must first find the
-	    // mapping for the given position and then return the opposite position it
-	    // points to. Because the mappings are sorted, we can use binary search to
-	    // find the best mapping.
-
-	    if (aNeedle[aLineName] <= 0) {
-	      throw new TypeError('Line must be greater than or equal to 1, got '
-	                          + aNeedle[aLineName]);
-	    }
-	    if (aNeedle[aColumnName] < 0) {
-	      throw new TypeError('Column must be greater than or equal to 0, got '
-	                          + aNeedle[aColumnName]);
-	    }
-
-	    return binarySearch.search(aNeedle, aMappings, aComparator, aBias);
-	  };
-
-	/**
-	 * Compute the last column for each generated mapping. The last column is
-	 * inclusive.
-	 */
-	BasicSourceMapConsumer.prototype.computeColumnSpans =
-	  function SourceMapConsumer_computeColumnSpans() {
-	    for (var index = 0; index < this._generatedMappings.length; ++index) {
-	      var mapping = this._generatedMappings[index];
-
-	      // Mappings do not contain a field for the last generated columnt. We
-	      // can come up with an optimistic estimate, however, by assuming that
-	      // mappings are contiguous (i.e. given two consecutive mappings, the
-	      // first mapping ends where the second one starts).
-	      if (index + 1 < this._generatedMappings.length) {
-	        var nextMapping = this._generatedMappings[index + 1];
-
-	        if (mapping.generatedLine === nextMapping.generatedLine) {
-	          mapping.lastGeneratedColumn = nextMapping.generatedColumn - 1;
-	          continue;
-	        }
-	      }
-
-	      // The last mapping for each line spans the entire line.
-	      mapping.lastGeneratedColumn = Infinity;
-	    }
-	  };
-
-	/**
-	 * Returns the original source, line, and column information for the generated
-	 * source's line and column positions provided. The only argument is an object
-	 * with the following properties:
-	 *
-	 *   - line: The line number in the generated source.
-	 *   - column: The column number in the generated source.
-	 *   - bias: Either 'SourceMapConsumer.GREATEST_LOWER_BOUND' or
-	 *     'SourceMapConsumer.LEAST_UPPER_BOUND'. Specifies whether to return the
-	 *     closest element that is smaller than or greater than the one we are
-	 *     searching for, respectively, if the exact element cannot be found.
-	 *     Defaults to 'SourceMapConsumer.GREATEST_LOWER_BOUND'.
-	 *
-	 * and an object is returned with the following properties:
-	 *
-	 *   - source: The original source file, or null.
-	 *   - line: The line number in the original source, or null.
-	 *   - column: The column number in the original source, or null.
-	 *   - name: The original identifier, or null.
-	 */
-	BasicSourceMapConsumer.prototype.originalPositionFor =
-	  function SourceMapConsumer_originalPositionFor(aArgs) {
-	    var needle = {
-	      generatedLine: util.getArg(aArgs, 'line'),
-	      generatedColumn: util.getArg(aArgs, 'column')
-	    };
-
-	    var index = this._findMapping(
-	      needle,
-	      this._generatedMappings,
-	      "generatedLine",
-	      "generatedColumn",
-	      util.compareByGeneratedPositionsDeflated,
-	      util.getArg(aArgs, 'bias', SourceMapConsumer.GREATEST_LOWER_BOUND)
-	    );
-
-	    if (index >= 0) {
-	      var mapping = this._generatedMappings[index];
-
-	      if (mapping.generatedLine === needle.generatedLine) {
-	        var source = util.getArg(mapping, 'source', null);
-	        if (source !== null) {
-	          source = this._sources.at(source);
-	          if (this.sourceRoot != null) {
-	            source = util.join(this.sourceRoot, source);
-	          }
-	        }
-	        var name = util.getArg(mapping, 'name', null);
-	        if (name !== null) {
-	          name = this._names.at(name);
-	        }
-	        return {
-	          source: source,
-	          line: util.getArg(mapping, 'originalLine', null),
-	          column: util.getArg(mapping, 'originalColumn', null),
-	          name: name
-	        };
-	      }
-	    }
-
-	    return {
-	      source: null,
-	      line: null,
-	      column: null,
-	      name: null
-	    };
-	  };
-
-	/**
-	 * Return true if we have the source content for every source in the source
-	 * map, false otherwise.
-	 */
-	BasicSourceMapConsumer.prototype.hasContentsOfAllSources =
-	  function BasicSourceMapConsumer_hasContentsOfAllSources() {
-	    if (!this.sourcesContent) {
-	      return false;
-	    }
-	    return this.sourcesContent.length >= this._sources.size() &&
-	      !this.sourcesContent.some(function (sc) { return sc == null; });
-	  };
-
-	/**
-	 * Returns the original source content. The only argument is the url of the
-	 * original source file. Returns null if no original source content is
-	 * available.
-	 */
-	BasicSourceMapConsumer.prototype.sourceContentFor =
-	  function SourceMapConsumer_sourceContentFor(aSource, nullOnMissing) {
-	    if (!this.sourcesContent) {
-	      return null;
-	    }
-
-	    if (this.sourceRoot != null) {
-	      aSource = util.relative(this.sourceRoot, aSource);
-	    }
-
-	    if (this._sources.has(aSource)) {
-	      return this.sourcesContent[this._sources.indexOf(aSource)];
-	    }
-
-	    var url;
-	    if (this.sourceRoot != null
-	        && (url = util.urlParse(this.sourceRoot))) {
-	      // XXX: file:// URIs and absolute paths lead to unexpected behavior for
-	      // many users. We can help them out when they expect file:// URIs to
-	      // behave like it would if they were running a local HTTP server. See
-	      // https://bugzilla.mozilla.org/show_bug.cgi?id=885597.
-	      var fileUriAbsPath = aSource.replace(/^file:\/\//, "");
-	      if (url.scheme == "file"
-	          && this._sources.has(fileUriAbsPath)) {
-	        return this.sourcesContent[this._sources.indexOf(fileUriAbsPath)]
-	      }
-
-	      if ((!url.path || url.path == "/")
-	          && this._sources.has("/" + aSource)) {
-	        return this.sourcesContent[this._sources.indexOf("/" + aSource)];
-	      }
-	    }
-
-	    // This function is used recursively from
-	    // IndexedSourceMapConsumer.prototype.sourceContentFor. In that case, we
-	    // don't want to throw if we can't find the source - we just want to
-	    // return null, so we provide a flag to exit gracefully.
-	    if (nullOnMissing) {
-	      return null;
-	    }
-	    else {
-	      throw new Error('"' + aSource + '" is not in the SourceMap.');
-	    }
-	  };
-
-	/**
-	 * Returns the generated line and column information for the original source,
-	 * line, and column positions provided. The only argument is an object with
-	 * the following properties:
-	 *
-	 *   - source: The filename of the original source.
-	 *   - line: The line number in the original source.
-	 *   - column: The column number in the original source.
-	 *   - bias: Either 'SourceMapConsumer.GREATEST_LOWER_BOUND' or
-	 *     'SourceMapConsumer.LEAST_UPPER_BOUND'. Specifies whether to return the
-	 *     closest element that is smaller than or greater than the one we are
-	 *     searching for, respectively, if the exact element cannot be found.
-	 *     Defaults to 'SourceMapConsumer.GREATEST_LOWER_BOUND'.
-	 *
-	 * and an object is returned with the following properties:
-	 *
-	 *   - line: The line number in the generated source, or null.
-	 *   - column: The column number in the generated source, or null.
-	 */
-	BasicSourceMapConsumer.prototype.generatedPositionFor =
-	  function SourceMapConsumer_generatedPositionFor(aArgs) {
-	    var source = util.getArg(aArgs, 'source');
-	    if (this.sourceRoot != null) {
-	      source = util.relative(this.sourceRoot, source);
-	    }
-	    if (!this._sources.has(source)) {
-	      return {
-	        line: null,
-	        column: null,
-	        lastColumn: null
-	      };
-	    }
-	    source = this._sources.indexOf(source);
-
-	    var needle = {
-	      source: source,
-	      originalLine: util.getArg(aArgs, 'line'),
-	      originalColumn: util.getArg(aArgs, 'column')
-	    };
-
-	    var index = this._findMapping(
-	      needle,
-	      this._originalMappings,
-	      "originalLine",
-	      "originalColumn",
-	      util.compareByOriginalPositions,
-	      util.getArg(aArgs, 'bias', SourceMapConsumer.GREATEST_LOWER_BOUND)
-	    );
-
-	    if (index >= 0) {
-	      var mapping = this._originalMappings[index];
-
-	      if (mapping.source === needle.source) {
-	        return {
-	          line: util.getArg(mapping, 'generatedLine', null),
-	          column: util.getArg(mapping, 'generatedColumn', null),
-	          lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
-	        };
-	      }
-	    }
-
-	    return {
-	      line: null,
-	      column: null,
-	      lastColumn: null
-	    };
-	  };
-
-	var BasicSourceMapConsumer_1 = BasicSourceMapConsumer;
-
-	/**
-	 * An IndexedSourceMapConsumer instance represents a parsed source map which
-	 * we can query for information. It differs from BasicSourceMapConsumer in
-	 * that it takes "indexed" source maps (i.e. ones with a "sections" field) as
-	 * input.
-	 *
-	 * The only parameter is a raw source map (either as a JSON string, or already
-	 * parsed to an object). According to the spec for indexed source maps, they
-	 * have the following attributes:
-	 *
-	 *   - version: Which version of the source map spec this map is following.
-	 *   - file: Optional. The generated file this source map is associated with.
-	 *   - sections: A list of section definitions.
-	 *
-	 * Each value under the "sections" field has two fields:
-	 *   - offset: The offset into the original specified at which this section
-	 *       begins to apply, defined as an object with a "line" and "column"
-	 *       field.
-	 *   - map: A source map definition. This source map could also be indexed,
-	 *       but doesn't have to be.
-	 *
-	 * Instead of the "map" field, it's also possible to have a "url" field
-	 * specifying a URL to retrieve a source map from, but that's currently
-	 * unsupported.
-	 *
-	 * Here's an example source map, taken from the source map spec[0], but
-	 * modified to omit a section which uses the "url" field.
-	 *
-	 *  {
-	 *    version : 3,
-	 *    file: "app.js",
-	 *    sections: [{
-	 *      offset: {line:100, column:10},
-	 *      map: {
-	 *        version : 3,
-	 *        file: "section.js",
-	 *        sources: ["foo.js", "bar.js"],
-	 *        names: ["src", "maps", "are", "fun"],
-	 *        mappings: "AAAA,E;;ABCDE;"
-	 *      }
-	 *    }],
-	 *  }
-	 *
-	 * [0]: https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit#heading=h.535es3xeprgt
-	 */
-	function IndexedSourceMapConsumer(aSourceMap) {
-	  var sourceMap = aSourceMap;
-	  if (typeof aSourceMap === 'string') {
-	    sourceMap = JSON.parse(aSourceMap.replace(/^\)\]\}'/, ''));
-	  }
-
-	  var version = util.getArg(sourceMap, 'version');
-	  var sections = util.getArg(sourceMap, 'sections');
-
-	  if (version != this._version) {
-	    throw new Error('Unsupported version: ' + version);
-	  }
-
-	  this._sources = new ArraySet$2();
-	  this._names = new ArraySet$2();
-
-	  var lastOffset = {
-	    line: -1,
-	    column: 0
-	  };
-	  this._sections = sections.map(function (s) {
-	    if (s.url) {
-	      // The url field will require support for asynchronicity.
-	      // See https://github.com/mozilla/source-map/issues/16
-	      throw new Error('Support for url field in sections not implemented.');
-	    }
-	    var offset = util.getArg(s, 'offset');
-	    var offsetLine = util.getArg(offset, 'line');
-	    var offsetColumn = util.getArg(offset, 'column');
-
-	    if (offsetLine < lastOffset.line ||
-	        (offsetLine === lastOffset.line && offsetColumn < lastOffset.column)) {
-	      throw new Error('Section offsets must be ordered and non-overlapping.');
-	    }
-	    lastOffset = offset;
-
-	    return {
-	      generatedOffset: {
-	        // The offset fields are 0-based, but we use 1-based indices when
-	        // encoding/decoding from VLQ.
-	        generatedLine: offsetLine + 1,
-	        generatedColumn: offsetColumn + 1
-	      },
-	      consumer: new SourceMapConsumer(util.getArg(s, 'map'))
-	    }
-	  });
-	}
-
-	IndexedSourceMapConsumer.prototype = Object.create(SourceMapConsumer.prototype);
-	IndexedSourceMapConsumer.prototype.constructor = SourceMapConsumer;
-
-	/**
-	 * The version of the source mapping spec that we are consuming.
-	 */
-	IndexedSourceMapConsumer.prototype._version = 3;
-
-	/**
-	 * The list of original sources.
-	 */
-	Object.defineProperty(IndexedSourceMapConsumer.prototype, 'sources', {
-	  get: function () {
-	    var sources = [];
-	    for (var i = 0; i < this._sections.length; i++) {
-	      for (var j = 0; j < this._sections[i].consumer.sources.length; j++) {
-	        sources.push(this._sections[i].consumer.sources[j]);
-	      }
-	    }
-	    return sources;
-	  }
-	});
-
-	/**
-	 * Returns the original source, line, and column information for the generated
-	 * source's line and column positions provided. The only argument is an object
-	 * with the following properties:
-	 *
-	 *   - line: The line number in the generated source.
-	 *   - column: The column number in the generated source.
-	 *
-	 * and an object is returned with the following properties:
-	 *
-	 *   - source: The original source file, or null.
-	 *   - line: The line number in the original source, or null.
-	 *   - column: The column number in the original source, or null.
-	 *   - name: The original identifier, or null.
-	 */
-	IndexedSourceMapConsumer.prototype.originalPositionFor =
-	  function IndexedSourceMapConsumer_originalPositionFor(aArgs) {
-	    var needle = {
-	      generatedLine: util.getArg(aArgs, 'line'),
-	      generatedColumn: util.getArg(aArgs, 'column')
-	    };
-
-	    // Find the section containing the generated position we're trying to map
-	    // to an original position.
-	    var sectionIndex = binarySearch.search(needle, this._sections,
-	      function(needle, section) {
-	        var cmp = needle.generatedLine - section.generatedOffset.generatedLine;
-	        if (cmp) {
-	          return cmp;
-	        }
-
-	        return (needle.generatedColumn -
-	                section.generatedOffset.generatedColumn);
-	      });
-	    var section = this._sections[sectionIndex];
-
-	    if (!section) {
-	      return {
-	        source: null,
-	        line: null,
-	        column: null,
-	        name: null
-	      };
-	    }
-
-	    return section.consumer.originalPositionFor({
-	      line: needle.generatedLine -
-	        (section.generatedOffset.generatedLine - 1),
-	      column: needle.generatedColumn -
-	        (section.generatedOffset.generatedLine === needle.generatedLine
-	         ? section.generatedOffset.generatedColumn - 1
-	         : 0),
-	      bias: aArgs.bias
-	    });
-	  };
-
-	/**
-	 * Return true if we have the source content for every source in the source
-	 * map, false otherwise.
-	 */
-	IndexedSourceMapConsumer.prototype.hasContentsOfAllSources =
-	  function IndexedSourceMapConsumer_hasContentsOfAllSources() {
-	    return this._sections.every(function (s) {
-	      return s.consumer.hasContentsOfAllSources();
-	    });
-	  };
-
-	/**
-	 * Returns the original source content. The only argument is the url of the
-	 * original source file. Returns null if no original source content is
-	 * available.
-	 */
-	IndexedSourceMapConsumer.prototype.sourceContentFor =
-	  function IndexedSourceMapConsumer_sourceContentFor(aSource, nullOnMissing) {
-	    for (var i = 0; i < this._sections.length; i++) {
-	      var section = this._sections[i];
-
-	      var content = section.consumer.sourceContentFor(aSource, true);
-	      if (content) {
-	        return content;
-	      }
-	    }
-	    if (nullOnMissing) {
-	      return null;
-	    }
-	    else {
-	      throw new Error('"' + aSource + '" is not in the SourceMap.');
-	    }
-	  };
-
-	/**
-	 * Returns the generated line and column information for the original source,
-	 * line, and column positions provided. The only argument is an object with
-	 * the following properties:
-	 *
-	 *   - source: The filename of the original source.
-	 *   - line: The line number in the original source.
-	 *   - column: The column number in the original source.
-	 *
-	 * and an object is returned with the following properties:
-	 *
-	 *   - line: The line number in the generated source, or null.
-	 *   - column: The column number in the generated source, or null.
-	 */
-	IndexedSourceMapConsumer.prototype.generatedPositionFor =
-	  function IndexedSourceMapConsumer_generatedPositionFor(aArgs) {
-	    for (var i = 0; i < this._sections.length; i++) {
-	      var section = this._sections[i];
-
-	      // Only consider this section if the requested source is in the list of
-	      // sources of the consumer.
-	      if (section.consumer.sources.indexOf(util.getArg(aArgs, 'source')) === -1) {
-	        continue;
-	      }
-	      var generatedPosition = section.consumer.generatedPositionFor(aArgs);
-	      if (generatedPosition) {
-	        var ret = {
-	          line: generatedPosition.line +
-	            (section.generatedOffset.generatedLine - 1),
-	          column: generatedPosition.column +
-	            (section.generatedOffset.generatedLine === generatedPosition.line
-	             ? section.generatedOffset.generatedColumn - 1
-	             : 0)
-	        };
-	        return ret;
-	      }
-	    }
-
-	    return {
-	      line: null,
-	      column: null
-	    };
-	  };
-
-	/**
-	 * Parse the mappings in a string in to a data structure which we can easily
-	 * query (the ordered arrays in the `this.__generatedMappings` and
-	 * `this.__originalMappings` properties).
-	 */
-	IndexedSourceMapConsumer.prototype._parseMappings =
-	  function IndexedSourceMapConsumer_parseMappings(aStr, aSourceRoot) {
-	    this.__generatedMappings = [];
-	    this.__originalMappings = [];
-	    for (var i = 0; i < this._sections.length; i++) {
-	      var section = this._sections[i];
-	      var sectionMappings = section.consumer._generatedMappings;
-	      for (var j = 0; j < sectionMappings.length; j++) {
-	        var mapping = sectionMappings[j];
-
-	        var source = section.consumer._sources.at(mapping.source);
-	        if (section.consumer.sourceRoot !== null) {
-	          source = util.join(section.consumer.sourceRoot, source);
-	        }
-	        this._sources.add(source);
-	        source = this._sources.indexOf(source);
-
-	        var name = section.consumer._names.at(mapping.name);
-	        this._names.add(name);
-	        name = this._names.indexOf(name);
-
-	        // The mappings coming from the consumer for the section have
-	        // generated positions relative to the start of the section, so we
-	        // need to offset them to be relative to the start of the concatenated
-	        // generated file.
-	        var adjustedMapping = {
-	          source: source,
-	          generatedLine: mapping.generatedLine +
-	            (section.generatedOffset.generatedLine - 1),
-	          generatedColumn: mapping.generatedColumn +
-	            (section.generatedOffset.generatedLine === mapping.generatedLine
-	            ? section.generatedOffset.generatedColumn - 1
-	            : 0),
-	          originalLine: mapping.originalLine,
-	          originalColumn: mapping.originalColumn,
-	          name: name
-	        };
-
-	        this.__generatedMappings.push(adjustedMapping);
-	        if (typeof adjustedMapping.originalLine === 'number') {
-	          this.__originalMappings.push(adjustedMapping);
-	        }
-	      }
-	    }
-
-	    quickSort$1(this.__generatedMappings, util.compareByGeneratedPositionsDeflated);
-	    quickSort$1(this.__originalMappings, util.compareByOriginalPositions);
-	  };
-
-	var IndexedSourceMapConsumer_1 = IndexedSourceMapConsumer;
-
-	var sourceMapConsumer = {
-		SourceMapConsumer: SourceMapConsumer_1,
-		BasicSourceMapConsumer: BasicSourceMapConsumer_1,
-		IndexedSourceMapConsumer: IndexedSourceMapConsumer_1
-	};
-
-	/* -*- Mode: js; js-indent-level: 2; -*- */
-	/*
-	 * Copyright 2011 Mozilla Foundation and contributors
-	 * Licensed under the New BSD license. See LICENSE or:
-	 * http://opensource.org/licenses/BSD-3-Clause
-	 */
-
 	var SourceMapGenerator$1 = sourceMapGenerator.SourceMapGenerator;
-
-
-	// Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
-	// operating systems these days (capturing the result).
-	var REGEX_NEWLINE = /(\r?\n)/;
-
-	// Newline character code for charCodeAt() comparisons
-	var NEWLINE_CODE = 10;
-
-	// Private symbol for identifying `SourceNode`s when multiple versions of
-	// the source-map library are loaded. This MUST NOT CHANGE across
-	// versions!
-	var isSourceNode = "$$$isSourceNode$$$";
-
-	/**
-	 * SourceNodes provide a way to abstract over interpolating/concatenating
-	 * snippets of generated JavaScript source code while maintaining the line and
-	 * column information associated with the original source code.
-	 *
-	 * @param aLine The original line number.
-	 * @param aColumn The original column number.
-	 * @param aSource The original source's filename.
-	 * @param aChunks Optional. An array of strings which are snippets of
-	 *        generated JS, or other SourceNodes.
-	 * @param aName The original identifier.
-	 */
-	function SourceNode(aLine, aColumn, aSource, aChunks, aName) {
-	  this.children = [];
-	  this.sourceContents = {};
-	  this.line = aLine == null ? null : aLine;
-	  this.column = aColumn == null ? null : aColumn;
-	  this.source = aSource == null ? null : aSource;
-	  this.name = aName == null ? null : aName;
-	  this[isSourceNode] = true;
-	  if (aChunks != null) this.add(aChunks);
-	}
-
-	/**
-	 * Creates a SourceNode from generated code and a SourceMapConsumer.
-	 *
-	 * @param aGeneratedCode The generated code
-	 * @param aSourceMapConsumer The SourceMap for the generated code
-	 * @param aRelativePath Optional. The path that relative sources in the
-	 *        SourceMapConsumer should be relative to.
-	 */
-	SourceNode.fromStringWithSourceMap =
-	  function SourceNode_fromStringWithSourceMap(aGeneratedCode, aSourceMapConsumer, aRelativePath) {
-	    // The SourceNode we want to fill with the generated code
-	    // and the SourceMap
-	    var node = new SourceNode();
-
-	    // All even indices of this array are one line of the generated code,
-	    // while all odd indices are the newlines between two adjacent lines
-	    // (since `REGEX_NEWLINE` captures its match).
-	    // Processed fragments are accessed by calling `shiftNextLine`.
-	    var remainingLines = aGeneratedCode.split(REGEX_NEWLINE);
-	    var remainingLinesIndex = 0;
-	    var shiftNextLine = function() {
-	      var lineContents = getNextLine();
-	      // The last line of a file might not have a newline.
-	      var newLine = getNextLine() || "";
-	      return lineContents + newLine;
-
-	      function getNextLine() {
-	        return remainingLinesIndex < remainingLines.length ?
-	            remainingLines[remainingLinesIndex++] : undefined;
-	      }
-	    };
-
-	    // We need to remember the position of "remainingLines"
-	    var lastGeneratedLine = 1, lastGeneratedColumn = 0;
-
-	    // The generate SourceNodes we need a code range.
-	    // To extract it current and last mapping is used.
-	    // Here we store the last mapping.
-	    var lastMapping = null;
-
-	    aSourceMapConsumer.eachMapping(function (mapping) {
-	      if (lastMapping !== null) {
-	        // We add the code from "lastMapping" to "mapping":
-	        // First check if there is a new line in between.
-	        if (lastGeneratedLine < mapping.generatedLine) {
-	          // Associate first line with "lastMapping"
-	          addMappingWithCode(lastMapping, shiftNextLine());
-	          lastGeneratedLine++;
-	          lastGeneratedColumn = 0;
-	          // The remaining code is added without mapping
-	        } else {
-	          // There is no new line in between.
-	          // Associate the code between "lastGeneratedColumn" and
-	          // "mapping.generatedColumn" with "lastMapping"
-	          var nextLine = remainingLines[remainingLinesIndex];
-	          var code = nextLine.substr(0, mapping.generatedColumn -
-	                                        lastGeneratedColumn);
-	          remainingLines[remainingLinesIndex] = nextLine.substr(mapping.generatedColumn -
-	                                              lastGeneratedColumn);
-	          lastGeneratedColumn = mapping.generatedColumn;
-	          addMappingWithCode(lastMapping, code);
-	          // No more remaining code, continue
-	          lastMapping = mapping;
-	          return;
-	        }
-	      }
-	      // We add the generated code until the first mapping
-	      // to the SourceNode without any mapping.
-	      // Each line is added as separate string.
-	      while (lastGeneratedLine < mapping.generatedLine) {
-	        node.add(shiftNextLine());
-	        lastGeneratedLine++;
-	      }
-	      if (lastGeneratedColumn < mapping.generatedColumn) {
-	        var nextLine = remainingLines[remainingLinesIndex];
-	        node.add(nextLine.substr(0, mapping.generatedColumn));
-	        remainingLines[remainingLinesIndex] = nextLine.substr(mapping.generatedColumn);
-	        lastGeneratedColumn = mapping.generatedColumn;
-	      }
-	      lastMapping = mapping;
-	    }, this);
-	    // We have processed all mappings.
-	    if (remainingLinesIndex < remainingLines.length) {
-	      if (lastMapping) {
-	        // Associate the remaining code in the current line with "lastMapping"
-	        addMappingWithCode(lastMapping, shiftNextLine());
-	      }
-	      // and add the remaining lines without any mapping
-	      node.add(remainingLines.splice(remainingLinesIndex).join(""));
-	    }
-
-	    // Copy sourcesContent into SourceNode
-	    aSourceMapConsumer.sources.forEach(function (sourceFile) {
-	      var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-	      if (content != null) {
-	        if (aRelativePath != null) {
-	          sourceFile = util.join(aRelativePath, sourceFile);
-	        }
-	        node.setSourceContent(sourceFile, content);
-	      }
-	    });
-
-	    return node;
-
-	    function addMappingWithCode(mapping, code) {
-	      if (mapping === null || mapping.source === undefined) {
-	        node.add(code);
-	      } else {
-	        var source = aRelativePath
-	          ? util.join(aRelativePath, mapping.source)
-	          : mapping.source;
-	        node.add(new SourceNode(mapping.originalLine,
-	                                mapping.originalColumn,
-	                                source,
-	                                code,
-	                                mapping.name));
-	      }
-	    }
-	  };
-
-	/**
-	 * Add a chunk of generated JS to this source node.
-	 *
-	 * @param aChunk A string snippet of generated JS code, another instance of
-	 *        SourceNode, or an array where each member is one of those things.
-	 */
-	SourceNode.prototype.add = function SourceNode_add(aChunk) {
-	  if (Array.isArray(aChunk)) {
-	    aChunk.forEach(function (chunk) {
-	      this.add(chunk);
-	    }, this);
-	  }
-	  else if (aChunk[isSourceNode] || typeof aChunk === "string") {
-	    if (aChunk) {
-	      this.children.push(aChunk);
-	    }
-	  }
-	  else {
-	    throw new TypeError(
-	      "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
-	    );
-	  }
-	  return this;
-	};
-
-	/**
-	 * Add a chunk of generated JS to the beginning of this source node.
-	 *
-	 * @param aChunk A string snippet of generated JS code, another instance of
-	 *        SourceNode, or an array where each member is one of those things.
-	 */
-	SourceNode.prototype.prepend = function SourceNode_prepend(aChunk) {
-	  if (Array.isArray(aChunk)) {
-	    for (var i = aChunk.length-1; i >= 0; i--) {
-	      this.prepend(aChunk[i]);
-	    }
-	  }
-	  else if (aChunk[isSourceNode] || typeof aChunk === "string") {
-	    this.children.unshift(aChunk);
-	  }
-	  else {
-	    throw new TypeError(
-	      "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
-	    );
-	  }
-	  return this;
-	};
-
-	/**
-	 * Walk over the tree of JS snippets in this node and its children. The
-	 * walking function is called once for each snippet of JS and is passed that
-	 * snippet and the its original associated source's line/column location.
-	 *
-	 * @param aFn The traversal function.
-	 */
-	SourceNode.prototype.walk = function SourceNode_walk(aFn) {
-	  var chunk;
-	  for (var i = 0, len = this.children.length; i < len; i++) {
-	    chunk = this.children[i];
-	    if (chunk[isSourceNode]) {
-	      chunk.walk(aFn);
-	    }
-	    else {
-	      if (chunk !== '') {
-	        aFn(chunk, { source: this.source,
-	                     line: this.line,
-	                     column: this.column,
-	                     name: this.name });
-	      }
-	    }
-	  }
-	};
-
-	/**
-	 * Like `String.prototype.join` except for SourceNodes. Inserts `aStr` between
-	 * each of `this.children`.
-	 *
-	 * @param aSep The separator.
-	 */
-	SourceNode.prototype.join = function SourceNode_join(aSep) {
-	  var newChildren;
-	  var i;
-	  var len = this.children.length;
-	  if (len > 0) {
-	    newChildren = [];
-	    for (i = 0; i < len-1; i++) {
-	      newChildren.push(this.children[i]);
-	      newChildren.push(aSep);
-	    }
-	    newChildren.push(this.children[i]);
-	    this.children = newChildren;
-	  }
-	  return this;
-	};
-
-	/**
-	 * Call String.prototype.replace on the very right-most source snippet. Useful
-	 * for trimming whitespace from the end of a source node, etc.
-	 *
-	 * @param aPattern The pattern to replace.
-	 * @param aReplacement The thing to replace the pattern with.
-	 */
-	SourceNode.prototype.replaceRight = function SourceNode_replaceRight(aPattern, aReplacement) {
-	  var lastChild = this.children[this.children.length - 1];
-	  if (lastChild[isSourceNode]) {
-	    lastChild.replaceRight(aPattern, aReplacement);
-	  }
-	  else if (typeof lastChild === 'string') {
-	    this.children[this.children.length - 1] = lastChild.replace(aPattern, aReplacement);
-	  }
-	  else {
-	    this.children.push(''.replace(aPattern, aReplacement));
-	  }
-	  return this;
-	};
-
-	/**
-	 * Set the source content for a source file. This will be added to the SourceMapGenerator
-	 * in the sourcesContent field.
-	 *
-	 * @param aSourceFile The filename of the source file
-	 * @param aSourceContent The content of the source file
-	 */
-	SourceNode.prototype.setSourceContent =
-	  function SourceNode_setSourceContent(aSourceFile, aSourceContent) {
-	    this.sourceContents[util.toSetString(aSourceFile)] = aSourceContent;
-	  };
-
-	/**
-	 * Walk over the tree of SourceNodes. The walking function is called for each
-	 * source file content and is passed the filename and source content.
-	 *
-	 * @param aFn The traversal function.
-	 */
-	SourceNode.prototype.walkSourceContents =
-	  function SourceNode_walkSourceContents(aFn) {
-	    for (var i = 0, len = this.children.length; i < len; i++) {
-	      if (this.children[i][isSourceNode]) {
-	        this.children[i].walkSourceContents(aFn);
-	      }
-	    }
-
-	    var sources = Object.keys(this.sourceContents);
-	    for (var i = 0, len = sources.length; i < len; i++) {
-	      aFn(util.fromSetString(sources[i]), this.sourceContents[sources[i]]);
-	    }
-	  };
-
-	/**
-	 * Return the string representation of this source node. Walks over the tree
-	 * and concatenates all the various snippets together to one string.
-	 */
-	SourceNode.prototype.toString = function SourceNode_toString() {
-	  var str = "";
-	  this.walk(function (chunk) {
-	    str += chunk;
-	  });
-	  return str;
-	};
-
-	/**
-	 * Returns the string representation of this source node along with a source
-	 * map.
-	 */
-	SourceNode.prototype.toStringWithSourceMap = function SourceNode_toStringWithSourceMap(aArgs) {
-	  var generated = {
-	    code: "",
-	    line: 1,
-	    column: 0
-	  };
-	  var map = new SourceMapGenerator$1(aArgs);
-	  var sourceMappingActive = false;
-	  var lastOriginalSource = null;
-	  var lastOriginalLine = null;
-	  var lastOriginalColumn = null;
-	  var lastOriginalName = null;
-	  this.walk(function (chunk, original) {
-	    generated.code += chunk;
-	    if (original.source !== null
-	        && original.line !== null
-	        && original.column !== null) {
-	      if(lastOriginalSource !== original.source
-	         || lastOriginalLine !== original.line
-	         || lastOriginalColumn !== original.column
-	         || lastOriginalName !== original.name) {
-	        map.addMapping({
-	          source: original.source,
-	          original: {
-	            line: original.line,
-	            column: original.column
-	          },
-	          generated: {
-	            line: generated.line,
-	            column: generated.column
-	          },
-	          name: original.name
-	        });
-	      }
-	      lastOriginalSource = original.source;
-	      lastOriginalLine = original.line;
-	      lastOriginalColumn = original.column;
-	      lastOriginalName = original.name;
-	      sourceMappingActive = true;
-	    } else if (sourceMappingActive) {
-	      map.addMapping({
-	        generated: {
-	          line: generated.line,
-	          column: generated.column
-	        }
-	      });
-	      lastOriginalSource = null;
-	      sourceMappingActive = false;
-	    }
-	    for (var idx = 0, length = chunk.length; idx < length; idx++) {
-	      if (chunk.charCodeAt(idx) === NEWLINE_CODE) {
-	        generated.line++;
-	        generated.column = 0;
-	        // Mappings end at eol
-	        if (idx + 1 === length) {
-	          lastOriginalSource = null;
-	          sourceMappingActive = false;
-	        } else if (sourceMappingActive) {
-	          map.addMapping({
-	            source: original.source,
-	            original: {
-	              line: original.line,
-	              column: original.column
-	            },
-	            generated: {
-	              line: generated.line,
-	              column: generated.column
-	            },
-	            name: original.name
-	          });
-	        }
-	      } else {
-	        generated.column++;
-	      }
-	    }
-	  });
-	  this.walkSourceContents(function (sourceFile, sourceContent) {
-	    map.setSourceContent(sourceFile, sourceContent);
-	  });
-
-	  return { code: generated.code, map: map };
-	};
-
-	var SourceNode_1 = SourceNode;
-
-	var sourceNode = {
-		SourceNode: SourceNode_1
-	};
-
-	/*
-	 * Copyright 2009-2011 Mozilla Foundation and contributors
-	 * Licensed under the New BSD license. See LICENSE.txt or:
-	 * http://opensource.org/licenses/BSD-3-Clause
-	 */
-	var SourceMapGenerator$2 = sourceMapGenerator.SourceMapGenerator;
-	var SourceMapConsumer$1 = sourceMapConsumer.SourceMapConsumer;
-	var SourceNode$1 = sourceNode.SourceNode;
-
-	var sourceMap = {
-		SourceMapGenerator: SourceMapGenerator$2,
-		SourceMapConsumer: SourceMapConsumer$1,
-		SourceNode: SourceNode$1
-	};
-
-	var SourceMapGenerator$3 = sourceMap.SourceMapGenerator;
 	var trackNodes = {
 	    Atrule: true,
 	    Selector: true,
 	    Declaration: true
 	};
 
-	var sourceMap$1 = function generateSourceMap(handlers) {
-	    var map = new SourceMapGenerator$3();
+	var sourceMap = function generateSourceMap(handlers) {
+	    var map = new SourceMapGenerator$1();
 	    var line = 1;
 	    var column = 0;
 	    var generated = {
@@ -10815,7 +10699,7 @@
 	            }
 
 	            if (options.sourceMap) {
-	                handlers = sourceMap$1(handlers);
+	                handlers = sourceMap(handlers);
 	            }
 	        }
 
@@ -10830,8 +10714,8 @@
 	        fromPlainObject: function(ast) {
 	            walk(ast, {
 	                enter: function(node) {
-	                    if (node.children && node.children instanceof list === false) {
-	                        node.children = new list().fromArray(node.children);
+	                    if (node.children && node.children instanceof List_1 === false) {
+	                        node.children = new List_1().fromArray(node.children);
 	                    }
 	                }
 	            });
@@ -10841,7 +10725,7 @@
 	        toPlainObject: function(ast) {
 	            walk(ast, {
 	                leave: function(node) {
-	                    if (node.children && node.children instanceof list) {
+	                    if (node.children && node.children instanceof List_1) {
 	                        node.children = node.children.toArray();
 	                    }
 	                }
@@ -10932,36 +10816,43 @@
 	}
 
 	function createTypeIterator(config, reverse) {
-	    var fields = reverse ? config.fields.slice().reverse() : config.fields;
-	    var body = fields.map(function(field) {
-	        var ref = 'node.' + field.name;
-	        var line;
+	    var fields = config.fields.slice();
+	    var contextName = config.context;
+	    var useContext = typeof contextName === 'string';
 
-	        if (field.type === 'list') {
-	            line = reverse
-	                ? ref + '.forEachRight(walk);'
-	                : ref + '.forEach(walk);';
-	        } else {
-	            line = 'walk(' + ref + ');';
-	        }
-
-	        if (field.nullable) {
-	            line = 'if (' + ref + ') {\n    ' + line + '}';
-	        }
-
-	        return line;
-	    });
-
-	    if (config.context) {
-	        body = [].concat(
-	            'var old = context.' + config.context + ';',
-	            'context.' + config.context + ' = node;',
-	            body,
-	            'context.' + config.context + ' = old;'
-	        );
+	    if (reverse) {
+	        fields.reverse();
 	    }
 
-	    return new Function('node', 'context', 'walk', body.join('\n'));
+	    return function(node, context, walk) {
+	        var prevContextValue;
+
+	        if (useContext) {
+	            prevContextValue = context[contextName];
+	            context[contextName] = node;
+	        }
+
+	        for (var i = 0; i < fields.length; i++) {
+	            var field = fields[i];
+	            var ref = node[field.name];
+
+	            if (!field.nullable || ref) {
+	                if (field.type === 'list') {
+	                    if (reverse) {
+	                        ref.forEachRight(walk);
+	                    } else {
+	                        ref.forEach(walk);
+	                    }
+	                } else {
+	                    walk(ref);
+	                }
+	            }
+	        }
+
+	        if (useContext) {
+	            context[contextName] = prevContextValue;
+	        }
+	    };
 	}
 
 	function createFastTraveralMap(iterators) {
@@ -10982,7 +10873,8 @@
 	            StyleSheet: iterators.StyleSheet,
 	            Atrule: iterators.Atrule,
 	            Rule: iterators.Rule,
-	            Block: iterators.Block
+	            Block: iterators.Block,
+	            DeclarationList: iterators.DeclarationList
 	        }
 	    };
 	}
@@ -11002,7 +10894,7 @@
 	    var fastTraversalIteratorsNatural = createFastTraveralMap(iteratorsNatural);
 	    var fastTraversalIteratorsReverse = createFastTraveralMap(iteratorsReverse);
 
-	    return function walk(root, options) {
+	    var walk = function(root, options) {
 	        function walkNode(node, item, list) {
 	            enter.call(context, node, item, list);
 
@@ -11065,6 +10957,47 @@
 
 	        walkNode(root);
 	    };
+
+	    walk.find = function(ast, fn) {
+	        var found = null;
+
+	        walk(ast, function(node, item, list) {
+	            if (found === null && fn.call(this, node, item, list)) {
+	                found = node;
+	            }
+	        });
+
+	        return found;
+	    };
+
+	    walk.findLast = function(ast, fn) {
+	        var found = null;
+
+	        walk(ast, {
+	            reverse: true,
+	            enter: function(node, item, list) {
+	                if (found === null && fn.call(this, node, item, list)) {
+	                    found = node;
+	                }
+	            }
+	        });
+
+	        return found;
+	    };
+
+	    walk.findAll = function(ast, fn) {
+	        var found = [];
+
+	        walk(ast, function(node, item, list) {
+	            if (fn.call(this, node, item, list)) {
+	                found.push(node);
+	            }
+	        });
+
+	        return found;
+	    };
+
+	    return walk;
 	};
 
 	var clone = function clone(node) {
@@ -11074,7 +11007,7 @@
 	        var value = node[key];
 
 	        if (value) {
-	            if (Array.isArray(value) || value instanceof list) {
+	            if (Array.isArray(value) || value instanceof List_1) {
 	                value = value.map(clone);
 	            } else if (value.constructor === Object) {
 	                value = clone(value);
@@ -11091,6 +11024,7 @@
 	var shape = {
 	    generic: true,
 	    types: {},
+	    atrules: {},
 	    properties: {},
 	    parseContext: {},
 	    scope: {},
@@ -11105,18 +11039,11 @@
 
 	function copy(value) {
 	    if (isObject(value)) {
-	        var res = {};
-	        for (var key in value) {
-	            if (hasOwnProperty$5.call(value, key)) {
-	                res[key] = value[key];
-	            }
-	        }
-	        return res;
+	        return Object.assign({}, value);
 	    } else {
 	        return value;
 	    }
 	}
-
 	function extend(dest, src) {
 	    for (var key in src) {
 	        if (hasOwnProperty$5.call(src, key)) {
@@ -11182,14 +11109,6 @@
 	    return mix(dest, src, shape);
 	};
 
-	function assign$1(dest, src) {
-	    for (var key in src) {
-	        dest[key] = src[key];
-	    }
-
-	    return dest;
-	}
-
 	function createSyntax(config) {
 	    var parse = create$1(config);
 	    var walk = create$4(config);
@@ -11197,8 +11116,9 @@
 	    var convert = create$3(walk);
 
 	    var syntax = {
-	        List: list,
-	        Tokenizer: tokenizer,
+	        List: List_1,
+	        SyntaxError: _SyntaxError,
+	        TokenStream: TokenStream_1,
 	        Lexer: Lexer_1,
 
 	        vendorPrefix: names.vendorPrefix,
@@ -11206,15 +11126,20 @@
 	        property: names.property,
 	        isCustomProperty: names.isCustomProperty,
 
-	        grammar: grammar,
+	        definitionSyntax: definitionSyntax,
 	        lexer: null,
 	        createLexer: function(config) {
 	            return new Lexer_1(config, syntax, syntax.lexer.structure);
 	        },
 
+	        tokenize: tokenizer,
 	        parse: parse,
 	        walk: walk,
 	        generate: generate,
+
+	        find: walk.find,
+	        findLast: walk.findLast,
+	        findAll: walk.findAll,
 
 	        clone: clone,
 	        fromPlainObject: convert.fromPlainObject,
@@ -11227,7 +11152,7 @@
 	            var base = mix_1({}, config); // copy of config
 	            return createSyntax(
 	                typeof extension === 'function'
-	                    ? extension(base, assign$1)
+	                    ? extension(base, Object.assign)
 	                    : mix_1(base, extension)
 	            );
 	        }
@@ -11236,6 +11161,7 @@
 	    syntax.lexer = new Lexer_1({
 	        generic: true,
 	        types: config.types,
+	        atrules: config.atrules,
 	        properties: config.properties,
 	        node: config.node
 	    }, syntax);
@@ -11250,6 +11176,507 @@
 		create: create_1
 	};
 
+	var atRules = {
+		"@charset": {
+		syntax: "@charset \"<charset>\";",
+		groups: [
+			"CSS Charsets"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@charset"
+	},
+		"@counter-style": {
+		syntax: "@counter-style <counter-style-name> {\n  [ system: <counter-system>; ] ||\n  [ symbols: <counter-symbols>; ] ||\n  [ additive-symbols: <additive-symbols>; ] ||\n  [ negative: <negative-symbol>; ] ||\n  [ prefix: <prefix>; ] ||\n  [ suffix: <suffix>; ] ||\n  [ range: <range>; ] ||\n  [ pad: <padding>; ] ||\n  [ speak-as: <speak-as>; ] ||\n  [ fallback: <counter-style-name>; ]\n}",
+		interfaces: [
+			"CSSCounterStyleRule"
+		],
+		groups: [
+			"CSS Counter Styles"
+		],
+		descriptors: {
+			"additive-symbols": {
+				syntax: "[ <integer> && <symbol> ]#",
+				media: "all",
+				initial: "N/A",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "orderOfAppearance",
+				status: "standard"
+			},
+			fallback: {
+				syntax: "<counter-style-name>",
+				media: "all",
+				initial: "decimal",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			negative: {
+				syntax: "<symbol> <symbol>?",
+				media: "all",
+				initial: "\"-\" hyphen-minus",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "orderOfAppearance",
+				status: "standard"
+			},
+			pad: {
+				syntax: "<integer> && <symbol>",
+				media: "all",
+				initial: "0 \"\"",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			prefix: {
+				syntax: "<symbol>",
+				media: "all",
+				initial: "\"\"",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			range: {
+				syntax: "[ [ <integer> | infinite ]{2} ]# | auto",
+				media: "all",
+				initial: "auto",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "orderOfAppearance",
+				status: "standard"
+			},
+			"speak-as": {
+				syntax: "auto | bullets | numbers | words | spell-out | <counter-style-name>",
+				media: "all",
+				initial: "auto",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			suffix: {
+				syntax: "<symbol>",
+				media: "all",
+				initial: "\". \"",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			symbols: {
+				syntax: "<symbol>+",
+				media: "all",
+				initial: "N/A",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "orderOfAppearance",
+				status: "standard"
+			},
+			system: {
+				syntax: "cyclic | numeric | alphabetic | symbolic | additive | [ fixed <integer>? ] | [ extends <counter-style-name> ]",
+				media: "all",
+				initial: "symbolic",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			}
+		},
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@counter-style"
+	},
+		"@document": {
+		syntax: "@document [ <url> | url-prefix(<string>) | domain(<string>) | media-document(<string>) | regexp(<string>) ]# {\n  <group-rule-body>\n}",
+		interfaces: [
+			"CSSGroupingRule",
+			"CSSConditionRule"
+		],
+		groups: [
+			"CSS Conditional Rules"
+		],
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@document"
+	},
+		"@font-face": {
+		syntax: "@font-face {\n  [ font-family: <family-name>; ] ||\n  [ src: <src>; ] ||\n  [ unicode-range: <unicode-range>; ] ||\n  [ font-variant: <font-variant>; ] ||\n  [ font-feature-settings: <font-feature-settings>; ] ||\n  [ font-variation-settings: <font-variation-settings>; ] ||\n  [ font-stretch: <font-stretch>; ] ||\n  [ font-weight: <font-weight>; ] ||\n  [ font-style: <font-style>; ]\n}",
+		interfaces: [
+			"CSSFontFaceRule"
+		],
+		groups: [
+			"CSS Fonts"
+		],
+		descriptors: {
+			"font-display": {
+				syntax: "[ auto | block | swap | fallback | optional ]",
+				media: "visual",
+				percentages: "no",
+				initial: "auto",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "experimental"
+			},
+			"font-family": {
+				syntax: "<family-name>",
+				media: "all",
+				initial: "n/a (required)",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			"font-feature-settings": {
+				syntax: "normal | <feature-tag-value>#",
+				media: "all",
+				initial: "normal",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "orderOfAppearance",
+				status: "standard"
+			},
+			"font-variation-settings": {
+				syntax: "normal | [ <string> <number> ]#",
+				media: "all",
+				initial: "normal",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "orderOfAppearance",
+				status: "standard"
+			},
+			"font-stretch": {
+				syntax: "<font-stretch-absolute>{1,2}",
+				media: "all",
+				initial: "normal",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			"font-style": {
+				syntax: "normal | italic | oblique <angle>{0,2}",
+				media: "all",
+				initial: "normal",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			"font-weight": {
+				syntax: "<font-weight-absolute>{1,2}",
+				media: "all",
+				initial: "normal",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			"font-variant": {
+				syntax: "normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> || stylistic(<feature-value-name>) || historical-forms || styleset(<feature-value-name>#) || character-variant(<feature-value-name>#) || swash(<feature-value-name>) || ornaments(<feature-value-name>) || annotation(<feature-value-name>) || [ small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps ] || <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero || <east-asian-variant-values> || <east-asian-width-values> || ruby ]",
+				media: "all",
+				initial: "normal",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "orderOfAppearance",
+				status: "standard"
+			},
+			src: {
+				syntax: "[ <url> [ format( <string># ) ]? | local( <family-name> ) ]#",
+				media: "all",
+				initial: "n/a (required)",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "orderOfAppearance",
+				status: "standard"
+			},
+			"unicode-range": {
+				syntax: "<unicode-range>#",
+				media: "all",
+				initial: "U+0-10FFFF",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "orderOfAppearance",
+				status: "standard"
+			}
+		},
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@font-face"
+	},
+		"@font-feature-values": {
+		syntax: "@font-feature-values <family-name># {\n  <feature-value-block-list>\n}",
+		interfaces: [
+			"CSSFontFeatureValuesRule"
+		],
+		groups: [
+			"CSS Fonts"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@font-feature-values"
+	},
+		"@import": {
+		syntax: "@import [ <string> | <url> ] [ <media-query-list> ]?;",
+		groups: [
+			"Media Queries"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@import"
+	},
+		"@keyframes": {
+		syntax: "@keyframes <keyframes-name> {\n  <keyframe-block-list>\n}",
+		interfaces: [
+			"CSSKeyframeRule",
+			"CSSKeyframesRule"
+		],
+		groups: [
+			"CSS Animations"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@keyframes"
+	},
+		"@media": {
+		syntax: "@media <media-query-list> {\n  <group-rule-body>\n}",
+		interfaces: [
+			"CSSGroupingRule",
+			"CSSConditionRule",
+			"CSSMediaRule",
+			"CSSCustomMediaRule"
+		],
+		groups: [
+			"CSS Conditional Rules",
+			"Media Queries"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@media"
+	},
+		"@namespace": {
+		syntax: "@namespace <namespace-prefix>? [ <string> | <url> ];",
+		groups: [
+			"CSS Namespaces"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@namespace"
+	},
+		"@page": {
+		syntax: "@page <page-selector-list> {\n  <page-body>\n}",
+		interfaces: [
+			"CSSPageRule"
+		],
+		groups: [
+			"CSS Pages"
+		],
+		descriptors: {
+			bleed: {
+				syntax: "auto | <length>",
+				media: [
+					"visual",
+					"paged"
+				],
+				initial: "auto",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "experimental"
+			},
+			marks: {
+				syntax: "none | [ crop || cross ]",
+				media: [
+					"visual",
+					"paged"
+				],
+				initial: "none",
+				percentages: "no",
+				computed: "asSpecified",
+				order: "orderOfAppearance",
+				status: "experimental"
+			}
+		},
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@page"
+	},
+		"@supports": {
+		syntax: "@supports <supports-condition> {\n  <group-rule-body>\n}",
+		interfaces: [
+			"CSSGroupingRule",
+			"CSSConditionRule",
+			"CSSSupportsRule"
+		],
+		groups: [
+			"CSS Conditional Rules"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@supports"
+	},
+		"@viewport": {
+		syntax: "@viewport {\n  <group-rule-body>\n}",
+		interfaces: [
+			"CSSViewportRule"
+		],
+		groups: [
+			"CSS Device Adaptation"
+		],
+		descriptors: {
+			height: {
+				syntax: "<viewport-length>{1,2}",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: [
+					"min-height",
+					"max-height"
+				],
+				percentages: [
+					"min-height",
+					"max-height"
+				],
+				computed: [
+					"min-height",
+					"max-height"
+				],
+				order: "orderOfAppearance",
+				status: "standard"
+			},
+			"max-height": {
+				syntax: "<viewport-length>",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: "auto",
+				percentages: "referToHeightOfInitialViewport",
+				computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			"max-width": {
+				syntax: "<viewport-length>",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: "auto",
+				percentages: "referToWidthOfInitialViewport",
+				computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			"max-zoom": {
+				syntax: "auto | <number> | <percentage>",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: "auto",
+				percentages: "the zoom factor itself",
+				computed: "autoNonNegativeOrPercentage",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			"min-height": {
+				syntax: "<viewport-length>",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: "auto",
+				percentages: "referToHeightOfInitialViewport",
+				computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			"min-width": {
+				syntax: "<viewport-length>",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: "auto",
+				percentages: "referToWidthOfInitialViewport",
+				computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			"min-zoom": {
+				syntax: "auto | <number> | <percentage>",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: "auto",
+				percentages: "the zoom factor itself",
+				computed: "autoNonNegativeOrPercentage",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			orientation: {
+				syntax: "auto | portrait | landscape",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: "auto",
+				percentages: "referToSizeOfBoundingBox",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			"user-zoom": {
+				syntax: "zoom | fixed",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: "zoom",
+				percentages: "referToSizeOfBoundingBox",
+				computed: "asSpecified",
+				order: "uniqueOrder",
+				status: "standard"
+			},
+			width: {
+				syntax: "<viewport-length>{1,2}",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: [
+					"min-width",
+					"max-width"
+				],
+				percentages: [
+					"min-width",
+					"max-width"
+				],
+				computed: [
+					"min-width",
+					"max-width"
+				],
+				order: "orderOfAppearance",
+				status: "standard"
+			},
+			zoom: {
+				syntax: "auto | <number> | <percentage>",
+				media: [
+					"visual",
+					"continuous"
+				],
+				initial: "auto",
+				percentages: "the zoom factor itself",
+				computed: "autoNonNegativeOrPercentage",
+				order: "uniqueOrder",
+				status: "standard"
+			}
+		},
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/@viewport"
+	}
+	};
+
+	var atRules$1 = /*#__PURE__*/Object.freeze({
+		__proto__: null,
+		'default': atRules
+	});
+
 	var all = {
 		syntax: "initial | inherit | unset | revert",
 		media: "noPracticalMedia",
@@ -11263,7 +11690,8 @@
 		appliesto: "allElements",
 		computed: "asSpecifiedAppliesToEachProperty",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/all"
 	};
 	var animation = {
 		syntax: "<single-animation>#",
@@ -11296,10 +11724,11 @@
 			"animation-play-state"
 		],
 		order: "orderOfAppearance",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/animation"
 	};
 	var appearance = {
-		syntax: "auto | none",
+		syntax: "none | auto | button | textfield | <compat>",
 		media: "all",
 		inherited: false,
 		animationType: "discrete",
@@ -11311,7 +11740,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-appearance"
 	};
 	var azimuth = {
 		syntax: "<angle> | [ [ left-side | far-left | left | center-left | center | center-right | right | far-right | right-side ] || behind ] | leftwards | rightwards",
@@ -11326,7 +11756,8 @@
 		appliesto: "allElements",
 		computed: "normalizedAngle",
 		order: "orderOfAppearance",
-		status: "obsolete"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/azimuth"
 	};
 	var background = {
 		syntax: "[ <bg-layer> , ]* <final-bg-layer>",
@@ -11375,10 +11806,11 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background"
 	};
 	var border = {
-		syntax: "<br-width> || <br-style> || <color>",
+		syntax: "<line-width> || <line-style> || <color>",
 		media: "visual",
 		inherited: false,
 		animationType: [
@@ -11405,7 +11837,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border"
 	};
 	var bottom = {
 		syntax: "<length> | <percentage> | auto",
@@ -11420,7 +11853,8 @@
 		appliesto: "positionedElements",
 		computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/bottom"
 	};
 	var clear = {
 		syntax: "none | left | right | both | inline-start | inline-end",
@@ -11435,7 +11869,8 @@
 		appliesto: "blockLevelElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/clear"
 	};
 	var clip = {
 		syntax: "<shape> | auto",
@@ -11450,7 +11885,8 @@
 		appliesto: "absolutelyPositionedElements",
 		computed: "autoOrRectangle",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/clip"
 	};
 	var color = {
 		syntax: "<color>",
@@ -11470,7 +11906,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/color"
 	};
 	var columns = {
 		syntax: "<'column-width'> || <'column-count'>",
@@ -11494,7 +11931,8 @@
 			"column-count"
 		],
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/columns"
 	};
 	var contain = {
 		syntax: "none | strict | content | [ size || layout || style || paint ]",
@@ -11509,7 +11947,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/contain"
 	};
 	var content = {
 		syntax: "normal | none | [ <content-replacement> | <content-list> ] [/ <string> ]?",
@@ -11524,7 +11963,8 @@
 		appliesto: "beforeAndAfterPseudos",
 		computed: "normalOnElementsForPseudosNoneAbsoluteURIStringOrAsSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/content"
 	};
 	var cursor = {
 		syntax: "[ [ <url> [ <x> <y> ]? , ]* [ auto | default | none | context-menu | help | pointer | progress | wait | cell | crosshair | text | vertical-text | alias | copy | move | no-drop | not-allowed | e-resize | n-resize | ne-resize | nw-resize | s-resize | se-resize | sw-resize | w-resize | ew-resize | ns-resize | nesw-resize | nwse-resize | col-resize | row-resize | all-scroll | zoom-in | zoom-out | grab | grabbing ] ]",
@@ -11542,7 +11982,8 @@
 		appliesto: "allElements",
 		computed: "asSpecifiedURLsAbsolute",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/cursor"
 	};
 	var direction = {
 		syntax: "ltr | rtl",
@@ -11557,7 +11998,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/direction"
 	};
 	var display = {
 		syntax: "[ <display-outside> || <display-inside> ] | <display-listitem> | <display-internal> | <display-box> | <display-legacy>",
@@ -11572,7 +12014,8 @@
 		appliesto: "allElements",
 		computed: "asSpecifiedExceptPositionedFloatingAndRootElementsKeywordMaybeDifferent",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/display"
 	};
 	var filter = {
 		syntax: "none | <filter-function-list>",
@@ -11587,7 +12030,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/filter"
 	};
 	var flex = {
 		syntax: "none | [ <'flex-grow'> <'flex-shrink'>? || <'flex-basis'> ]",
@@ -11614,7 +12058,8 @@
 			"flex-basis"
 		],
 		order: "orderOfAppearance",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/flex"
 	};
 	var float = {
 		syntax: "left | right | none | inline-start | inline-end",
@@ -11629,7 +12074,8 @@
 		appliesto: "allElementsNoEffectIfDisplayNone",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/float"
 	};
 	var font = {
 		syntax: "[ [ <'font-style'> || <font-variant-css21> || <'font-weight'> || <'font-stretch'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar",
@@ -11676,7 +12122,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font"
 	};
 	var gap = {
 		syntax: "<'row-gap'> <'column-gap'>?",
@@ -11700,7 +12147,8 @@
 			"column-gap"
 		],
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/gap"
 	};
 	var grid = {
 		syntax: "<'grid-template'> | <'grid-template-rows'> / [ auto-flow && dense? ] <'grid-auto-columns'>? | [ auto-flow && dense? ] <'grid-auto-rows'>? / <'grid-template-columns'>",
@@ -11742,7 +12190,8 @@
 			"row-gap"
 		],
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid"
 	};
 	var height = {
 		syntax: "[ <length> | <percentage> ] && [ border-box | content-box ]? | available | min-content | max-content | fit-content | auto",
@@ -11757,7 +12206,8 @@
 		appliesto: "allElementsButNonReplacedAndTableColumns",
 		computed: "percentageAutoOrAbsoluteLength",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/height"
 	};
 	var hyphens = {
 		syntax: "none | manual | auto",
@@ -11772,7 +12222,24 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/hyphens"
+	};
+	var inset = {
+		syntax: "<'top'>{1,4}",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "logicalHeightOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "auto",
+		appliesto: "positionedElements",
+		computed: "sameAsBoxOffsets",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/inset"
 	};
 	var isolation = {
 		syntax: "auto | isolate",
@@ -11787,7 +12254,8 @@
 		appliesto: "allElementsSVGContainerGraphicsAndGraphicsReferencingElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/isolation"
 	};
 	var left = {
 		syntax: "<length> | <percentage> | auto",
@@ -11802,7 +12270,8 @@
 		appliesto: "positionedElements",
 		computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/left"
 	};
 	var margin = {
 		syntax: "[ <length> | <percentage> | auto ]{1,4}",
@@ -11830,7 +12299,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin"
 	};
 	var mask = {
 		syntax: "<mask-layer>#",
@@ -11875,7 +12345,8 @@
 		],
 		order: "perGrammar",
 		stacking: true,
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask"
 	};
 	var offset = {
 		syntax: "[ <'offset-position'>? [ <'offset-path'> [ <'offset-distance'> || <'offset-rotate'> ]? ]? ]! [ / <'offset-anchor'> ]?",
@@ -11894,7 +12365,7 @@
 			"offset-anchor"
 		],
 		groups: [
-			"CSS Motion"
+			"CSS Motion Path"
 		],
 		initial: [
 			"offset-position",
@@ -11913,10 +12384,11 @@
 		],
 		order: "perGrammar",
 		stacking: true,
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/offset"
 	};
 	var opacity = {
-		syntax: "<number>",
+		syntax: "<alpha-value>",
 		media: "visual",
 		inherited: false,
 		animationType: "number",
@@ -11931,7 +12403,8 @@
 		alsoAppliesTo: [
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/opacity"
 	};
 	var order = {
 		syntax: "<integer>",
@@ -11946,7 +12419,8 @@
 		appliesto: "flexItemsAndAbsolutelyPositionedFlexContainerChildren",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/order"
 	};
 	var orphans = {
 		syntax: "<integer>",
@@ -11961,7 +12435,8 @@
 		appliesto: "blockContainerElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/orphans"
 	};
 	var outline = {
 		syntax: "[ <'outline-color'> || <'outline-style'> || <'outline-width'> ]",
@@ -11991,7 +12466,8 @@
 			"outline-style"
 		],
 		order: "orderOfAppearance",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/outline"
 	};
 	var overflow = {
 		syntax: "[ visible | hidden | clip | scroll | auto ]{1,2}",
@@ -12006,7 +12482,8 @@
 		appliesto: "blockContainersFlexContainersGridContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/overflow"
 	};
 	var padding = {
 		syntax: "[ <length> | <percentage> ]{1,4}",
@@ -12034,7 +12511,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding"
 	};
 	var perspective = {
 		syntax: "none | <length>",
@@ -12050,7 +12528,8 @@
 		computed: "absoluteLengthOrNone",
 		order: "uniqueOrder",
 		stacking: true,
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/perspective"
 	};
 	var position = {
 		syntax: "static | relative | absolute | sticky | fixed",
@@ -12066,10 +12545,11 @@
 		computed: "asSpecified",
 		order: "uniqueOrder",
 		stacking: true,
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/position"
 	};
 	var quotes = {
-		syntax: "none | [ <string> <string> ]+",
+		syntax: "none | auto | [ <string> <string> ]+",
 		media: "visual",
 		inherited: true,
 		animationType: "discrete",
@@ -12081,10 +12561,11 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/quotes"
 	};
 	var resize = {
-		syntax: "none | both | horizontal | vertical",
+		syntax: "none | both | horizontal | vertical | block | inline",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -12096,7 +12577,8 @@
 		appliesto: "elementsWithOverflowNotVisibleAndReplacedElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/resize"
 	};
 	var right = {
 		syntax: "<length> | <percentage> | auto",
@@ -12111,10 +12593,11 @@
 		appliesto: "positionedElements",
 		computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/right"
 	};
 	var rotate = {
-		syntax: "none | [ x | y | z | <number>{3} ]? && <angle>",
+		syntax: "none | <angle> | [ x | y | z | <number>{3} ] && <angle>",
 		media: "visual",
 		inherited: false,
 		animationType: "transform",
@@ -12127,7 +12610,8 @@
 		computed: "asSpecified",
 		order: "perGrammar",
 		stacking: true,
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/rotate"
 	};
 	var scale = {
 		syntax: "none | <number>{1,3}",
@@ -12143,7 +12627,8 @@
 		computed: "asSpecified",
 		order: "perGrammar",
 		stacking: true,
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scale"
 	};
 	var top = {
 		syntax: "<length> | <percentage> | auto",
@@ -12158,7 +12643,8 @@
 		appliesto: "positionedElements",
 		computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/top"
 	};
 	var transform = {
 		syntax: "none | <transform-list>",
@@ -12174,7 +12660,8 @@
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "uniqueOrder",
 		stacking: true,
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/transform"
 	};
 	var transition = {
 		syntax: "<single-transition>#",
@@ -12199,7 +12686,8 @@
 			"transition-timing-function"
 		],
 		order: "orderOfAppearance",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/transition"
 	};
 	var translate = {
 		syntax: "none | <length-percentage> [ <length-percentage> <length>? ]?",
@@ -12215,7 +12703,8 @@
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "perGrammar",
 		stacking: true,
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/translate"
 	};
 	var visibility = {
 		syntax: "visible | hidden | collapse",
@@ -12230,7 +12719,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/visibility"
 	};
 	var widows = {
 		syntax: "<integer>",
@@ -12245,7 +12735,8 @@
 		appliesto: "blockContainerElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/widows"
 	};
 	var width = {
 		syntax: "[ <length> | <percentage> ] && [ border-box | content-box ]? | available | min-content | max-content | fit-content | auto",
@@ -12260,7 +12751,8 @@
 		appliesto: "allElementsButNonReplacedAndTableRows",
 		computed: "percentageAutoOrAbsoluteLength",
 		order: "lengthOrPercentageBeforeKeywordIfBothPresent",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/width"
 	};
 	var zoom = {
 		syntax: "normal | reset | <number> | <percentage>",
@@ -12275,7 +12767,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/zoom"
 	};
 	var properties$1 = {
 		"--*": {
@@ -12291,7 +12784,8 @@
 		appliesto: "allElements",
 		computed: "asSpecifiedWithVarsSubstituted",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/--*"
 	},
 		"-ms-accelerator": {
 		syntax: "false | true",
@@ -12306,7 +12800,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-accelerator"
 	},
 		"-ms-block-progression": {
 		syntax: "tb | rl | bt | lr",
@@ -12321,7 +12816,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-block-progression"
 	},
 		"-ms-content-zoom-chaining": {
 		syntax: "none | chained",
@@ -12336,7 +12832,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-chaining"
 	},
 		"-ms-content-zooming": {
 		syntax: "none | zoom",
@@ -12351,7 +12848,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-content-zooming"
 	},
 		"-ms-content-zoom-limit": {
 		syntax: "<'-ms-content-zoom-limit-min'> <'-ms-content-zoom-limit-max'>",
@@ -12375,7 +12873,8 @@
 			"-ms-content-zoom-limit-min"
 		],
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-limit"
 	},
 		"-ms-content-zoom-limit-max": {
 		syntax: "<percentage>",
@@ -12390,7 +12889,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-limit-max"
 	},
 		"-ms-content-zoom-limit-min": {
 		syntax: "<percentage>",
@@ -12405,7 +12905,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-limit-min"
 	},
 		"-ms-content-zoom-snap": {
 		syntax: "<'-ms-content-zoom-snap-type'> || <'-ms-content-zoom-snap-points'>",
@@ -12426,7 +12927,8 @@
 			"-ms-content-zoom-snap-points"
 		],
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-snap"
 	},
 		"-ms-content-zoom-snap-points": {
 		syntax: "snapInterval( <percentage>, <percentage> ) | snapList( <percentage># )",
@@ -12441,7 +12943,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-snap-points"
 	},
 		"-ms-content-zoom-snap-type": {
 		syntax: "none | proximity | mandatory",
@@ -12456,7 +12959,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-snap-type"
 	},
 		"-ms-filter": {
 		syntax: "<string>",
@@ -12471,7 +12975,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-filter"
 	},
 		"-ms-flow-from": {
 		syntax: "[ none | <custom-ident> ]#",
@@ -12486,7 +12991,8 @@
 		appliesto: "nonReplacedElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-flow-from"
 	},
 		"-ms-flow-into": {
 		syntax: "[ none | <custom-ident> ]#",
@@ -12501,7 +13007,8 @@
 		appliesto: "iframeElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-flow-into"
 	},
 		"-ms-high-contrast-adjust": {
 		syntax: "auto | none",
@@ -12516,7 +13023,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-high-contrast-adjust"
 	},
 		"-ms-hyphenate-limit-chars": {
 		syntax: "auto | <integer>{1,3}",
@@ -12531,7 +13039,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-hyphenate-limit-chars"
 	},
 		"-ms-hyphenate-limit-lines": {
 		syntax: "no-limit | <integer>",
@@ -12546,7 +13055,8 @@
 		appliesto: "blockContainerElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-hyphenate-limit-lines"
 	},
 		"-ms-hyphenate-limit-zone": {
 		syntax: "<percentage> | <length>",
@@ -12561,7 +13071,8 @@
 		appliesto: "blockContainerElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-hyphenate-limit-zone"
 	},
 		"-ms-ime-align": {
 		syntax: "auto | after",
@@ -12576,7 +13087,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-ime-align"
 	},
 		"-ms-overflow-style": {
 		syntax: "auto | none | scrollbar | -ms-autohiding-scrollbar",
@@ -12591,7 +13103,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-overflow-style"
 	},
 		"-ms-scrollbar-3dlight-color": {
 		syntax: "<color>",
@@ -12606,7 +13119,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-3dlight-color"
 	},
 		"-ms-scrollbar-arrow-color": {
 		syntax: "<color>",
@@ -12621,7 +13135,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-arrow-color"
 	},
 		"-ms-scrollbar-base-color": {
 		syntax: "<color>",
@@ -12636,7 +13151,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-base-color"
 	},
 		"-ms-scrollbar-darkshadow-color": {
 		syntax: "<color>",
@@ -12651,7 +13167,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-darkshadow-color"
 	},
 		"-ms-scrollbar-face-color": {
 		syntax: "<color>",
@@ -12666,7 +13183,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-face-color"
 	},
 		"-ms-scrollbar-highlight-color": {
 		syntax: "<color>",
@@ -12681,7 +13199,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-highlight-color"
 	},
 		"-ms-scrollbar-shadow-color": {
 		syntax: "<color>",
@@ -12696,7 +13215,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-shadow-color"
 	},
 		"-ms-scrollbar-track-color": {
 		syntax: "<color>",
@@ -12711,7 +13231,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-track-color"
 	},
 		"-ms-scroll-chaining": {
 		syntax: "chained | none",
@@ -12726,7 +13247,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-chaining"
 	},
 		"-ms-scroll-limit": {
 		syntax: "<'-ms-scroll-limit-x-min'> <'-ms-scroll-limit-y-min'> <'-ms-scroll-limit-x-max'> <'-ms-scroll-limit-y-max'>",
@@ -12751,7 +13273,8 @@
 			"-ms-scroll-limit-y-max"
 		],
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit"
 	},
 		"-ms-scroll-limit-x-max": {
 		syntax: "auto | <length>",
@@ -12766,7 +13289,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-x-max"
 	},
 		"-ms-scroll-limit-x-min": {
 		syntax: "<length>",
@@ -12781,7 +13305,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-x-min"
 	},
 		"-ms-scroll-limit-y-max": {
 		syntax: "auto | <length>",
@@ -12796,7 +13321,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-y-max"
 	},
 		"-ms-scroll-limit-y-min": {
 		syntax: "<length>",
@@ -12811,7 +13337,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-y-min"
 	},
 		"-ms-scroll-rails": {
 		syntax: "none | railed",
@@ -12826,7 +13353,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-rails"
 	},
 		"-ms-scroll-snap-points-x": {
 		syntax: "snapInterval( <length-percentage>, <length-percentage> ) | snapList( <length-percentage># )",
@@ -12841,7 +13369,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-points-x"
 	},
 		"-ms-scroll-snap-points-y": {
 		syntax: "snapInterval( <length-percentage>, <length-percentage> ) | snapList( <length-percentage># )",
@@ -12856,7 +13385,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-points-y"
 	},
 		"-ms-scroll-snap-type": {
 		syntax: "none | proximity | mandatory",
@@ -12871,7 +13401,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-type"
 	},
 		"-ms-scroll-snap-x": {
 		syntax: "<'-ms-scroll-snap-type'> <'-ms-scroll-snap-points-x'>",
@@ -12892,7 +13423,8 @@
 			"-ms-scroll-snap-points-x"
 		],
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-x"
 	},
 		"-ms-scroll-snap-y": {
 		syntax: "<'-ms-scroll-snap-type'> <'-ms-scroll-snap-points-y'>",
@@ -12913,7 +13445,8 @@
 			"-ms-scroll-snap-points-y"
 		],
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-y"
 	},
 		"-ms-scroll-translation": {
 		syntax: "none | vertical-to-horizontal",
@@ -12928,7 +13461,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-translation"
 	},
 		"-ms-text-autospace": {
 		syntax: "none | ideograph-alpha | ideograph-numeric | ideograph-parenthesis | ideograph-space",
@@ -12943,7 +13477,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-text-autospace"
 	},
 		"-ms-touch-select": {
 		syntax: "grippers | none",
@@ -12958,7 +13493,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-touch-select"
 	},
 		"-ms-user-select": {
 		syntax: "none | element | text",
@@ -12973,7 +13509,8 @@
 		appliesto: "nonReplacedElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-user-select"
 	},
 		"-ms-wrap-flow": {
 		syntax: "auto | both | start | end | maximum | clear",
@@ -12988,7 +13525,8 @@
 		appliesto: "blockLevelElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-wrap-flow"
 	},
 		"-ms-wrap-margin": {
 		syntax: "<length>",
@@ -13003,7 +13541,8 @@
 		appliesto: "exclusionElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-wrap-margin"
 	},
 		"-ms-wrap-through": {
 		syntax: "wrap | none",
@@ -13018,7 +13557,8 @@
 		appliesto: "blockLevelElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-ms-wrap-through"
 	},
 		"-moz-appearance": {
 		syntax: "none | button | button-arrow-down | button-arrow-next | button-arrow-previous | button-arrow-up | button-bevel | button-focus | caret | checkbox | checkbox-container | checkbox-label | checkmenuitem | dualbutton | groupbox | listbox | listitem | menuarrow | menubar | menucheckbox | menuimage | menuitem | menuitemtext | menulist | menulist-button | menulist-text | menulist-textfield | menupopup | menuradio | menuseparator | meterbar | meterchunk | progressbar | progressbar-vertical | progresschunk | progresschunk-vertical | radio | radio-container | radio-label | radiomenuitem | range | range-thumb | resizer | resizerpanel | scale-horizontal | scalethumbend | scalethumb-horizontal | scalethumbstart | scalethumbtick | scalethumb-vertical | scale-vertical | scrollbarbutton-down | scrollbarbutton-left | scrollbarbutton-right | scrollbarbutton-up | scrollbarthumb-horizontal | scrollbarthumb-vertical | scrollbartrack-horizontal | scrollbartrack-vertical | searchfield | separator | sheet | spinner | spinner-downbutton | spinner-textfield | spinner-upbutton | splitter | statusbar | statusbarpanel | tab | tabpanel | tabpanels | tab-scroll-arrow-back | tab-scroll-arrow-forward | textfield | textfield-multiline | toolbar | toolbarbutton | toolbarbutton-dropdown | toolbargripper | toolbox | tooltip | treeheader | treeheadercell | treeheadersortarrow | treeitem | treeline | treetwisty | treetwistyopen | treeview | -moz-mac-unified-toolbar | -moz-win-borderless-glass | -moz-win-browsertabbar-toolbox | -moz-win-communicationstext | -moz-win-communications-toolbox | -moz-win-exclude-glass | -moz-win-glass | -moz-win-mediatext | -moz-win-media-toolbox | -moz-window-button-box | -moz-window-button-box-maximized | -moz-window-button-close | -moz-window-button-maximize | -moz-window-button-minimize | -moz-window-button-restore | -moz-window-frame-bottom | -moz-window-frame-left | -moz-window-frame-right | -moz-window-titlebar | -moz-window-titlebar-maximized",
@@ -13034,7 +13574,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-appearance"
 	},
 		"-moz-binding": {
 		syntax: "<url> | none",
@@ -13049,7 +13590,8 @@
 		appliesto: "allElementsExceptGeneratedContentOrPseudoElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-binding"
 	},
 		"-moz-border-bottom-colors": {
 		syntax: "<color>+ | none",
@@ -13064,7 +13606,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-border-bottom-colors"
 	},
 		"-moz-border-left-colors": {
 		syntax: "<color>+ | none",
@@ -13079,7 +13622,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-border-left-colors"
 	},
 		"-moz-border-right-colors": {
 		syntax: "<color>+ | none",
@@ -13094,7 +13638,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-border-right-colors"
 	},
 		"-moz-border-top-colors": {
 		syntax: "<color>+ | none",
@@ -13109,7 +13654,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-border-top-colors"
 	},
 		"-moz-context-properties": {
 		syntax: "none | [ fill | fill-opacity | stroke | stroke-opacity ]#",
@@ -13124,7 +13670,8 @@
 		appliesto: "allElementsThatCanReferenceImages",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-context-properties"
 	},
 		"-moz-float-edge": {
 		syntax: "border-box | content-box | margin-box | padding-box",
@@ -13139,7 +13686,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-float-edge"
 	},
 		"-moz-force-broken-image-icon": {
 		syntax: "<integer>",
@@ -13154,7 +13702,8 @@
 		appliesto: "images",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-force-broken-image-icon"
 	},
 		"-moz-image-region": {
 		syntax: "<shape> | auto",
@@ -13169,7 +13718,8 @@
 		appliesto: "xulImageElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-image-region"
 	},
 		"-moz-orient": {
 		syntax: "inline | block | horizontal | vertical",
@@ -13184,7 +13734,8 @@
 		appliesto: "anyElementEffectOnProgressAndMeter",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-orient"
 	},
 		"-moz-outline-radius": {
 		syntax: "<outline-radius>{1,4} [ / <outline-radius>{1,4} ]?",
@@ -13219,7 +13770,8 @@
 			"-moz-outline-radius-bottomleft"
 		],
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius"
 	},
 		"-moz-outline-radius-bottomleft": {
 		syntax: "<outline-radius>",
@@ -13234,7 +13786,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-bottomleft"
 	},
 		"-moz-outline-radius-bottomright": {
 		syntax: "<outline-radius>",
@@ -13249,7 +13802,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-bottomright"
 	},
 		"-moz-outline-radius-topleft": {
 		syntax: "<outline-radius>",
@@ -13264,7 +13818,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-topleft"
 	},
 		"-moz-outline-radius-topright": {
 		syntax: "<outline-radius>",
@@ -13279,7 +13834,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-topright"
 	},
 		"-moz-stack-sizing": {
 		syntax: "ignore | stretch-to-fit",
@@ -13294,7 +13850,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-stack-sizing"
 	},
 		"-moz-text-blink": {
 		syntax: "none | blink",
@@ -13309,7 +13866,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-text-blink"
 	},
 		"-moz-user-focus": {
 		syntax: "ignore | normal | select-after | select-before | select-menu | select-same | select-all | none",
@@ -13324,7 +13882,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-user-focus"
 	},
 		"-moz-user-input": {
 		syntax: "auto | none | enabled | disabled",
@@ -13339,7 +13898,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-user-input"
 	},
 		"-moz-user-modify": {
 		syntax: "read-only | read-write | write-only",
@@ -13354,7 +13914,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-user-modify"
 	},
 		"-moz-window-dragging": {
 		syntax: "drag | no-drag",
@@ -13369,7 +13930,8 @@
 		appliesto: "allElementsCreatingNativeWindows",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-window-dragging"
 	},
 		"-moz-window-shadow": {
 		syntax: "default | menu | tooltip | sheet | none",
@@ -13384,7 +13946,8 @@
 		appliesto: "allElementsCreatingNativeWindows",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-window-shadow"
 	},
 		"-webkit-appearance": {
 		syntax: "none | button | button-bevel | caret | checkbox | default-button | inner-spin-button | listbox | listitem | media-controls-background | media-controls-fullscreen-background | media-current-time-display | media-enter-fullscreen-button | media-exit-fullscreen-button | media-fullscreen-button | media-mute-button | media-overlay-play-button | media-play-button | media-seek-back-button | media-seek-forward-button | media-slider | media-sliderthumb | media-time-remaining-display | media-toggle-closed-captions-button | media-volume-slider | media-volume-slider-container | media-volume-sliderthumb | menulist | menulist-button | menulist-text | menulist-textfield | meter | progress-bar | progress-bar-value | push-button | radio | searchfield | searchfield-cancel-button | searchfield-decoration | searchfield-results-button | searchfield-results-decoration | slider-horizontal | slider-vertical | sliderthumb-horizontal | sliderthumb-vertical | square-button | textarea | textfield",
@@ -13399,7 +13962,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-moz-appearance"
 	},
 		"-webkit-border-before": {
 		syntax: "<'border-width'> || <'border-style'> || <'color'>",
@@ -13424,7 +13988,8 @@
 			"color"
 		],
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-border-before"
 	},
 		"-webkit-border-before-color": {
 		syntax: "<'color'>",
@@ -13484,7 +14049,25 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-box-reflect"
+	},
+		"-webkit-line-clamp": {
+		syntax: "none | <integer>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"WebKit Extensions",
+			"CSS Overflow"
+		],
+		initial: "none",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-line-clamp"
 	},
 		"-webkit-mask": {
 		syntax: "[ <mask-reference> || <position> [ / <bg-size> ]? || <repeat-style> || [ <box> | border | padding | content | text ] || [ <box> | border | padding | content ] ]#",
@@ -13513,7 +14096,8 @@
 			"-webkit-mask-clip"
 		],
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask"
 	},
 		"-webkit-mask-attachment": {
 		syntax: "<attachment>#",
@@ -13528,7 +14112,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-attachment"
 	},
 		"-webkit-mask-clip": {
 		syntax: "[ <box> | border | padding | content | text ]#",
@@ -13543,7 +14128,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-clip"
 	},
 		"-webkit-mask-composite": {
 		syntax: "<composite-style>#",
@@ -13558,7 +14144,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-composite"
 	},
 		"-webkit-mask-image": {
 		syntax: "<mask-reference>#",
@@ -13573,7 +14160,8 @@
 		appliesto: "allElements",
 		computed: "absoluteURIOrNone",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-image"
 	},
 		"-webkit-mask-origin": {
 		syntax: "[ <box> | border | padding | content ]#",
@@ -13588,7 +14176,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-origin"
 	},
 		"-webkit-mask-position": {
 		syntax: "<position>#",
@@ -13603,7 +14192,8 @@
 		appliesto: "allElements",
 		computed: "absoluteLengthOrPercentage",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-position"
 	},
 		"-webkit-mask-position-x": {
 		syntax: "[ <length-percentage> | left | center | right ]#",
@@ -13618,7 +14208,8 @@
 		appliesto: "allElements",
 		computed: "absoluteLengthOrPercentage",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-position-x"
 	},
 		"-webkit-mask-position-y": {
 		syntax: "[ <length-percentage> | top | center | bottom ]#",
@@ -13633,7 +14224,8 @@
 		appliesto: "allElements",
 		computed: "absoluteLengthOrPercentage",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-position-y"
 	},
 		"-webkit-mask-repeat": {
 		syntax: "<repeat-style>#",
@@ -13648,7 +14240,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-repeat"
 	},
 		"-webkit-mask-repeat-x": {
 		syntax: "repeat | no-repeat | space | round",
@@ -13663,7 +14256,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-repeat-x"
 	},
 		"-webkit-mask-repeat-y": {
 		syntax: "repeat | no-repeat | space | round",
@@ -13678,7 +14272,8 @@
 		appliesto: "allElements",
 		computed: "absoluteLengthOrPercentage",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-repeat-y"
 	},
 		"-webkit-mask-size": {
 		syntax: "<bg-size>#",
@@ -13693,12 +14288,13 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-size"
 	},
 		"-webkit-overflow-scrolling": {
 		syntax: "auto | touch",
 		media: "visual",
-		inherited: false,
+		inherited: true,
 		animationType: "discrete",
 		percentages: "no",
 		groups: [
@@ -13708,7 +14304,8 @@
 		appliesto: "scrollingBoxes",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-overflow-scrolling"
 	},
 		"-webkit-tap-highlight-color": {
 		syntax: "<color>",
@@ -13723,7 +14320,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-tap-highlight-color"
 	},
 		"-webkit-text-fill-color": {
 		syntax: "<color>",
@@ -13738,7 +14336,8 @@
 		appliesto: "allElements",
 		computed: "computedColor",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-text-fill-color"
 	},
 		"-webkit-text-stroke": {
 		syntax: "<length> || <color>",
@@ -13762,7 +14361,8 @@
 			"-webkit-text-stroke-color"
 		],
 		order: "canonicalOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke"
 	},
 		"-webkit-text-stroke-color": {
 		syntax: "<color>",
@@ -13777,7 +14377,8 @@
 		appliesto: "allElements",
 		computed: "computedColor",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke-color"
 	},
 		"-webkit-text-stroke-width": {
 		syntax: "<length>",
@@ -13792,7 +14393,8 @@
 		appliesto: "allElements",
 		computed: "absoluteLength",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke-width"
 	},
 		"-webkit-touch-callout": {
 		syntax: "default | none",
@@ -13807,7 +14409,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/-webkit-touch-callout"
 	},
 		"-webkit-user-modify": {
 		syntax: "read-only | read-write | read-write-plaintext-only",
@@ -13831,13 +14434,14 @@
 		animationType: "discrete",
 		percentages: "no",
 		groups: [
-			"CSS Flexible Box Layout"
+			"CSS Box Alignment"
 		],
 		initial: "normal",
 		appliesto: "multilineFlexContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/align-content"
 	},
 		"align-items": {
 		syntax: "normal | stretch | <baseline-position> | [ <overflow-position>? <self-position> ]",
@@ -13846,13 +14450,14 @@
 		animationType: "discrete",
 		percentages: "no",
 		groups: [
-			"CSS Flexible Box Layout"
+			"CSS Box Alignment"
 		],
 		initial: "normal",
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/align-items"
 	},
 		"align-self": {
 		syntax: "auto | normal | stretch | <baseline-position> | <overflow-position>? <self-position>",
@@ -13861,13 +14466,14 @@
 		animationType: "discrete",
 		percentages: "no",
 		groups: [
-			"CSS Flexible Box Layout"
+			"CSS Box Alignment"
 		],
 		initial: "auto",
 		appliesto: "flexItemsGridItemsAndAbsolutelyPositionedBoxes",
 		computed: "autoOnAbsolutelyPositionedElementsValueOfAlignItemsOnParent",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/align-self"
 	},
 		all: all,
 		animation: animation,
@@ -13884,7 +14490,8 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/animation-delay"
 	},
 		"animation-direction": {
 		syntax: "<single-animation-direction>#",
@@ -13899,7 +14506,8 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/animation-direction"
 	},
 		"animation-duration": {
 		syntax: "<time>#",
@@ -13914,7 +14522,8 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/animation-duration"
 	},
 		"animation-fill-mode": {
 		syntax: "<single-animation-fill-mode>#",
@@ -13929,7 +14538,8 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/animation-fill-mode"
 	},
 		"animation-iteration-count": {
 		syntax: "<single-animation-iteration-count>#",
@@ -13944,7 +14554,8 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/animation-iteration-count"
 	},
 		"animation-name": {
 		syntax: "[ none | <keyframes-name> ]#",
@@ -13959,7 +14570,8 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/animation-name"
 	},
 		"animation-play-state": {
 		syntax: "<single-animation-play-state>#",
@@ -13974,10 +14586,11 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/animation-play-state"
 	},
 		"animation-timing-function": {
-		syntax: "<single-timing-function>#",
+		syntax: "<timing-function>#",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -13989,9 +14602,26 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/animation-timing-function"
 	},
 		appearance: appearance,
+		"aspect-ratio": {
+		syntax: "auto | <ratio>",
+		media: "all",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Basic User Interface"
+		],
+		initial: "auto",
+		appliesto: "allElementsExceptInlineBoxesAndInternalRubyOrTableBoxes",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/aspect-ratio"
+	},
 		azimuth: azimuth,
 		"backdrop-filter": {
 		syntax: "none | <filter-function-list>",
@@ -14006,7 +14636,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/backdrop-filter"
 	},
 		"backface-visibility": {
 		syntax: "visible | hidden",
@@ -14021,7 +14652,8 @@
 		appliesto: "transformableElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/backface-visibility"
 	},
 		background: background,
 		"background-attachment": {
@@ -14042,7 +14674,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-attachment"
 	},
 		"background-blend-mode": {
 		syntax: "<blend-mode>#",
@@ -14062,7 +14695,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-blend-mode"
 	},
 		"background-clip": {
 		syntax: "<box>#",
@@ -14082,7 +14716,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-clip"
 	},
 		"background-color": {
 		syntax: "<color>",
@@ -14102,7 +14737,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-color"
 	},
 		"background-image": {
 		syntax: "<bg-image>#",
@@ -14122,7 +14758,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-image"
 	},
 		"background-origin": {
 		syntax: "<box>#",
@@ -14142,7 +14779,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-origin"
 	},
 		"background-position": {
 		syntax: "<bg-position>#",
@@ -14162,7 +14800,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-position"
 	},
 		"background-position-x": {
 		syntax: "[ center | [ left | right | x-start | x-end ]? <length-percentage>? ]#",
@@ -14177,7 +14816,8 @@
 		appliesto: "allElements",
 		computed: "listEachItemConsistingOfAbsoluteLengthPercentageAndOrigin",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-position-x"
 	},
 		"background-position-y": {
 		syntax: "[ center | [ top | bottom | y-start | y-end ]? <length-percentage>? ]#",
@@ -14192,7 +14832,8 @@
 		appliesto: "allElements",
 		computed: "listEachItemConsistingOfAbsoluteLengthPercentageAndOrigin",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-position-y"
 	},
 		"background-repeat": {
 		syntax: "<repeat-style>#",
@@ -14212,7 +14853,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-repeat"
 	},
 		"background-size": {
 		syntax: "<bg-size>#",
@@ -14232,7 +14874,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/background-size"
 	},
 		"block-overflow": {
 		syntax: "clip | ellipsis | <string>",
@@ -14262,11 +14905,12 @@
 		appliesto: "sameAsWidthAndHeight",
 		computed: "sameAsWidthAndHeight",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/block-size"
 	},
 		border: border,
-		"border-block-end": {
-		syntax: "<'border-width'> || <'border-style'> || <'color'>",
+		"border-block": {
+		syntax: "<'border-top-width'> || <'border-top-style'> || <'color'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14275,21 +14919,22 @@
 			"CSS Logical Properties"
 		],
 		initial: [
-			"border-width",
-			"border-style",
-			"color"
+			"border-top-width",
+			"border-top-style",
+			"border-top-color"
 		],
 		appliesto: "allElements",
 		computed: [
-			"border-width",
-			"border-style",
-			"border-block-end-color"
+			"border-top-width",
+			"border-top-style",
+			"border-top-color"
 		],
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block"
 	},
-		"border-block-end-color": {
-		syntax: "<'color'>",
+		"border-block-color": {
+		syntax: "<'border-top-color'>{1,2}",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14301,10 +14946,11 @@
 		appliesto: "allElements",
 		computed: "computedColor",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-color"
 	},
-		"border-block-end-style": {
-		syntax: "<'border-style'>",
+		"border-block-style": {
+		syntax: "<'border-top-style'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14316,10 +14962,11 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-style"
 	},
-		"border-block-end-width": {
-		syntax: "<'border-width'>",
+		"border-block-width": {
+		syntax: "<'border-top-width'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14331,10 +14978,83 @@
 		appliesto: "allElements",
 		computed: "absoluteLengthZeroIfBorderStyleNoneOrHidden",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-width"
+	},
+		"border-block-end": {
+		syntax: "<'border-top-width'> || <'border-top-style'> || <'color'>",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: [
+			"border-top-width",
+			"border-top-style",
+			"border-top-color"
+		],
+		appliesto: "allElements",
+		computed: [
+			"border-top-width",
+			"border-top-style",
+			"border-top-color"
+		],
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-end"
+	},
+		"border-block-end-color": {
+		syntax: "<'border-top-color'>",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "currentcolor",
+		appliesto: "allElements",
+		computed: "computedColor",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-end-color"
+	},
+		"border-block-end-style": {
+		syntax: "<'border-top-style'>",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "none",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-end-style"
+	},
+		"border-block-end-width": {
+		syntax: "<'border-top-width'>",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "logicalWidthOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "medium",
+		appliesto: "allElements",
+		computed: "absoluteLengthZeroIfBorderStyleNoneOrHidden",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-end-width"
 	},
 		"border-block-start": {
-		syntax: "<'border-width'> || <'border-style'> || <'color'>",
+		syntax: "<'border-top-width'> || <'border-top-style'> || <'color'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14354,10 +15074,11 @@
 			"border-block-start-color"
 		],
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-start"
 	},
 		"border-block-start-color": {
-		syntax: "<'color'>",
+		syntax: "<'border-top-color'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14369,10 +15090,11 @@
 		appliesto: "allElements",
 		computed: "computedColor",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-start-color"
 	},
 		"border-block-start-style": {
-		syntax: "<'border-style'>",
+		syntax: "<'border-top-style'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14384,10 +15106,11 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-start-style"
 	},
 		"border-block-start-width": {
-		syntax: "<'border-width'>",
+		syntax: "<'border-top-width'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14399,10 +15122,11 @@
 		appliesto: "allElements",
 		computed: "absoluteLengthZeroIfBorderStyleNoneOrHidden",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-block-start-width"
 	},
 		"border-bottom": {
-		syntax: "<br-width> || <br-style> || <color>",
+		syntax: "<line-width> || <line-style> || <color>",
 		media: "visual",
 		inherited: false,
 		animationType: [
@@ -14429,10 +15153,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-bottom"
 	},
 		"border-bottom-color": {
-		syntax: "<color>",
+		syntax: "<'border-top-color'>",
 		media: "visual",
 		inherited: false,
 		animationType: "color",
@@ -14447,7 +15172,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-bottom-color"
 	},
 		"border-bottom-left-radius": {
 		syntax: "<length-percentage>{1,2}",
@@ -14465,7 +15191,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-bottom-left-radius"
 	},
 		"border-bottom-right-radius": {
 		syntax: "<length-percentage>{1,2}",
@@ -14483,10 +15210,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-bottom-right-radius"
 	},
 		"border-bottom-style": {
-		syntax: "<br-style>",
+		syntax: "<line-style>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14501,10 +15229,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-bottom-style"
 	},
 		"border-bottom-width": {
-		syntax: "<br-width>",
+		syntax: "<line-width>",
 		media: "visual",
 		inherited: false,
 		animationType: "length",
@@ -14519,7 +15248,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-bottom-width"
 	},
 		"border-collapse": {
 		syntax: "collapse | separate",
@@ -14534,7 +15264,8 @@
 		appliesto: "tableElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-collapse"
 	},
 		"border-color": {
 		syntax: "<color>{1,4}",
@@ -14567,7 +15298,46 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-color"
+	},
+		"border-end-end-radius": {
+		syntax: "<length-percentage>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "referToDimensionOfBorderBox",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "0",
+		appliesto: "allElementsUAsNotRequiredWhenCollapse",
+		computed: "twoAbsoluteLengthOrPercentages",
+		order: "uniqueOrder",
+		alsoAppliesTo: [
+			"::first-letter"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-end-end-radius"
+	},
+		"border-end-start-radius": {
+		syntax: "<length-percentage>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "referToDimensionOfBorderBox",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "0",
+		appliesto: "allElementsUAsNotRequiredWhenCollapse",
+		computed: "twoAbsoluteLengthOrPercentages",
+		order: "uniqueOrder",
+		alsoAppliesTo: [
+			"::first-letter"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-end-start-radius"
 	},
 		"border-image": {
 		syntax: "<'border-image-source'> || <'border-image-slice'> [ / <'border-image-width'> | / <'border-image-width'>? / <'border-image-outset'> ]? || <'border-image-repeat'>",
@@ -14600,13 +15370,14 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-image"
 	},
 		"border-image-outset": {
 		syntax: "[ <length> | <number> ]{1,4}",
 		media: "visual",
 		inherited: false,
-		animationType: "discrete",
+		animationType: "byComputedValueType",
 		percentages: "no",
 		groups: [
 			"CSS Backgrounds and Borders"
@@ -14618,7 +15389,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-image-outset"
 	},
 		"border-image-repeat": {
 		syntax: "[ stretch | repeat | round | space ]{1,2}",
@@ -14636,13 +15408,14 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-image-repeat"
 	},
 		"border-image-slice": {
 		syntax: "<number-percentage>{1,4} && fill?",
 		media: "visual",
 		inherited: false,
-		animationType: "discrete",
+		animationType: "byComputedValueType",
 		percentages: "referToSizeOfBorderImage",
 		groups: [
 			"CSS Backgrounds and Borders"
@@ -14654,7 +15427,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-image-slice"
 	},
 		"border-image-source": {
 		syntax: "none | <image>",
@@ -14672,13 +15446,14 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-image-source"
 	},
 		"border-image-width": {
 		syntax: "[ <length-percentage> | <number> | auto ]{1,4}",
 		media: "visual",
 		inherited: false,
-		animationType: "discrete",
+		animationType: "byComputedValueType",
 		percentages: "referToWidthOrHeightOfBorderImageArea",
 		groups: [
 			"CSS Backgrounds and Borders"
@@ -14690,10 +15465,35 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-image-width"
+	},
+		"border-inline": {
+		syntax: "<'border-top-width'> || <'border-top-style'> || <'color'>",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: [
+			"border-top-width",
+			"border-top-style",
+			"border-top-color"
+		],
+		appliesto: "allElements",
+		computed: [
+			"border-top-width",
+			"border-top-style",
+			"border-top-color"
+		],
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline"
 	},
 		"border-inline-end": {
-		syntax: "<'border-width'> || <'border-style'> || <'color'>",
+		syntax: "<'border-top-width'> || <'border-top-style'> || <'color'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14713,10 +15513,11 @@
 			"border-inline-end-color"
 		],
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-end"
 	},
-		"border-inline-end-color": {
-		syntax: "<'color'>",
+		"border-inline-color": {
+		syntax: "<'border-top-color'>{1,2}",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14728,10 +15529,11 @@
 		appliesto: "allElements",
 		computed: "computedColor",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-color"
 	},
-		"border-inline-end-style": {
-		syntax: "<'border-style'>",
+		"border-inline-style": {
+		syntax: "<'border-top-style'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14743,10 +15545,11 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-style"
 	},
-		"border-inline-end-width": {
-		syntax: "<'border-width'>",
+		"border-inline-width": {
+		syntax: "<'border-top-width'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14758,10 +15561,59 @@
 		appliesto: "allElements",
 		computed: "absoluteLengthZeroIfBorderStyleNoneOrHidden",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-width"
+	},
+		"border-inline-end-color": {
+		syntax: "<'border-top-color'>",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "currentcolor",
+		appliesto: "allElements",
+		computed: "computedColor",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-end-color"
+	},
+		"border-inline-end-style": {
+		syntax: "<'border-top-style'>",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "none",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-end-style"
+	},
+		"border-inline-end-width": {
+		syntax: "<'border-top-width'>",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "logicalWidthOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "medium",
+		appliesto: "allElements",
+		computed: "absoluteLengthZeroIfBorderStyleNoneOrHidden",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-end-width"
 	},
 		"border-inline-start": {
-		syntax: "<'border-width'> || <'border-style'> || <'color'>",
+		syntax: "<'border-top-width'> || <'border-top-style'> || <'color'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14781,10 +15633,11 @@
 			"border-inline-start-color"
 		],
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-start"
 	},
 		"border-inline-start-color": {
-		syntax: "<'color'>",
+		syntax: "<'border-top-color'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14796,10 +15649,11 @@
 		appliesto: "allElements",
 		computed: "computedColor",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-start-color"
 	},
 		"border-inline-start-style": {
-		syntax: "<'border-style'>",
+		syntax: "<'border-top-style'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14811,10 +15665,11 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-start-style"
 	},
 		"border-inline-start-width": {
-		syntax: "<'border-width'>",
+		syntax: "<'border-top-width'>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14826,10 +15681,11 @@
 		appliesto: "allElements",
 		computed: "absoluteLengthZeroIfBorderStyleNoneOrHidden",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-inline-start-width"
 	},
 		"border-left": {
-		syntax: "<br-width> || <br-style> || <color>",
+		syntax: "<line-width> || <line-style> || <color>",
 		media: "visual",
 		inherited: false,
 		animationType: [
@@ -14856,7 +15712,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-left"
 	},
 		"border-left-color": {
 		syntax: "<color>",
@@ -14874,10 +15731,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-left-color"
 	},
 		"border-left-style": {
-		syntax: "<br-style>",
+		syntax: "<line-style>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -14892,10 +15750,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-left-style"
 	},
 		"border-left-width": {
-		syntax: "<br-width>",
+		syntax: "<line-width>",
 		media: "visual",
 		inherited: false,
 		animationType: "length",
@@ -14910,7 +15769,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-left-width"
 	},
 		"border-radius": {
 		syntax: "<length-percentage>{1,4} [ / <length-percentage>{1,4} ]?",
@@ -14943,10 +15803,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-radius"
 	},
 		"border-right": {
-		syntax: "<br-width> || <br-style> || <color>",
+		syntax: "<line-width> || <line-style> || <color>",
 		media: "visual",
 		inherited: false,
 		animationType: [
@@ -14973,7 +15834,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-right"
 	},
 		"border-right-color": {
 		syntax: "<color>",
@@ -14991,10 +15853,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-right-color"
 	},
 		"border-right-style": {
-		syntax: "<br-style>",
+		syntax: "<line-style>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -15009,10 +15872,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-right-style"
 	},
 		"border-right-width": {
-		syntax: "<br-width>",
+		syntax: "<line-width>",
 		media: "visual",
 		inherited: false,
 		animationType: "length",
@@ -15027,7 +15891,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-right-width"
 	},
 		"border-spacing": {
 		syntax: "<length> <length>?",
@@ -15042,10 +15907,49 @@
 		appliesto: "tableElements",
 		computed: "twoAbsoluteLengths",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-spacing"
+	},
+		"border-start-end-radius": {
+		syntax: "<length-percentage>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "referToDimensionOfBorderBox",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "0",
+		appliesto: "allElementsUAsNotRequiredWhenCollapse",
+		computed: "twoAbsoluteLengthOrPercentages",
+		order: "uniqueOrder",
+		alsoAppliesTo: [
+			"::first-letter"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-start-end-radius"
+	},
+		"border-start-start-radius": {
+		syntax: "<length-percentage>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "referToDimensionOfBorderBox",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "0",
+		appliesto: "allElementsUAsNotRequiredWhenCollapse",
+		computed: "twoAbsoluteLengthOrPercentages",
+		order: "uniqueOrder",
+		alsoAppliesTo: [
+			"::first-letter"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-start-start-radius"
 	},
 		"border-style": {
-		syntax: "<br-style>{1,4}",
+		syntax: "<line-style>{1,4}",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -15070,10 +15974,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-style"
 	},
 		"border-top": {
-		syntax: "<br-width> || <br-style> || <color>",
+		syntax: "<line-width> || <line-style> || <color>",
 		media: "visual",
 		inherited: false,
 		animationType: [
@@ -15100,7 +16005,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-top"
 	},
 		"border-top-color": {
 		syntax: "<color>",
@@ -15118,7 +16024,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-top-color"
 	},
 		"border-top-left-radius": {
 		syntax: "<length-percentage>{1,2}",
@@ -15136,7 +16043,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-top-left-radius"
 	},
 		"border-top-right-radius": {
 		syntax: "<length-percentage>{1,2}",
@@ -15154,10 +16062,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-top-right-radius"
 	},
 		"border-top-style": {
-		syntax: "<br-style>",
+		syntax: "<line-style>",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -15172,10 +16081,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-top-style"
 	},
 		"border-top-width": {
-		syntax: "<br-width>",
+		syntax: "<line-width>",
 		media: "visual",
 		inherited: false,
 		animationType: "length",
@@ -15190,10 +16100,11 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-top-width"
 	},
 		"border-width": {
-		syntax: "<br-width>{1,4}",
+		syntax: "<line-width>{1,4}",
 		media: "visual",
 		inherited: false,
 		animationType: [
@@ -15223,7 +16134,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/border-width"
 	},
 		bottom: bottom,
 		"box-align": {
@@ -15240,7 +16152,8 @@
 		appliesto: "elementsWithDisplayBoxOrInlineBox",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-align"
 	},
 		"box-decoration-break": {
 		syntax: "slice | clone",
@@ -15255,7 +16168,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-decoration-break"
 	},
 		"box-direction": {
 		syntax: "normal | reverse | inherit",
@@ -15271,7 +16185,8 @@
 		appliesto: "elementsWithDisplayBoxOrInlineBox",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-direction"
 	},
 		"box-flex": {
 		syntax: "<number>",
@@ -15287,7 +16202,8 @@
 		appliesto: "directChildrenOfElementsWithDisplayMozBoxMozInlineBox",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-flex"
 	},
 		"box-flex-group": {
 		syntax: "<integer>",
@@ -15303,7 +16219,8 @@
 		appliesto: "inFlowChildrenOfBoxElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-flex-group"
 	},
 		"box-lines": {
 		syntax: "single | multiple",
@@ -15319,7 +16236,8 @@
 		appliesto: "boxElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-lines"
 	},
 		"box-ordinal-group": {
 		syntax: "<integer>",
@@ -15335,7 +16253,8 @@
 		appliesto: "childrenOfBoxElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-ordinal-group"
 	},
 		"box-orient": {
 		syntax: "horizontal | vertical | inline-axis | block-axis | inherit",
@@ -15351,7 +16270,8 @@
 		appliesto: "elementsWithDisplayBoxOrInlineBox",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-orient"
 	},
 		"box-pack": {
 		syntax: "start | center | end | justify",
@@ -15367,7 +16287,8 @@
 		appliesto: "elementsWithDisplayMozBoxMozInlineBox",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-pack"
 	},
 		"box-shadow": {
 		syntax: "none | <shadow>#",
@@ -15385,7 +16306,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-shadow"
 	},
 		"box-sizing": {
 		syntax: "content-box | border-box",
@@ -15400,11 +16322,12 @@
 		appliesto: "allElementsAcceptingWidthOrHeight",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/box-sizing"
 	},
 		"break-after": {
-		syntax: "auto | avoid | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region",
-		media: "paged",
+		syntax: "auto | avoid | always | all | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region",
+		media: "visual",
 		inherited: false,
 		animationType: "discrete",
 		percentages: "no",
@@ -15415,11 +16338,12 @@
 		appliesto: "blockLevelElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/break-after"
 	},
 		"break-before": {
-		syntax: "auto | avoid | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region",
-		media: "paged",
+		syntax: "auto | avoid | always | all | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region",
+		media: "visual",
 		inherited: false,
 		animationType: "discrete",
 		percentages: "no",
@@ -15430,11 +16354,12 @@
 		appliesto: "blockLevelElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/break-before"
 	},
 		"break-inside": {
 		syntax: "auto | avoid | avoid-page | avoid-column | avoid-region",
-		media: "paged",
+		media: "visual",
 		inherited: false,
 		animationType: "discrete",
 		percentages: "no",
@@ -15445,7 +16370,8 @@
 		appliesto: "blockLevelElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/break-inside"
 	},
 		"caption-side": {
 		syntax: "top | bottom | block-start | block-end | inline-start | inline-end",
@@ -15460,7 +16386,8 @@
 		appliesto: "tableCaptionElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/caption-side"
 	},
 		"caret-color": {
 		syntax: "auto | <color>",
@@ -15475,7 +16402,8 @@
 		appliesto: "allElements",
 		computed: "asAutoOrColor",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/caret-color"
 	},
 		clear: clear,
 		clip: clip,
@@ -15492,7 +16420,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecifiedURLsAbsolute",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/clip-path"
 	},
 		color: color,
 		"color-adjust": {
@@ -15508,7 +16437,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/color-adjust"
 	},
 		"column-count": {
 		syntax: "<integer> | auto",
@@ -15523,7 +16453,8 @@
 		appliesto: "blockContainersExceptTableWrappers",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/column-count"
 	},
 		"column-fill": {
 		syntax: "auto | balance | balance-all",
@@ -15538,7 +16469,8 @@
 		appliesto: "multicolElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/column-fill"
 	},
 		"column-gap": {
 		syntax: "normal | <length-percentage>",
@@ -15553,7 +16485,8 @@
 		appliesto: "multiColumnElementsFlexContainersGridContainers",
 		computed: "asSpecifiedWithLengthsAbsoluteAndNormalComputingToZeroExceptMultiColumn",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/column-gap"
 	},
 		"column-rule": {
 		syntax: "<'column-rule-width'> || <'column-rule-style'> || <'column-rule-color'>",
@@ -15580,7 +16513,8 @@
 			"column-rule-width"
 		],
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/column-rule"
 	},
 		"column-rule-color": {
 		syntax: "<color>",
@@ -15595,7 +16529,8 @@
 		appliesto: "multicolElements",
 		computed: "computedColor",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/column-rule-color"
 	},
 		"column-rule-style": {
 		syntax: "<'border-style'>",
@@ -15610,7 +16545,8 @@
 		appliesto: "multicolElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/column-rule-style"
 	},
 		"column-rule-width": {
 		syntax: "<'border-width'>",
@@ -15625,7 +16561,8 @@
 		appliesto: "multicolElements",
 		computed: "absoluteLength0IfColumnRuleStyleNoneOrHidden",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/column-rule-width"
 	},
 		"column-span": {
 		syntax: "none | all",
@@ -15640,7 +16577,8 @@
 		appliesto: "inFlowBlockLevelElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/column-span"
 	},
 		"column-width": {
 		syntax: "<length> | auto",
@@ -15655,7 +16593,8 @@
 		appliesto: "blockContainersExceptTableWrappers",
 		computed: "absoluteLengthZeroOrLarger",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/column-width"
 	},
 		columns: columns,
 		contain: contain,
@@ -15673,7 +16612,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/counter-increment"
 	},
 		"counter-reset": {
 		syntax: "[ <custom-ident> <integer>? ]+ | none",
@@ -15688,7 +16628,24 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/counter-reset"
+	},
+		"counter-set": {
+		syntax: "[ <custom-ident> <integer>? ]+ | none",
+		media: "all",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Counter Styles"
+		],
+		initial: "none",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/counter-set"
 	},
 		cursor: cursor,
 		direction: direction,
@@ -15706,7 +16663,8 @@
 		appliesto: "tableCellElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/empty-cells"
 	},
 		filter: filter,
 		flex: flex,
@@ -15723,7 +16681,8 @@
 		appliesto: "flexItemsAndInFlowPseudos",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "lengthOrPercentageBeforeKeywordIfBothPresent",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/flex-basis"
 	},
 		"flex-direction": {
 		syntax: "row | row-reverse | column | column-reverse",
@@ -15738,7 +16697,8 @@
 		appliesto: "flexContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/flex-direction"
 	},
 		"flex-flow": {
 		syntax: "<'flex-direction'> || <'flex-wrap'>",
@@ -15759,7 +16719,8 @@
 			"flex-wrap"
 		],
 		order: "orderOfAppearance",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/flex-flow"
 	},
 		"flex-grow": {
 		syntax: "<number>",
@@ -15774,7 +16735,8 @@
 		appliesto: "flexItemsAndInFlowPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/flex-grow"
 	},
 		"flex-shrink": {
 		syntax: "<number>",
@@ -15789,7 +16751,8 @@
 		appliesto: "flexItemsAndInFlowPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/flex-shrink"
 	},
 		"flex-wrap": {
 		syntax: "nowrap | wrap | wrap-reverse",
@@ -15804,7 +16767,8 @@
 		appliesto: "flexContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/flex-wrap"
 	},
 		float: float,
 		font: font,
@@ -15826,7 +16790,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-family"
 	},
 		"font-feature-settings": {
 		syntax: "normal | <feature-tag-value>#",
@@ -15846,7 +16811,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-feature-settings"
 	},
 		"font-kerning": {
 		syntax: "auto | normal | none",
@@ -15866,7 +16832,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-kerning"
 	},
 		"font-language-override": {
 		syntax: "normal | <string>",
@@ -15886,7 +16853,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-language-override"
 	},
 		"font-optical-sizing": {
 		syntax: "auto | none",
@@ -15906,7 +16874,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-optical-sizing"
 	},
 		"font-variation-settings": {
 		syntax: "normal | [ <string> <number> ]#",
@@ -15926,7 +16895,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-variation-settings"
 	},
 		"font-size": {
 		syntax: "<absolute-size> | <relative-size> | <length-percentage>",
@@ -15946,7 +16916,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-size"
 	},
 		"font-size-adjust": {
 		syntax: "none | <number>",
@@ -15966,7 +16937,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-size-adjust"
 	},
 		"font-stretch": {
 		syntax: "<font-stretch-absolute>",
@@ -15986,7 +16958,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-stretch"
 	},
 		"font-style": {
 		syntax: "normal | italic | oblique <angle>?",
@@ -16006,7 +16979,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-style"
 	},
 		"font-synthesis": {
 		syntax: "none | [ weight || style ]",
@@ -16026,7 +17000,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-synthesis"
 	},
 		"font-variant": {
 		syntax: "normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> || stylistic( <feature-value-name> ) || historical-forms || styleset( <feature-value-name># ) || character-variant( <feature-value-name># ) || swash( <feature-value-name> ) || ornaments( <feature-value-name> ) || annotation( <feature-value-name> ) || [ small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps ] || <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero || <east-asian-variant-values> || <east-asian-width-values> || ruby ]",
@@ -16046,7 +17021,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-variant"
 	},
 		"font-variant-alternates": {
 		syntax: "normal | [ stylistic( <feature-value-name> ) || historical-forms || styleset( <feature-value-name># ) || character-variant( <feature-value-name># ) || swash( <feature-value-name> ) || ornaments( <feature-value-name> ) || annotation( <feature-value-name> ) ]",
@@ -16066,7 +17042,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-variant-alternates"
 	},
 		"font-variant-caps": {
 		syntax: "normal | small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps",
@@ -16086,7 +17063,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-variant-caps"
 	},
 		"font-variant-east-asian": {
 		syntax: "normal | [ <east-asian-variant-values> || <east-asian-width-values> || ruby ]",
@@ -16106,7 +17084,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-variant-east-asian"
 	},
 		"font-variant-ligatures": {
 		syntax: "normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> ]",
@@ -16126,7 +17105,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-variant-ligatures"
 	},
 		"font-variant-numeric": {
 		syntax: "normal | [ <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero ]",
@@ -16146,7 +17126,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-variant-numeric"
 	},
 		"font-variant-position": {
 		syntax: "normal | sub | super",
@@ -16166,7 +17147,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-variant-position"
 	},
 		"font-weight": {
 		syntax: "<font-weight-absolute> | bolder | lighter",
@@ -16186,7 +17168,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/font-weight"
 	},
 		gap: gap,
 		grid: grid,
@@ -16213,7 +17196,8 @@
 			"grid-column-end"
 		],
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-area"
 	},
 		"grid-auto-columns": {
 		syntax: "<track-size>+",
@@ -16228,7 +17212,8 @@
 		appliesto: "gridContainers",
 		computed: "percentageAsSpecifiedOrAbsoluteLength",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-auto-columns"
 	},
 		"grid-auto-flow": {
 		syntax: "[ row | column ] || dense",
@@ -16243,7 +17228,8 @@
 		appliesto: "gridContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-auto-flow"
 	},
 		"grid-auto-rows": {
 		syntax: "<track-size>+",
@@ -16258,7 +17244,8 @@
 		appliesto: "gridContainers",
 		computed: "percentageAsSpecifiedOrAbsoluteLength",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-auto-rows"
 	},
 		"grid-column": {
 		syntax: "<grid-line> [ / <grid-line> ]?",
@@ -16279,7 +17266,8 @@
 			"grid-column-end"
 		],
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-column"
 	},
 		"grid-column-end": {
 		syntax: "<grid-line>",
@@ -16294,7 +17282,8 @@
 		appliesto: "gridItemsAndBoxesWithinGridContainer",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-column-end"
 	},
 		"grid-column-gap": {
 		syntax: "<length-percentage>",
@@ -16309,7 +17298,8 @@
 		appliesto: "gridContainers",
 		computed: "percentageAsSpecifiedOrAbsoluteLength",
 		order: "uniqueOrder",
-		status: "obsolete"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/column-gap"
 	},
 		"grid-column-start": {
 		syntax: "<grid-line>",
@@ -16324,7 +17314,8 @@
 		appliesto: "gridItemsAndBoxesWithinGridContainer",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-column-start"
 	},
 		"grid-gap": {
 		syntax: "<'grid-row-gap'> <'grid-column-gap'>?",
@@ -16348,7 +17339,8 @@
 			"grid-column-gap"
 		],
 		order: "uniqueOrder",
-		status: "obsolete"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/gap"
 	},
 		"grid-row": {
 		syntax: "<grid-line> [ / <grid-line> ]?",
@@ -16369,7 +17361,8 @@
 			"grid-row-end"
 		],
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-row"
 	},
 		"grid-row-end": {
 		syntax: "<grid-line>",
@@ -16384,7 +17377,8 @@
 		appliesto: "gridItemsAndBoxesWithinGridContainer",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-row-end"
 	},
 		"grid-row-gap": {
 		syntax: "<length-percentage>",
@@ -16399,7 +17393,8 @@
 		appliesto: "gridContainers",
 		computed: "percentageAsSpecifiedOrAbsoluteLength",
 		order: "uniqueOrder",
-		status: "obsolete"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/row-gap"
 	},
 		"grid-row-start": {
 		syntax: "<grid-line>",
@@ -16414,7 +17409,8 @@
 		appliesto: "gridItemsAndBoxesWithinGridContainer",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-row-start"
 	},
 		"grid-template": {
 		syntax: "none | [ <'grid-template-rows'> / <'grid-template-columns'> ] | [ <line-names>? <string> <track-size>? <line-names>? ]+ [ / <explicit-track-list> ]?",
@@ -16440,7 +17436,8 @@
 			"grid-template-areas"
 		],
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-template"
 	},
 		"grid-template-areas": {
 		syntax: "none | <string>+",
@@ -16455,13 +17452,14 @@
 		appliesto: "gridContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-template-areas"
 	},
 		"grid-template-columns": {
-		syntax: "none | <track-list> | <auto-track-list>",
+		syntax: "none | <track-list> | <auto-track-list> | subgrid <line-name-list>?",
 		media: "visual",
 		inherited: false,
-		animationType: "discrete",
+		animationType: "simpleListOfLpcDifferenceLpc",
 		percentages: "referToDimensionOfContentArea",
 		groups: [
 			"CSS Grid Layout"
@@ -16470,13 +17468,14 @@
 		appliesto: "gridContainers",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-template-columns"
 	},
 		"grid-template-rows": {
-		syntax: "none | <track-list> | <auto-track-list>",
+		syntax: "none | <track-list> | <auto-track-list> | subgrid <line-name-list>?",
 		media: "visual",
 		inherited: false,
-		animationType: "discrete",
+		animationType: "simpleListOfLpcDifferenceLpc",
 		percentages: "referToDimensionOfContentArea",
 		groups: [
 			"CSS Grid Layout"
@@ -16485,7 +17484,8 @@
 		appliesto: "gridContainers",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/grid-template-rows"
 	},
 		"hanging-punctuation": {
 		syntax: "none | [ first || [ force-end | allow-end ] || last ]",
@@ -16500,7 +17500,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/hanging-punctuation"
 	},
 		height: height,
 		hyphens: hyphens,
@@ -16517,7 +17518,8 @@
 		appliesto: "allElements",
 		computed: "angleRoundedToNextQuarter",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/image-orientation"
 	},
 		"image-rendering": {
 		syntax: "auto | crisp-edges | pixelated",
@@ -16532,7 +17534,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/image-rendering"
 	},
 		"image-resolution": {
 		syntax: "[ from-image || <resolution> ] && snap?",
@@ -16562,7 +17565,8 @@
 		appliesto: "textFields",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "obsolete"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/ime-mode"
 	},
 		"initial-letter": {
 		syntax: "normal | [ <number> <integer>? ]",
@@ -16577,7 +17581,8 @@
 		appliesto: "firstLetterPseudoElementsAndInlineLevelFirstChildren",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/initial-letter"
 	},
 		"initial-letter-align": {
 		syntax: "[ auto | alphabetic | hanging | ideographic ]",
@@ -16592,7 +17597,8 @@
 		appliesto: "firstLetterPseudoElementsAndInlineLevelFirstChildren",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/initial-letter-align"
 	},
 		"inline-size": {
 		syntax: "<'width'>",
@@ -16607,7 +17613,105 @@
 		appliesto: "sameAsWidthAndHeight",
 		computed: "sameAsWidthAndHeight",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/inline-size"
+	},
+		inset: inset,
+		"inset-block": {
+		syntax: "<'top'>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "logicalHeightOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "auto",
+		appliesto: "positionedElements",
+		computed: "sameAsBoxOffsets",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/inset-block"
+	},
+		"inset-block-end": {
+		syntax: "<'top'>",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "logicalHeightOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "auto",
+		appliesto: "positionedElements",
+		computed: "sameAsBoxOffsets",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/inset-block-end"
+	},
+		"inset-block-start": {
+		syntax: "<'top'>",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "logicalHeightOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "auto",
+		appliesto: "positionedElements",
+		computed: "sameAsBoxOffsets",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/inset-block-start"
+	},
+		"inset-inline": {
+		syntax: "<'top'>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "logicalWidthOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "auto",
+		appliesto: "positionedElements",
+		computed: "sameAsBoxOffsets",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/inset-inline"
+	},
+		"inset-inline-end": {
+		syntax: "<'top'>",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "logicalWidthOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "auto",
+		appliesto: "positionedElements",
+		computed: "sameAsBoxOffsets",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/inset-inline-end"
+	},
+		"inset-inline-start": {
+		syntax: "<'top'>",
+		media: "visual",
+		inherited: false,
+		animationType: "lpc",
+		percentages: "logicalWidthOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "auto",
+		appliesto: "positionedElements",
+		computed: "sameAsBoxOffsets",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/inset-inline-start"
 	},
 		isolation: isolation,
 		"justify-content": {
@@ -16617,13 +17721,14 @@
 		animationType: "discrete",
 		percentages: "no",
 		groups: [
-			"CSS Flexible Box Layout"
+			"CSS Box Alignment"
 		],
 		initial: "normal",
 		appliesto: "flexContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/justify-content"
 	},
 		"justify-items": {
 		syntax: "normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | legacy | legacy && [ left | right | center ]",
@@ -16638,7 +17743,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/justify-items"
 	},
 		"justify-self": {
 		syntax: "auto | normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ]",
@@ -16653,7 +17759,8 @@
 		appliesto: "blockLevelBoxesAndAbsolutelyPositionedBoxesAndGridItems",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/justify-self"
 	},
 		left: left,
 		"letter-spacing": {
@@ -16673,10 +17780,11 @@
 			"::first-letter",
 			"::first-line"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/letter-spacing"
 	},
 		"line-break": {
-		syntax: "auto | loose | normal | strict",
+		syntax: "auto | loose | normal | strict | anywhere",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -16688,7 +17796,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/line-break"
 	},
 		"line-clamp": {
 		syntax: "none | <integer>",
@@ -16723,7 +17832,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/line-height"
 	},
 		"line-height-step": {
 		syntax: "<length>",
@@ -16735,10 +17845,11 @@
 			"CSS Fonts"
 		],
 		initial: "0",
-		appliesto: "blockContainerElements",
+		appliesto: "blockContainers",
 		computed: "absoluteLength",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/line-height-step"
 	},
 		"list-style": {
 		syntax: "<'list-style-type'> || <'list-style-position'> || <'list-style-image'>",
@@ -16761,7 +17872,8 @@
 			"list-style-type"
 		],
 		order: "orderOfAppearance",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/list-style"
 	},
 		"list-style-image": {
 		syntax: "<url> | none",
@@ -16776,7 +17888,8 @@
 		appliesto: "listItems",
 		computed: "noneOrImageWithAbsoluteURI",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/list-style-image"
 	},
 		"list-style-position": {
 		syntax: "inside | outside",
@@ -16791,7 +17904,8 @@
 		appliesto: "listItems",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/list-style-position"
 	},
 		"list-style-type": {
 		syntax: "<counter-style> | <string> | none",
@@ -16806,9 +17920,26 @@
 		appliesto: "listItems",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/list-style-type"
 	},
 		margin: margin,
+		"margin-block": {
+		syntax: "<'margin-left'>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "dependsOnLayoutModel",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "0",
+		appliesto: "sameAsMargin",
+		computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin-block"
+	},
 		"margin-block-end": {
 		syntax: "<'margin-left'>",
 		media: "visual",
@@ -16822,7 +17953,8 @@
 		appliesto: "sameAsMargin",
 		computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin-block-end"
 	},
 		"margin-block-start": {
 		syntax: "<'margin-left'>",
@@ -16837,7 +17969,8 @@
 		appliesto: "sameAsMargin",
 		computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin-block-start"
 	},
 		"margin-bottom": {
 		syntax: "<length> | <percentage> | auto",
@@ -16855,7 +17988,24 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin-bottom"
+	},
+		"margin-inline": {
+		syntax: "<'margin-left'>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "dependsOnLayoutModel",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "0",
+		appliesto: "sameAsMargin",
+		computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin-inline"
 	},
 		"margin-inline-end": {
 		syntax: "<'margin-left'>",
@@ -16870,7 +18020,8 @@
 		appliesto: "sameAsMargin",
 		computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin-inline-end"
 	},
 		"margin-inline-start": {
 		syntax: "<'margin-left'>",
@@ -16885,7 +18036,8 @@
 		appliesto: "sameAsMargin",
 		computed: "lengthAbsolutePercentageAsSpecifiedOtherwiseAuto",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin-inline-start"
 	},
 		"margin-left": {
 		syntax: "<length> | <percentage> | auto",
@@ -16903,7 +18055,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin-left"
 	},
 		"margin-right": {
 		syntax: "<length> | <percentage> | auto",
@@ -16921,7 +18074,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin-right"
 	},
 		"margin-top": {
 		syntax: "<length> | <percentage> | auto",
@@ -16939,7 +18093,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/margin-top"
 	},
 		mask: mask,
 		"mask-border": {
@@ -16980,7 +18135,8 @@
 		],
 		order: "perGrammar",
 		stacking: true,
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-border"
 	},
 		"mask-border-mode": {
 		syntax: "luminance | alpha",
@@ -16995,7 +18151,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-border-mode"
 	},
 		"mask-border-outset": {
 		syntax: "[ <length> | <number> ]{1,4}",
@@ -17010,7 +18167,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-border-outset"
 	},
 		"mask-border-repeat": {
 		syntax: "[ stretch | repeat | round | space ]{1,2}",
@@ -17025,7 +18183,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-border-repeat"
 	},
 		"mask-border-slice": {
 		syntax: "<number-percentage>{1,4} fill?",
@@ -17040,7 +18199,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-border-slice"
 	},
 		"mask-border-source": {
 		syntax: "none | <image>",
@@ -17055,7 +18215,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecifiedURLsAbsolute",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-border-source"
 	},
 		"mask-border-width": {
 		syntax: "[ <length-percentage> | <number> | auto ]{1,4}",
@@ -17070,7 +18231,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-border-width"
 	},
 		"mask-clip": {
 		syntax: "[ <geometry-box> | no-clip ]#",
@@ -17085,7 +18247,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-clip"
 	},
 		"mask-composite": {
 		syntax: "<compositing-operator>#",
@@ -17100,7 +18263,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-composite"
 	},
 		"mask-image": {
 		syntax: "<mask-reference>#",
@@ -17115,7 +18279,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecifiedURLsAbsolute",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-image"
 	},
 		"mask-mode": {
 		syntax: "<masking-mode>#",
@@ -17130,7 +18295,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-mode"
 	},
 		"mask-origin": {
 		syntax: "<geometry-box>#",
@@ -17145,7 +18311,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-origin"
 	},
 		"mask-position": {
 		syntax: "<position>#",
@@ -17160,7 +18327,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "consistsOfTwoKeywordsForOriginAndOffsets",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-position"
 	},
 		"mask-repeat": {
 		syntax: "<repeat-style>#",
@@ -17175,7 +18343,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "consistsOfTwoDimensionKeywords",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-repeat"
 	},
 		"mask-size": {
 		syntax: "<bg-size>#",
@@ -17190,7 +18359,8 @@
 		appliesto: "allElementsSVGContainerElements",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-size"
 	},
 		"mask-type": {
 		syntax: "luminance | alpha",
@@ -17205,7 +18375,8 @@
 		appliesto: "maskElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mask-type"
 	},
 		"max-block-size": {
 		syntax: "<'max-width'>",
@@ -17220,7 +18391,8 @@
 		appliesto: "sameAsWidthAndHeight",
 		computed: "sameAsMaxWidthAndMaxHeight",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/max-block-size"
 	},
 		"max-height": {
 		syntax: "<length> | <percentage> | none | max-content | min-content | fit-content | fill-available",
@@ -17235,7 +18407,8 @@
 		appliesto: "allElementsButNonReplacedAndTableColumns",
 		computed: "percentageAsSpecifiedAbsoluteLengthOrNone",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/max-height"
 	},
 		"max-inline-size": {
 		syntax: "<'max-width'>",
@@ -17250,7 +18423,8 @@
 		appliesto: "sameAsWidthAndHeight",
 		computed: "sameAsMaxWidthAndMaxHeight",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/max-inline-size"
 	},
 		"max-lines": {
 		syntax: "none | <integer>",
@@ -17280,7 +18454,8 @@
 		appliesto: "allElementsButNonReplacedAndTableRows",
 		computed: "percentageAsSpecifiedAbsoluteLengthOrNone",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/max-width"
 	},
 		"min-block-size": {
 		syntax: "<'min-width'>",
@@ -17295,7 +18470,8 @@
 		appliesto: "sameAsWidthAndHeight",
 		computed: "sameAsMinWidthAndMinHeight",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/min-block-size"
 	},
 		"min-height": {
 		syntax: "<length> | <percentage> | auto | max-content | min-content | fit-content | fill-available",
@@ -17306,11 +18482,12 @@
 		groups: [
 			"CSS Box Model"
 		],
-		initial: "0",
+		initial: "auto",
 		appliesto: "allElementsButNonReplacedAndTableColumns",
 		computed: "percentageAsSpecifiedOrAbsoluteLength",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/min-height"
 	},
 		"min-inline-size": {
 		syntax: "<'min-width'>",
@@ -17325,7 +18502,8 @@
 		appliesto: "sameAsWidthAndHeight",
 		computed: "sameAsMinWidthAndMinHeight",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/min-inline-size"
 	},
 		"min-width": {
 		syntax: "<length> | <percentage> | auto | max-content | min-content | fit-content | fill-available",
@@ -17336,11 +18514,12 @@
 		groups: [
 			"CSS Box Model"
 		],
-		initial: "0",
+		initial: "auto",
 		appliesto: "allElementsButNonReplacedAndTableRows",
 		computed: "percentageAsSpecifiedOrAbsoluteLength",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/min-width"
 	},
 		"mix-blend-mode": {
 		syntax: "<blend-mode>",
@@ -17356,7 +18535,8 @@
 		computed: "asSpecified",
 		order: "uniqueOrder",
 		stacking: true,
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/mix-blend-mode"
 	},
 		"object-fit": {
 		syntax: "fill | contain | cover | none | scale-down",
@@ -17371,7 +18551,8 @@
 		appliesto: "replacedElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/object-fit"
 	},
 		"object-position": {
 		syntax: "<position>",
@@ -17386,7 +18567,8 @@
 		appliesto: "replacedElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/object-position"
 	},
 		offset: offset,
 		"offset-anchor": {
@@ -17396,73 +18578,13 @@
 		animationType: "position",
 		percentages: "relativeToWidthAndHeight",
 		groups: [
-			"CSS Motion"
+			"CSS Motion Path"
 		],
 		initial: "auto",
 		appliesto: "transformableElements",
 		computed: "forLengthAbsoluteValueOtherwisePercentage",
 		order: "perGrammar",
 		status: "experimental"
-	},
-		"offset-block-end": {
-		syntax: "<'left'>",
-		media: "visual",
-		inherited: false,
-		animationType: "discrete",
-		percentages: "logicalHeightOfContainingBlock",
-		groups: [
-			"CSS Logical Properties"
-		],
-		initial: "auto",
-		appliesto: "positionedElements",
-		computed: "sameAsBoxOffsets",
-		order: "uniqueOrder",
-		status: "standard"
-	},
-		"offset-block-start": {
-		syntax: "<'left'>",
-		media: "visual",
-		inherited: false,
-		animationType: "discrete",
-		percentages: "logicalHeightOfContainingBlock",
-		groups: [
-			"CSS Logical Properties"
-		],
-		initial: "auto",
-		appliesto: "positionedElements",
-		computed: "sameAsBoxOffsets",
-		order: "uniqueOrder",
-		status: "standard"
-	},
-		"offset-inline-end": {
-		syntax: "<'left'>",
-		media: "visual",
-		inherited: false,
-		animationType: "discrete",
-		percentages: "logicalWidthOfContainingBlock",
-		groups: [
-			"CSS Logical Properties"
-		],
-		initial: "auto",
-		appliesto: "positionedElements",
-		computed: "sameAsBoxOffsets",
-		order: "uniqueOrder",
-		status: "standard"
-	},
-		"offset-inline-start": {
-		syntax: "<'left'>",
-		media: "visual",
-		inherited: false,
-		animationType: "discrete",
-		percentages: "logicalWidthOfContainingBlock",
-		groups: [
-			"CSS Logical Properties"
-		],
-		initial: "auto",
-		appliesto: "positionedElements",
-		computed: "sameAsBoxOffsets",
-		order: "uniqueOrder",
-		status: "standard"
 	},
 		"offset-distance": {
 		syntax: "<length-percentage>",
@@ -17471,13 +18593,14 @@
 		animationType: "lpc",
 		percentages: "referToTotalPathLength",
 		groups: [
-			"CSS Motion"
+			"CSS Motion Path"
 		],
 		initial: "0",
 		appliesto: "transformableElements",
 		computed: "forLengthAbsoluteValueOtherwisePercentage",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/offset-distance"
 	},
 		"offset-path": {
 		syntax: "none | ray( [ <angle> && <size>? && contain? ] ) | <path()> | <url> | [ <basic-shape> || <geometry-box> ]",
@@ -17486,14 +18609,15 @@
 		animationType: "angleOrBasicShapeOrPath",
 		percentages: "no",
 		groups: [
-			"CSS Motion"
+			"CSS Motion Path"
 		],
 		initial: "none",
 		appliesto: "transformableElements",
 		computed: "asSpecified",
 		order: "perGrammar",
 		stacking: true,
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/offset-path"
 	},
 		"offset-position": {
 		syntax: "auto | <position>",
@@ -17502,7 +18626,7 @@
 		animationType: "position",
 		percentages: "referToSizeOfContainingBlock",
 		groups: [
-			"CSS Motion"
+			"CSS Motion Path"
 		],
 		initial: "auto",
 		appliesto: "transformableElements",
@@ -17514,16 +18638,17 @@
 		syntax: "[ auto | reverse ] || <angle>",
 		media: "visual",
 		inherited: false,
-		animationType: "angle",
+		animationType: "angleOrBasicShapeOrPath",
 		percentages: "no",
 		groups: [
-			"CSS Motion"
+			"CSS Motion Path"
 		],
 		initial: "auto",
 		appliesto: "transformableElements",
 		computed: "asSpecified",
 		order: "perGrammar",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/offset-rotate"
 	},
 		opacity: opacity,
 		order: order,
@@ -17545,7 +18670,8 @@
 		appliesto: "allElements",
 		computed: "invertForTranslucentColorRGBAOtherwiseRGB",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/outline-color"
 	},
 		"outline-offset": {
 		syntax: "<length>",
@@ -17563,10 +18689,11 @@
 		appliesto: "allElements",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/outline-offset"
 	},
 		"outline-style": {
-		syntax: "auto | <br-style>",
+		syntax: "auto | <'border-style'>",
 		media: [
 			"visual",
 			"interactive"
@@ -17581,10 +18708,11 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/outline-style"
 	},
 		"outline-width": {
-		syntax: "<br-width>",
+		syntax: "<line-width>",
 		media: [
 			"visual",
 			"interactive"
@@ -17599,7 +18727,8 @@
 		appliesto: "allElements",
 		computed: "absoluteLength0ForNone",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/outline-width"
 	},
 		overflow: overflow,
 		"overflow-anchor": {
@@ -17618,7 +18747,7 @@
 		status: "experimental"
 	},
 		"overflow-block": {
-		syntax: "<'overflow'>",
+		syntax: "visible | hidden | clip | scroll | auto",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -17645,10 +18774,11 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Mozilla/CSS/overflow-clip-box"
 	},
 		"overflow-inline": {
-		syntax: "<'overflow'>",
+		syntax: "visible | hidden | clip | scroll | auto",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -17663,7 +18793,7 @@
 		status: "experimental"
 	},
 		"overflow-wrap": {
-		syntax: "normal | break-word",
+		syntax: "normal | break-word | anywhere",
 		media: "visual",
 		inherited: true,
 		animationType: "discrete",
@@ -17672,10 +18802,11 @@
 			"CSS Text"
 		],
 		initial: "normal",
-		appliesto: "allElements",
+		appliesto: "nonReplacedInlineElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/overflow-wrap"
 	},
 		"overflow-x": {
 		syntax: "visible | hidden | clip | scroll | auto",
@@ -17690,7 +18821,8 @@
 		appliesto: "blockContainersFlexContainersGridContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/overflow-x"
 	},
 		"overflow-y": {
 		syntax: "visible | hidden | clip | scroll | auto",
@@ -17705,7 +18837,8 @@
 		appliesto: "blockContainersFlexContainersGridContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/overflow-y"
 	},
 		"overscroll-behavior": {
 		syntax: "[ contain | none | auto ]{1,2}",
@@ -17720,7 +18853,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior"
 	},
 		"overscroll-behavior-x": {
 		syntax: "contain | none | auto",
@@ -17735,7 +18869,8 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-x"
 	},
 		"overscroll-behavior-y": {
 		syntax: "contain | none | auto",
@@ -17750,9 +18885,26 @@
 		appliesto: "nonReplacedBlockAndInlineBlockElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-y"
 	},
 		padding: padding,
+		"padding-block": {
+		syntax: "<'padding-left'>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "logicalWidthOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asLength",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding-block"
+	},
 		"padding-block-end": {
 		syntax: "<'padding-left'>",
 		media: "visual",
@@ -17766,7 +18918,8 @@
 		appliesto: "allElements",
 		computed: "asLength",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding-block-end"
 	},
 		"padding-block-start": {
 		syntax: "<'padding-left'>",
@@ -17781,7 +18934,8 @@
 		appliesto: "allElements",
 		computed: "asLength",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding-block-start"
 	},
 		"padding-bottom": {
 		syntax: "<length> | <percentage>",
@@ -17799,7 +18953,24 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding-bottom"
+	},
+		"padding-inline": {
+		syntax: "<'padding-left'>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "logicalWidthOfContainingBlock",
+		groups: [
+			"CSS Logical Properties"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asLength",
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding-inline"
 	},
 		"padding-inline-end": {
 		syntax: "<'padding-left'>",
@@ -17814,7 +18985,8 @@
 		appliesto: "allElements",
 		computed: "asLength",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding-inline-end"
 	},
 		"padding-inline-start": {
 		syntax: "<'padding-left'>",
@@ -17829,7 +19001,8 @@
 		appliesto: "allElements",
 		computed: "asLength",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding-inline-start"
 	},
 		"padding-left": {
 		syntax: "<length> | <percentage>",
@@ -17847,7 +19020,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding-left"
 	},
 		"padding-right": {
 		syntax: "<length> | <percentage>",
@@ -17865,7 +19039,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding-right"
 	},
 		"padding-top": {
 		syntax: "<length> | <percentage>",
@@ -17883,7 +19058,8 @@
 		alsoAppliesTo: [
 			"::first-letter"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/padding-top"
 	},
 		"page-break-after": {
 		syntax: "auto | always | avoid | left | right | recto | verso",
@@ -17901,7 +19077,8 @@
 		appliesto: "blockElementsInNormalFlow",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/page-break-after"
 	},
 		"page-break-before": {
 		syntax: "auto | always | avoid | left | right | recto | verso",
@@ -17919,7 +19096,8 @@
 		appliesto: "blockElementsInNormalFlow",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/page-break-before"
 	},
 		"page-break-inside": {
 		syntax: "auto | avoid",
@@ -17937,7 +19115,8 @@
 		appliesto: "blockElementsInNormalFlow",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/page-break-inside"
 	},
 		"paint-order": {
 		syntax: "normal | [ fill || stroke || markers ]",
@@ -17952,7 +19131,8 @@
 		appliesto: "textElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/paint-order"
 	},
 		perspective: perspective,
 		"perspective-origin": {
@@ -17968,7 +19148,8 @@
 		appliesto: "transformableElements",
 		computed: "forLengthAbsoluteValueOtherwisePercentage",
 		order: "oneOrTwoValuesLengthAbsoluteKeywordsPercentages",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/perspective-origin"
 	},
 		"place-content": {
 		syntax: "<'align-content'> <'justify-content'>?",
@@ -17977,13 +19158,58 @@
 		animationType: "discrete",
 		percentages: "no",
 		groups: [
-			"CSS Flexible Box Layout"
+			"CSS Box Alignment"
 		],
 		initial: "normal",
 		appliesto: "multilineFlexContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/place-content"
+	},
+		"place-items": {
+		syntax: "<'align-items'> <'justify-items'>?",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Box Alignment"
+		],
+		initial: [
+			"align-items",
+			"justify-items"
+		],
+		appliesto: "allElements",
+		computed: [
+			"align-items",
+			"justify-items"
+		],
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/place-items"
+	},
+		"place-self": {
+		syntax: "<'align-self'> <'justify-self'>?",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Box Alignment"
+		],
+		initial: [
+			"align-self",
+			"justify-self"
+		],
+		appliesto: "blockLevelBoxesAndAbsolutelyPositionedBoxesAndGridItems",
+		computed: [
+			"align-self",
+			"justify-self"
+		],
+		order: "uniqueOrder",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/place-self"
 	},
 		"pointer-events": {
 		syntax: "auto | none | visiblePainted | visibleFill | visibleStroke | visible | painted | fill | stroke | all | inherit",
@@ -17998,7 +19224,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/pointer-events"
 	},
 		position: position,
 		quotes: quotes,
@@ -18018,7 +19245,8 @@
 		appliesto: "multiColumnElementsFlexContainersGridContainers",
 		computed: "asSpecifiedWithLengthsAbsoluteAndNormalComputingToZeroExceptMultiColumn",
 		order: "perGrammar",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/row-gap"
 	},
 		"ruby-align": {
 		syntax: "start | center | space-between | space-around",
@@ -18033,7 +19261,8 @@
 		appliesto: "rubyBasesAnnotationsBaseAnnotationContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/ruby-align"
 	},
 		"ruby-merge": {
 		syntax: "separate | collapse | auto",
@@ -18063,9 +19292,42 @@
 		appliesto: "rubyAnnotationsContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/ruby-position"
 	},
 		scale: scale,
+		"scrollbar-color": {
+		syntax: "auto | dark | light | <color>{2}",
+		media: "visual",
+		inherited: true,
+		animationType: "color",
+		percentages: "no",
+		groups: [
+			"CSS Scrollbars"
+		],
+		initial: "auto",
+		appliesto: "scrollingBoxes",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scrollbar-color"
+	},
+		"scrollbar-width": {
+		syntax: "auto | thin | none",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Scrollbars"
+		],
+		initial: "auto",
+		appliesto: "scrollingBoxes",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scrollbar-width"
+	},
 		"scroll-behavior": {
 		syntax: "auto | smooth",
 		media: "visual",
@@ -18079,7 +19341,376 @@
 		appliesto: "scrollingBoxes",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-behavior"
+	},
+		"scroll-margin": {
+		syntax: "<length>{1,4}",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin"
+	},
+		"scroll-margin-block": {
+		syntax: "<length>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block"
+	},
+		"scroll-margin-block-start": {
+		syntax: "<length>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block-start"
+	},
+		"scroll-margin-block-end": {
+		syntax: "<length>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block-end"
+	},
+		"scroll-margin-bottom": {
+		syntax: "<length>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-bottom"
+	},
+		"scroll-margin-inline": {
+		syntax: "<length>{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline"
+	},
+		"scroll-margin-inline-start": {
+		syntax: "<length>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline-start"
+	},
+		"scroll-margin-inline-end": {
+		syntax: "<length>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline-end"
+	},
+		"scroll-margin-left": {
+		syntax: "<length>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-left"
+	},
+		"scroll-margin-right": {
+		syntax: "<length>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-right"
+	},
+		"scroll-margin-top": {
+		syntax: "<length>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "0",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-margin-top"
+	},
+		"scroll-padding": {
+		syntax: "[ auto | <length-percentage> ]{1,4}",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding"
+	},
+		"scroll-padding-block": {
+		syntax: "[ auto | <length-percentage> ]{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block"
+	},
+		"scroll-padding-block-start": {
+		syntax: "auto | <length-percentage>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block-start"
+	},
+		"scroll-padding-block-end": {
+		syntax: "auto | <length-percentage>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block-end"
+	},
+		"scroll-padding-bottom": {
+		syntax: "auto | <length-percentage>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-bottom"
+	},
+		"scroll-padding-inline": {
+		syntax: "[ auto | <length-percentage> ]{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline"
+	},
+		"scroll-padding-inline-start": {
+		syntax: "auto | <length-percentage>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline-start"
+	},
+		"scroll-padding-inline-end": {
+		syntax: "auto | <length-percentage>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline-end"
+	},
+		"scroll-padding-left": {
+		syntax: "auto | <length-percentage>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-left"
+	},
+		"scroll-padding-right": {
+		syntax: "auto | <length-percentage>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-right"
+	},
+		"scroll-padding-top": {
+		syntax: "auto | <length-percentage>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "relativeToTheScrollContainersScrollport",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "auto",
+		appliesto: "scrollContainers",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-padding-top"
+	},
+		"scroll-snap-align": {
+		syntax: "[ none | start | end | center ]{1,2}",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "none",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-align"
 	},
 		"scroll-snap-coordinate": {
 		syntax: "none | <position>#",
@@ -18094,7 +19725,8 @@
 		appliesto: "allElements",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-coordinate"
 	},
 		"scroll-snap-destination": {
 		syntax: "<position>",
@@ -18109,7 +19741,8 @@
 		appliesto: "scrollContainers",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-destination"
 	},
 		"scroll-snap-points-x": {
 		syntax: "none | repeat( <length-percentage> )",
@@ -18124,7 +19757,8 @@
 		appliesto: "scrollContainers",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "uniqueOrder",
-		status: "obsolete"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-points-x"
 	},
 		"scroll-snap-points-y": {
 		syntax: "none | repeat( <length-percentage> )",
@@ -18139,10 +19773,27 @@
 		appliesto: "scrollContainers",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "uniqueOrder",
-		status: "obsolete"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-points-y"
+	},
+		"scroll-snap-stop": {
+		syntax: "normal | always",
+		media: "visual",
+		inherited: false,
+		animationType: "discrete",
+		percentages: "no",
+		groups: [
+			"CSS Scroll Snap"
+		],
+		initial: "normal",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "perGrammar",
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-stop"
 	},
 		"scroll-snap-type": {
-		syntax: "none | mandatory | proximity",
+		syntax: "none | [ x | y | block | inline | both ] [ mandatory | proximity ]?",
 		media: "interactive",
 		inherited: false,
 		animationType: "discrete",
@@ -18151,10 +19802,11 @@
 			"CSS Scroll Snap"
 		],
 		initial: "none",
-		appliesto: "scrollContainers",
+		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type"
 	},
 		"scroll-snap-type-x": {
 		syntax: "none | mandatory | proximity",
@@ -18169,7 +19821,8 @@
 		appliesto: "scrollContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type-x"
 	},
 		"scroll-snap-type-y": {
 		syntax: "none | mandatory | proximity",
@@ -18184,10 +19837,11 @@
 		appliesto: "scrollContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "obsolete",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type-y"
 	},
 		"shape-image-threshold": {
-		syntax: "<number>",
+		syntax: "<alpha-value>",
 		media: "visual",
 		inherited: false,
 		animationType: "number",
@@ -18199,7 +19853,8 @@
 		appliesto: "floats",
 		computed: "specifiedValueNumberClipped0To1",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/shape-image-threshold"
 	},
 		"shape-margin": {
 		syntax: "<length-percentage>",
@@ -18214,7 +19869,8 @@
 		appliesto: "floats",
 		computed: "asSpecifiedRelativeToAbsoluteLengths",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/shape-margin"
 	},
 		"shape-outside": {
 		syntax: "none | <shape-box> || <basic-shape> | <image>",
@@ -18229,7 +19885,8 @@
 		appliesto: "floats",
 		computed: "asDefinedForBasicShapeWithAbsoluteURIOtherwiseAsSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/shape-outside"
 	},
 		"tab-size": {
 		syntax: "<integer> | <length>",
@@ -18244,7 +19901,8 @@
 		appliesto: "blockContainers",
 		computed: "specifiedIntegerOrAbsoluteLength",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/tab-size"
 	},
 		"table-layout": {
 		syntax: "auto | fixed",
@@ -18259,7 +19917,8 @@
 		appliesto: "tableElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/table-layout"
 	},
 		"text-align": {
 		syntax: "start | end | left | right | center | justify | match-parent",
@@ -18277,7 +19936,8 @@
 		alsoAppliesTo: [
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-align"
 	},
 		"text-align-last": {
 		syntax: "auto | start | end | left | right | center | justify",
@@ -18292,7 +19952,8 @@
 		appliesto: "blockContainers",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-align-last"
 	},
 		"text-combine-upright": {
 		syntax: "none | all | [ digits <integer>? ]",
@@ -18307,16 +19968,18 @@
 		appliesto: "nonReplacedInlineElements",
 		computed: "keywordPlusIntegerIfDigits",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-combine-upright"
 	},
 		"text-decoration": {
-		syntax: "<'text-decoration-line'> || <'text-decoration-style'> || <'text-decoration-color'>",
+		syntax: "<'text-decoration-line'> || <'text-decoration-style'> || <'text-decoration-color'> || <'text-decoration-thickness'>",
 		media: "visual",
 		inherited: false,
 		animationType: [
 			"text-decoration-color",
 			"text-decoration-style",
-			"text-decoration-line"
+			"text-decoration-line",
+			"text-decoration-thickness"
 		],
 		percentages: "no",
 		groups: [
@@ -18331,7 +19994,8 @@
 		computed: [
 			"text-decoration-line",
 			"text-decoration-style",
-			"text-decoration-color"
+			"text-decoration-color",
+			"text-decoration-thickness"
 		],
 		order: "orderOfAppearance",
 		alsoAppliesTo: [
@@ -18339,7 +20003,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-decoration"
 	},
 		"text-decoration-color": {
 		syntax: "<color>",
@@ -18359,10 +20024,11 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-color"
 	},
 		"text-decoration-line": {
-		syntax: "none | [ underline || overline || line-through || blink ]",
+		syntax: "none | [ underline || overline || line-through || blink ] | spelling-error | grammar-error",
 		media: "visual",
 		inherited: false,
 		animationType: "discrete",
@@ -18379,7 +20045,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-line"
 	},
 		"text-decoration-skip": {
 		syntax: "none | [ objects || [ spaces | [ leading-spaces || trailing-spaces ] ] || edges || box-decoration ]",
@@ -18394,7 +20061,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-skip"
 	},
 		"text-decoration-skip-ink": {
 		syntax: "auto | none",
@@ -18409,7 +20077,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-skip-ink"
 	},
 		"text-decoration-style": {
 		syntax: "solid | double | dotted | dashed | wavy",
@@ -18429,7 +20098,29 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-style"
+	},
+		"text-decoration-thickness": {
+		syntax: "auto | from-font | <length>",
+		media: "visual",
+		inherited: false,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Text Decoration"
+		],
+		initial: "auto",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "uniqueOrder",
+		alsoAppliesTo: [
+			"::first-letter",
+			"::first-line",
+			"::placeholder"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-decoration-thickness"
 	},
 		"text-emphasis": {
 		syntax: "<'text-emphasis-style'> || <'text-emphasis-color'>",
@@ -18453,7 +20144,8 @@
 			"text-emphasis-color"
 		],
 		order: "orderOfAppearance",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-emphasis"
 	},
 		"text-emphasis-color": {
 		syntax: "<color>",
@@ -18468,7 +20160,8 @@
 		appliesto: "allElements",
 		computed: "computedColor",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-emphasis-color"
 	},
 		"text-emphasis-position": {
 		syntax: "[ over | under ] && [ right | left ]",
@@ -18483,7 +20176,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-emphasis-position"
 	},
 		"text-emphasis-style": {
 		syntax: "none | [ [ filled | open ] || [ dot | circle | double-circle | triangle | sesame ] ] | <string>",
@@ -18498,7 +20192,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-emphasis-style"
 	},
 		"text-indent": {
 		syntax: "<length-percentage> && hanging? && each-line?",
@@ -18513,7 +20208,8 @@
 		appliesto: "blockContainers",
 		computed: "percentageOrAbsoluteLengthPlusKeywords",
 		order: "lengthOrPercentageBeforeKeywords",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-indent"
 	},
 		"text-justify": {
 		syntax: "auto | inter-character | inter-word | none",
@@ -18528,7 +20224,8 @@
 		appliesto: "inlineLevelAndTableCellElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-justify"
 	},
 		"text-orientation": {
 		syntax: "mixed | upright | sideways",
@@ -18543,7 +20240,8 @@
 		appliesto: "allElementsExceptTableRowGroupsRowsColumnGroupsAndColumns",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-orientation"
 	},
 		"text-overflow": {
 		syntax: "[ clip | ellipsis | <string> ]{1,2}",
@@ -18561,7 +20259,8 @@
 		alsoAppliesTo: [
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-overflow"
 	},
 		"text-rendering": {
 		syntax: "auto | optimizeSpeed | optimizeLegibility | geometricPrecision",
@@ -18576,7 +20275,8 @@
 		appliesto: "textElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-rendering"
 	},
 		"text-shadow": {
 		syntax: "none | <shadow-t>#",
@@ -18596,7 +20296,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-shadow"
 	},
 		"text-size-adjust": {
 		syntax: "none | auto | <percentage>",
@@ -18611,10 +20312,11 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "experimental"
+		status: "experimental",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-size-adjust"
 	},
 		"text-transform": {
-		syntax: "none | capitalize | uppercase | lowercase | full-width",
+		syntax: "none | capitalize | uppercase | lowercase | full-width | full-size-kana",
 		media: "visual",
 		inherited: true,
 		animationType: "discrete",
@@ -18631,7 +20333,29 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-transform"
+	},
+		"text-underline-offset": {
+		syntax: "auto | from-font | <length>",
+		media: "visual",
+		inherited: true,
+		animationType: "byComputedValueType",
+		percentages: "no",
+		groups: [
+			"CSS Text Decoration"
+		],
+		initial: "auto",
+		appliesto: "allElements",
+		computed: "asSpecified",
+		order: "uniqueOrder",
+		alsoAppliesTo: [
+			"::first-letter",
+			"::first-line",
+			"::placeholder"
+		],
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-underline-offset"
 	},
 		"text-underline-position": {
 		syntax: "auto | [ under || [ left | right ] ]",
@@ -18646,7 +20370,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "orderOfAppearance",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/text-underline-position"
 	},
 		top: top,
 		"touch-action": {
@@ -18662,7 +20387,8 @@
 		appliesto: "allElementsExceptNonReplacedInlineElementsTableRowsColumnsRowColumnGroups",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/touch-action"
 	},
 		transform: transform,
 		"transform-box": {
@@ -18678,7 +20404,8 @@
 		appliesto: "transformableElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/transform-box"
 	},
 		"transform-origin": {
 		syntax: "[ <length-percentage> | left | center | right | top | bottom ] | [ [ <length-percentage> | left | center | right ] && [ <length-percentage> | top | center | bottom ] ] <length>?",
@@ -18693,7 +20420,8 @@
 		appliesto: "transformableElements",
 		computed: "forLengthAbsoluteValueOtherwisePercentage",
 		order: "oneOrTwoValuesLengthAbsoluteKeywordsPercentages",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/transform-origin"
 	},
 		"transform-style": {
 		syntax: "flat | preserve-3d",
@@ -18709,7 +20437,8 @@
 		computed: "asSpecified",
 		order: "uniqueOrder",
 		stacking: true,
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/transform-style"
 	},
 		transition: transition,
 		"transition-delay": {
@@ -18725,7 +20454,8 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/transition-delay"
 	},
 		"transition-duration": {
 		syntax: "<time>#",
@@ -18740,7 +20470,8 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/transition-duration"
 	},
 		"transition-property": {
 		syntax: "none | <single-transition-property>#",
@@ -18755,10 +20486,11 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/transition-property"
 	},
 		"transition-timing-function": {
-		syntax: "<single-transition-timing-function>#",
+		syntax: "<timing-function>#",
 		media: "interactive",
 		inherited: false,
 		animationType: "discrete",
@@ -18770,7 +20502,8 @@
 		appliesto: "allElementsAndPseudos",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/transition-timing-function"
 	},
 		translate: translate,
 		"unicode-bidi": {
@@ -18786,7 +20519,8 @@
 		appliesto: "allElementsSomeValuesNoEffectOnNonInlineElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/unicode-bidi"
 	},
 		"user-select": {
 		syntax: "auto | text | none | contain | all",
@@ -18801,7 +20535,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "nonstandard"
+		status: "nonstandard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/user-select"
 	},
 		"vertical-align": {
 		syntax: "baseline | sub | super | text-top | text-bottom | middle | top | bottom | <percentage> | <length>",
@@ -18821,11 +20556,12 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/vertical-align"
 	},
 		visibility: visibility,
 		"white-space": {
-		syntax: "normal | pre | nowrap | pre-wrap | pre-line",
+		syntax: "normal | pre | nowrap | pre-wrap | pre-line | break-spaces",
 		media: "visual",
 		inherited: true,
 		animationType: "discrete",
@@ -18837,7 +20573,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/white-space"
 	},
 		widows: widows,
 		width: width,
@@ -18854,7 +20591,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/will-change"
 	},
 		"word-break": {
 		syntax: "normal | break-all | keep-all | break-word",
@@ -18869,7 +20607,8 @@
 		appliesto: "allElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/word-break"
 	},
 		"word-spacing": {
 		syntax: "normal | <length-percentage>",
@@ -18889,7 +20628,8 @@
 			"::first-line",
 			"::placeholder"
 		],
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/word-spacing"
 	},
 		"word-wrap": {
 		syntax: "normal | break-word",
@@ -18901,10 +20641,11 @@
 			"CSS Text"
 		],
 		initial: "normal",
-		appliesto: "allElements",
+		appliesto: "nonReplacedInlineElements",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/overflow-wrap"
 	},
 		"writing-mode": {
 		syntax: "horizontal-tb | vertical-rl | vertical-lr | sideways-rl | sideways-lr",
@@ -18919,7 +20660,8 @@
 		appliesto: "allElementsExceptTableRowColumnGroupsTableRowsColumns",
 		computed: "asSpecified",
 		order: "uniqueOrder",
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/writing-mode"
 	},
 		"z-index": {
 		syntax: "auto | <integer>",
@@ -18935,12 +20677,14 @@
 		computed: "asSpecified",
 		order: "uniqueOrder",
 		stacking: true,
-		status: "standard"
+		status: "standard",
+		mdn_url: "https://developer.mozilla.org/docs/Web/CSS/z-index"
 	},
 		zoom: zoom
 	};
 
 	var properties$2 = /*#__PURE__*/Object.freeze({
+		__proto__: null,
 		all: all,
 		animation: animation,
 		appearance: appearance,
@@ -18965,6 +20709,7 @@
 		grid: grid,
 		height: height,
 		hyphens: hyphens,
+		inset: inset,
 		isolation: isolation,
 		left: left,
 		margin: margin,
@@ -18991,7 +20736,7 @@
 		widows: widows,
 		width: width,
 		zoom: zoom,
-		default: properties$1
+		'default': properties$1
 	});
 
 	var attachment = {
@@ -19003,14 +20748,20 @@
 	var color$1 = {
 		syntax: "<rgb()> | <rgba()> | <hsl()> | <hsla()> | <hex-color> | <named-color> | currentcolor | <deprecated-system-color>"
 	};
+	var combinator = {
+		syntax: "'>' | '+' | '~' | [ '||' ]"
+	};
+	var compat = {
+		syntax: "searchfield | textarea | push-button | button-bevel | slider-horizontal | checkbox | radio | square-button | menulist | menulist-button | listbox | meter | progress-bar"
+	};
 	var gradient = {
-		syntax: "<linear-gradient()> | <repeating-linear-gradient()> | <radial-gradient()> | <repeating-radial-gradient()>"
+		syntax: "<linear-gradient()> | <repeating-linear-gradient()> | <radial-gradient()> | <repeating-radial-gradient()> | <conic-gradient()>"
 	};
 	var hue = {
 		syntax: "<number> | <angle>"
 	};
 	var image = {
-		syntax: "<url> | <image()> | <image-set()> | <element()> | <cross-fade()> | <gradient>"
+		syntax: "<url> | <image()> | <image-set()> | <element()> | <paint()> | <cross-fade()> | <gradient>"
 	};
 	var nth = {
 		syntax: "<an-plus-b> | even | odd"
@@ -19038,13 +20789,22 @@
 	};
 	var syntaxes = {
 		"absolute-size": {
-		syntax: "xx-small | x-small | small | medium | large | x-large | xx-large"
+		syntax: "xx-small | x-small | small | medium | large | x-large | xx-large | xxx-large"
 	},
 		"alpha-value": {
 		syntax: "<number> | <percentage>"
 	},
 		"angle-percentage": {
 		syntax: "<angle> | <percentage>"
+	},
+		"angular-color-hint": {
+		syntax: "<angle-percentage>"
+	},
+		"angular-color-stop": {
+		syntax: "<color> && <color-stop-angle>?"
+	},
+		"angular-color-stop-list": {
+		syntax: "[ <angular-color-stop> [, <angular-color-hint>]? ]# , <angular-color-stop>"
 	},
 		"animateable-feature": {
 		syntax: "scroll-position | contents | <custom-ident>"
@@ -19057,7 +20817,7 @@
 		syntax: "[ '~' | '|' | '^' | '$' | '*' ]? '='"
 	},
 		"attr-modifier": {
-		syntax: "i"
+		syntax: "i | s"
 	},
 		"attribute-selector": {
 		syntax: "'[' <wq-name> ']' | '[' <wq-name> <attr-matcher> [ <string-token> | <ident-token> ] <attr-modifier>? ']'"
@@ -19093,12 +20853,6 @@
 		syntax: "normal | multiply | screen | overlay | darken | lighten | color-dodge | color-burn | hard-light | soft-light | difference | exclusion | hue | saturation | color | luminosity"
 	},
 		box: box,
-		"br-style": {
-		syntax: "none | hidden | dotted | dashed | solid | double | groove | ridge | inset | outset"
-	},
-		"br-width": {
-		syntax: "<length> | thin | medium | thick"
-	},
 		"brightness()": {
 		syntax: "brightness( <number-percentage> )"
 	},
@@ -19123,6 +20877,9 @@
 		"circle()": {
 		syntax: "circle( [ <shape-radius> ]? [ at <position> ]? )"
 	},
+		"clamp()": {
+		syntax: "clamp( <calc-sum>#{3} )"
+	},
 		"class-selector": {
 		syntax: "'.' <ident-token>"
 	},
@@ -19131,14 +20888,22 @@
 	},
 		color: color$1,
 		"color-stop": {
-		syntax: "<color> <length-percentage>?"
+		syntax: "<color-stop-length> | <color-stop-angle>"
+	},
+		"color-stop-angle": {
+		syntax: "<angle-percentage>{1,2}"
+	},
+		"color-stop-length": {
+		syntax: "<length-percentage>{1,2}"
 	},
 		"color-stop-list": {
-		syntax: "<color-stop>#{2,}"
+		syntax: "[ <linear-color-stop> [, <linear-color-hint>]? ]# , <linear-color-stop>"
 	},
+		combinator: combinator,
 		"common-lig-values": {
 		syntax: "[ common-ligatures | no-common-ligatures ]"
 	},
+		compat: compat,
 		"composite-style": {
 		syntax: "clear | copy | source-over | source-in | source-out | source-atop | destination-over | destination-in | destination-out | destination-atop | xor"
 	},
@@ -19150,6 +20915,15 @@
 	},
 		"compound-selector-list": {
 		syntax: "<compound-selector>#"
+	},
+		"complex-selector": {
+		syntax: "<compound-selector> [ <combinator>? <compound-selector> ]*"
+	},
+		"complex-selector-list": {
+		syntax: "<complex-selector>#"
+	},
+		"conic-gradient()": {
+		syntax: "conic-gradient( [ from <angle> ]? [ at <position> ]?, <angular-color-stop-list> )"
 	},
 		"contextual-alt-values": {
 		syntax: "[ contextual | no-contextual ]"
@@ -19169,11 +20943,17 @@
 		"contrast()": {
 		syntax: "contrast( [ <number-percentage> ] )"
 	},
+		"counter()": {
+		syntax: "counter( <custom-ident>, <counter-style>? )"
+	},
 		"counter-style": {
 		syntax: "<counter-style-name> | symbols()"
 	},
 		"counter-style-name": {
 		syntax: "<custom-ident>"
+	},
+		"counters()": {
+		syntax: "counters( <custom-ident>, <string>, <counter-style>? )"
 	},
 		"cross-fade()": {
 		syntax: "cross-fade( <cf-mixing-image> , <cf-final-image>? )"
@@ -19191,7 +20971,7 @@
 		syntax: "contents | none"
 	},
 		"display-inside": {
-		syntax: "flow | flow-root | table | flex | grid | subgrid | ruby"
+		syntax: "flow | flow-root | table | flex | grid | ruby"
 	},
 		"display-internal": {
 		syntax: "table-row-group | table-header-group | table-footer-group | table-row | table-cell | table-column-group | table-column | table-caption | ruby-base | ruby-text | ruby-base-container | ruby-text-container"
@@ -19223,6 +21003,9 @@
 		"ending-shape": {
 		syntax: "circle | ellipse"
 	},
+		"env()": {
+		syntax: "env( <custom-ident> , <declaration-value>? )"
+	},
 		"explicit-track-list": {
 		syntax: "[ <line-names>? <track-size> ]+ <line-names>?"
 	},
@@ -19236,7 +21019,7 @@
 		syntax: "@stylistic | @historical-forms | @styleset | @character-variant | @swash | @ornaments | @annotation"
 	},
 		"feature-value-block": {
-		syntax: "<feature-type> {\n  <feature-value-declaration-list>\n}"
+		syntax: "<feature-type> '{' <feature-value-declaration-list> '}'"
 	},
 		"feature-value-block-list": {
 		syntax: "<feature-value-block>+"
@@ -19283,9 +21066,6 @@
 		"font-weight-absolute": {
 		syntax: "normal | bold | <number>"
 	},
-		"frames-timing-function": {
-		syntax: "frames(<integer>)"
-	},
 		"frequency-percentage": {
 		syntax: "<frequency> | <percentage>"
 	},
@@ -19326,7 +21106,7 @@
 	},
 		image: image,
 		"image()": {
-		syntax: "image( [ [ <image> | <string> ]? , <color>? ]! )"
+		syntax: "image( <image-tags>? [ <image-src>? , <color>? ]! )"
 	},
 		"image-set()": {
 		syntax: "image-set( <image-set-option># )"
@@ -19334,11 +21114,17 @@
 		"image-set-option": {
 		syntax: "[ <image> | <string> ] <resolution>"
 	},
+		"image-src": {
+		syntax: "<url> | <string>"
+	},
+		"image-tags": {
+		syntax: "ltr | rtl"
+	},
 		"inflexible-breadth": {
 		syntax: "<length> | <percentage> | min-content | max-content | auto"
 	},
 		"inset()": {
-		syntax: "inset( <length-percentage>{1,4} [ round <border-radius> ]? )"
+		syntax: "inset( <length-percentage>{1,4} [ round <'border-radius'> ]? )"
 	},
 		"invert()": {
 		syntax: "invert( <number-percentage> )"
@@ -19370,6 +21156,18 @@
 		"line-name-list": {
 		syntax: "[ <line-names> | <name-repeat> ]+"
 	},
+		"line-style": {
+		syntax: "none | hidden | dotted | dashed | solid | double | groove | ridge | inset | outset"
+	},
+		"line-width": {
+		syntax: "<length> | thin | medium | thick"
+	},
+		"linear-color-hint": {
+		syntax: "<length-percentage>"
+	},
+		"linear-color-stop": {
+		syntax: "<color> <color-stop-length>?"
+	},
 		"linear-gradient()": {
 		syntax: "linear-gradient( [ <angle> | to <side-or-corner> ]? , <color-stop-list> )"
 	},
@@ -19389,10 +21187,13 @@
 		syntax: "alpha | luminance | match-source"
 	},
 		"matrix()": {
-		syntax: "matrix( <number> [, <number> ]{5,5} )"
+		syntax: "matrix( <number>#{6} )"
 	},
 		"matrix3d()": {
-		syntax: "matrix3d( <number> [, <number> ]{15,15} )"
+		syntax: "matrix3d( <number>#{16} )"
+	},
+		"max()": {
+		syntax: "max( <calc-sum># )"
 	},
 		"media-and": {
 		syntax: "<media-in-parens> [ and <media-in-parens> ]+"
@@ -19439,6 +21240,9 @@
 		"mf-value": {
 		syntax: "<number> | <dimension> | <ident> | <ratio>"
 	},
+		"min()": {
+		syntax: "min( <calc-sum># )"
+	},
 		"minmax()": {
 		syntax: "minmax( [ <length> | <percentage> | <flex> | min-content | max-content | auto ] , [ <length> | <percentage> | <flex> | min-content | max-content | auto ] )"
 	},
@@ -19477,7 +21281,7 @@
 		syntax: "<declaration>? [ ; <page-body> ]? | <page-margin-box> <page-body>"
 	},
 		"page-margin-box": {
-		syntax: "<page-margin-box-type> {\n  <declaration-list>\n}"
+		syntax: "<page-margin-box-type> '{' <declaration-list> '}'"
 	},
 		"page-margin-box-type": {
 		syntax: "@top-left-corner | @top-left | @top-center | @top-right | @top-right-corner | @bottom-left-corner | @bottom-left | @bottom-center | @bottom-right | @bottom-right-corner | @left-top | @left-middle | @left-bottom | @right-top | @right-middle | @right-bottom"
@@ -19487,6 +21291,9 @@
 	},
 		"page-selector": {
 		syntax: "<pseudo-page>+ | <ident> <pseudo-page>*"
+	},
+		"paint()": {
+		syntax: "paint( <ident>, <declaration-value>? )"
 	},
 		"perspective()": {
 		syntax: "perspective( <length> )"
@@ -19508,6 +21315,12 @@
 		"radial-gradient()": {
 		syntax: "radial-gradient( [ <ending-shape> || <size> ]? [ at <position> ]? , <color-stop-list> )"
 	},
+		"relative-selector": {
+		syntax: "<combinator>? <complex-selector>"
+	},
+		"relative-selector-list": {
+		syntax: "<relative-selector>#"
+	},
 		"relative-size": {
 		syntax: "larger | smaller"
 	},
@@ -19527,25 +21340,25 @@
 		syntax: "rgba( <percentage>{3} [ / <alpha-value> ]? ) | rgba( <number>{3} [ / <alpha-value> ]? ) | rgba( <percentage>#{3} , <alpha-value>? ) | rgba( <number>#{3} , <alpha-value>? )"
 	},
 		"rotate()": {
-		syntax: "rotate( <angle> )"
+		syntax: "rotate( [ <angle> | <zero> ] )"
 	},
 		"rotate3d()": {
-		syntax: "rotate3d( <number> , <number> , <number> , <angle> )"
+		syntax: "rotate3d( <number> , <number> , <number> , [ <angle> | <zero> ] )"
 	},
 		"rotateX()": {
-		syntax: "rotateX( <angle> )"
+		syntax: "rotateX( [ <angle> | <zero> ] )"
 	},
 		"rotateY()": {
-		syntax: "rotateY( <angle> )"
+		syntax: "rotateY( [ <angle> | <zero> ] )"
 	},
 		"rotateZ()": {
-		syntax: "rotateZ( <angle> )"
+		syntax: "rotateZ( [ <angle> | <zero> ] )"
 	},
 		"saturate()": {
 		syntax: "saturate( <number-percentage> )"
 	},
 		"scale()": {
-		syntax: "scale( <number> [, <number> ]? )"
+		syntax: "scale( <number> , <number>? )"
 	},
 		"scale3d()": {
 		syntax: "scale3d( <number> , <number> , <number> )"
@@ -19566,13 +21379,13 @@
 		syntax: "<length-percentage> | closest-side | farthest-side"
 	},
 		"skew()": {
-		syntax: "skew( <angle> [, <angle> ]? )"
+		syntax: "skew( [ <angle> | <zero> ] , [ <angle> | <zero> ]? )"
 	},
 		"skewX()": {
-		syntax: "skewX( <angle> )"
+		syntax: "skewX( [ <angle> | <zero> ] )"
 	},
 		"skewY()": {
-		syntax: "skewY( <angle> )"
+		syntax: "skewY( [ <angle> | <zero> ] )"
 	},
 		"sepia()": {
 		syntax: "sepia( <number-percentage> )"
@@ -19589,7 +21402,7 @@
 		syntax: "[ left | right ] || [ top | bottom ]"
 	},
 		"single-animation": {
-		syntax: "<time> || <single-timing-function> || <time> || <single-animation-iteration-count> || <single-animation-direction> || <single-animation-fill-mode> || <single-animation-play-state> || [ none | <keyframes-name> ]"
+		syntax: "<time> || <timing-function> || <time> || <single-animation-iteration-count> || <single-animation-direction> || <single-animation-fill-mode> || <single-animation-play-state> || [ none | <keyframes-name> ]"
 	},
 		"single-animation-direction": {
 		syntax: "normal | reverse | alternate | alternate-reverse"
@@ -19603,24 +21416,36 @@
 		"single-animation-play-state": {
 		syntax: "running | paused"
 	},
-		"single-timing-function": {
-		syntax: "linear | <cubic-bezier-timing-function> | <step-timing-function> | <frames-timing-function>"
-	},
 		"single-transition": {
-		syntax: "[ none | <single-transition-property> ] || <time> || <single-transition-timing-function> || <time>"
-	},
-		"single-transition-timing-function": {
-		syntax: "<single-timing-function>"
+		syntax: "[ none | <single-transition-property> ] || <time> || <timing-function> || <time>"
 	},
 		"single-transition-property": {
 		syntax: "all | <custom-ident>"
 	},
 		size: size,
+		"step-position": {
+		syntax: "jump-start | jump-end | jump-none | jump-both | start | end"
+	},
 		"step-timing-function": {
-		syntax: "step-start | step-end | steps(<integer>[, [ start | end ] ]?)"
+		syntax: "step-start | step-end | steps(<integer>[, <step-position>]?)"
 	},
 		"subclass-selector": {
 		syntax: "<id-selector> | <class-selector> | <attribute-selector> | <pseudo-class-selector>"
+	},
+		"supports-condition": {
+		syntax: "not <supports-in-parens> | <supports-in-parens> [ and <supports-in-parens> ]* | <supports-in-parens> [ or <supports-in-parens> ]*"
+	},
+		"supports-in-parens": {
+		syntax: "( <supports-condition> ) | <supports-feature> | <general-enclosed>"
+	},
+		"supports-feature": {
+		syntax: "<supports-decl> | <supports-selector-fn>"
+	},
+		"supports-decl": {
+		syntax: "( <declaration> )"
+	},
+		"supports-selector-fn": {
+		syntax: "selector( <complex-selector> )"
 	},
 		symbol: symbol,
 		target: target,
@@ -19635,6 +21460,9 @@
 	},
 		"time-percentage": {
 		syntax: "<time> | <percentage>"
+	},
+		"timing-function": {
+		syntax: "linear | <cubic-bezier-timing-function> | <step-timing-function>"
 	},
 		"track-breadth": {
 		syntax: "<length-percentage> | <flex> | min-content | max-content | auto"
@@ -19655,7 +21483,7 @@
 		syntax: "<transform-function>+"
 	},
 		"translate()": {
-		syntax: "translate( <length-percentage> [, <length-percentage> ]? )"
+		syntax: "translate( <length-percentage> , <length-percentage>? )"
 	},
 		"translate3d()": {
 		syntax: "translate3d( <length-percentage> , <length-percentage> , <length> )"
@@ -19670,13 +21498,13 @@
 		syntax: "translateZ( <length> )"
 	},
 		"type-or-unit": {
-		syntax: "string | integer | color | url | integer | number | length | angle | time | frequency | em | ex | px | rem | vw | vh | vmin | vmax | mm | q | cm | in | pt | pc | deg | grad | rad | ms | s | Hz | kHz | %"
+		syntax: "string | color | url | integer | number | length | angle | time | frequency | cap | ch | em | ex | ic | lh | rlh | rem | vb | vi | vw | vh | vmin | vmax | mm | Q | cm | in | pt | pc | px | deg | grad | rad | turn | ms | s | Hz | kHz | %"
 	},
 		"type-selector": {
 		syntax: "<wq-name> | <ns-prefix>? '*'"
 	},
 		"var()": {
-		syntax: "var( <custom-property-name> [, <declaration-value> ]? )"
+		syntax: "var( <custom-property-name> , <declaration-value>? )"
 	},
 		"viewport-length": {
 		syntax: "auto | <length-percentage>"
@@ -19687,9 +21515,12 @@
 	};
 
 	var syntaxes$1 = /*#__PURE__*/Object.freeze({
+		__proto__: null,
 		attachment: attachment,
 		box: box,
 		color: color$1,
+		combinator: combinator,
+		compat: compat,
 		gradient: gradient,
 		hue: hue,
 		image: image,
@@ -19701,14 +21532,10 @@
 		size: size,
 		symbol: symbol,
 		target: target,
-		default: syntaxes
+		'default': syntaxes
 	});
 
 	var properties$3 = {
-		"--*": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
 		"-moz-background-clip": {
 			comment: "deprecated syntax in old Firefox, https://developer.mozilla.org/en/docs/Web/CSS/background-clip",
 			syntax: "padding | border"
@@ -19728,6 +21555,10 @@
 		"-moz-border-radius-topright": {
 			comment: "https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-right-radius",
 			syntax: "<'border-bottom-right-radius'>"
+		},
+		"-moz-control-character-visibility": {
+			comment: "firefox specific keywords, https://bugzilla.mozilla.org/show_bug.cgi?id=947588",
+			syntax: "visible | hidden"
 		},
 		"-moz-osx-font-smoothing": {
 			comment: "misssed old syntax https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth",
@@ -19777,9 +21608,21 @@
 			comment: "add this property first since it uses as fallback for flexbox, https://msdn.microsoft.com/en-us/library/windows/apps/hh466338.aspx",
 			syntax: "start | end | center | stretch"
 		},
+		"-ms-grid-columns": {
+			comment: "misssed old syntax implemented in IE; https://www.w3.org/TR/2012/WD-css3-grid-layout-20120322/#grid-columns",
+			syntax: "<track-list-v0>"
+		},
 		"-ms-grid-row-align": {
 			comment: "add this property first since it uses as fallback for flexbox, https://msdn.microsoft.com/en-us/library/windows/apps/hh466348.aspx",
 			syntax: "start | end | center | stretch"
+		},
+		"-ms-grid-rows": {
+			comment: "misssed old syntax implemented in IE; https://www.w3.org/TR/2012/WD-css3-grid-layout-20120322/#grid-rows",
+			syntax: "<track-list-v0>"
+		},
+		"-ms-hyphenate-limit-last": {
+			comment: "misssed old syntax implemented in IE; https://www.w3.org/TR/css-text-4/#hyphenate-line-limits",
+			syntax: "none | always | column | page | spread"
 		},
 		"-webkit-appearance": {
 			comment: "webkit specific keywords",
@@ -19808,17 +21651,9 @@
 			comment: "https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth",
 			syntax: "auto | none | antialiased | subpixel-antialiased"
 		},
-		"-webkit-line-clamp": {
-			comment: "non-standard and deprecated but may still using by some sites",
-			syntax: "<positive-integer>"
-		},
 		"-webkit-mask-box-image": {
 			comment: "missed; https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-mask-box-image",
 			syntax: "[ <url> | <gradient> | none ] [ <length-percentage>{4} <-webkit-mask-box-repeat>{2} ]?"
-		},
-		"-webkit-mask-clip": {
-			comment: "change type to <-webkit-mask-clip-style> since it differ from <mask-clip>, extra space between [ and ,",
-			syntax: "<-webkit-mask-clip-style> [, <-webkit-mask-clip-style> ]*"
 		},
 		"-webkit-print-color-adjust": {
 			comment: "missed",
@@ -19878,14 +21713,14 @@
 		},
 		cursor: {
 			comment: "added legacy keywords: hand, -webkit-grab. -webkit-grabbing, -webkit-zoom-in, -webkit-zoom-out, -moz-grab, -moz-grabbing, -moz-zoom-in, -moz-zoom-out",
-			refenrences: [
+			references: [
 				"https://www.sitepoint.com/css3-cursor-styles/"
 			],
 			syntax: "[ [ <url> [ <x> <y> ]? , ]* [ auto | default | none | context-menu | help | pointer | progress | wait | cell | crosshair | text | vertical-text | alias | copy | move | no-drop | not-allowed | e-resize | n-resize | ne-resize | nw-resize | s-resize | se-resize | sw-resize | w-resize | ew-resize | ns-resize | nesw-resize | nwse-resize | col-resize | row-resize | all-scroll | zoom-in | zoom-out | grab | grabbing | hand | -webkit-grab | -webkit-grabbing | -webkit-zoom-in | -webkit-zoom-out | -moz-grab | -moz-grabbing | -moz-zoom-in | -moz-zoom-out ] ]"
 		},
 		display: {
 			comment: "extended with -ms-flexbox",
-			syntax: "none | inline | block | list-item | inline-list-item | inline-block | inline-table | table | table-cell | table-column | table-column-group | table-footer-group | table-header-group | table-row | table-row-group | flex | inline-flex | grid | inline-grid | run-in | ruby | ruby-base | ruby-text | ruby-base-container | ruby-text-container | contents | -ms-flexbox | -ms-inline-flexbox | -ms-grid | -ms-inline-grid | -webkit-flex | -webkit-inline-flex | -webkit-box | -webkit-inline-box | -moz-inline-stack | -moz-box | -moz-inline-box"
+			syntax: "block | contents | flex | flow | flow-root | grid | inline | inline-block | inline-flex | inline-grid | inline-list-item | inline-table | list-item | none | ruby | ruby-base | ruby-base-container | ruby-text | ruby-text-container | run-in | table | table-caption | table-cell | table-column | table-column-group | table-footer-group | table-header-group | table-row | table-row-group | -ms-flexbox | -ms-inline-flexbox | -ms-grid | -ms-inline-grid | -webkit-flex | -webkit-inline-flex | -webkit-box | -webkit-inline-box | -moz-inline-stack | -moz-box | -moz-inline-box"
 		},
 		position: {
 			comment: "extended with -webkit-sticky",
@@ -19929,11 +21764,7 @@
 		},
 		filter: {
 			comment: "extend with IE legacy syntaxes",
-			syntax: "none | <filter-function-list> | <-ms-filter>"
-		},
-		font: {
-			comment: "extend with non-standard fonts",
-			syntax: "[ [ <'font-style'> || <font-variant-css21> || <'font-weight'> || <'font-stretch'> ]? <'font-size'> [ / <'line-height'> ]? <'font-family'> ] | caption | icon | menu | message-box | small-caption | status-bar | <-non-standard-font>"
+			syntax: "none | <filter-function-list> | <-ms-filter-function-list>"
 		},
 		"glyph-orientation-horizontal": {
 			comment: "added SVG property",
@@ -19962,10 +21793,6 @@
 				"https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/letter-spacing"
 			],
 			syntax: "normal | <length-percentage>"
-		},
-		"line-height-step": {
-			comment: "fix extra spaces around",
-			syntax: "none | <length>"
 		},
 		marker: {
 			comment: "added SVG property",
@@ -20009,7 +21836,7 @@
 		},
 		overflow: {
 			comment: "extend by vendor keywords https://developer.mozilla.org/en-US/docs/Web/CSS/overflow",
-			syntax: "visible | hidden | scroll | auto | <-non-standard-overflow>"
+			syntax: "[ visible | hidden | clip | scroll | auto ]{1,2} | <-non-standard-overflow>"
 		},
 		pause: {
 			comment: "https://www.w3.org/TR/css3-speech/#property-index",
@@ -20117,17 +21944,13 @@
 			],
 			syntax: "start | middle | end"
 		},
-		"transform-origin": {
-			comment: "move first group to the end since less collecting",
-			syntax: "[ [ <length-percentage> | left | center | right ] && [ <length-percentage> | top | center | bottom ] ] <length>? | [ <length-percentage> | left | center | right | top | bottom ]"
-		},
 		"unicode-bidi": {
 			comment: "added prefixed keywords https://developer.mozilla.org/en-US/docs/Web/CSS/unicode-bidi",
 			syntax: "normal | embed | isolate | bidi-override | isolate-override | plaintext | -moz-isolate | -moz-isolate-override | -moz-plaintext | -webkit-isolate"
 		},
 		"unicode-range": {
 			comment: "added missed property https://developer.mozilla.org/en-US/docs/Web/CSS/%40font-face/unicode-range",
-			syntax: "<unicode-range>#"
+			syntax: "<urange>#"
 		},
 		"voice-balance": {
 			comment: "https://www.w3.org/TR/css3-speech/#property-index",
@@ -20160,10 +21983,6 @@
 		"voice-volume": {
 			comment: "https://www.w3.org/TR/css3-speech/#property-index",
 			syntax: "silent | [ [ x-soft | soft | medium | loud | x-loud ] || <decibel> ]"
-		},
-		"word-break": {
-			comment: "extend with non-standard keywords",
-			syntax: "normal | break-all | keep-all | <-non-standard-word-break>"
 		},
 		"writing-mode": {
 			comment: "extend with SVG keywords",
@@ -20204,12 +22023,12 @@
 			syntax: "closest-side | closest-corner | farthest-side | farthest-corner | contain | cover"
 		},
 		"-legacy-radial-gradient-shape": {
-			comment: "define to duoble sure it doesn't extends in future https://www.w3.org/TR/2011/WD-css3-images-20110908/#ltshape",
+			comment: "define to double sure it doesn't extends in future https://www.w3.org/TR/2011/WD-css3-images-20110908/#ltshape",
 			syntax: "circle | ellipse"
 		},
 		"-non-standard-font": {
 			comment: "non standard fonts",
-			preferences: [
+			references: [
 				"https://webkit.org/blog/3709/using-the-system-font-in-web-content/"
 			],
 			syntax: "-apple-system-body | -apple-system-headline | -apple-system-subheadline | -apple-system-caption1 | -apple-system-caption2 | -apple-system-footnote | -apple-system-short-body | -apple-system-short-headline | -apple-system-short-subheadline | -apple-system-short-caption1 | -apple-system-short-footnote | -apple-system-tall-body"
@@ -20233,10 +22052,6 @@
 		"-non-standard-width": {
 			comment: "non-standard keywords https://developer.mozilla.org/en-US/docs/Web/CSS/width",
 			syntax: "min-intrinsic | intrinsic | -moz-min-content | -moz-max-content | -webkit-min-content | -webkit-max-content"
-		},
-		"-non-standard-word-break": {
-			comment: "non-standard keywords https://css-tricks.com/almanac/properties/w/word-break/",
-			syntax: "break-word"
 		},
 		"-webkit-gradient()": {
 			comment: "first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/ - TODO: simplify when after match algorithm improvement ( [, point, radius | , point] -> [, radius]? , point )",
@@ -20266,16 +22081,34 @@
 			comment: "missed; there is no enough information about `-webkit-mask-clip` property, but looks like all those keywords are working",
 			syntax: "border | border-box | padding | padding-box | content | content-box | text"
 		},
+		"-ms-filter-function-list": {
+			comment: "https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter",
+			syntax: "<-ms-filter-function>+"
+		},
+		"-ms-filter-function": {
+			comment: "https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter",
+			syntax: "<-ms-filter-function-progid> | <-ms-filter-function-legacy>"
+		},
+		"-ms-filter-function-progid": {
+			comment: "https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter",
+			syntax: "'progid:' [ <ident-token> '.' ]* [ <ident-token> | <function-token> <any-value>? ) ]"
+		},
+		"-ms-filter-function-legacy": {
+			comment: "https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter",
+			syntax: "<ident-token> | <function-token> <any-value>? )"
+		},
 		"-ms-filter": {
-			syntax: "[ <progid> | FlipH | FlipV ]+"
+			syntax: "<string>"
 		},
 		age: {
 			comment: "https://www.w3.org/TR/css3-speech/#voice-family",
 			syntax: "child | young | old"
 		},
-		"attr()": {
-			comment: "drop it since it's a generic",
-			syntax: null
+		"attr-name": {
+			syntax: "<wq-name>"
+		},
+		"attr-fallback": {
+			syntax: "<any-value>"
 		},
 		"border-radius": {
 			comment: "missed, https://drafts.csswg.org/css-backgrounds-3/#the-border-radius",
@@ -20288,10 +22121,6 @@
 		"content-list": {
 			comment: "missed -> https://drafts.csswg.org/css-content/#typedef-content-list (document-url, <target> and leader() is omitted util stabilization)",
 			syntax: "[ <string> | contents | <url> | <quote> | <attr()> | counter( <ident>, <'list-style-type'>? ) ]+"
-		},
-		"inset()": {
-			comment: "changed <border-radius> to <'border-radius'>",
-			syntax: "inset( <length-percentage>{1,4} [ round <'border-radius'> ]? )"
 		},
 		"generic-voice": {
 			comment: "https://www.w3.org/TR/css3-speech/#voice-family",
@@ -20309,8 +22138,8 @@
 			syntax: "serif | sans-serif | cursive | fantasy | monospace | -apple-system"
 		},
 		gradient: {
-			comment: "added -webkit-gradient() since may to be used for legacy support",
-			syntax: "<-legacy-gradient> | <linear-gradient()> | <repeating-linear-gradient()> | <radial-gradient()> | <repeating-radial-gradient()>"
+			comment: "added legacy syntaxes support",
+			syntax: "<linear-gradient()> | <repeating-linear-gradient()> | <radial-gradient()> | <repeating-radial-gradient()> | <conic-gradient()> | <-legacy-gradient>"
 		},
 		left: {
 			comment: "missed; not sure we should add it, but no others except `shape` is using it so it's ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect",
@@ -20320,33 +22149,25 @@
 			comment: "missed; https://drafts.fxtf.org/css-masking-1/#the-mask-image",
 			syntax: "<mask-reference>#"
 		},
-		"matrix()": {
-			comment: "redundant max",
-			syntax: "matrix( <number> [, <number> ]{5} )"
-		},
-		"matrix3d()": {
-			comment: "redundant max",
-			syntax: "matrix3d( <number> [, <number> ]{15} )"
-		},
 		"name-repeat": {
 			comment: "missed, and looks like obsolete, keep it as is since other property syntaxes should be changed too; https://www.w3.org/TR/2015/WD-css-grid-1-20150917/#typedef-name-repeat",
 			syntax: "repeat( [ <positive-integer> | auto-fill ], <line-names>+)"
 		},
 		"named-color": {
-			comment: "replaced <ident> to list of colors according to https://www.w3.org/TR/css-color-4/#named-colors",
+			comment: "added non standard color names",
 			syntax: "transparent | aliceblue | antiquewhite | aqua | aquamarine | azure | beige | bisque | black | blanchedalmond | blue | blueviolet | brown | burlywood | cadetblue | chartreuse | chocolate | coral | cornflowerblue | cornsilk | crimson | cyan | darkblue | darkcyan | darkgoldenrod | darkgray | darkgreen | darkgrey | darkkhaki | darkmagenta | darkolivegreen | darkorange | darkorchid | darkred | darksalmon | darkseagreen | darkslateblue | darkslategray | darkslategrey | darkturquoise | darkviolet | deeppink | deepskyblue | dimgray | dimgrey | dodgerblue | firebrick | floralwhite | forestgreen | fuchsia | gainsboro | ghostwhite | gold | goldenrod | gray | green | greenyellow | grey | honeydew | hotpink | indianred | indigo | ivory | khaki | lavender | lavenderblush | lawngreen | lemonchiffon | lightblue | lightcoral | lightcyan | lightgoldenrodyellow | lightgray | lightgreen | lightgrey | lightpink | lightsalmon | lightseagreen | lightskyblue | lightslategray | lightslategrey | lightsteelblue | lightyellow | lime | limegreen | linen | magenta | maroon | mediumaquamarine | mediumblue | mediumorchid | mediumpurple | mediumseagreen | mediumslateblue | mediumspringgreen | mediumturquoise | mediumvioletred | midnightblue | mintcream | mistyrose | moccasin | navajowhite | navy | oldlace | olive | olivedrab | orange | orangered | orchid | palegoldenrod | palegreen | paleturquoise | palevioletred | papayawhip | peachpuff | peru | pink | plum | powderblue | purple | rebeccapurple | red | rosybrown | royalblue | saddlebrown | salmon | sandybrown | seagreen | seashell | sienna | silver | skyblue | slateblue | slategray | slategrey | snow | springgreen | steelblue | tan | teal | thistle | tomato | turquoise | violet | wheat | white | whitesmoke | yellow | yellowgreen | <-non-standard-color>"
 		},
-		"outline-radius": {
-			comment: "missed, looks like it's a similar to <border-radius> https://developer.mozilla.org/en/docs/Web/CSS/-moz-outline-radius",
-			syntax: "<border-radius>"
-		},
 		paint: {
-			comment: "simplified SVG syntax (omit <icccolor>, replace <funciri> for <url>) https://www.w3.org/TR/SVG/painting.html#SpecifyingPaint",
-			syntax: "none | currentColor | <color> | <url> [ none | currentColor | <color> ]?"
+			comment: "used by SVG https://www.w3.org/TR/SVG/painting.html#SpecifyingPaint",
+			syntax: "none | <color> | <url> [ none | <color> ]? | context-fill | context-stroke"
 		},
 		"path()": {
 			comment: "missed, `motion` property was renamed, but left it as is for now; path() syntax was get from last draft https://drafts.fxtf.org/motion-1/#funcdef-offset-path-path",
 			syntax: "path( <string> )"
+		},
+		ratio: {
+			comment: "missed, https://drafts.csswg.org/mediaqueries-4/#typedef-ratio",
+			syntax: "<integer> / <integer>"
 		},
 		right: {
 			comment: "missed; not sure we should add it, but no others except `shape` is using it so it's ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect",
@@ -20354,11 +22175,7 @@
 		},
 		shape: {
 			comment: "missed spaces in function body and add backwards compatible syntax",
-			syntax: "rect( [ [ <top>, <right>, <bottom>, <left> ] | [ <top> <right> <bottom> <left> ] ] )"
-		},
-		"single-transition": {
-			comment: "moved <single-transition-timing-function> in the beginning to avoid wrong match to <single-transition-property>",
-			syntax: "<single-transition-timing-function> || [ none | <single-transition-property> ] || <time> || <time>"
+			syntax: "rect( <top>, <right>, <bottom>, <left> ) | rect( <top> <right> <bottom> <left> )"
 		},
 		"svg-length": {
 			comment: "All coordinates and lengths in SVG can be specified with or without a unit identifier",
@@ -20379,6 +22196,18 @@
 			comment: "missed; not sure we should add it, but no others except `shape` is using it so it's ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect",
 			syntax: "<length> | auto"
 		},
+		"track-group": {
+			comment: "used by old grid-columns and grid-rows syntax v0",
+			syntax: "'(' [ <string>* <track-minmax> <string>* ]+ ')' [ '[' <positive-integer> ']' ]? | <track-minmax>"
+		},
+		"track-list-v0": {
+			comment: "used by old grid-columns and grid-rows syntax v0",
+			syntax: "[ <string>* <track-group> <string>* ]+ | none"
+		},
+		"track-minmax": {
+			comment: "used by old grid-columns and grid-rows syntax v0",
+			syntax: "minmax( <track-breadth> , <track-breadth> ) | auto | <track-breadth> | fit-content"
+		},
 		x: {
 			comment: "missed; not sure we should add it, but no others except `cursor` is using it so it's ok for now; https://drafts.csswg.org/css-ui-3/#cursor",
 			syntax: "<number>"
@@ -20387,121 +22216,30 @@
 			comment: "missed; not sure we should add it, but no others except `cursor` is using so it's ok for now; https://drafts.csswg.org/css-ui-3/#cursor",
 			syntax: "<number>"
 		},
-		"var()": {
-			comment: "drop it since it's a generic (also syntax is incorrect and can't be parsed)",
-			syntax: null
+		declaration: {
+			comment: "missed, restored by https://drafts.csswg.org/css-syntax",
+			syntax: "<ident-token> : <declaration-value>? [ '!' important ]?"
 		},
-		"an-plus-b": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
+		"declaration-list": {
+			comment: "missed, restored by https://drafts.csswg.org/css-syntax",
+			syntax: "[ <declaration>? ';' ]* <declaration>?"
 		},
-		"feature-type": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
+		url: {
+			comment: "https://drafts.csswg.org/css-values-4/#urls",
+			syntax: "url( <string> <url-modifier>* ) | <url-token>"
 		},
-		"feature-value-block": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
+		"url-modifier": {
+			comment: "https://drafts.csswg.org/css-values-4/#typedef-url-modifier",
+			syntax: "<ident> | <function-token> <any-value> )"
 		},
-		"feature-value-declaration": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
+		"number-zero-one": {
+			syntax: "<number [0,1]>"
 		},
-		"feature-value-block-list": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
+		"number-one-or-greater": {
+			syntax: "<number [1,∞]>"
 		},
-		"feature-value-declaration-list": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"general-enclosed": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"keyframe-block": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"keyframe-block-list": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"mf-plain": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"mf-range": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"mf-value": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"media-and": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"media-condition": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"media-not": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"media-or": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"media-in-parens": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"media-feature": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"media-condition-without-or": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"media-query": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"media-query-list": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		nth: {
-			comment: "syntax has <an-plus-b> that doesn't support currently, drop for now",
-			syntax: null
-		},
-		"page-selector": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"page-selector-list": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"page-body": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"page-margin-box": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"page-margin-box-type": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
-		},
-		"pseudo-page": {
-			comment: "syntax is incorrect and can't be parsed, drop for now",
-			syntax: null
+		"positive-integer": {
+			syntax: "<integer [0,∞]>"
 		}
 	};
 	var patch = {
@@ -20510,16 +22248,43 @@
 	};
 
 	var patch$1 = /*#__PURE__*/Object.freeze({
+		__proto__: null,
 		properties: properties$3,
 		syntaxes: syntaxes$2,
-		default: patch
+		'default': patch
 	});
+
+	var mdnAtrules = getCjsExportFromNamespace(atRules$1);
 
 	var mdnProperties = getCjsExportFromNamespace(properties$2);
 
 	var mdnSyntaxes = getCjsExportFromNamespace(syntaxes$1);
 
 	var patch$2 = getCjsExportFromNamespace(patch$1);
+
+	function preprocessAtrules(dict) {
+	    var result = Object.create(null);
+
+	    for (var atruleName in dict) {
+	        var atrule = dict[atruleName];
+	        var descriptors = null;
+
+	        if (atrule.descriptors) {
+	            descriptors = Object.create(null);
+
+	            for (var descriptor in atrule.descriptors) {
+	                descriptors[descriptor] = atrule.descriptors[descriptor].syntax;
+	            }
+	        }
+
+	        result[atruleName.substr(1)] = {
+	            prelude: atrule.syntax.trim().match(/^@\S+\s+([^;\{]*)/)[1].trim() || null,
+	            descriptors
+	        };
+	    }
+
+	    return result;
+	}
 
 	function buildDictionary(dict, patchDict) {
 	    var result = {};
@@ -20548,38 +22313,107 @@
 	}
 
 	var data = {
-	    properties: buildDictionary(mdnProperties, patch$2.properties),
-	    types: buildDictionary(mdnSyntaxes, patch$2.syntaxes)
+	    types: buildDictionary(mdnSyntaxes, patch$2.syntaxes),
+	    atrules: preprocessAtrules(mdnAtrules),
+	    properties: buildDictionary(mdnProperties, patch$2.properties)
 	};
 
-	var cmpChar$1 = tokenizer.cmpChar;
-	var isNumber$3 = tokenizer.isNumber;
-	var TYPE$4 = tokenizer.TYPE;
+	var cmpChar$3 = tokenizer.cmpChar;
+	var isDigit$4 = tokenizer.isDigit;
+	var TYPE$9 = tokenizer.TYPE;
 
-	var IDENTIFIER$3 = TYPE$4.Identifier;
-	var NUMBER$2 = TYPE$4.Number;
-	var PLUSSIGN$4 = TYPE$4.PlusSign;
-	var HYPHENMINUS$4 = TYPE$4.HyphenMinus;
-	var N$5 = 110; // 'n'.charCodeAt(0)
-	var DISALLOW_SIGN = true;
-	var ALLOW_SIGN = false;
+	var WHITESPACE$4 = TYPE$9.WhiteSpace;
+	var COMMENT$3 = TYPE$9.Comment;
+	var IDENT$3 = TYPE$9.Ident;
+	var NUMBER$3 = TYPE$9.Number;
+	var DIMENSION$2 = TYPE$9.Dimension;
+	var PLUSSIGN$3 = 0x002B;    // U+002B PLUS SIGN (+)
+	var HYPHENMINUS$3 = 0x002D; // U+002D HYPHEN-MINUS (-)
+	var N$4 = 0x006E;           // U+006E LATIN SMALL LETTER N (n)
+	var DISALLOW_SIGN$1 = true;
+	var ALLOW_SIGN$1 = false;
 
-	function checkTokenIsInteger(scanner, disallowSign) {
-	    var pos = scanner.tokenStart;
+	function checkInteger$1(offset, disallowSign) {
+	    var pos = this.scanner.tokenStart + offset;
+	    var code = this.scanner.source.charCodeAt(pos);
 
-	    if (scanner.source.charCodeAt(pos) === PLUSSIGN$4 ||
-	        scanner.source.charCodeAt(pos) === HYPHENMINUS$4) {
+	    if (code === PLUSSIGN$3 || code === HYPHENMINUS$3) {
 	        if (disallowSign) {
-	            scanner.error();
+	            this.error('Number sign is not allowed');
 	        }
 	        pos++;
 	    }
 
-	    for (; pos < scanner.tokenEnd; pos++) {
-	        if (!isNumber$3(scanner.source.charCodeAt(pos))) {
-	            scanner.error('Unexpected input', pos);
+	    for (; pos < this.scanner.tokenEnd; pos++) {
+	        if (!isDigit$4(this.scanner.source.charCodeAt(pos))) {
+	            this.error('Integer is expected', pos);
 	        }
 	    }
+	}
+
+	function checkTokenIsInteger(disallowSign) {
+	    return checkInteger$1.call(this, 0, disallowSign);
+	}
+
+	function expectCharCode(offset, code) {
+	    if (!cmpChar$3(this.scanner.source, this.scanner.tokenStart + offset, code)) {
+	        var msg = '';
+
+	        switch (code) {
+	            case N$4:
+	                msg = 'N is expected';
+	                break;
+	            case HYPHENMINUS$3:
+	                msg = 'HyphenMinus is expected';
+	                break;
+	        }
+
+	        this.error(msg, this.scanner.tokenStart + offset);
+	    }
+	}
+
+	// ... <signed-integer>
+	// ... ['+' | '-'] <signless-integer>
+	function consumeB$1() {
+	    var offset = 0;
+	    var sign = 0;
+	    var type = this.scanner.tokenType;
+
+	    while (type === WHITESPACE$4 || type === COMMENT$3) {
+	        type = this.scanner.lookupType(++offset);
+	    }
+
+	    if (type !== NUMBER$3) {
+	        if (this.scanner.isDelim(PLUSSIGN$3, offset) ||
+	            this.scanner.isDelim(HYPHENMINUS$3, offset)) {
+	            sign = this.scanner.isDelim(PLUSSIGN$3, offset) ? PLUSSIGN$3 : HYPHENMINUS$3;
+
+	            do {
+	                type = this.scanner.lookupType(++offset);
+	            } while (type === WHITESPACE$4 || type === COMMENT$3);
+
+	            if (type !== NUMBER$3) {
+	                this.scanner.skip(offset);
+	                checkTokenIsInteger.call(this, DISALLOW_SIGN$1);
+	            }
+	        } else {
+	            return null;
+	        }
+	    }
+
+	    if (offset > 0) {
+	        this.scanner.skip(offset);
+	    }
+
+	    if (sign === 0) {
+	        type = this.scanner.source.charCodeAt(this.scanner.tokenStart);
+	        if (type !== PLUSSIGN$3 && type !== HYPHENMINUS$3) {
+	            this.error('Number sign is expected');
+	        }
+	    }
+
+	    checkTokenIsInteger.call(this, sign !== 0);
+	    return sign === HYPHENMINUS$3 ? '-' + this.consume(NUMBER$3) : this.consume(NUMBER$3);
 	}
 
 	// An+B microsyntax https://www.w3.org/TR/css-syntax-3/#anb
@@ -20590,117 +22424,166 @@
 	        b: [String, null]
 	    },
 	    parse: function() {
+	        /* eslint-disable brace-style*/
 	        var start = this.scanner.tokenStart;
-	        var end = start;
-	        var prefix = '';
 	        var a = null;
 	        var b = null;
 
-	        if (this.scanner.tokenType === NUMBER$2 ||
-	            this.scanner.tokenType === PLUSSIGN$4) {
-	            checkTokenIsInteger(this.scanner, ALLOW_SIGN);
-	            prefix = this.scanner.getTokenValue();
-	            this.scanner.next();
-	            end = this.scanner.tokenStart;
+	        // <integer>
+	        if (this.scanner.tokenType === NUMBER$3) {
+	            checkTokenIsInteger.call(this, ALLOW_SIGN$1);
+	            b = this.consume(NUMBER$3);
 	        }
 
-	        if (this.scanner.tokenType === IDENTIFIER$3) {
-	            var bStart = this.scanner.tokenStart;
+	        // -n
+	        // -n <signed-integer>
+	        // -n ['+' | '-'] <signless-integer>
+	        // -n- <signless-integer>
+	        // <dashndashdigit-ident>
+	        else if (this.scanner.tokenType === IDENT$3 && cmpChar$3(this.scanner.source, this.scanner.tokenStart, HYPHENMINUS$3)) {
+	            a = '-1';
 
-	            if (cmpChar$1(this.scanner.source, bStart, HYPHENMINUS$4)) {
-	                if (prefix === '') {
-	                    prefix = '-';
-	                    bStart++;
-	                } else {
-	                    this.scanner.error('Unexpected hyphen minus');
-	                }
-	            }
+	            expectCharCode.call(this, 1, N$4);
 
-	            if (!cmpChar$1(this.scanner.source, bStart, N$5)) {
-	                this.scanner.error();
-	            }
+	            switch (this.scanner.getTokenLength()) {
+	                // -n
+	                // -n <signed-integer>
+	                // -n ['+' | '-'] <signless-integer>
+	                case 2:
+	                    this.scanner.next();
+	                    b = consumeB$1.call(this);
+	                    break;
 
-	            a = prefix === ''  ? '1'  :
-	                prefix === '+' ? '+1' :
-	                prefix === '-' ? '-1' :
-	                prefix;
+	                // -n- <signless-integer>
+	                case 3:
+	                    expectCharCode.call(this, 2, HYPHENMINUS$3);
 
-	            var len = this.scanner.tokenEnd - bStart;
-	            if (len > 1) {
-	                // ..n-..
-	                if (this.scanner.source.charCodeAt(bStart + 1) !== HYPHENMINUS$4) {
-	                    this.scanner.error('Unexpected input', bStart + 1);
-	                }
-
-	                if (len > 2) {
-	                    // ..n-{number}..
-	                    this.scanner.tokenStart = bStart + 2;
-	                } else {
-	                    // ..n- {number}
 	                    this.scanner.next();
 	                    this.scanner.skipSC();
-	                }
 
-	                checkTokenIsInteger(this.scanner, DISALLOW_SIGN);
-	                b = '-' + this.scanner.getTokenValue();
+	                    checkTokenIsInteger.call(this, DISALLOW_SIGN$1);
+
+	                    b = '-' + this.consume(NUMBER$3);
+	                    break;
+
+	                // <dashndashdigit-ident>
+	                default:
+	                    expectCharCode.call(this, 2, HYPHENMINUS$3);
+	                    checkInteger$1.call(this, 3, DISALLOW_SIGN$1);
+	                    this.scanner.next();
+
+	                    b = this.scanner.substrToCursor(start + 2);
+	            }
+	        }
+
+	        // '+'? n
+	        // '+'? n <signed-integer>
+	        // '+'? n ['+' | '-'] <signless-integer>
+	        // '+'? n- <signless-integer>
+	        // '+'? <ndashdigit-ident>
+	        else if (this.scanner.tokenType === IDENT$3 || (this.scanner.isDelim(PLUSSIGN$3) && this.scanner.lookupType(1) === IDENT$3)) {
+	            var sign = 0;
+	            a = '1';
+
+	            // just ignore a plus
+	            if (this.scanner.isDelim(PLUSSIGN$3)) {
+	                sign = 1;
 	                this.scanner.next();
-	                end = this.scanner.tokenStart;
+	            }
+
+	            expectCharCode.call(this, 0, N$4);
+
+	            switch (this.scanner.getTokenLength()) {
+	                // '+'? n
+	                // '+'? n <signed-integer>
+	                // '+'? n ['+' | '-'] <signless-integer>
+	                case 1:
+	                    this.scanner.next();
+	                    b = consumeB$1.call(this);
+	                    break;
+
+	                // '+'? n- <signless-integer>
+	                case 2:
+	                    expectCharCode.call(this, 1, HYPHENMINUS$3);
+
+	                    this.scanner.next();
+	                    this.scanner.skipSC();
+
+	                    checkTokenIsInteger.call(this, DISALLOW_SIGN$1);
+
+	                    b = '-' + this.consume(NUMBER$3);
+	                    break;
+
+	                // '+'? <ndashdigit-ident>
+	                default:
+	                    expectCharCode.call(this, 1, HYPHENMINUS$3);
+	                    checkInteger$1.call(this, 2, DISALLOW_SIGN$1);
+	                    this.scanner.next();
+
+	                    b = this.scanner.substrToCursor(start + sign + 1);
+	            }
+	        }
+
+	        // <ndashdigit-dimension>
+	        // <ndash-dimension> <signless-integer>
+	        // <n-dimension>
+	        // <n-dimension> <signed-integer>
+	        // <n-dimension> ['+' | '-'] <signless-integer>
+	        else if (this.scanner.tokenType === DIMENSION$2) {
+	            var code = this.scanner.source.charCodeAt(this.scanner.tokenStart);
+	            var sign = code === PLUSSIGN$3 || code === HYPHENMINUS$3;
+
+	            for (var i = this.scanner.tokenStart + sign; i < this.scanner.tokenEnd; i++) {
+	                if (!isDigit$4(this.scanner.source.charCodeAt(i))) {
+	                    break;
+	                }
+	            }
+
+	            if (i === this.scanner.tokenStart + sign) {
+	                this.error('Integer is expected', this.scanner.tokenStart + sign);
+	            }
+
+	            expectCharCode.call(this, i - this.scanner.tokenStart, N$4);
+	            a = this.scanner.source.substring(start, i);
+
+	            // <n-dimension>
+	            // <n-dimension> <signed-integer>
+	            // <n-dimension> ['+' | '-'] <signless-integer>
+	            if (i + 1 === this.scanner.tokenEnd) {
+	                this.scanner.next();
+	                b = consumeB$1.call(this);
 	            } else {
-	                prefix = '';
-	                this.scanner.next();
-	                end = this.scanner.tokenStart;
-	                this.scanner.skipSC();
+	                expectCharCode.call(this, i - this.scanner.tokenStart + 1, HYPHENMINUS$3);
 
-	                if (this.scanner.tokenType === HYPHENMINUS$4 ||
-	                    this.scanner.tokenType === PLUSSIGN$4) {
-	                    prefix = this.scanner.getTokenValue();
+	                // <ndash-dimension> <signless-integer>
+	                if (i + 2 === this.scanner.tokenEnd) {
 	                    this.scanner.next();
 	                    this.scanner.skipSC();
+	                    checkTokenIsInteger.call(this, DISALLOW_SIGN$1);
+	                    b = '-' + this.consume(NUMBER$3);
 	                }
-
-	                if (this.scanner.tokenType === NUMBER$2) {
-	                    checkTokenIsInteger(this.scanner, prefix !== '');
-
-	                    if (!isNumber$3(this.scanner.source.charCodeAt(this.scanner.tokenStart))) {
-	                        prefix = this.scanner.source.charAt(this.scanner.tokenStart);
-	                        this.scanner.tokenStart++;
-	                    }
-
-	                    if (prefix === '') {
-	                        // should be an operator before number
-	                        this.scanner.error();
-	                    } else if (prefix === '+') {
-	                        // plus is using by default
-	                        prefix = '';
-	                    }
-
-	                    b = prefix + this.scanner.getTokenValue();
-
+	                // <ndashdigit-dimension>
+	                else {
+	                    checkInteger$1.call(this, i - this.scanner.tokenStart + 2, DISALLOW_SIGN$1);
 	                    this.scanner.next();
-	                    end = this.scanner.tokenStart;
-	                } else {
-	                    if (prefix) {
-	                        this.scanner.eat(NUMBER$2);
-	                    }
+	                    b = this.scanner.substrToCursor(i + 1);
 	                }
 	            }
 	        } else {
-	            if (prefix === '' || prefix === '+') { // no number
-	                this.scanner.error(
-	                    'Number or identifier is expected',
-	                    this.scanner.tokenStart + (
-	                        this.scanner.tokenType === PLUSSIGN$4 ||
-	                        this.scanner.tokenType === HYPHENMINUS$4
-	                    )
-	                );
-	            }
+	            this.error();
+	        }
 
-	            b = prefix;
+	        if (a !== null && a.charCodeAt(0) === PLUSSIGN$3) {
+	            a = a.substr(1);
+	        }
+
+	        if (b !== null && b.charCodeAt(0) === PLUSSIGN$3) {
+	            b = b.substr(1);
 	        }
 
 	        return {
 	            type: 'AnPlusB',
-	            loc: this.getLocation(start, end),
+	            loc: this.getLocation(start, this.scanner.tokenStart),
 	            a: a,
 	            b: b
 	        };
@@ -20711,10 +22594,10 @@
 
 	        if (a) {
 	            this.chunk(
-	                node.a === '+1' ? '+n' :
-	                node.a ===  '1' ?  'n' :
-	                node.a === '-1' ? '-n' :
-	                node.a + 'n'
+	                node.a === '+1' ? '+n' : // eslint-disable-line operator-linebreak, indent
+	                node.a ===  '1' ?  'n' : // eslint-disable-line operator-linebreak, indent
+	                node.a === '-1' ? '-n' : // eslint-disable-line operator-linebreak, indent
+	                node.a + 'n'             // eslint-disable-line operator-linebreak, indent
 	            );
 
 	            if (b) {
@@ -20733,25 +22616,113 @@
 	    }
 	};
 
-	var TYPE$5 = tokenizer.TYPE;
+	var TYPE$a = tokenizer.TYPE;
 
-	var ATKEYWORD$2 = TYPE$5.AtKeyword;
-	var SEMICOLON = TYPE$5.Semicolon;
-	var LEFTCURLYBRACKET$2 = TYPE$5.LeftCurlyBracket;
-	var RIGHTCURLYBRACKET$2 = TYPE$5.RightCurlyBracket;
+	var WhiteSpace = TYPE$a.WhiteSpace;
+	var Semicolon = TYPE$a.Semicolon;
+	var LeftCurlyBracket = TYPE$a.LeftCurlyBracket;
+	var Delim = TYPE$a.Delim;
+	var EXCLAMATIONMARK$1 = 0x0021; // U+0021 EXCLAMATION MARK (!)
+
+	function getOffsetExcludeWS() {
+	    if (this.scanner.tokenIndex > 0) {
+	        if (this.scanner.lookupType(-1) === WhiteSpace) {
+	            return this.scanner.tokenIndex > 1
+	                ? this.scanner.getTokenStart(this.scanner.tokenIndex - 1)
+	                : this.scanner.firstCharOffset;
+	        }
+	    }
+
+	    return this.scanner.tokenStart;
+	}
+
+	// 0, 0, false
+	function balanceEnd() {
+	    return 0;
+	}
+
+	// LEFTCURLYBRACKET, 0, false
+	function leftCurlyBracket(tokenType) {
+	    return tokenType === LeftCurlyBracket ? 1 : 0;
+	}
+
+	// LEFTCURLYBRACKET, SEMICOLON, false
+	function leftCurlyBracketOrSemicolon(tokenType) {
+	    return tokenType === LeftCurlyBracket || tokenType === Semicolon ? 1 : 0;
+	}
+
+	// EXCLAMATIONMARK, SEMICOLON, false
+	function exclamationMarkOrSemicolon(tokenType, source, offset) {
+	    if (tokenType === Delim && source.charCodeAt(offset) === EXCLAMATIONMARK$1) {
+	        return 1;
+	    }
+
+	    return tokenType === Semicolon ? 1 : 0;
+	}
+
+	// 0, SEMICOLON, true
+	function semicolonIncluded(tokenType) {
+	    return tokenType === Semicolon ? 2 : 0;
+	}
+
+	var Raw = {
+	    name: 'Raw',
+	    structure: {
+	        value: String
+	    },
+	    parse: function(startToken, mode, excludeWhiteSpace) {
+	        var startOffset = this.scanner.getTokenStart(startToken);
+	        var endOffset;
+
+	        this.scanner.skip(
+	            this.scanner.getRawLength(startToken, mode || balanceEnd)
+	        );
+
+	        if (excludeWhiteSpace && this.scanner.tokenStart > startOffset) {
+	            endOffset = getOffsetExcludeWS.call(this);
+	        } else {
+	            endOffset = this.scanner.tokenStart;
+	        }
+
+	        return {
+	            type: 'Raw',
+	            loc: this.getLocation(startOffset, endOffset),
+	            value: this.scanner.source.substring(startOffset, endOffset)
+	        };
+	    },
+	    generate: function(node) {
+	        this.chunk(node.value);
+	    },
+
+	    mode: {
+	        default: balanceEnd,
+	        leftCurlyBracket: leftCurlyBracket,
+	        leftCurlyBracketOrSemicolon: leftCurlyBracketOrSemicolon,
+	        exclamationMarkOrSemicolon: exclamationMarkOrSemicolon,
+	        semicolonIncluded: semicolonIncluded
+	    }
+	};
+
+	var TYPE$b = tokenizer.TYPE;
+	var rawMode = Raw.mode;
+
+	var ATKEYWORD = TYPE$b.AtKeyword;
+	var SEMICOLON = TYPE$b.Semicolon;
+	var LEFTCURLYBRACKET$1 = TYPE$b.LeftCurlyBracket;
+	var RIGHTCURLYBRACKET$1 = TYPE$b.RightCurlyBracket;
 
 	function consumeRaw(startToken) {
-	    return this.Raw(startToken, SEMICOLON, LEFTCURLYBRACKET$2, false, true);
+	    return this.Raw(startToken, rawMode.leftCurlyBracketOrSemicolon, true);
 	}
 
 	function isDeclarationBlockAtrule() {
 	    for (var offset = 1, type; type = this.scanner.lookupType(offset); offset++) {
-	        if (type === RIGHTCURLYBRACKET$2) {
+	        if (type === RIGHTCURLYBRACKET$1) {
 	            return true;
 	        }
 
-	        if (type === LEFTCURLYBRACKET$2 ||
-	            type === ATKEYWORD$2) {
+	        if (type === LEFTCURLYBRACKET$1 ||
+	            type === ATKEYWORD) {
 	            return false;
 	        }
 	    }
@@ -20773,7 +22744,7 @@
 	        var prelude = null;
 	        var block = null;
 
-	        this.scanner.eat(ATKEYWORD$2);
+	        this.eat(ATKEYWORD);
 
 	        name = this.scanner.substrToCursor(start + 1);
 	        nameLowerCase = name.toLowerCase();
@@ -20781,7 +22752,7 @@
 
 	        // parse prelude
 	        if (this.scanner.eof === false &&
-	            this.scanner.tokenType !== LEFTCURLYBRACKET$2 &&
+	            this.scanner.tokenType !== LEFTCURLYBRACKET$1 &&
 	            this.scanner.tokenType !== SEMICOLON) {
 	            if (this.parseAtrulePrelude) {
 	                prelude = this.parseWithFallback(this.AtrulePrelude.bind(this, name), consumeRaw);
@@ -20791,7 +22762,7 @@
 	                    prelude = null;
 	                }
 	            } else {
-	                prelude = consumeRaw.call(this, this.scanner.currentToken);
+	                prelude = consumeRaw.call(this, this.scanner.tokenIndex);
 	            }
 
 	            this.scanner.skipSC();
@@ -20802,7 +22773,7 @@
 	                this.scanner.next();
 	                break;
 
-	            case LEFTCURLYBRACKET$2:
+	            case LEFTCURLYBRACKET$1:
 	                if (this.atrule.hasOwnProperty(nameLowerCase) &&
 	                    typeof this.atrule[nameLowerCase].block === 'function') {
 	                    block = this.atrule[nameLowerCase].block.call(this);
@@ -20840,10 +22811,10 @@
 	    walkContext: 'atrule'
 	};
 
-	var TYPE$6 = tokenizer.TYPE;
+	var TYPE$c = tokenizer.TYPE;
 
-	var SEMICOLON$1 = TYPE$6.Semicolon;
-	var LEFTCURLYBRACKET$3 = TYPE$6.LeftCurlyBracket;
+	var SEMICOLON$1 = TYPE$c.Semicolon;
+	var LEFTCURLYBRACKET$2 = TYPE$c.LeftCurlyBracket;
 
 	var AtrulePrelude = {
 	    name: 'AtrulePrelude',
@@ -20871,9 +22842,9 @@
 	        this.scanner.skipSC();
 
 	        if (this.scanner.eof !== true &&
-	            this.scanner.tokenType !== LEFTCURLYBRACKET$3 &&
+	            this.scanner.tokenType !== LEFTCURLYBRACKET$2 &&
 	            this.scanner.tokenType !== SEMICOLON$1) {
-	            this.scanner.error('Semicolon or block is expected');
+	            this.error('Semicolon or block is expected');
 	        }
 
 	        if (children === null) {
@@ -20892,51 +22863,51 @@
 	    walkContext: 'atrulePrelude'
 	};
 
-	var TYPE$7 = tokenizer.TYPE;
+	var TYPE$d = tokenizer.TYPE;
 
-	var IDENTIFIER$4 = TYPE$7.Identifier;
-	var STRING$2 = TYPE$7.String;
-	var DOLLARSIGN = TYPE$7.DollarSign;
-	var ASTERISK$1 = TYPE$7.Asterisk;
-	var COLON = TYPE$7.Colon;
-	var EQUALSSIGN = TYPE$7.EqualsSign;
-	var LEFTSQUAREBRACKET$2 = TYPE$7.LeftSquareBracket;
-	var RIGHTSQUAREBRACKET$2 = TYPE$7.RightSquareBracket;
-	var CIRCUMFLEXACCENT = TYPE$7.CircumflexAccent;
-	var VERTICALLINE$1 = TYPE$7.VerticalLine;
-	var TILDE = TYPE$7.Tilde;
+	var IDENT$4 = TYPE$d.Ident;
+	var STRING = TYPE$d.String;
+	var COLON = TYPE$d.Colon;
+	var LEFTSQUAREBRACKET$1 = TYPE$d.LeftSquareBracket;
+	var RIGHTSQUAREBRACKET$1 = TYPE$d.RightSquareBracket;
+	var DOLLARSIGN = 0x0024;       // U+0024 DOLLAR SIGN ($)
+	var ASTERISK$1 = 0x002A;         // U+002A ASTERISK (*)
+	var EQUALSSIGN = 0x003D;       // U+003D EQUALS SIGN (=)
+	var CIRCUMFLEXACCENT = 0x005E; // U+005E (^)
+	var VERTICALLINE$1 = 0x007C;     // U+007C VERTICAL LINE (|)
+	var TILDE = 0x007E;            // U+007E TILDE (~)
 
 	function getAttributeName() {
 	    if (this.scanner.eof) {
-	        this.scanner.error('Unexpected end of input');
+	        this.error('Unexpected end of input');
 	    }
 
 	    var start = this.scanner.tokenStart;
-	    var expectIdentifier = false;
+	    var expectIdent = false;
 	    var checkColon = true;
 
-	    if (this.scanner.tokenType === ASTERISK$1) {
-	        expectIdentifier = true;
+	    if (this.scanner.isDelim(ASTERISK$1)) {
+	        expectIdent = true;
 	        checkColon = false;
 	        this.scanner.next();
-	    } else if (this.scanner.tokenType !== VERTICALLINE$1) {
-	        this.scanner.eat(IDENTIFIER$4);
+	    } else if (!this.scanner.isDelim(VERTICALLINE$1)) {
+	        this.eat(IDENT$4);
 	    }
 
-	    if (this.scanner.tokenType === VERTICALLINE$1) {
-	        if (this.scanner.lookupType(1) !== EQUALSSIGN) {
+	    if (this.scanner.isDelim(VERTICALLINE$1)) {
+	        if (this.scanner.source.charCodeAt(this.scanner.tokenStart + 1) !== EQUALSSIGN) {
 	            this.scanner.next();
-	            this.scanner.eat(IDENTIFIER$4);
-	        } else if (expectIdentifier) {
-	            this.scanner.error('Identifier is expected', this.scanner.tokenEnd);
+	            this.eat(IDENT$4);
+	        } else if (expectIdent) {
+	            this.error('Identifier is expected', this.scanner.tokenEnd);
 	        }
-	    } else if (expectIdentifier) {
-	        this.scanner.error('Vertical line is expected');
+	    } else if (expectIdent) {
+	        this.error('Vertical line is expected');
 	    }
 
 	    if (checkColon && this.scanner.tokenType === COLON) {
 	        this.scanner.next();
-	        this.scanner.eat(IDENTIFIER$4);
+	        this.eat(IDENT$4);
 	    }
 
 	    return {
@@ -20948,30 +22919,33 @@
 
 	function getOperator() {
 	    var start = this.scanner.tokenStart;
-	    var tokenType = this.scanner.tokenType;
+	    var code = this.scanner.source.charCodeAt(start);
 
-	    if (tokenType !== EQUALSSIGN &&        // =
-	        tokenType !== TILDE &&             // ~=
-	        tokenType !== CIRCUMFLEXACCENT &&  // ^=
-	        tokenType !== DOLLARSIGN &&        // $=
-	        tokenType !== ASTERISK$1 &&          // *=
-	        tokenType !== VERTICALLINE$1         // |=
+	    if (code !== EQUALSSIGN &&        // =
+	        code !== TILDE &&             // ~=
+	        code !== CIRCUMFLEXACCENT &&  // ^=
+	        code !== DOLLARSIGN &&        // $=
+	        code !== ASTERISK$1 &&          // *=
+	        code !== VERTICALLINE$1         // |=
 	    ) {
-	        this.scanner.error('Attribute selector (=, ~=, ^=, $=, *=, |=) is expected');
+	        this.error('Attribute selector (=, ~=, ^=, $=, *=, |=) is expected');
 	    }
 
-	    if (tokenType === EQUALSSIGN) {
+	    this.scanner.next();
+
+	    if (code !== EQUALSSIGN) {
+	        if (!this.scanner.isDelim(EQUALSSIGN)) {
+	            this.error('Equal sign is expected');
+	        }
+
 	        this.scanner.next();
-	    } else {
-	        this.scanner.next();
-	        this.scanner.eat(EQUALSSIGN);
 	    }
 
 	    return this.scanner.substrToCursor(start);
 	}
 
-	// '[' S* attrib_name ']'
-	// '[' S* attrib_name S* attrib_matcher S* [ IDENT | STRING ] S* attrib_flags? S* ']'
+	// '[' <wq-name> ']'
+	// '[' <wq-name> <attr-matcher> [ <string-token> | <ident-token> ] <attr-modifier>? ']'
 	var AttributeSelector = {
 	    name: 'AttributeSelector',
 	    structure: {
@@ -20987,20 +22961,20 @@
 	        var value = null;
 	        var flags = null;
 
-	        this.scanner.eat(LEFTSQUAREBRACKET$2);
+	        this.eat(LEFTSQUAREBRACKET$1);
 	        this.scanner.skipSC();
 
 	        name = getAttributeName.call(this);
 	        this.scanner.skipSC();
 
-	        if (this.scanner.tokenType !== RIGHTSQUAREBRACKET$2) {
+	        if (this.scanner.tokenType !== RIGHTSQUAREBRACKET$1) {
 	            // avoid case `[name i]`
-	            if (this.scanner.tokenType !== IDENTIFIER$4) {
+	            if (this.scanner.tokenType !== IDENT$4) {
 	                matcher = getOperator.call(this);
 
 	                this.scanner.skipSC();
 
-	                value = this.scanner.tokenType === STRING$2
+	                value = this.scanner.tokenType === STRING
 	                    ? this.String()
 	                    : this.Identifier();
 
@@ -21008,7 +22982,7 @@
 	            }
 
 	            // attribute flags
-	            if (this.scanner.tokenType === IDENTIFIER$4) {
+	            if (this.scanner.tokenType === IDENT$4) {
 	                flags = this.scanner.getTokenValue();
 	                this.scanner.next();
 
@@ -21016,7 +22990,7 @@
 	            }
 	        }
 
-	        this.scanner.eat(RIGHTSQUAREBRACKET$2);
+	        this.eat(RIGHTSQUAREBRACKET$1);
 
 	        return {
 	            type: 'AttributeSelector',
@@ -21055,27 +23029,28 @@
 	    }
 	};
 
-	var TYPE$8 = tokenizer.TYPE;
+	var TYPE$e = tokenizer.TYPE;
+	var rawMode$1 = Raw.mode;
 
-	var WHITESPACE$3 = TYPE$8.WhiteSpace;
-	var COMMENT$3 = TYPE$8.Comment;
-	var SEMICOLON$2 = TYPE$8.Semicolon;
-	var ATKEYWORD$3 = TYPE$8.AtKeyword;
-	var LEFTCURLYBRACKET$4 = TYPE$8.LeftCurlyBracket;
-	var RIGHTCURLYBRACKET$3 = TYPE$8.RightCurlyBracket;
+	var WHITESPACE$5 = TYPE$e.WhiteSpace;
+	var COMMENT$4 = TYPE$e.Comment;
+	var SEMICOLON$2 = TYPE$e.Semicolon;
+	var ATKEYWORD$1 = TYPE$e.AtKeyword;
+	var LEFTCURLYBRACKET$3 = TYPE$e.LeftCurlyBracket;
+	var RIGHTCURLYBRACKET$2 = TYPE$e.RightCurlyBracket;
 
 	function consumeRaw$1(startToken) {
-	    return this.Raw(startToken, 0, 0, false, true);
+	    return this.Raw(startToken, null, true);
 	}
 	function consumeRule() {
 	    return this.parseWithFallback(this.Rule, consumeRaw$1);
 	}
 	function consumeRawDeclaration(startToken) {
-	    return this.Raw(startToken, 0, SEMICOLON$2, true, true);
+	    return this.Raw(startToken, rawMode$1.semicolonIncluded, true);
 	}
 	function consumeDeclaration() {
 	    if (this.scanner.tokenType === SEMICOLON$2) {
-	        return consumeRawDeclaration.call(this, this.scanner.currentToken);
+	        return consumeRawDeclaration.call(this, this.scanner.tokenIndex);
 	    }
 
 	    var node = this.parseWithFallback(this.Declaration, consumeRawDeclaration);
@@ -21102,20 +23077,20 @@
 	        var start = this.scanner.tokenStart;
 	        var children = this.createList();
 
-	        this.scanner.eat(LEFTCURLYBRACKET$4);
+	        this.eat(LEFTCURLYBRACKET$3);
 
 	        scan:
 	        while (!this.scanner.eof) {
 	            switch (this.scanner.tokenType) {
-	                case RIGHTCURLYBRACKET$3:
+	                case RIGHTCURLYBRACKET$2:
 	                    break scan;
 
-	                case WHITESPACE$3:
-	                case COMMENT$3:
+	                case WHITESPACE$5:
+	                case COMMENT$4:
 	                    this.scanner.next();
 	                    break;
 
-	                case ATKEYWORD$3:
+	                case ATKEYWORD$1:
 	                    children.push(this.parseWithFallback(this.Atrule, consumeRaw$1));
 	                    break;
 
@@ -21125,7 +23100,7 @@
 	        }
 
 	        if (!this.scanner.eof) {
-	            this.scanner.eat(RIGHTCURLYBRACKET$3);
+	            this.eat(RIGHTCURLYBRACKET$2);
 	        }
 
 	        return {
@@ -21146,9 +23121,10 @@
 	    walkContext: 'block'
 	};
 
-	var TYPE$9 = tokenizer.TYPE;
-	var LEFTSQUAREBRACKET$3 = TYPE$9.LeftSquareBracket;
-	var RIGHTSQUAREBRACKET$3 = TYPE$9.RightSquareBracket;
+	var TYPE$f = tokenizer.TYPE;
+
+	var LEFTSQUAREBRACKET$2 = TYPE$f.LeftSquareBracket;
+	var RIGHTSQUAREBRACKET$2 = TYPE$f.RightSquareBracket;
 
 	var Brackets = {
 	    name: 'Brackets',
@@ -21159,12 +23135,12 @@
 	        var start = this.scanner.tokenStart;
 	        var children = null;
 
-	        this.scanner.eat(LEFTSQUAREBRACKET$3);
+	        this.eat(LEFTSQUAREBRACKET$2);
 
 	        children = readSequence.call(this, recognizer);
 
 	        if (!this.scanner.eof) {
-	            this.scanner.eat(RIGHTSQUAREBRACKET$3);
+	            this.eat(RIGHTSQUAREBRACKET$2);
 	        }
 
 	        return {
@@ -21180,7 +23156,7 @@
 	    }
 	};
 
-	var CDC$2 = tokenizer.TYPE.CDC;
+	var CDC = tokenizer.TYPE.CDC;
 
 	var CDC_1 = {
 	    name: 'CDC',
@@ -21188,7 +23164,7 @@
 	    parse: function() {
 	        var start = this.scanner.tokenStart;
 
-	        this.scanner.eat(CDC$2); // -->
+	        this.eat(CDC); // -->
 
 	        return {
 	            type: 'CDC',
@@ -21200,7 +23176,7 @@
 	    }
 	};
 
-	var CDO$2 = tokenizer.TYPE.CDO;
+	var CDO = tokenizer.TYPE.CDO;
 
 	var CDO_1 = {
 	    name: 'CDO',
@@ -21208,7 +23184,7 @@
 	    parse: function() {
 	        var start = this.scanner.tokenStart;
 
-	        this.scanner.eat(CDO$2); // <!--
+	        this.eat(CDO); // <!--
 
 	        return {
 	            type: 'CDO',
@@ -21220,9 +23196,10 @@
 	    }
 	};
 
-	var TYPE$a = tokenizer.TYPE;
-	var IDENTIFIER$5 = TYPE$a.Identifier;
-	var FULLSTOP$2 = TYPE$a.FullStop;
+	var TYPE$g = tokenizer.TYPE;
+
+	var IDENT$5 = TYPE$g.Ident;
+	var FULLSTOP = 0x002E; // U+002E FULL STOP (.)
 
 	// '.' ident
 	var ClassSelector = {
@@ -21231,12 +23208,16 @@
 	        name: String
 	    },
 	    parse: function() {
-	        this.scanner.eat(FULLSTOP$2);
+	        if (!this.scanner.isDelim(FULLSTOP)) {
+	            this.error('Full stop is expected');
+	        }
+
+	        this.scanner.next();
 
 	        return {
 	            type: 'ClassSelector',
 	            loc: this.getLocation(this.scanner.tokenStart - 1, this.scanner.tokenEnd),
-	            name: this.scanner.consume(IDENTIFIER$5)
+	            name: this.consume(IDENT$5)
 	        };
 	    },
 	    generate: function(node) {
@@ -21245,12 +23226,13 @@
 	    }
 	};
 
-	var TYPE$b = tokenizer.TYPE;
+	var TYPE$h = tokenizer.TYPE;
 
-	var PLUSSIGN$5 = TYPE$b.PlusSign;
-	var SOLIDUS = TYPE$b.Solidus;
-	var GREATERTHANSIGN$2 = TYPE$b.GreaterThanSign;
-	var TILDE$1 = TYPE$b.Tilde;
+	var IDENT$6 = TYPE$h.Ident;
+	var PLUSSIGN$4 = 0x002B;        // U+002B PLUS SIGN (+)
+	var SOLIDUS = 0x002F;         // U+002F SOLIDUS (/)
+	var GREATERTHANSIGN$1 = 0x003E; // U+003E GREATER-THAN SIGN (>)
+	var TILDE$1 = 0x007E;           // U+007E TILDE (~)
 
 	// + | > | ~ | /deep/
 	var Combinator = {
@@ -21260,22 +23242,33 @@
 	    },
 	    parse: function() {
 	        var start = this.scanner.tokenStart;
+	        var code = this.scanner.source.charCodeAt(this.scanner.tokenStart);
 
-	        switch (this.scanner.tokenType) {
-	            case GREATERTHANSIGN$2:
-	            case PLUSSIGN$5:
+	        switch (code) {
+	            case GREATERTHANSIGN$1:
+	            case PLUSSIGN$4:
 	            case TILDE$1:
 	                this.scanner.next();
 	                break;
 
 	            case SOLIDUS:
 	                this.scanner.next();
-	                this.scanner.expectIdentifier('deep');
-	                this.scanner.eat(SOLIDUS);
+
+	                if (this.scanner.tokenType !== IDENT$6 || this.scanner.lookupValue(0, 'deep') === false) {
+	                    this.error('Identifier `deep` is expected');
+	                }
+
+	                this.scanner.next();
+
+	                if (!this.scanner.isDelim(SOLIDUS)) {
+	                    this.error('Solidus is expected');
+	                }
+
+	                this.scanner.next();
 	                break;
 
 	            default:
-	                this.scanner.error('Combinator is expected');
+	                this.error('Combinator is expected');
 	        }
 
 	        return {
@@ -21289,10 +23282,11 @@
 	    }
 	};
 
-	var TYPE$c = tokenizer.TYPE;
+	var TYPE$i = tokenizer.TYPE;
 
-	var ASTERISK$2 = TYPE$c.Asterisk;
-	var SOLIDUS$1 = TYPE$c.Solidus;
+	var COMMENT$5 = TYPE$i.Comment;
+	var ASTERISK$2 = 0x002A;        // U+002A ASTERISK (*)
+	var SOLIDUS$1 = 0x002F;         // U+002F SOLIDUS (/)
 
 	// '/*' .* '*/'
 	var Comment = {
@@ -21304,13 +23298,13 @@
 	        var start = this.scanner.tokenStart;
 	        var end = this.scanner.tokenEnd;
 
+	        this.eat(COMMENT$5);
+
 	        if ((end - start + 2) >= 2 &&
 	            this.scanner.source.charCodeAt(end - 2) === ASTERISK$2 &&
 	            this.scanner.source.charCodeAt(end - 1) === SOLIDUS$1) {
 	            end -= 2;
 	        }
-
-	        this.scanner.next();
 
 	        return {
 	            type: 'Comment',
@@ -21326,37 +23320,40 @@
 	};
 
 	var isCustomProperty$1 = names.isCustomProperty;
-	var TYPE$d = tokenizer.TYPE;
+	var TYPE$j = tokenizer.TYPE;
+	var rawMode$2 = Raw.mode;
 
-	var IDENTIFIER$6 = TYPE$d.Identifier;
-	var COLON$1 = TYPE$d.Colon;
-	var EXCLAMATIONMARK$2 = TYPE$d.ExclamationMark;
-	var SOLIDUS$2 = TYPE$d.Solidus;
-	var ASTERISK$3 = TYPE$d.Asterisk;
-	var DOLLARSIGN$1 = TYPE$d.DollarSign;
-	var HYPHENMINUS$5 = TYPE$d.HyphenMinus;
-	var SEMICOLON$3 = TYPE$d.Semicolon;
-	var PLUSSIGN$6 = TYPE$d.PlusSign;
-	var NUMBERSIGN$2 = TYPE$d.NumberSign;
+	var IDENT$7 = TYPE$j.Ident;
+	var HASH$1 = TYPE$j.Hash;
+	var COLON$1 = TYPE$j.Colon;
+	var SEMICOLON$3 = TYPE$j.Semicolon;
+	var DELIM$2 = TYPE$j.Delim;
+	var EXCLAMATIONMARK$2 = 0x0021; // U+0021 EXCLAMATION MARK (!)
+	var NUMBERSIGN$2 = 0x0023;      // U+0023 NUMBER SIGN (#)
+	var DOLLARSIGN$1 = 0x0024;      // U+0024 DOLLAR SIGN ($)
+	var AMPERSAND$1 = 0x0026;       // U+0026 ANPERSAND (&)
+	var ASTERISK$3 = 0x002A;        // U+002A ASTERISK (*)
+	var PLUSSIGN$5 = 0x002B;        // U+002B PLUS SIGN (+)
+	var SOLIDUS$2 = 0x002F;         // U+002F SOLIDUS (/)
 
 	function consumeValueRaw(startToken) {
-	    return this.Raw(startToken, EXCLAMATIONMARK$2, SEMICOLON$3, false, true);
+	    return this.Raw(startToken, rawMode$2.exclamationMarkOrSemicolon, true);
 	}
 
 	function consumeCustomPropertyRaw(startToken) {
-	    return this.Raw(startToken, EXCLAMATIONMARK$2, SEMICOLON$3, false, false);
+	    return this.Raw(startToken, rawMode$2.exclamationMarkOrSemicolon, false);
 	}
 
 	function consumeValue() {
-	    var startValueToken = this.scanner.currentToken;
+	    var startValueToken = this.scanner.tokenIndex;
 	    var value = this.Value();
 
 	    if (value.type !== 'Raw' &&
 	        this.scanner.eof === false &&
 	        this.scanner.tokenType !== SEMICOLON$3 &&
-	        this.scanner.tokenType !== EXCLAMATIONMARK$2 &&
+	        this.scanner.isDelim(EXCLAMATIONMARK$2) === false &&
 	        this.scanner.isBalanceEdge(startValueToken) === false) {
-	        this.scanner.error();
+	        this.error();
 	    }
 
 	    return value;
@@ -21371,7 +23368,7 @@
 	    },
 	    parse: function() {
 	        var start = this.scanner.tokenStart;
-	        var startToken = this.scanner.currentToken;
+	        var startToken = this.scanner.tokenIndex;
 	        var property = readProperty$1.call(this);
 	        var customProperty = isCustomProperty$1(property);
 	        var parseValue = customProperty ? this.parseCustomProperty : this.parseValue;
@@ -21380,7 +23377,7 @@
 	        var value;
 
 	        this.scanner.skipSC();
-	        this.scanner.eat(COLON$1);
+	        this.eat(COLON$1);
 
 	        if (!customProperty) {
 	            this.scanner.skipSC();
@@ -21389,11 +23386,11 @@
 	        if (parseValue) {
 	            value = this.parseWithFallback(consumeValue, consumeRaw);
 	        } else {
-	            value = consumeRaw.call(this, this.scanner.currentToken);
+	            value = consumeRaw.call(this, this.scanner.tokenIndex);
 	        }
 
-	        if (this.scanner.tokenType === EXCLAMATIONMARK$2) {
-	            important = getImportant(this.scanner);
+	        if (this.scanner.isDelim(EXCLAMATIONMARK$2)) {
+	            important = getImportant.call(this);
 	            this.scanner.skipSC();
 	        }
 
@@ -21403,7 +23400,7 @@
 	        if (this.scanner.eof === false &&
 	            this.scanner.tokenType !== SEMICOLON$3 &&
 	            this.scanner.isBalanceEdge(startToken) === false) {
-	            this.scanner.error();
+	            this.error();
 	        }
 
 	        return {
@@ -21428,56 +23425,58 @@
 
 	function readProperty$1() {
 	    var start = this.scanner.tokenStart;
-	    var prefix = 0;
 
 	    // hacks
-	    switch (this.scanner.tokenType) {
-	        case ASTERISK$3:
-	        case DOLLARSIGN$1:
-	        case PLUSSIGN$6:
-	        case NUMBERSIGN$2:
-	            prefix = 1;
-	            break;
+	    if (this.scanner.tokenType === DELIM$2) {
+	        switch (this.scanner.source.charCodeAt(this.scanner.tokenStart)) {
+	            case ASTERISK$3:
+	            case DOLLARSIGN$1:
+	            case PLUSSIGN$5:
+	            case NUMBERSIGN$2:
+	            case AMPERSAND$1:
+	                this.scanner.next();
+	                break;
 
-	        // TODO: not sure we should support this hack
-	        case SOLIDUS$2:
-	            prefix = this.scanner.lookupType(1) === SOLIDUS$2 ? 2 : 1;
-	            break;
+	            // TODO: not sure we should support this hack
+	            case SOLIDUS$2:
+	                this.scanner.next();
+	                if (this.scanner.isDelim(SOLIDUS$2)) {
+	                    this.scanner.next();
+	                }
+	                break;
+	        }
 	    }
 
-	    if (this.scanner.lookupType(prefix) === HYPHENMINUS$5) {
-	        prefix++;
+	    if (this.scanner.tokenType === HASH$1) {
+	        this.eat(HASH$1);
+	    } else {
+	        this.eat(IDENT$7);
 	    }
-
-	    if (prefix) {
-	        this.scanner.skip(prefix);
-	    }
-
-	    this.scanner.eat(IDENTIFIER$6);
 
 	    return this.scanner.substrToCursor(start);
 	}
 
 	// ! ws* important
-	function getImportant(scanner) {
-	    scanner.eat(EXCLAMATIONMARK$2);
-	    scanner.skipSC();
+	function getImportant() {
+	    this.eat(DELIM$2);
+	    this.scanner.skipSC();
 
-	    var important = scanner.consume(IDENTIFIER$6);
+	    var important = this.consume(IDENT$7);
 
 	    // store original value in case it differ from `important`
 	    // for better original source restoring and hacks like `!ie` support
 	    return important === 'important' ? true : important;
 	}
 
-	var TYPE$e = tokenizer.TYPE;
+	var TYPE$k = tokenizer.TYPE;
+	var rawMode$3 = Raw.mode;
 
-	var WHITESPACE$4 = TYPE$e.WhiteSpace;
-	var COMMENT$4 = TYPE$e.Comment;
-	var SEMICOLON$4 = TYPE$e.Semicolon;
+	var WHITESPACE$6 = TYPE$k.WhiteSpace;
+	var COMMENT$6 = TYPE$k.Comment;
+	var SEMICOLON$4 = TYPE$k.Semicolon;
 
 	function consumeRaw$2(startToken) {
-	    return this.Raw(startToken, 0, SEMICOLON$4, true, true);
+	    return this.Raw(startToken, rawMode$3.semicolonIncluded, true);
 	}
 
 	var DeclarationList = {
@@ -21490,11 +23489,11 @@
 	    parse: function() {
 	        var children = this.createList();
 
-	        scan:
+	        
 	        while (!this.scanner.eof) {
 	            switch (this.scanner.tokenType) {
-	                case WHITESPACE$4:
-	                case COMMENT$4:
+	                case WHITESPACE$6:
+	                case COMMENT$6:
 	                case SEMICOLON$4:
 	                    this.scanner.next();
 	                    break;
@@ -21519,28 +23518,11 @@
 	    }
 	};
 
-	var NUMBER$3 = tokenizer.TYPE.Number;
+	var consumeNumber$3 = utils.consumeNumber;
+	var TYPE$l = tokenizer.TYPE;
 
-	// special reader for units to avoid adjoined IE hacks (i.e. '1px\9')
-	function readUnit(scanner) {
-	    var unit = scanner.getTokenValue();
-	    var backSlashPos = unit.indexOf('\\');
+	var DIMENSION$3 = TYPE$l.Dimension;
 
-	    if (backSlashPos > 0) {
-	        // patch token offset
-	        scanner.tokenStart += backSlashPos;
-
-	        // return part before backslash
-	        return unit.substring(0, backSlashPos);
-	    }
-
-	    // no backslash in unit name
-	    scanner.next();
-
-	    return unit;
-	}
-
-	// number ident
 	var Dimension = {
 	    name: 'Dimension',
 	    structure: {
@@ -21549,14 +23531,15 @@
 	    },
 	    parse: function() {
 	        var start = this.scanner.tokenStart;
-	        var value = this.scanner.consume(NUMBER$3);
-	        var unit = readUnit(this.scanner);
+	        var numberEnd = consumeNumber$3(this.scanner.source, start);
+
+	        this.eat(DIMENSION$3);
 
 	        return {
 	            type: 'Dimension',
 	            loc: this.getLocation(start, this.scanner.tokenStart),
-	            value: value,
-	            unit: unit
+	            value: this.scanner.source.substring(start, numberEnd),
+	            unit: this.scanner.source.substring(numberEnd, this.scanner.tokenStart)
 	        };
 	    },
 	    generate: function(node) {
@@ -21565,10 +23548,11 @@
 	    }
 	};
 
-	var TYPE$f = tokenizer.TYPE;
-	var RIGHTPARENTHESIS$3 = TYPE$f.RightParenthesis;
+	var TYPE$m = tokenizer.TYPE;
 
-	// <function-token> <sequence> ')'
+	var RIGHTPARENTHESIS$2 = TYPE$m.RightParenthesis;
+
+	// <function-token> <sequence> )
 	var _Function = {
 	    name: 'Function',
 	    structure: {
@@ -21577,7 +23561,7 @@
 	    },
 	    parse: function(readSequence, recognizer) {
 	        var start = this.scanner.tokenStart;
-	        var name = this.scanner.consumeFunctionName();
+	        var name = this.consumeFunctionName();
 	        var nameLowerCase = name.toLowerCase();
 	        var children;
 
@@ -21586,7 +23570,7 @@
 	            : readSequence.call(this, recognizer);
 
 	        if (!this.scanner.eof) {
-	            this.scanner.eat(RIGHTPARENTHESIS$3);
+	            this.eat(RIGHTPARENTHESIS$2);
 	        }
 
 	        return {
@@ -21605,38 +23589,11 @@
 	    walkContext: 'function'
 	};
 
-	var isHex$2 = tokenizer.isHex;
-	var TYPE$g = tokenizer.TYPE;
+	var TYPE$n = tokenizer.TYPE;
 
-	var IDENTIFIER$7 = TYPE$g.Identifier;
-	var NUMBER$4 = TYPE$g.Number;
-	var NUMBERSIGN$3 = TYPE$g.NumberSign;
+	var HASH$2 = TYPE$n.Hash;
 
-	function consumeHexSequence(scanner, required) {
-	    if (!isHex$2(scanner.source.charCodeAt(scanner.tokenStart))) {
-	        if (required) {
-	            scanner.error('Unexpected input', scanner.tokenStart);
-	        } else {
-	            return;
-	        }
-	    }
-
-	    for (var pos = scanner.tokenStart + 1; pos < scanner.tokenEnd; pos++) {
-	        var code = scanner.source.charCodeAt(pos);
-
-	        // break on non-hex char
-	        if (!isHex$2(code)) {
-	            // break token, exclude symbol
-	            scanner.tokenStart = pos;
-	            return;
-	        }
-	    }
-
-	    // token is full hex sequence, go to next token
-	    scanner.next();
-	}
-
-	// # ident
+	// '#' ident
 	var HexColor = {
 	    name: 'HexColor',
 	    structure: {
@@ -21645,33 +23602,12 @@
 	    parse: function() {
 	        var start = this.scanner.tokenStart;
 
-	        this.scanner.eat(NUMBERSIGN$3);
-
-	        scan:
-	        switch (this.scanner.tokenType) {
-	            case NUMBER$4:
-	                consumeHexSequence(this.scanner, true);
-
-	                // if token is identifier then number consists of hex only,
-	                // try to add identifier to result
-	                if (this.scanner.tokenType === IDENTIFIER$7) {
-	                    consumeHexSequence(this.scanner, false);
-	                }
-
-	                break;
-
-	            case IDENTIFIER$7:
-	                consumeHexSequence(this.scanner, true);
-	                break;
-
-	            default:
-	                this.scanner.error('Number or identifier is expected');
-	        }
+	        this.eat(HASH$2);
 
 	        return {
 	            type: 'HexColor',
 	            loc: this.getLocation(start, this.scanner.tokenStart),
-	            value: this.scanner.substrToCursor(start + 1) // skip #
+	            value: this.scanner.substrToCursor(start + 1)
 	        };
 	    },
 	    generate: function(node) {
@@ -21680,8 +23616,9 @@
 	    }
 	};
 
-	var TYPE$h = tokenizer.TYPE;
-	var IDENTIFIER$8 = TYPE$h.Identifier;
+	var TYPE$o = tokenizer.TYPE;
+
+	var IDENT$8 = TYPE$o.Ident;
 
 	var Identifier = {
 	    name: 'Identifier',
@@ -21692,7 +23629,7 @@
 	        return {
 	            type: 'Identifier',
 	            loc: this.getLocation(this.scanner.tokenStart, this.scanner.tokenEnd),
-	            name: this.scanner.consume(IDENTIFIER$8)
+	            name: this.consume(IDENT$8)
 	        };
 	    },
 	    generate: function(node) {
@@ -21700,23 +23637,26 @@
 	    }
 	};
 
-	var TYPE$i = tokenizer.TYPE;
-	var IDENTIFIER$9 = TYPE$i.Identifier;
-	var NUMBERSIGN$4 = TYPE$i.NumberSign;
+	var TYPE$p = tokenizer.TYPE;
 
-	// '#' ident
+	var HASH$3 = TYPE$p.Hash;
+
+	// <hash-token>
 	var IdSelector = {
 	    name: 'IdSelector',
 	    structure: {
 	        name: String
 	    },
 	    parse: function() {
-	        this.scanner.eat(NUMBERSIGN$4);
+	        var start = this.scanner.tokenStart;
+
+	        // TODO: check value is an ident
+	        this.eat(HASH$3);
 
 	        return {
 	            type: 'IdSelector',
-	            loc: this.getLocation(this.scanner.tokenStart - 1, this.scanner.tokenEnd),
-	            name: this.scanner.consume(IDENTIFIER$9)
+	            loc: this.getLocation(start, this.scanner.tokenStart),
+	            name: this.scanner.substrToCursor(start + 1)
 	        };
 	    },
 	    generate: function(node) {
@@ -21725,14 +23665,15 @@
 	    }
 	};
 
-	var TYPE$j = tokenizer.TYPE;
+	var TYPE$q = tokenizer.TYPE;
 
-	var IDENTIFIER$a = TYPE$j.Identifier;
-	var NUMBER$5 = TYPE$j.Number;
-	var LEFTPARENTHESIS$3 = TYPE$j.LeftParenthesis;
-	var RIGHTPARENTHESIS$4 = TYPE$j.RightParenthesis;
-	var COLON$2 = TYPE$j.Colon;
-	var SOLIDUS$3 = TYPE$j.Solidus;
+	var IDENT$9 = TYPE$q.Ident;
+	var NUMBER$4 = TYPE$q.Number;
+	var DIMENSION$4 = TYPE$q.Dimension;
+	var LEFTPARENTHESIS$2 = TYPE$q.LeftParenthesis;
+	var RIGHTPARENTHESIS$3 = TYPE$q.RightParenthesis;
+	var COLON$2 = TYPE$q.Colon;
+	var DELIM$3 = TYPE$q.Delim;
 
 	var MediaFeature = {
 	    name: 'MediaFeature',
@@ -21745,21 +23686,19 @@
 	        var name;
 	        var value = null;
 
-	        this.scanner.eat(LEFTPARENTHESIS$3);
+	        this.eat(LEFTPARENTHESIS$2);
 	        this.scanner.skipSC();
 
-	        name = this.scanner.consume(IDENTIFIER$a);
+	        name = this.consume(IDENT$9);
 	        this.scanner.skipSC();
 
-	        if (this.scanner.tokenType !== RIGHTPARENTHESIS$4) {
-	            this.scanner.eat(COLON$2);
+	        if (this.scanner.tokenType !== RIGHTPARENTHESIS$3) {
+	            this.eat(COLON$2);
 	            this.scanner.skipSC();
 
 	            switch (this.scanner.tokenType) {
-	                case NUMBER$5:
-	                    if (this.scanner.lookupType(1) === IDENTIFIER$a) {
-	                        value = this.Dimension();
-	                    } else if (this.scanner.lookupNonWSType(1) === SOLIDUS$3) {
+	                case NUMBER$4:
+	                    if (this.lookupNonWSType(1) === DELIM$3) {
 	                        value = this.Ratio();
 	                    } else {
 	                        value = this.Number();
@@ -21767,19 +23706,23 @@
 
 	                    break;
 
-	                case IDENTIFIER$a:
+	                case DIMENSION$4:
+	                    value = this.Dimension();
+	                    break;
+
+	                case IDENT$9:
 	                    value = this.Identifier();
 
 	                    break;
 
 	                default:
-	                    this.scanner.error('Number, dimension, ratio or identifier is expected');
+	                    this.error('Number, dimension, ratio or identifier is expected');
 	            }
 
 	            this.scanner.skipSC();
 	        }
 
-	        this.scanner.eat(RIGHTPARENTHESIS$4);
+	        this.eat(RIGHTPARENTHESIS$3);
 
 	        return {
 	            type: 'MediaFeature',
@@ -21799,12 +23742,12 @@
 	    }
 	};
 
-	var TYPE$k = tokenizer.TYPE;
+	var TYPE$r = tokenizer.TYPE;
 
-	var WHITESPACE$5 = TYPE$k.WhiteSpace;
-	var COMMENT$5 = TYPE$k.Comment;
-	var IDENTIFIER$b = TYPE$k.Identifier;
-	var LEFTPARENTHESIS$4 = TYPE$k.LeftParenthesis;
+	var WHITESPACE$7 = TYPE$r.WhiteSpace;
+	var COMMENT$7 = TYPE$r.Comment;
+	var IDENT$a = TYPE$r.Ident;
+	var LEFTPARENTHESIS$3 = TYPE$r.LeftParenthesis;
 
 	var MediaQuery = {
 	    name: 'MediaQuery',
@@ -21825,19 +23768,19 @@
 	        scan:
 	        while (!this.scanner.eof) {
 	            switch (this.scanner.tokenType) {
-	                case COMMENT$5:
+	                case COMMENT$7:
 	                    this.scanner.next();
 	                    continue;
 
-	                case WHITESPACE$5:
+	                case WHITESPACE$7:
 	                    space = this.WhiteSpace();
 	                    continue;
 
-	                case IDENTIFIER$b:
+	                case IDENT$a:
 	                    child = this.Identifier();
 	                    break;
 
-	                case LEFTPARENTHESIS$4:
+	                case LEFTPARENTHESIS$3:
 	                    child = this.MediaFeature();
 	                    break;
 
@@ -21854,7 +23797,7 @@
 	        }
 
 	        if (child === null) {
-	            this.scanner.error('Identifier or parenthesis is expected');
+	            this.error('Identifier or parenthesis is expected');
 	        }
 
 	        return {
@@ -21905,7 +23848,6 @@
 	    }
 	};
 
-	// https://drafts.csswg.org/css-syntax-3/#the-anb-type
 	var Nth = {
 	    name: 'Nth',
 	    structure: {
@@ -21958,7 +23900,7 @@
 	    }
 	};
 
-	var NUMBER$6 = tokenizer.TYPE.Number;
+	var NUMBER$5 = tokenizer.TYPE.Number;
 
 	var _Number = {
 	    name: 'Number',
@@ -21969,7 +23911,7 @@
 	        return {
 	            type: 'Number',
 	            loc: this.getLocation(this.scanner.tokenStart, this.scanner.tokenEnd),
-	            value: this.scanner.consume(NUMBER$6)
+	            value: this.consume(NUMBER$5)
 	        };
 	    },
 	    generate: function(node) {
@@ -21999,9 +23941,10 @@
 	    }
 	};
 
-	var TYPE$l = tokenizer.TYPE;
-	var LEFTPARENTHESIS$5 = TYPE$l.LeftParenthesis;
-	var RIGHTPARENTHESIS$5 = TYPE$l.RightParenthesis;
+	var TYPE$s = tokenizer.TYPE;
+
+	var LEFTPARENTHESIS$4 = TYPE$s.LeftParenthesis;
+	var RIGHTPARENTHESIS$4 = TYPE$s.RightParenthesis;
 
 	var Parentheses = {
 	    name: 'Parentheses',
@@ -22012,12 +23955,12 @@
 	        var start = this.scanner.tokenStart;
 	        var children = null;
 
-	        this.scanner.eat(LEFTPARENTHESIS$5);
+	        this.eat(LEFTPARENTHESIS$4);
 
 	        children = readSequence.call(this, recognizer);
 
 	        if (!this.scanner.eof) {
-	            this.scanner.eat(RIGHTPARENTHESIS$5);
+	            this.eat(RIGHTPARENTHESIS$4);
 	        }
 
 	        return {
@@ -22033,10 +23976,10 @@
 	    }
 	};
 
-	var TYPE$m = tokenizer.TYPE;
+	var consumeNumber$4 = utils.consumeNumber;
+	var TYPE$t = tokenizer.TYPE;
 
-	var NUMBER$7 = TYPE$m.Number;
-	var PERCENTSIGN = TYPE$m.PercentSign;
+	var PERCENTAGE$1 = TYPE$t.Percentage;
 
 	var Percentage = {
 	    name: 'Percentage',
@@ -22045,14 +23988,14 @@
 	    },
 	    parse: function() {
 	        var start = this.scanner.tokenStart;
-	        var number = this.scanner.consume(NUMBER$7);
+	        var numberEnd = consumeNumber$4(this.scanner.source, start);
 
-	        this.scanner.eat(PERCENTSIGN);
+	        this.eat(PERCENTAGE$1);
 
 	        return {
 	            type: 'Percentage',
 	            loc: this.getLocation(start, this.scanner.tokenStart),
-	            value: number
+	            value: this.scanner.source.substring(start, numberEnd)
 	        };
 	    },
 	    generate: function(node) {
@@ -22061,14 +24004,14 @@
 	    }
 	};
 
-	var TYPE$n = tokenizer.TYPE;
+	var TYPE$u = tokenizer.TYPE;
 
-	var IDENTIFIER$c = TYPE$n.Identifier;
-	var FUNCTION$2 = TYPE$n.Function;
-	var COLON$3 = TYPE$n.Colon;
-	var RIGHTPARENTHESIS$6 = TYPE$n.RightParenthesis;
+	var IDENT$b = TYPE$u.Ident;
+	var FUNCTION$1 = TYPE$u.Function;
+	var COLON$3 = TYPE$u.Colon;
+	var RIGHTPARENTHESIS$5 = TYPE$u.RightParenthesis;
 
-	// : ident [ '(' .. ')' ]?
+	// : [ <ident> | <function-token> <any-value>? ) ]
 	var PseudoClassSelector = {
 	    name: 'PseudoClassSelector',
 	    structure: {
@@ -22081,10 +24024,10 @@
 	        var name;
 	        var nameLowerCase;
 
-	        this.scanner.eat(COLON$3);
+	        this.eat(COLON$3);
 
-	        if (this.scanner.tokenType === FUNCTION$2) {
-	            name = this.scanner.consumeFunctionName();
+	        if (this.scanner.tokenType === FUNCTION$1) {
+	            name = this.consumeFunctionName();
 	            nameLowerCase = name.toLowerCase();
 
 	            if (this.pseudo.hasOwnProperty(nameLowerCase)) {
@@ -22094,13 +24037,13 @@
 	            } else {
 	                children = this.createList();
 	                children.push(
-	                    this.Raw(this.scanner.currentToken, 0, 0, false, false)
+	                    this.Raw(this.scanner.tokenIndex, null, false)
 	                );
 	            }
 
-	            this.scanner.eat(RIGHTPARENTHESIS$6);
+	            this.eat(RIGHTPARENTHESIS$5);
 	        } else {
-	            name = this.scanner.consume(IDENTIFIER$c);
+	            name = this.consume(IDENT$b);
 	        }
 
 	        return {
@@ -22123,14 +24066,14 @@
 	    walkContext: 'function'
 	};
 
-	var TYPE$o = tokenizer.TYPE;
+	var TYPE$v = tokenizer.TYPE;
 
-	var IDENTIFIER$d = TYPE$o.Identifier;
-	var FUNCTION$3 = TYPE$o.Function;
-	var COLON$4 = TYPE$o.Colon;
-	var RIGHTPARENTHESIS$7 = TYPE$o.RightParenthesis;
+	var IDENT$c = TYPE$v.Ident;
+	var FUNCTION$2 = TYPE$v.Function;
+	var COLON$4 = TYPE$v.Colon;
+	var RIGHTPARENTHESIS$6 = TYPE$v.RightParenthesis;
 
-	// :: ident [ '(' .. ')' ]?
+	// :: [ <ident> | <function-token> <any-value>? ) ]
 	var PseudoElementSelector = {
 	    name: 'PseudoElementSelector',
 	    structure: {
@@ -22143,11 +24086,11 @@
 	        var name;
 	        var nameLowerCase;
 
-	        this.scanner.eat(COLON$4);
-	        this.scanner.eat(COLON$4);
+	        this.eat(COLON$4);
+	        this.eat(COLON$4);
 
-	        if (this.scanner.tokenType === FUNCTION$3) {
-	            name = this.scanner.consumeFunctionName();
+	        if (this.scanner.tokenType === FUNCTION$2) {
+	            name = this.consumeFunctionName();
 	            nameLowerCase = name.toLowerCase();
 
 	            if (this.pseudo.hasOwnProperty(nameLowerCase)) {
@@ -22157,13 +24100,13 @@
 	            } else {
 	                children = this.createList();
 	                children.push(
-	                    this.Raw(this.scanner.currentToken, 0, 0, false, false)
+	                    this.Raw(this.scanner.tokenIndex, null, false)
 	                );
 	            }
 
-	            this.scanner.eat(RIGHTPARENTHESIS$7);
+	            this.eat(RIGHTPARENTHESIS$6);
 	        } else {
-	            name = this.scanner.consume(IDENTIFIER$d);
+	            name = this.consume(IDENT$c);
 	        }
 
 	        return {
@@ -22186,30 +24129,34 @@
 	    walkContext: 'function'
 	};
 
-	var isNumber$4 = tokenizer.isNumber;
-	var TYPE$p = tokenizer.TYPE;
-	var NUMBER$8 = TYPE$p.Number;
-	var SOLIDUS$4 = TYPE$p.Solidus;
-	var FULLSTOP$3 = TYPE$p.FullStop;
+	var isDigit$5 = tokenizer.isDigit;
+	var TYPE$w = tokenizer.TYPE;
 
-	// Terms of <ratio> should to be a positive number (not zero or negative)
+	var NUMBER$6 = TYPE$w.Number;
+	var DELIM$4 = TYPE$w.Delim;
+	var SOLIDUS$3 = 0x002F;  // U+002F SOLIDUS (/)
+	var FULLSTOP$1 = 0x002E; // U+002E FULL STOP (.)
+
+	// Terms of <ratio> should be a positive numbers (not zero or negative)
 	// (see https://drafts.csswg.org/mediaqueries-3/#values)
 	// However, -o-min-device-pixel-ratio takes fractional values as a ratio's term
 	// and this is using by various sites. Therefore we relax checking on parse
-	// to test a term is unsigned number without exponent part.
-	// Additional checks may to be applied on lexer validation.
-	function consumeNumber$1(scanner) {
-	    var value = scanner.consumeNonWS(NUMBER$8);
+	// to test a term is unsigned number without an exponent part.
+	// Additional checking may be applied on lexer validation.
+	function consumeNumber$5() {
+	    this.scanner.skipWS();
+
+	    var value = this.consume(NUMBER$6);
 
 	    for (var i = 0; i < value.length; i++) {
 	        var code = value.charCodeAt(i);
-	        if (!isNumber$4(code) && code !== FULLSTOP$3) {
-	            scanner.error('Unsigned number is expected', scanner.tokenStart - value.length + i);
+	        if (!isDigit$5(code) && code !== FULLSTOP$1) {
+	            this.error('Unsigned number is expected', this.scanner.tokenStart - value.length + i);
 	        }
 	    }
 
 	    if (Number(value) === 0) {
-	        scanner.error('Zero number is not allowed', scanner.tokenStart - value.length);
+	        this.error('Zero number is not allowed', this.scanner.tokenStart - value.length);
 	    }
 
 	    return value;
@@ -22224,11 +24171,16 @@
 	    },
 	    parse: function() {
 	        var start = this.scanner.tokenStart;
-	        var left = consumeNumber$1(this.scanner);
+	        var left = consumeNumber$5.call(this);
 	        var right;
 
-	        this.scanner.eatNonWS(SOLIDUS$4);
-	        right = consumeNumber$1(this.scanner);
+	        this.scanner.skipWS();
+
+	        if (!this.scanner.isDelim(SOLIDUS$3)) {
+	            this.error('Solidus is expected');
+	        }
+	        this.eat(DELIM$4);
+	        right = consumeNumber$5.call(this);
 
 	        return {
 	            type: 'Ratio',
@@ -22244,47 +24196,13 @@
 	    }
 	};
 
-	var Raw = {
-	    name: 'Raw',
-	    structure: {
-	        value: String
-	    },
-	    parse: function(startToken, endTokenType1, endTokenType2, includeTokenType2, excludeWhiteSpace) {
-	        var startOffset = this.scanner.getTokenStart(startToken);
-	        var endOffset;
+	var TYPE$x = tokenizer.TYPE;
+	var rawMode$4 = Raw.mode;
 
-	        this.scanner.skip(
-	            this.scanner.getRawLength(
-	                startToken,
-	                endTokenType1,
-	                endTokenType2,
-	                includeTokenType2
-	            )
-	        );
-
-	        if (excludeWhiteSpace && this.scanner.tokenStart > startOffset) {
-	            endOffset = this.scanner.getOffsetExcludeWS();
-	        } else {
-	            endOffset = this.scanner.tokenStart;
-	        }
-
-	        return {
-	            type: 'Raw',
-	            loc: this.getLocation(startOffset, endOffset),
-	            value: this.scanner.source.substring(startOffset, endOffset)
-	        };
-	    },
-	    generate: function(node) {
-	        this.chunk(node.value);
-	    }
-	};
-
-	var TYPE$q = tokenizer.TYPE;
-
-	var LEFTCURLYBRACKET$5 = TYPE$q.LeftCurlyBracket;
+	var LEFTCURLYBRACKET$4 = TYPE$x.LeftCurlyBracket;
 
 	function consumeRaw$3(startToken) {
-	    return this.Raw(startToken, LEFTCURLYBRACKET$5, 0, false, true);
+	    return this.Raw(startToken, rawMode$4.leftCurlyBracket, true);
 	}
 
 	function consumePrelude() {
@@ -22292,8 +24210,8 @@
 
 	    if (prelude.type !== 'Raw' &&
 	        this.scanner.eof === false &&
-	        this.scanner.tokenType !== LEFTCURLYBRACKET$5) {
-	        this.scanner.error();
+	        this.scanner.tokenType !== LEFTCURLYBRACKET$4) {
+	        this.error();
 	    }
 
 	    return prelude;
@@ -22306,7 +24224,7 @@
 	        block: ['Block']
 	    },
 	    parse: function() {
-	        var startToken = this.scanner.currentToken;
+	        var startToken = this.scanner.tokenIndex;
 	        var startOffset = this.scanner.tokenStart;
 	        var prelude;
 	        var block;
@@ -22352,7 +24270,7 @@
 
 	        // nothing were consumed
 	        if (this.getFirstListNode(children) === null) {
-	            this.scanner.error('Selector is expected');
+	            this.error('Selector is expected');
 	        }
 
 	        return {
@@ -22366,9 +24284,9 @@
 	    }
 	};
 
-	var TYPE$r = tokenizer.TYPE;
+	var TYPE$y = tokenizer.TYPE;
 
-	var COMMA$2 = TYPE$r.Comma;
+	var COMMA$2 = TYPE$y.Comma;
 
 	var SelectorList = {
 	    name: 'SelectorList',
@@ -22406,7 +24324,7 @@
 	    walkContext: 'selector'
 	};
 
-	var STRING$3 = tokenizer.TYPE.String;
+	var STRING$1 = tokenizer.TYPE.String;
 
 	var _String = {
 	    name: 'String',
@@ -22417,7 +24335,7 @@
 	        return {
 	            type: 'String',
 	            loc: this.getLocation(this.scanner.tokenStart, this.scanner.tokenEnd),
-	            value: this.scanner.consume(STRING$3)
+	            value: this.consume(STRING$1)
 	        };
 	    },
 	    generate: function(node) {
@@ -22425,17 +24343,17 @@
 	    }
 	};
 
-	var TYPE$s = tokenizer.TYPE;
+	var TYPE$z = tokenizer.TYPE;
 
-	var WHITESPACE$6 = TYPE$s.WhiteSpace;
-	var COMMENT$6 = TYPE$s.Comment;
-	var EXCLAMATIONMARK$3 = TYPE$s.ExclamationMark;
-	var ATKEYWORD$4 = TYPE$s.AtKeyword;
-	var CDO$3 = TYPE$s.CDO;
-	var CDC$3 = TYPE$s.CDC;
+	var WHITESPACE$8 = TYPE$z.WhiteSpace;
+	var COMMENT$8 = TYPE$z.Comment;
+	var ATKEYWORD$2 = TYPE$z.AtKeyword;
+	var CDO$1 = TYPE$z.CDO;
+	var CDC$1 = TYPE$z.CDC;
+	var EXCLAMATIONMARK$3 = 0x0021; // U+0021 EXCLAMATION MARK (!)
 
 	function consumeRaw$4(startToken) {
-	    return this.Raw(startToken, 0, 0, false, false);
+	    return this.Raw(startToken, null, false);
 	}
 
 	var StyleSheet = {
@@ -22455,14 +24373,14 @@
 	        var children = this.createList();
 	        var child;
 
-	        scan:
+	        
 	        while (!this.scanner.eof) {
 	            switch (this.scanner.tokenType) {
-	                case WHITESPACE$6:
+	                case WHITESPACE$8:
 	                    this.scanner.next();
 	                    continue;
 
-	                case COMMENT$6:
+	                case COMMENT$8:
 	                    // ignore comments except exclamation comments (i.e. /*! .. */) on top level
 	                    if (this.scanner.source.charCodeAt(this.scanner.tokenStart + 2) !== EXCLAMATIONMARK$3) {
 	                        this.scanner.next();
@@ -22472,18 +24390,18 @@
 	                    child = this.Comment();
 	                    break;
 
-	                case CDO$3: // <!--
+	                case CDO$1: // <!--
 	                    child = this.CDO();
 	                    break;
 
-	                case CDC$3: // -->
+	                case CDC$1: // -->
 	                    child = this.CDC();
 	                    break;
 
 	                // CSS Syntax Module Level 3
 	                // §2.2 Error handling
 	                // At the "top level" of a stylesheet, an <at-keyword-token> starts an at-rule.
-	                case ATKEYWORD$4:
+	                case ATKEYWORD$2:
 	                    child = this.parseWithFallback(this.Atrule, consumeRaw$4);
 	                    break;
 
@@ -22507,16 +24425,16 @@
 	    walkContext: 'stylesheet'
 	};
 
-	var TYPE$t = tokenizer.TYPE;
+	var TYPE$A = tokenizer.TYPE;
 
-	var IDENTIFIER$e = TYPE$t.Identifier;
-	var ASTERISK$4 = TYPE$t.Asterisk;
-	var VERTICALLINE$2 = TYPE$t.VerticalLine;
+	var IDENT$d = TYPE$A.Ident;
+	var ASTERISK$4 = 0x002A;     // U+002A ASTERISK (*)
+	var VERTICALLINE$2 = 0x007C; // U+007C VERTICAL LINE (|)
 
 	function eatIdentifierOrAsterisk() {
-	    if (this.scanner.tokenType !== IDENTIFIER$e &&
-	        this.scanner.tokenType !== ASTERISK$4) {
-	        this.scanner.error('Identifier or asterisk is expected');
+	    if (this.scanner.tokenType !== IDENT$d &&
+	        this.scanner.isDelim(ASTERISK$4) === false) {
+	        this.error('Identifier or asterisk is expected');
 	    }
 
 	    this.scanner.next();
@@ -22538,13 +24456,13 @@
 	    parse: function() {
 	        var start = this.scanner.tokenStart;
 
-	        if (this.scanner.tokenType === VERTICALLINE$2) {
+	        if (this.scanner.isDelim(VERTICALLINE$2)) {
 	            this.scanner.next();
 	            eatIdentifierOrAsterisk.call(this);
 	        } else {
 	            eatIdentifierOrAsterisk.call(this);
 
-	            if (this.scanner.tokenType === VERTICALLINE$2) {
+	            if (this.scanner.isDelim(VERTICALLINE$2)) {
 	                this.scanner.next();
 	                eatIdentifierOrAsterisk.call(this);
 	            }
@@ -22561,108 +24479,146 @@
 	    }
 	};
 
-	var isHex$3 = tokenizer.isHex;
-	var TYPE$u = tokenizer.TYPE;
+	var isHexDigit$4 = tokenizer.isHexDigit;
+	var cmpChar$4 = tokenizer.cmpChar;
+	var TYPE$B = tokenizer.TYPE;
+	var NAME$3 = tokenizer.NAME;
 
-	var IDENTIFIER$f = TYPE$u.Identifier;
-	var NUMBER$9 = TYPE$u.Number;
-	var PLUSSIGN$7 = TYPE$u.PlusSign;
-	var HYPHENMINUS$6 = TYPE$u.HyphenMinus;
-	var FULLSTOP$4 = TYPE$u.FullStop;
-	var QUESTIONMARK$1 = TYPE$u.QuestionMark;
+	var IDENT$e = TYPE$B.Ident;
+	var NUMBER$7 = TYPE$B.Number;
+	var DIMENSION$5 = TYPE$B.Dimension;
+	var PLUSSIGN$6 = 0x002B;     // U+002B PLUS SIGN (+)
+	var HYPHENMINUS$4 = 0x002D;  // U+002D HYPHEN-MINUS (-)
+	var QUESTIONMARK$2 = 0x003F; // U+003F QUESTION MARK (?)
+	var U$1 = 0x0075;            // U+0075 LATIN SMALL LETTER U (u)
 
-	function scanUnicodeNumber(scanner) {
-	    for (var pos = scanner.tokenStart + 1; pos < scanner.tokenEnd; pos++) {
-	        var code = scanner.source.charCodeAt(pos);
+	function eatHexSequence(offset, allowDash) {
+	    for (var pos = this.scanner.tokenStart + offset, len = 0; pos < this.scanner.tokenEnd; pos++) {
+	        var code = this.scanner.source.charCodeAt(pos);
 
-	        // break on fullstop or hyperminus/plussign after exponent
-	        if (code === FULLSTOP$4 || code === PLUSSIGN$7) {
-	            // break token, exclude symbol
-	            scanner.tokenStart = pos;
-	            return false;
+	        if (code === HYPHENMINUS$4 && allowDash && len !== 0) {
+	            if (eatHexSequence.call(this, offset + len + 1, false) === 0) {
+	                this.error();
+	            }
+
+	            return -1;
 	        }
-	    }
 
-	    return true;
+	        if (!isHexDigit$4(code)) {
+	            this.error(
+	                allowDash && len !== 0
+	                    ? 'HyphenMinus' + (len < 6 ? ' or hex digit' : '') + ' is expected'
+	                    : (len < 6 ? 'Hex digit is expected' : 'Unexpected input'),
+	                pos
+	            );
+	        }
+
+	        if (++len > 6) {
+	            this.error('Too many hex digits', pos);
+	        }    }
+
+	    this.scanner.next();
+	    return len;
 	}
 
-	// https://drafts.csswg.org/css-syntax-3/#urange
-	function scanUnicodeRange(scanner) {
-	    var hexStart = scanner.tokenStart + 1; // skip +
+	function eatQuestionMarkSequence(max) {
+	    var count = 0;
+
+	    while (this.scanner.isDelim(QUESTIONMARK$2)) {
+	        if (++count > max) {
+	            this.error('Too many question marks');
+	        }
+
+	        this.scanner.next();
+	    }
+	}
+
+	function startsWith$1(code) {
+	    if (this.scanner.source.charCodeAt(this.scanner.tokenStart) !== code) {
+	        this.error(NAME$3[code] + ' is expected');
+	    }
+	}
+
+	// https://drafts.csswg.org/css-syntax/#urange
+	// Informally, the <urange> production has three forms:
+	// U+0001
+	//      Defines a range consisting of a single code point, in this case the code point "1".
+	// U+0001-00ff
+	//      Defines a range of codepoints between the first and the second value, in this case
+	//      the range between "1" and "ff" (255 in decimal) inclusive.
+	// U+00??
+	//      Defines a range of codepoints where the "?" characters range over all hex digits,
+	//      in this case defining the same as the value U+0000-00ff.
+	// In each form, a maximum of 6 digits is allowed for each hexadecimal number (if you treat "?" as a hexadecimal digit).
+	//
+	// <urange> =
+	//   u '+' <ident-token> '?'* |
+	//   u <dimension-token> '?'* |
+	//   u <number-token> '?'* |
+	//   u <number-token> <dimension-token> |
+	//   u <number-token> <number-token> |
+	//   u '+' '?'+
+	function scanUnicodeRange() {
 	    var hexLength = 0;
 
-	    scan: {
-	        if (scanner.tokenType === NUMBER$9) {
-	            if (scanner.source.charCodeAt(scanner.tokenStart) !== FULLSTOP$4 && scanUnicodeNumber(scanner)) {
-	                scanner.next();
-	            } else if (scanner.source.charCodeAt(scanner.tokenStart) !== HYPHENMINUS$6) {
-	                break scan;
+	    // u '+' <ident-token> '?'*
+	    // u '+' '?'+
+	    if (this.scanner.isDelim(PLUSSIGN$6)) {
+	        this.scanner.next();
+
+	        if (this.scanner.tokenType === IDENT$e) {
+	            hexLength = eatHexSequence.call(this, 0, true);
+	            if (hexLength > 0) {
+	                eatQuestionMarkSequence.call(this, 6 - hexLength);
 	            }
-	        } else {
-	            scanner.next(); // PLUSSIGN
+	            return;
 	        }
 
-	        if (scanner.tokenType === HYPHENMINUS$6) {
-	            scanner.next();
+	        if (this.scanner.isDelim(QUESTIONMARK$2)) {
+	            this.scanner.next();
+	            eatQuestionMarkSequence.call(this, 5);
+	            return;
 	        }
 
-	        if (scanner.tokenType === NUMBER$9) {
-	            scanner.next();
-	        }
-
-	        if (scanner.tokenType === IDENTIFIER$f) {
-	            scanner.next();
-	        }
-
-	        if (scanner.tokenStart === hexStart) {
-	            scanner.error('Unexpected input', hexStart);
-	        }
+	        this.error('Hex digit or question mark is expected');
+	        return;
 	    }
 
-	    // validate for U+x{1,6} or U+x{1,6}-x{1,6}
-	    // where x is [0-9a-fA-F]
-	    for (var i = hexStart, wasHyphenMinus = false; i < scanner.tokenStart; i++) {
-	        var code = scanner.source.charCodeAt(i);
+	    // u <number-token> '?'*
+	    // u <number-token> <dimension-token>
+	    // u <number-token> <number-token>
+	    if (this.scanner.tokenType === NUMBER$7) {
+	        startsWith$1.call(this, PLUSSIGN$6);
+	        hexLength = eatHexSequence.call(this, 1, true);
 
-	        if (isHex$3(code) === false && (code !== HYPHENMINUS$6 || wasHyphenMinus)) {
-	            scanner.error('Unexpected input', i);
+	        if (this.scanner.isDelim(QUESTIONMARK$2)) {
+	            eatQuestionMarkSequence.call(this, 6 - hexLength);
+	            return;
 	        }
 
-	        if (code === HYPHENMINUS$6) {
-	            // hex sequence shouldn't be an empty
-	            if (hexLength === 0) {
-	                scanner.error('Unexpected input', i);
-	            }
-
-	            wasHyphenMinus = true;
-	            hexLength = 0;
-	        } else {
-	            hexLength++;
-
-	            // too long hex sequence
-	            if (hexLength > 6) {
-	                scanner.error('Too long hex sequence', i);
-	            }
+	        if (this.scanner.tokenType === DIMENSION$5 ||
+	            this.scanner.tokenType === NUMBER$7) {
+	            startsWith$1.call(this, HYPHENMINUS$4);
+	            eatHexSequence.call(this, 1, false);
+	            return;
 	        }
 
+	        return;
 	    }
 
-	    // check we have a non-zero sequence
-	    if (hexLength === 0) {
-	        scanner.error('Unexpected input', i - 1);
-	    }
+	    // u <dimension-token> '?'*
+	    if (this.scanner.tokenType === DIMENSION$5) {
+	        startsWith$1.call(this, PLUSSIGN$6);
+	        hexLength = eatHexSequence.call(this, 1, true);
 
-	    // U+abc???
-	    if (!wasHyphenMinus) {
-	        // consume as many U+003F QUESTION MARK (?) code points as possible
-	        for (; hexLength < 6 && !scanner.eof; scanner.next()) {
-	            if (scanner.tokenType !== QUESTIONMARK$1) {
-	                break;
-	            }
-
-	            hexLength++;
+	        if (hexLength > 0) {
+	            eatQuestionMarkSequence.call(this, 6 - hexLength);
 	        }
+
+	        return;
 	    }
+
+	    this.error();
 	}
 
 	var UnicodeRange = {
@@ -22673,8 +24629,17 @@
 	    parse: function() {
 	        var start = this.scanner.tokenStart;
 
-	        this.scanner.next(); // U or u
-	        scanUnicodeRange(this.scanner);
+	        // U or u
+	        if (!cmpChar$4(this.scanner.source, start, U$1)) {
+	            this.error('U is expected');
+	        }
+
+	        if (!cmpChar$4(this.scanner.source, start + 1, PLUSSIGN$6)) {
+	            this.error('Plus sign is expected');
+	        }
+
+	        this.scanner.next();
+	        scanUnicodeRange.call(this);
 
 	        return {
 	            type: 'UnicodeRange',
@@ -22687,14 +24652,15 @@
 	    }
 	};
 
-	var TYPE$v = tokenizer.TYPE;
+	var isWhiteSpace$2 = tokenizer.isWhiteSpace;
+	var cmpStr$4 = tokenizer.cmpStr;
+	var TYPE$C = tokenizer.TYPE;
 
-	var STRING$4 = TYPE$v.String;
-	var URL$3 = TYPE$v.Url;
-	var RAW$2 = TYPE$v.Raw;
-	var RIGHTPARENTHESIS$8 = TYPE$v.RightParenthesis;
+	var FUNCTION$3 = TYPE$C.Function;
+	var URL$2 = TYPE$C.Url;
+	var RIGHTPARENTHESIS$7 = TYPE$C.RightParenthesis;
 
-	// url '(' S* (string | raw) S* ')'
+	// <url-token> | <function-token> <string> )
 	var Url = {
 	    name: 'Url',
 	    structure: {
@@ -22704,24 +24670,43 @@
 	        var start = this.scanner.tokenStart;
 	        var value;
 
-	        this.scanner.eat(URL$3);
-	        this.scanner.skipSC();
-
 	        switch (this.scanner.tokenType) {
-	            case STRING$4:
-	                value = this.String();
+	            case URL$2:
+	                var rawStart = start + 4;
+	                var rawEnd = this.scanner.tokenEnd - 1;
+
+	                while (rawStart < rawEnd && isWhiteSpace$2(this.scanner.source.charCodeAt(rawStart))) {
+	                    rawStart++;
+	                }
+
+	                while (rawStart < rawEnd && isWhiteSpace$2(this.scanner.source.charCodeAt(rawEnd - 1))) {
+	                    rawEnd--;
+	                }
+
+	                value = {
+	                    type: 'Raw',
+	                    loc: this.getLocation(rawStart, rawEnd),
+	                    value: this.scanner.source.substring(rawStart, rawEnd)
+	                };
+
+	                this.eat(URL$2);
 	                break;
 
-	            case RAW$2:
-	                value = this.Raw(this.scanner.currentToken, 0, RAW$2, true, false);
+	            case FUNCTION$3:
+	                if (!cmpStr$4(this.scanner.source, this.scanner.tokenStart, this.scanner.tokenEnd, 'url(')) {
+	                    this.error('Function name must be `url`');
+	                }
+
+	                this.eat(FUNCTION$3);
+	                this.scanner.skipSC();
+	                value = this.String();
+	                this.scanner.skipSC();
+	                this.eat(RIGHTPARENTHESIS$7);
 	                break;
 
 	            default:
-	                this.scanner.error('String or Raw is expected');
+	                this.error('Url or Function is expected');
 	        }
-
-	        this.scanner.skipSC();
-	        this.scanner.eat(RIGHTPARENTHESIS$8);
 
 	        return {
 	            type: 'Url',
@@ -22757,26 +24742,26 @@
 	    }
 	};
 
-	var WHITESPACE$7 = tokenizer.TYPE.WhiteSpace;
-	var SPACE$4 = Object.freeze({
+	var WHITESPACE$9 = tokenizer.TYPE.WhiteSpace;
+	var SPACE$2 = Object.freeze({
 	    type: 'WhiteSpace',
 	    loc: null,
 	    value: ' '
 	});
 
-	var WhiteSpace = {
+	var WhiteSpace$1 = {
 	    name: 'WhiteSpace',
 	    structure: {
 	        value: String
 	    },
 	    parse: function() {
-	        this.scanner.eat(WHITESPACE$7);
-	        return SPACE$4;
+	        this.eat(WHITESPACE$9);
+	        return SPACE$2;
 
 	        // return {
 	        //     type: 'WhiteSpace',
 	        //     loc: this.getLocation(this.scanner.tokenStart, this.scanner.tokenEnd),
-	        //     value: this.scanner.consume(WHITESPACE)
+	        //     value: this.consume(WHITESPACE)
 	        // };
 	    },
 	    generate: function(node) {
@@ -22824,39 +24809,43 @@
 	    UnicodeRange: UnicodeRange,
 	    Url: Url,
 	    Value: Value,
-	    WhiteSpace: WhiteSpace
+	    WhiteSpace: WhiteSpace$1
 	};
 
 	var lexer = {
 	    generic: true,
 	    types: data.types,
+	    atrules: data.atrules,
 	    properties: data.properties,
 	    node: node
 	};
 
-	var cmpChar$2 = tokenizer.cmpChar;
-	var TYPE$w = tokenizer.TYPE;
+	var cmpChar$5 = tokenizer.cmpChar;
+	var cmpStr$5 = tokenizer.cmpStr;
+	var TYPE$D = tokenizer.TYPE;
 
-	var IDENTIFIER$g = TYPE$w.Identifier;
-	var STRING$5 = TYPE$w.String;
-	var NUMBER$a = TYPE$w.Number;
-	var FUNCTION$4 = TYPE$w.Function;
-	var URL$4 = TYPE$w.Url;
-	var NUMBERSIGN$5 = TYPE$w.NumberSign;
-	var LEFTPARENTHESIS$6 = TYPE$w.LeftParenthesis;
-	var LEFTSQUAREBRACKET$4 = TYPE$w.LeftSquareBracket;
-	var PLUSSIGN$8 = TYPE$w.PlusSign;
-	var HYPHENMINUS$7 = TYPE$w.HyphenMinus;
-	var COMMA$3 = TYPE$w.Comma;
-	var SOLIDUS$5 = TYPE$w.Solidus;
-	var ASTERISK$5 = TYPE$w.Asterisk;
-	var PERCENTSIGN$1 = TYPE$w.PercentSign;
-	var BACKSLASH = TYPE$w.Backslash;
-	var U = 117; // 'u'.charCodeAt(0)
+	var IDENT$f = TYPE$D.Ident;
+	var STRING$2 = TYPE$D.String;
+	var NUMBER$8 = TYPE$D.Number;
+	var FUNCTION$4 = TYPE$D.Function;
+	var URL$3 = TYPE$D.Url;
+	var HASH$4 = TYPE$D.Hash;
+	var DIMENSION$6 = TYPE$D.Dimension;
+	var PERCENTAGE$2 = TYPE$D.Percentage;
+	var LEFTPARENTHESIS$5 = TYPE$D.LeftParenthesis;
+	var LEFTSQUAREBRACKET$3 = TYPE$D.LeftSquareBracket;
+	var COMMA$3 = TYPE$D.Comma;
+	var DELIM$5 = TYPE$D.Delim;
+	var NUMBERSIGN$3 = 0x0023;  // U+0023 NUMBER SIGN (#)
+	var ASTERISK$5 = 0x002A;    // U+002A ASTERISK (*)
+	var PLUSSIGN$7 = 0x002B;    // U+002B PLUS SIGN (+)
+	var HYPHENMINUS$5 = 0x002D; // U+002D HYPHEN-MINUS (-)
+	var SOLIDUS$4 = 0x002F;     // U+002F SOLIDUS (/)
+	var U$2 = 0x0075;           // U+0075 LATIN SMALL LETTER U (u)
 
 	var _default = function defaultRecognizer(context) {
 	    switch (this.scanner.tokenType) {
-	        case NUMBERSIGN$5:
+	        case HASH$4:
 	            return this.HexColor();
 
 	        case COMMA$3:
@@ -22864,52 +24853,58 @@
 	            context.ignoreWSAfter = true;
 	            return this.Operator();
 
-	        case SOLIDUS$5:
-	        case ASTERISK$5:
-	        case PLUSSIGN$8:
-	        case HYPHENMINUS$7:
-	            return this.Operator();
-
-	        case LEFTPARENTHESIS$6:
+	        case LEFTPARENTHESIS$5:
 	            return this.Parentheses(this.readSequence, context.recognizer);
 
-	        case LEFTSQUAREBRACKET$4:
+	        case LEFTSQUAREBRACKET$3:
 	            return this.Brackets(this.readSequence, context.recognizer);
 
-	        case STRING$5:
+	        case STRING$2:
 	            return this.String();
 
-	        case NUMBER$a:
-	            switch (this.scanner.lookupType(1)) {
-	                case PERCENTSIGN$1:
-	                    return this.Percentage();
+	        case DIMENSION$6:
+	            return this.Dimension();
 
-	                case IDENTIFIER$g:
-	                    // edge case: number with folowing \0 and \9 hack shouldn't to be a Dimension
-	                    if (cmpChar$2(this.scanner.source, this.scanner.tokenEnd, BACKSLASH)) {
-	                        return this.Number();
-	                    } else {
-	                        return this.Dimension();
-	                    }
+	        case PERCENTAGE$2:
+	            return this.Percentage();
 
-	                default:
-	                    return this.Number();
-	            }
+	        case NUMBER$8:
+	            return this.Number();
 
 	        case FUNCTION$4:
-	            return this.Function(this.readSequence, context.recognizer);
+	            return cmpStr$5(this.scanner.source, this.scanner.tokenStart, this.scanner.tokenEnd, 'url(')
+	                ? this.Url()
+	                : this.Function(this.readSequence, context.recognizer);
 
-	        case URL$4:
+	        case URL$3:
 	            return this.Url();
 
-	        case IDENTIFIER$g:
+	        case IDENT$f:
 	            // check for unicode range, it should start with u+ or U+
-	            if (cmpChar$2(this.scanner.source, this.scanner.tokenStart, U) &&
-	                cmpChar$2(this.scanner.source, this.scanner.tokenStart + 1, PLUSSIGN$8)) {
+	            if (cmpChar$5(this.scanner.source, this.scanner.tokenStart, U$2) &&
+	                cmpChar$5(this.scanner.source, this.scanner.tokenStart + 1, PLUSSIGN$7)) {
 	                return this.UnicodeRange();
 	            } else {
 	                return this.Identifier();
 	            }
+
+	        case DELIM$5:
+	            var code = this.scanner.source.charCodeAt(this.scanner.tokenStart);
+
+	            if (code === SOLIDUS$4 ||
+	                code === ASTERISK$5 ||
+	                code === PLUSSIGN$7 ||
+	                code === HYPHENMINUS$5) {
+	                return this.Operator(); // TODO: replace with Delim
+	            }
+
+	            // TODO: produce a node with Delim node type
+
+	            if (code === NUMBERSIGN$3) {
+	                this.error('Hex or identifier is expected', this.scanner.tokenStart + 1);
+	            }
+
+	            break;
 	    }
 	};
 
@@ -22917,40 +24912,31 @@
 	    getNode: _default
 	};
 
-	var TYPE$x = tokenizer.TYPE;
+	var TYPE$E = tokenizer.TYPE;
 
-	var IDENTIFIER$h = TYPE$x.Identifier;
-	var NUMBER$b = TYPE$x.Number;
-	var NUMBERSIGN$6 = TYPE$x.NumberSign;
-	var LEFTSQUAREBRACKET$5 = TYPE$x.LeftSquareBracket;
-	var PLUSSIGN$9 = TYPE$x.PlusSign;
-	var SOLIDUS$6 = TYPE$x.Solidus;
-	var ASTERISK$6 = TYPE$x.Asterisk;
-	var FULLSTOP$5 = TYPE$x.FullStop;
-	var COLON$5 = TYPE$x.Colon;
-	var GREATERTHANSIGN$3 = TYPE$x.GreaterThanSign;
-	var VERTICALLINE$3 = TYPE$x.VerticalLine;
-	var TILDE$2 = TYPE$x.Tilde;
+	var DELIM$6 = TYPE$E.Delim;
+	var IDENT$g = TYPE$E.Ident;
+	var DIMENSION$7 = TYPE$E.Dimension;
+	var PERCENTAGE$3 = TYPE$E.Percentage;
+	var NUMBER$9 = TYPE$E.Number;
+	var HASH$5 = TYPE$E.Hash;
+	var COLON$5 = TYPE$E.Colon;
+	var LEFTSQUAREBRACKET$4 = TYPE$E.LeftSquareBracket;
+	var NUMBERSIGN$4 = 0x0023;      // U+0023 NUMBER SIGN (#)
+	var ASTERISK$6 = 0x002A;        // U+002A ASTERISK (*)
+	var PLUSSIGN$8 = 0x002B;        // U+002B PLUS SIGN (+)
+	var SOLIDUS$5 = 0x002F;         // U+002F SOLIDUS (/)
+	var FULLSTOP$2 = 0x002E;        // U+002E FULL STOP (.)
+	var GREATERTHANSIGN$2 = 0x003E; // U+003E GREATER-THAN SIGN (>)
+	var VERTICALLINE$3 = 0x007C;    // U+007C VERTICAL LINE (|)
+	var TILDE$2 = 0x007E;           // U+007E TILDE (~)
 
 	function getNode(context) {
 	    switch (this.scanner.tokenType) {
-	        case PLUSSIGN$9:
-	        case GREATERTHANSIGN$3:
-	        case TILDE$2:
-	            context.space = null;
-	            context.ignoreWSAfter = true;
-	            return this.Combinator();
-
-	        case SOLIDUS$6:  // /deep/
-	            return this.Combinator();
-
-	        case FULLSTOP$5:
-	            return this.ClassSelector();
-
-	        case LEFTSQUAREBRACKET$5:
+	        case LEFTSQUAREBRACKET$4:
 	            return this.AttributeSelector();
 
-	        case NUMBERSIGN$6:
+	        case HASH$5:
 	            return this.IdSelector();
 
 	        case COLON$5:
@@ -22960,13 +24946,46 @@
 	                return this.PseudoClassSelector();
 	            }
 
-	        case IDENTIFIER$h:
-	        case ASTERISK$6:
-	        case VERTICALLINE$3:
+	        case IDENT$g:
 	            return this.TypeSelector();
 
-	        case NUMBER$b:
+	        case NUMBER$9:
+	        case PERCENTAGE$3:
 	            return this.Percentage();
+
+	        case DIMENSION$7:
+	            // throws when .123ident
+	            if (this.scanner.source.charCodeAt(this.scanner.tokenStart) === FULLSTOP$2) {
+	                this.error('Identifier is expected', this.scanner.tokenStart + 1);
+	            }
+	            break;
+
+	        case DELIM$6:
+	            var code = this.scanner.source.charCodeAt(this.scanner.tokenStart);
+
+	            switch (code) {
+	                case PLUSSIGN$8:
+	                case GREATERTHANSIGN$2:
+	                case TILDE$2:
+	                    context.space = null;
+	                    context.ignoreWSAfter = true;
+	                    return this.Combinator();
+
+	                case SOLIDUS$5:  // /deep/
+	                    return this.Combinator();
+
+	                case FULLSTOP$2:
+	                    return this.ClassSelector();
+
+	                case ASTERISK$6:
+	                case VERTICALLINE$3:
+	                    return this.TypeSelector();
+
+	                case NUMBERSIGN$4:
+	                    return this.IdSelector();
+	            }
+
+	            break;
 	    }
 	}
 	var selector = {
@@ -22988,40 +25007,26 @@
 	};
 
 	// legacy IE function
-	// expression '(' raw ')'
-	var expression$1 = function() {
+	// expression( <any-value> )
+	var expression = function() {
 	    return this.createSingleNodeList(
-	        this.Raw(this.scanner.currentToken, 0, 0, false, false)
+	        this.Raw(this.scanner.tokenIndex, null, false)
 	    );
 	};
 
-	var TYPE$y = tokenizer.TYPE;
+	var TYPE$F = tokenizer.TYPE;
+	var rawMode$5 = Raw.mode;
 
-	var IDENTIFIER$i = TYPE$y.Identifier;
-	var COMMA$4 = TYPE$y.Comma;
-	var SEMICOLON$5 = TYPE$y.Semicolon;
-	var HYPHENMINUS$8 = TYPE$y.HyphenMinus;
-	var EXCLAMATIONMARK$4 = TYPE$y.ExclamationMark;
+	var COMMA$4 = TYPE$F.Comma;
 
-	// var '(' ident (',' <value>? )? ')'
+	// var( <ident> , <value>? )
 	var _var = function() {
 	    var children = this.createList();
 
 	    this.scanner.skipSC();
 
-	    var identStart = this.scanner.tokenStart;
-
-	    this.scanner.eat(HYPHENMINUS$8);
-	    if (this.scanner.source.charCodeAt(this.scanner.tokenStart) !== HYPHENMINUS$8) {
-	        this.scanner.error('HyphenMinus is expected');
-	    }
-	    this.scanner.eat(IDENTIFIER$i);
-
-	    children.push({
-	        type: 'Identifier',
-	        loc: this.getLocation(identStart, this.scanner.tokenStart),
-	        name: this.scanner.substrToCursor(identStart)
-	    });
+	    // NOTE: Don't check more than a first argument is an ident, rest checks are for lexer
+	    children.push(this.Identifier());
 
 	    this.scanner.skipSC();
 
@@ -23029,7 +25034,7 @@
 	        children.push(this.Operator());
 	        children.push(this.parseCustomProperty
 	            ? this.Value(null)
-	            : this.Raw(this.scanner.currentToken, EXCLAMATIONMARK$4, SEMICOLON$5, false, false)
+	            : this.Raw(this.scanner.tokenIndex, rawMode$5.exclamationMarkOrSemicolon, false)
 	        );
 	    }
 
@@ -23040,7 +25045,7 @@
 	    getNode: _default,
 	    '-moz-element': element,
 	    'element': element,
-	    'expression': expression$1,
+	    'expression': expression,
 	    'var': _var
 	};
 
@@ -23059,12 +25064,13 @@
 	    }
 	};
 
-	var TYPE$z = tokenizer.TYPE;
+	var TYPE$G = tokenizer.TYPE;
 
-	var STRING$6 = TYPE$z.String;
-	var IDENTIFIER$j = TYPE$z.Identifier;
-	var URL$5 = TYPE$z.Url;
-	var LEFTPARENTHESIS$7 = TYPE$z.LeftParenthesis;
+	var STRING$3 = TYPE$G.String;
+	var IDENT$h = TYPE$G.Ident;
+	var URL$4 = TYPE$G.Url;
+	var FUNCTION$5 = TYPE$G.Function;
+	var LEFTPARENTHESIS$6 = TYPE$G.LeftParenthesis;
 
 	var _import = {
 	    parse: {
@@ -23074,20 +25080,21 @@
 	            this.scanner.skipSC();
 
 	            switch (this.scanner.tokenType) {
-	                case STRING$6:
+	                case STRING$3:
 	                    children.push(this.String());
 	                    break;
 
-	                case URL$5:
+	                case URL$4:
+	                case FUNCTION$5:
 	                    children.push(this.Url());
 	                    break;
 
 	                default:
-	                    this.scanner.error('String or url() is expected');
+	                    this.error('String or url() is expected');
 	            }
 
-	            if (this.scanner.lookupNonWSType(0) === IDENTIFIER$j ||
-	                this.scanner.lookupNonWSType(0) === LEFTPARENTHESIS$7) {
+	            if (this.lookupNonWSType(0) === IDENT$h ||
+	                this.lookupNonWSType(0) === LEFTPARENTHESIS$6) {
 	                children.push(this.WhiteSpace());
 	                children.push(this.MediaQueryList());
 	            }
@@ -23124,36 +25131,26 @@
 	    }
 	};
 
-	var TYPE$A = tokenizer.TYPE;
+	var TYPE$H = tokenizer.TYPE;
 
-	var WHITESPACE$8 = TYPE$A.WhiteSpace;
-	var COMMENT$7 = TYPE$A.Comment;
-	var IDENTIFIER$k = TYPE$A.Identifier;
-	var FUNCTION$5 = TYPE$A.Function;
-	var LEFTPARENTHESIS$8 = TYPE$A.LeftParenthesis;
-	var HYPHENMINUS$9 = TYPE$A.HyphenMinus;
-	var COLON$6 = TYPE$A.Colon;
+	var WHITESPACE$a = TYPE$H.WhiteSpace;
+	var COMMENT$9 = TYPE$H.Comment;
+	var IDENT$i = TYPE$H.Ident;
+	var FUNCTION$6 = TYPE$H.Function;
+	var COLON$6 = TYPE$H.Colon;
+	var LEFTPARENTHESIS$7 = TYPE$H.LeftParenthesis;
 
 	function consumeRaw$5() {
 	    return this.createSingleNodeList(
-	        this.Raw(this.scanner.currentToken, 0, 0, false, false)
+	        this.Raw(this.scanner.tokenIndex, null, false)
 	    );
 	}
 
 	function parentheses() {
-	    var index = 0;
-
 	    this.scanner.skipSC();
 
-	    // TODO: make it simplier
-	    if (this.scanner.tokenType === IDENTIFIER$k) {
-	        index = 1;
-	    } else if (this.scanner.tokenType === HYPHENMINUS$9 &&
-	               this.scanner.lookupType(1) === IDENTIFIER$k) {
-	        index = 2;
-	    }
-
-	    if (index !== 0 && this.scanner.lookupNonWSType(index) === COLON$6) {
+	    if (this.scanner.tokenType === IDENT$i &&
+	        this.lookupNonWSType(1) === COLON$6) {
 	        return this.createSingleNodeList(
 	            this.Declaration()
 	        );
@@ -23172,23 +25169,23 @@
 	    scan:
 	    while (!this.scanner.eof) {
 	        switch (this.scanner.tokenType) {
-	            case WHITESPACE$8:
+	            case WHITESPACE$a:
 	                space = this.WhiteSpace();
 	                continue;
 
-	            case COMMENT$7:
+	            case COMMENT$9:
 	                this.scanner.next();
 	                continue;
 
-	            case FUNCTION$5:
+	            case FUNCTION$6:
 	                child = this.Function(consumeRaw$5, this.scope.AtrulePrelude);
 	                break;
 
-	            case IDENTIFIER$k:
+	            case IDENT$i:
 	                child = this.Identifier();
 	                break;
 
-	            case LEFTPARENTHESIS$8:
+	            case LEFTPARENTHESIS$7:
 	                child = this.Parentheses(parentheses, this.scope.AtrulePrelude);
 	                break;
 
@@ -23213,7 +25210,7 @@
 	            var children = readSequence.call(this);
 
 	            if (this.getFirstListNode(children) === null) {
-	                this.scanner.error('Condition is expected');
+	                this.error('Condition is expected');
 	            }
 
 	            return children;
@@ -23382,6 +25379,9 @@
 				this.hooks.onAtMedia = new Hook(this);
 				this.hooks.onRule = new Hook(this);
 				this.hooks.onDeclaration = new Hook(this);
+				this.hooks.onSelector = new Hook(this);
+				this.hooks.onPseudoSelector = new Hook(this);
+
 				this.hooks.onContent = new Hook(this);
 				this.hooks.onImport = new Hook(this);
 
@@ -23433,6 +25433,8 @@
 			return this.ast;
 		}
 
+
+
 		insertRule(rule) {
 			let inserted = this.ast.children.appendData(rule);
 			inserted.forEach((item) => {
@@ -23482,6 +25484,8 @@
 
 					this.hooks.onRule.trigger(ruleNode, ruleItem, rulelist);
 					this.declarations(ruleNode, ruleItem, rulelist);
+					this.onSelector(ruleNode, ruleItem, rulelist);
+
 				}
 			});
 		}
@@ -23507,13 +25511,40 @@
 			});
 		}
 
+		// add pseudo elements to parser
+		onSelector(ruleNode, ruleItem, rulelist) {
+			lib.walk(ruleNode, {
+				visit: "Selector",
+				enter: (selectNode, selectItem, selectList) => {
+					// console.log(selectNode);
+					this.hooks.onSelector.trigger(selectNode, selectItem, selectList, {ruleNode, ruleItem, rulelist});
+
+					if (selectNode.children.forEach(node => {if (node.type === "PseudoElementSelector") {
+						lib.walk(node, {
+							visit: "PseudoElementSelector",
+							enter: (pseudoNode, pItem, pList) => {
+								this.hooks.onPseudoSelector.trigger(pseudoNode, pItem, pList, {selectNode, selectItem, selectList}, {ruleNode, ruleItem, rulelist});
+							}
+						});
+					}}));
+					// else {
+					// 	console.log("dommage");
+					// }
+
+				}
+			});
+		}
+
 		replaceUrls(ast) {
 			lib.walk(ast, {
 				visit: "Url",
 				enter: (node, item, list) => {
-					let href = node.value.value.replace(/["']/g, "");
-					let url = new URL(href, this.url);
-					node.value.value = url.toString();
+					let content = node.value.value;
+					if ((node.value.type === "Raw" && content.startsWith("data:")) || (node.value.type === "String" && (content.startsWith("\"data:") || content.startsWith("'data:")))) ; else {
+						let href = content.replace(/["']/g, "");
+						let url = new URL(href, this.url);
+						node.value.value = url.toString();
+					}
 				}
 			});
 		}
@@ -23654,16 +25685,36 @@
 :root {
 	--pagedjs-width: 8.5in;
 	--pagedjs-height: 11in;
+	--pagedjs-width-right: 8.5in;
+	--pagedjs-height-right: 11in;
+	--pagedjs-width-left: 8.5in;
+	--pagedjs-height-left: 11in;
 	--pagedjs-pagebox-width: 8.5in;
 	--pagedjs-pagebox-height: 11in;
 	--pagedjs-margin-top: 1in;
 	--pagedjs-margin-right: 1in;
 	--pagedjs-margin-bottom: 1in;
 	--pagedjs-margin-left: 1in;
-	--pagedjs-bleed-top: 0;
-	--pagedjs-bleed-right: 0;
-	--pagedjs-bleed-bottom: 0;
-	--pagedjs-bleed-left: 0;
+	--pagedjs-padding-top: 0mm;
+	--pagedjs-padding-right: 0mm;
+	--pagedjs-padding-bottom: 0mm;
+	--pagedjs-padding-left: 0mm;
+	--pagedjs-border-top: 0mm;
+	--pagedjs-border-right: 0mm;
+	--pagedjs-border-bottom: 0mm;
+	--pagedjs-border-left: 0mm;
+	--pagedjs-bleed-top: 0mm;
+	--pagedjs-bleed-right: 0mm;
+	--pagedjs-bleed-bottom: 0mm;
+	--pagedjs-bleed-left: 0mm;
+	--pagedjs-bleed-right-top: 0mm;
+	--pagedjs-bleed-right-right: 0mm;
+	--pagedjs-bleed-right-bottom: 0mm;
+	--pagedjs-bleed-right-left: 0mm;
+	--pagedjs-bleed-left-top: 0mm;
+	--pagedjs-bleed-left-right: 0mm;
+	--pagedjs-bleed-left-bottom: 0mm;
+	--pagedjs-bleed-left-left: 0mm;
 	--pagedjs-crop-color: black;
 	--pagedjs-crop-offset: 2mm;
 	--pagedjs-crop-stroke: 1px;
@@ -23671,6 +25722,7 @@
 	--pagedjs-mark-cross-display: none;
 	--pagedjs-mark-crop-display: none;
 	--pagedjs-page-count: 0;
+	--pagedjs-page-counter-increment: 1;
 }
 
 @page {
@@ -23687,6 +25739,20 @@
 	display: grid;
 	grid-template-columns: [bleed-left] var(--pagedjs-bleed-left) [sheet-center] calc(var(--pagedjs-width) - var(--pagedjs-bleed-left) - var(--pagedjs-bleed-right)) [bleed-right] var(--pagedjs-bleed-right);
 	grid-template-rows: [bleed-top] var(--pagedjs-bleed-top) [sheet-middle] calc(var(--pagedjs-height) - var(--pagedjs-bleed-top) - var(--pagedjs-bleed-bottom)) [bleed-bottom] var(--pagedjs-bleed-bottom);
+}
+
+.pagedjs_right_page .pagedjs_sheet {
+	width: var(--pagedjs-width-right);
+	height: var(--pagedjs-height-right);
+	grid-template-columns: [bleed-left] var(--pagedjs-bleed-right-left) [sheet-center] calc(var(--pagedjs-width) - var(--pagedjs-bleed-right-left) - var(--pagedjs-bleed-right-right)) [bleed-right] var(--pagedjs-bleed-right-right);
+	grid-template-rows: [bleed-top] var(--pagedjs-bleed-right-top) [sheet-middle] calc(var(--pagedjs-height) - var(--pagedjs-bleed-right-top) - var(--pagedjs-bleed-right-bottom)) [bleed-bottom] var(--pagedjs-bleed-right-bottom);
+}
+
+.pagedjs_left_page .pagedjs_sheet {
+	width: var(--pagedjs-width-left);
+	height: var(--pagedjs-height-left);
+	grid-template-columns: [bleed-left] var(--pagedjs-bleed-left-left) [sheet-center] calc(var(--pagedjs-width) - var(--pagedjs-bleed-left-left) - var(--pagedjs-bleed-left-right)) [bleed-right] var(--pagedjs-bleed-left-right);
+	grid-template-rows: [bleed-top] var(--pagedjs-bleed-left-top) [sheet-middle] calc(var(--pagedjs-height) - var(--pagedjs-bleed-left-top) - var(--pagedjs-bleed-left-bottom)) [bleed-bottom] var(--pagedjs-bleed-left-bottom);
 }
 
 .pagedjs_bleed {
@@ -23725,6 +25791,7 @@
 	display: var(--pagedjs-mark-crop-display);
 	flex-grow: 0;
 	flex-shrink: 0;
+	z-index: 9999999999;
 }
 
 .pagedjs_bleed-top .pagedjs_marks-crop:nth-child(1),
@@ -23733,10 +25800,30 @@
 	border-right: var(--pagedjs-crop-stroke) solid var(--pagedjs-crop-color);
 }
 
+.pagedjs_right_page .pagedjs_bleed-top .pagedjs_marks-crop:nth-child(1),
+.pagedjs_right_page .pagedjs_bleed-bottom .pagedjs_marks-crop:nth-child(1) {
+	width: calc(var(--pagedjs-bleed-right-left) - var(--pagedjs-crop-stroke));
+}
+
+.pagedjs_left_page .pagedjs_bleed-top .pagedjs_marks-crop:nth-child(1),
+.pagedjs_left_page .pagedjs_bleed-bottom .pagedjs_marks-crop:nth-child(1) {
+	width: calc(var(--pagedjs-bleed-left-left) - var(--pagedjs-crop-stroke));
+}
+
 .pagedjs_bleed-top .pagedjs_marks-crop:nth-child(3),
 .pagedjs_bleed-bottom .pagedjs_marks-crop:nth-child(3) {
 	width: calc(var(--pagedjs-bleed-right) - var(--pagedjs-crop-stroke));
 	border-left: var(--pagedjs-crop-stroke) solid var(--pagedjs-crop-color);
+}
+
+.pagedjs_right_page .pagedjs_bleed-top .pagedjs_marks-crop:nth-child(3),
+.pagedjs_right_page .pagedjs_bleed-bottom .pagedjs_marks-crop:nth-child(3) {
+	width: calc(var(--pagedjs-bleed-right-right) - var(--pagedjs-crop-stroke));
+}
+
+.pagedjs_left_page .pagedjs_bleed-top .pagedjs_marks-crop:nth-child(3),
+.pagedjs_left_page .pagedjs_bleed-bottom .pagedjs_marks-crop:nth-child(3) {
+	width: calc(var(--pagedjs-bleed-left-right) - var(--pagedjs-crop-stroke));
 }
 
 .pagedjs_bleed-top .pagedjs_marks-crop {
@@ -23744,9 +25831,25 @@
 	height: calc(var(--pagedjs-bleed-top) - var(--pagedjs-crop-offset));
 }
 
+.pagedjs_right_page .pagedjs_bleed-top .pagedjs_marks-crop {
+	height: calc(var(--pagedjs-bleed-right-top) - var(--pagedjs-crop-offset));
+}
+
+.pagedjs_left_page .pagedjs_bleed-top .pagedjs_marks-crop {
+	height: calc(var(--pagedjs-bleed-left-top) - var(--pagedjs-crop-offset));
+}
+
 .pagedjs_bleed-bottom .pagedjs_marks-crop {
 	align-self: flex-end;
 	height: calc(var(--pagedjs-bleed-bottom) - var(--pagedjs-crop-offset));
+}
+
+.pagedjs_right_page .pagedjs_bleed-bottom .pagedjs_marks-crop {
+	height: calc(var(--pagedjs-bleed-right-bottom) - var(--pagedjs-crop-offset));
+}
+
+.pagedjs_left_page .pagedjs_bleed-bottom .pagedjs_marks-crop {
+	height: calc(var(--pagedjs-bleed-left-bottom) - var(--pagedjs-crop-offset));
 }
 
 .pagedjs_bleed-left .pagedjs_marks-crop:nth-child(1),
@@ -23755,10 +25858,30 @@
 	border-bottom: var(--pagedjs-crop-stroke) solid var(--pagedjs-crop-color);
 }
 
+.pagedjs_right_page .pagedjs_bleed-left .pagedjs_marks-crop:nth-child(1),
+.pagedjs_right_page .pagedjs_bleed-right .pagedjs_marks-crop:nth-child(1) {
+	height: calc(var(--pagedjs-bleed-right-top) - var(--pagedjs-crop-stroke));
+}
+
+.pagedjs_left_page .pagedjs_bleed-left .pagedjs_marks-crop:nth-child(1),
+.pagedjs_left_page .pagedjs_bleed-right .pagedjs_marks-crop:nth-child(1) {
+	height: calc(var(--pagedjs-bleed-left-top) - var(--pagedjs-crop-stroke));
+}
+
 .pagedjs_bleed-left .pagedjs_marks-crop:nth-child(3),
 .pagedjs_bleed-right .pagedjs_marks-crop:nth-child(3) {
 	height: calc(var(--pagedjs-bleed-bottom) - var(--pagedjs-crop-stroke));
 	border-top: var(--pagedjs-crop-stroke) solid var(--pagedjs-crop-color);
+}
+
+.pagedjs_right_page .pagedjs_bleed-left .pagedjs_marks-crop:nth-child(3),
+.pagedjs_right_page .pagedjs_bleed-right .pagedjs_marks-crop:nth-child(3) {
+	height: calc(var(--pagedjs-bleed-right-bottom) - var(--pagedjs-crop-stroke));
+}
+
+.pagedjs_left_page .pagedjs_bleed-left .pagedjs_marks-crop:nth-child(3),
+.pagedjs_left_page .pagedjs_bleed-right .pagedjs_marks-crop:nth-child(3) {
+	height: calc(var(--pagedjs-bleed-left-bottom) - var(--pagedjs-crop-stroke));
 }
 
 .pagedjs_bleed-left .pagedjs_marks-crop {
@@ -23766,9 +25889,25 @@
 	align-self: flex-start;
 }
 
+.pagedjs_right_page .pagedjs_bleed-left .pagedjs_marks-crop {
+	width: calc(var(--pagedjs-bleed-right-left) - var(--pagedjs-crop-offset));
+}
+
+.pagedjs_left_page .pagedjs_bleed-left .pagedjs_marks-crop {
+	width: calc(var(--pagedjs-bleed-left-left) - var(--pagedjs-crop-offset));
+}
+
 .pagedjs_bleed-right .pagedjs_marks-crop {
 	width: calc(var(--pagedjs-bleed-right) - var(--pagedjs-crop-offset));
 	align-self: flex-end;
+}
+
+.pagedjs_right_page .pagedjs_bleed-right .pagedjs_marks-crop {
+	width: calc(var(--pagedjs-bleed-right-right) - var(--pagedjs-crop-offset));
+}
+
+.pagedjs_left_page .pagedjs_bleed-right .pagedjs_marks-crop {
+	width: calc(var(--pagedjs-bleed-left-right) - var(--pagedjs-crop-offset));
 }
 
 .pagedjs_marks-middle {
@@ -23908,6 +26047,11 @@
 	grid-row: page;
 	width: 100%;
 	height: 100%;
+	padding: var(--pagedjs-padding-top) var(--pagedjs-padding-right) var(--pagedjs-padding-bottom) var(--pagedjs-padding-left);
+	border-top: var(--pagedjs-border-top);
+	border-right: var(--pagedjs-border-right);
+	border-bottom: var(--pagedjs-border-bottom);
+	border-left: var(--pagedjs-border-left);
 }
 
 .pagedjs_pagebox > .pagedjs_area > .pagedjs_page_content {
@@ -23918,15 +26062,24 @@
 }
 
 .pagedjs_page {
-	counter-increment: page;
+	counter-increment: page var(--pagedjs-page-counter-increment);
 	width: var(--pagedjs-width);
 	height: var(--pagedjs-height);
+}
+
+.pagedjs_page.pagedjs_right_page {
+	width: var(--pagedjs-width-right);
+	height: var(--pagedjs-height-right);
+}
+
+.pagedjs_page.pagedjs_left_page {
+	width: var(--pagedjs-width-left);
+	height: var(--pagedjs-height-left);
 }
 
 .pagedjs_pages {
 	counter-reset: pages var(--pagedjs-page-count);
 }
-
 
 .pagedjs_pagebox .pagedjs_margin-top-left-corner,
 .pagedjs_pagebox .pagedjs_margin-top-right-corner,
@@ -24095,9 +26248,10 @@
 	content: none !important;
 }
 
-img {
-	height: auto;
+[data-align-last-split-element='justify'] {
+	text-align-last: justify;
 }
+
 
 @media print {
 	html {
@@ -24115,7 +26269,7 @@ img {
 		max-height: 100%;
 	}
 	.pagedjs_pages {
-		width: var(--pagedjs-width);
+		width: auto;
 		display: block !important;
 		transform: none !important;
 		height: 100% !important;
@@ -24132,6 +26286,13 @@ img {
 		page-break-after: always;
 		break-after: page;
 	}
+	.pagedjs_sheet {
+		margin: 0;
+		padding: 0;
+		max-height: 100%;
+		min-height: 100%;
+		height: 100% !important;
+	}
 }
 `;
 
@@ -24139,17 +26300,17 @@ img {
 		return new Promise(function(resolve, reject) {
 			let request = new XMLHttpRequest();
 
-			request.open(options.method || 'get', url, true);
+			request.open(options.method || "get", url, true);
 
 			for (let i in options.headers) {
 				request.setRequestHeader(i, options.headers[i]);
 			}
 
-			request.withCredentials = options.credentials=='include';
+			request.withCredentials = options.credentials === "include";
 
 			request.onload = () => {
-	 			// Chrome returns a status code of 0 for local files
-	 			const status = request.status === 0 && url.startsWith('file://') ? 200 : request.status;
+				// Chrome returns a status code of 0 for local files
+				const status = request.status === 0 && url.startsWith("file://") ? 200 : request.status;
 				resolve(new Response(request.responseText, {status}));
 			};
 
@@ -24171,6 +26332,9 @@ img {
 			this.hooks.onRule = new Hook(this);
 			this.hooks.onDeclaration = new Hook(this);
 			this.hooks.onContent = new Hook(this);
+			this.hooks.onSelector = new Hook(this);
+			this.hooks.onPseudoSelector = new Hook(this);
+
 			this.hooks.onImport = new Hook(this);
 
 			this.hooks.beforeTreeParse = new Hook(this);
@@ -24420,7 +26584,7 @@ img {
 		},
 		"B5": {
 			width: {
-				value: 250,
+				value: 176,
 				unit: "mm"
 			},
 			height: {
@@ -24441,21 +26605,21 @@ img {
 		"legal": {
 			width: {
 				value: 8.5,
-				unit: "mm"
+				unit: "in"
 			},
 			height: {
 				value: 14,
-				unit: "mm"
+				unit: "in"
 			}
 		},
 		"ledger": {
 			width: {
 				value: 11,
-				unit: "mm"
+				unit: "in"
 			},
 			height: {
 				value: 17,
-				unit: "mm"
+				unit: "in"
 			}
 		}
 	};
@@ -24469,7 +26633,6 @@ img {
 			this.width = undefined;
 			this.height = undefined;
 			this.orientation = undefined;
-
 			this.marginalia = {};
 		}
 
@@ -24483,12 +26646,25 @@ img {
 				width: undefined,
 				height: undefined,
 				orientation: undefined,
-				margin : {
+				margin: {
 					top: {},
 					right: {},
 					left: {},
 					bottom: {}
 				},
+				padding: {
+					top: {},
+					right: {},
+					left: {},
+					bottom: {}
+				},
+				border: {
+					top: {},
+					right: {},
+					left: {},
+					bottom: {}
+				},
+				backgroundOrigin: undefined,
 				block: {},
 				marks: undefined
 			};
@@ -24534,7 +26710,7 @@ img {
 				page.marginalia = marginalia;
 			}
 
-			let declarations = this.replaceDeclartations(node);
+			let declarations = this.replaceDeclarations(node);
 
 			if (declarations.size) {
 				page.size = declarations.size;
@@ -24597,6 +26773,13 @@ img {
 			if (declarations.margin) {
 				page.margin = declarations.margin;
 			}
+			if (declarations.padding) {
+				page.padding = declarations.padding;
+			}
+
+			if (declarations.border) {
+				page.border = declarations.border;
+			}
 
 			if (declarations.marks) {
 				page.marks = declarations.marks;
@@ -24636,19 +26819,29 @@ img {
 				let orientation = this.pages["*"].orientation;
 				let bleed = this.pages["*"].bleed;
 				let marks = this.pages["*"].marks;
+				let bleedverso = undefined;
+				let bleedrecto = undefined;
 
+				if (":left" in this.pages) {
+					bleedverso = this.pages[":left"].bleed;
+				}
+
+				if (":right" in this.pages) {
+					bleedrecto = this.pages[":right"].bleed;
+				}
 
 				if ((width && height) &&
-						(this.width !== width || this.height !== height)) {
+					(this.width !== width || this.height !== height)) {
 					this.width = width;
 					this.height = height;
 					this.format = format;
 					this.orientation = orientation;
 
-					this.addRootVars(ast, width, height, orientation, bleed, marks);
-					this.addRootPage(ast, this.pages["*"].size, bleed);
+					this.addRootVars(ast, width, height, orientation, bleed, bleedrecto, bleedverso, marks);
+					this.addRootPage(ast, this.pages["*"].size, bleed, bleedrecto, bleedverso);
 
 					this.emit("size", { width, height, orientation, format, bleed });
+					this.emit("atpages", this.pages);
 				}
 
 			}
@@ -24726,14 +26919,14 @@ img {
 			return parsed;
 		}
 
-		replaceDeclartations(ast) {
+		replaceDeclarations(ast) {
 			let parsed = {};
 
 			lib.walk(ast.block, {
 				visit: "Declaration",
 				enter: (declaration, dItem, dList) => {
 					let prop = lib.property(declaration.property).name;
-					let value = declaration.value;
+					// let value = declaration.value;
 
 					if (prop === "marks") {
 						parsed.marks = [];
@@ -24747,6 +26940,7 @@ img {
 					} else if (prop === "margin") {
 						parsed.margin = this.getMargins(declaration);
 						dList.remove(dItem);
+
 					} else if (prop.indexOf("margin-") === 0) {
 						let m = prop.substring("margin-".length);
 						if (!parsed.margin) {
@@ -24759,7 +26953,60 @@ img {
 						}
 						parsed.margin[m] = declaration.value.children.first();
 						dList.remove(dItem);
-					} else if (prop === "size") {
+
+					} else if (prop === "padding") {
+						parsed.padding = this.getPaddings(declaration.value);
+						dList.remove(dItem);
+
+					} else if (prop.indexOf("padding-") === 0) {
+						let p = prop.substring("padding-".length);
+						if (!parsed.padding) {
+							parsed.padding = {
+								top: {},
+								right: {},
+								left: {},
+								bottom: {}
+							};
+						}
+						parsed.padding[p] = declaration.value.children.first();
+						dList.remove(dItem);
+					}
+
+					else if (prop === "border") {
+						if (!parsed.border) {
+							parsed.border = {
+								top: {},
+								right: {},
+								left: {},
+								bottom: {}
+							};
+						}
+						parsed.border.top = lib.generate(declaration.value);
+						parsed.border.right = lib.generate(declaration.value);
+						parsed.border.left = lib.generate(declaration.value);
+						parsed.border.bottom = lib.generate(declaration.value);
+
+						dList.remove(dItem);
+
+					}
+
+					else if (prop.indexOf("border-") === 0) {
+						if (!parsed.border) {
+							parsed.border = {
+								top: {},
+								right: {},
+								left: {},
+								bottom: {}
+							};
+						}
+						let p = prop.substring("border-".length);
+
+						parsed.border[p] = lib.generate(declaration.value);
+						dList.remove(dItem);
+
+					}
+
+					else if (prop === "size") {
 						parsed.size = this.getSize(declaration);
 						dList.remove(dItem);
 					} else if (prop === "bleed") {
@@ -24785,8 +27032,7 @@ img {
 											unit: "px"
 										});
 										break;
-									default:
-										// ignore
+									// ignore
 								}
 
 							}
@@ -24799,8 +27045,8 @@ img {
 			});
 
 			return parsed;
-		}
 
+		}
 		getSize(declaration) {
 			let width, height, orientation, format;
 
@@ -24808,7 +27054,7 @@ img {
 			lib.walk(declaration, {
 				visit: "Dimension",
 				enter: (node, item, list) => {
-					let {value, unit} = node;
+					let { value, unit } = node;
 					if (typeof width === "undefined") {
 						width = { value, unit };
 					} else if (typeof height === "undefined") {
@@ -24866,9 +27112,16 @@ img {
 			};
 
 			lib.walk(declaration, {
-				visit: "Dimension",
-				enter: (node, item, list) => {
-					margins.push(node);
+				enter: (node) => {
+					switch (node.type) {
+						case "Dimension": // margin: 1in 2in, margin: 20px, etc...
+							margins.push(node);
+							break;
+						case "Number": // margin: 0
+							margins.push({value: node.value, unit: "px"});
+							break;
+						// ignore
+					}
 				}
 			});
 
@@ -24896,50 +27149,126 @@ img {
 			return margin;
 		}
 
+		getPaddings(declaration) {
+			let paddings = [];
+			let padding = {
+				top: {},
+				right: {},
+				left: {},
+				bottom: {}
+			};
+
+			lib.walk(declaration, {
+				enter: (node) => {
+					switch (node.type) {
+						case "Dimension": // padding: 1in 2in, padding: 20px, etc...
+							paddings.push(node);
+							break;
+						case "Number": // padding: 0
+							paddings.push({value: node.value, unit: "px"});
+							break;
+						// ignore
+					}
+				}
+			});
+			if (paddings.length === 1) {
+				for (let p in padding) {
+					padding[p] = paddings[0];
+				}
+			} else if (paddings.length === 2) {
+
+				padding.top = paddings[0];
+				padding.right = paddings[1];
+				padding.bottom = paddings[0];
+				padding.left = paddings[1];
+			} else if (paddings.length === 3) {
+
+				padding.top = paddings[0];
+				padding.right = paddings[1];
+				padding.bottom = paddings[2];
+				padding.left = paddings[1];
+			} else if (paddings.length === 4) {
+
+				padding.top = paddings[0];
+				padding.right = paddings[1];
+				padding.bottom = paddings[2];
+				padding.left = paddings[3];
+			}
+			return padding;
+		}
+
+		// get values for the border on the @page to pass them to the element with the .pagedjs_area class
+		getBorders(declaration) {
+			let border = {
+				top: {},
+				right: {},
+				left: {},
+				bottom: {}
+			};
+
+			if (declaration.prop == "border") {
+				border.top = lib.generate(declaration.value);
+				border.right = lib.generate(declaration.value);
+				border.bottom = lib.generate(declaration.value);
+				border.left = lib.generate(declaration.value);
+
+			}
+			else if (declaration.prop == "border-top") {
+				border.top = lib.generate(declaration.value);
+			}
+			else if (declaration.prop == "border-right") {
+				border.right = lib.generate(declaration.value);
+
+			}
+			else if (declaration.prop == "border-bottom") {
+				border.bottom = lib.generate(declaration.value);
+
+			}
+			else if (declaration.prop == "border-left") {
+				border.left = lib.generate(declaration.value);
+			}
+
+			return border;
+		}
+
+
 		addPageClasses(pages, ast, sheet) {
 			// First add * page
-			if ("*" in pages && !pages["*"].added) {
+			if ("*" in pages) {
 				let p = this.createPage(pages["*"], ast.children, sheet);
 				sheet.insertRule(p);
-				pages["*"].added = true;
 			}
 			// Add :left & :right
-			if (":left" in pages && !pages[":left"].added) {
+			if (":left" in pages) {
 				let left = this.createPage(pages[":left"], ast.children, sheet);
 				sheet.insertRule(left);
-				pages[":left"].added = true;
 			}
-			if (":right" in pages && !pages[":right"].added) {
+			if (":right" in pages) {
 				let right = this.createPage(pages[":right"], ast.children, sheet);
 				sheet.insertRule(right);
-				pages[":right"].added = true;
 			}
 			// Add :first & :blank
-			if (":first" in pages && !pages[":first"].first) {
+			if (":first" in pages) {
 				let first = this.createPage(pages[":first"], ast.children, sheet);
 				sheet.insertRule(first);
-				pages[":first"].added = true;
 			}
-			if (":blank" in pages && !pages[":blank"].added) {
+			if (":blank" in pages) {
 				let blank = this.createPage(pages[":blank"], ast.children, sheet);
 				sheet.insertRule(blank);
-				pages[":blank"].added = true;
 			}
 			// Add nth pages
 			for (let pg in pages) {
-				if (pages[pg].nth && !pages[pg].added) {
+				if (pages[pg].nth) {
 					let nth = this.createPage(pages[pg], ast.children, sheet);
 					sheet.insertRule(nth);
-					pages[pg].added = true;
 				}
 			}
 
 			// Add named pages
 			for (let pg in pages) {
-				if (pages[pg].name && !pages[pg].added) {
+				if (pages[pg].name) {
 					let named = this.createPage(pages[pg], ast.children, sheet);
 					sheet.insertRule(named);
-					pages[pg].added = true;
 				}
 			}
 
@@ -24954,9 +27283,14 @@ img {
 				loc: 0,
 				children: children
 			};
+
+
 			let rule = this.createRule(selectors, block);
 
 			this.addMarginVars(page.margin, children, children.first());
+			this.addPaddingVars(page.padding, children, children.first());
+			this.addBorderVars(page.border, children, children.first());
+
 
 			if (page.width) {
 				this.addDimensions(page.width, page.height, page.orientation, children, children.first());
@@ -24966,7 +27300,6 @@ img {
 				this.addMarginaliaStyles(page, ruleList, rule, sheet);
 				this.addMarginaliaContent(page, ruleList, rule, sheet);
 			}
-
 			return rule;
 		}
 
@@ -24984,7 +27317,48 @@ img {
 						}
 					});
 					list.append(mVar, item);
+
 				}
+			}
+		}
+
+		addPaddingVars(padding, list, item) {
+			// variables for padding
+			for (let p in padding) {
+
+				if (typeof padding[p].value !== "undefined") {
+					let value = padding[p].value + (padding[p].unit || "");
+					let pVar = list.createItem({
+						type: "Declaration",
+						property: "--pagedjs-padding-" + p,
+						value: {
+							type: "Raw",
+							value: value
+						}
+					});
+
+					list.append(pVar, item);
+				}
+
+			}
+		}
+
+		addBorderVars(border, list, item) {
+			// variables for borders
+			for (let b in border) {
+				if (typeof border[b] !== "undefined") {
+					let value = border[b];
+					let bVar = list.createItem({
+						type: "Declaration",
+						property: "--pagedjs-border-" + b,
+						value: {
+							type: "Raw",
+							value: value
+						}
+					});
+					list.append(bVar, item);
+				}
+
 			}
 		}
 
@@ -25016,9 +27390,9 @@ img {
 		addMarginaliaStyles(page, list, item, sheet) {
 			for (let loc in page.marginalia) {
 				let block = lib.clone(page.marginalia[loc]);
-				let hasContent$$1 = false;
+				let hasContent = false;
 
-				if(block.children.isEmpty()) {
+				if (block.children.isEmpty()) {
 					continue;
 				}
 
@@ -25027,9 +27401,9 @@ img {
 					enter: (node, item, list) => {
 						if (node.property === "content") {
 							if (node.value.children && node.value.children.first().name === "none") {
-								hasContent$$1 = false;
+								hasContent = false;
 							} else {
-								hasContent$$1 = true;
+								hasContent = true;
 							}
 							list.remove(item);
 						}
@@ -25052,11 +27426,11 @@ img {
 
 						if (node.property === "width" &&
 							(loc === "top-left" ||
-							 loc === "top-center" ||
-							 loc === "top-right" ||
-							 loc === "bottom-left" ||
-							 loc === "bottom-center" ||
-							 loc === "bottom-right")) {
+								loc === "top-center" ||
+								loc === "top-right" ||
+								loc === "bottom-left" ||
+								loc === "bottom-center" ||
+								loc === "bottom-right")) {
 							let c = lib.clone(node);
 							c.property = "max-width";
 							list.appendData(c);
@@ -25064,11 +27438,11 @@ img {
 
 						if (node.property === "height" &&
 							(loc === "left-top" ||
-							 loc === "left-middle" ||
-							 loc === "left-bottom" ||
-							 loc === "right-top" ||
-							 loc === "right-middle" ||
-							 loc === "right-bottom")) {
+								loc === "left-middle" ||
+								loc === "left-bottom" ||
+								loc === "right-top" ||
+								loc === "right-middle" ||
+								loc === "right-bottom")) {
 							let c = lib.clone(node);
 							c.property = "max-height";
 							list.appendData(c);
@@ -25090,7 +27464,7 @@ img {
 					page: page,
 					selector: sel,
 					block: page.marginalia[loc],
-					hasContent: hasContent$$1
+					hasContent: hasContent
 				};
 
 			}
@@ -25114,7 +27488,7 @@ img {
 					}
 				});
 
-				if(content.children.isEmpty()) {
+				if (content.children.isEmpty()) {
 					continue;
 				}
 
@@ -25174,7 +27548,7 @@ img {
 			}
 		}
 
-		addRootVars(ast, width, height, orientation, bleed, marks) {
+		addRootVars(ast, width, height, orientation, bleed, bleedrecto, bleedverso, marks) {
 			let rules = [];
 			let selectors = new lib.List();
 			selectors.insertData({
@@ -25184,23 +27558,79 @@ img {
 			});
 
 			let widthString, heightString;
+			let widthStringRight, heightStringRight;
+			let widthStringLeft, heightStringLeft;
 
 			if (!bleed) {
 				widthString = CSSValueToString(width);
 				heightString = CSSValueToString(height);
+				widthStringRight = CSSValueToString(width);
+				heightStringRight = CSSValueToString(height);
+				widthStringLeft = CSSValueToString(width);
+				heightStringLeft = CSSValueToString(height);
 			} else {
 				widthString = `calc( ${CSSValueToString(width)} + ${CSSValueToString(bleed.left)} + ${CSSValueToString(bleed.right)} )`;
 				heightString = `calc( ${CSSValueToString(height)} + ${CSSValueToString(bleed.top)} + ${CSSValueToString(bleed.bottom)} )`;
+
+				widthStringRight = `calc( ${CSSValueToString(width)} + ${CSSValueToString(bleed.left)} + ${CSSValueToString(bleed.right)} )`;
+				heightStringRight = `calc( ${CSSValueToString(height)} + ${CSSValueToString(bleed.top)} + ${CSSValueToString(bleed.bottom)} )`;
+
+				widthStringLeft = `calc( ${CSSValueToString(width)} + ${CSSValueToString(bleed.left)} + ${CSSValueToString(bleed.right)} )`;
+				heightStringLeft = `calc( ${CSSValueToString(height)} + ${CSSValueToString(bleed.top)} + ${CSSValueToString(bleed.bottom)} )`;
 
 				let bleedTop = this.createVariable("--pagedjs-bleed-top", CSSValueToString(bleed.top));
 				let bleedRight = this.createVariable("--pagedjs-bleed-right", CSSValueToString(bleed.right));
 				let bleedBottom = this.createVariable("--pagedjs-bleed-bottom", CSSValueToString(bleed.bottom));
 				let bleedLeft = this.createVariable("--pagedjs-bleed-left", CSSValueToString(bleed.left));
 
+				let bleedTopRecto = this.createVariable("--pagedjs-bleed-right-top", CSSValueToString(bleed.top));
+				let bleedRightRecto = this.createVariable("--pagedjs-bleed-right-right", CSSValueToString(bleed.right));
+				let bleedBottomRecto = this.createVariable("--pagedjs-bleed-right-bottom", CSSValueToString(bleed.bottom));
+				let bleedLeftRecto = this.createVariable("--pagedjs-bleed-right-left", CSSValueToString(bleed.left));
+
+				let bleedTopVerso = this.createVariable("--pagedjs-bleed-left-top", CSSValueToString(bleed.top));
+				let bleedRightVerso = this.createVariable("--pagedjs-bleed-left-right", CSSValueToString(bleed.right));
+				let bleedBottomVerso = this.createVariable("--pagedjs-bleed-left-bottom", CSSValueToString(bleed.bottom));
+				let bleedLeftVerso = this.createVariable("--pagedjs-bleed-left-left", CSSValueToString(bleed.left));
+
+				if (bleedrecto) {
+					bleedTopRecto = this.createVariable("--pagedjs-bleed-right-top", CSSValueToString(bleedrecto.top));
+					bleedRightRecto = this.createVariable("--pagedjs-bleed-right-right", CSSValueToString(bleedrecto.right));
+					bleedBottomRecto = this.createVariable("--pagedjs-bleed-right-bottom", CSSValueToString(bleedrecto.bottom));
+					bleedLeftRecto = this.createVariable("--pagedjs-bleed-right-left", CSSValueToString(bleedrecto.left));
+
+					widthStringRight = `calc( ${CSSValueToString(width)} + ${CSSValueToString(bleedrecto.left)} + ${CSSValueToString(bleedrecto.right)} )`;
+					heightStringRight = `calc( ${CSSValueToString(height)} + ${CSSValueToString(bleedrecto.top)} + ${CSSValueToString(bleedrecto.bottom)} )`;
+				}
+				if (bleedverso) {
+					bleedTopVerso = this.createVariable("--pagedjs-bleed-left-top", CSSValueToString(bleedverso.top));
+					bleedRightVerso = this.createVariable("--pagedjs-bleed-left-right", CSSValueToString(bleedverso.right));
+					bleedBottomVerso = this.createVariable("--pagedjs-bleed-left-bottom", CSSValueToString(bleedverso.bottom));
+					bleedLeftVerso = this.createVariable("--pagedjs-bleed-left-left", CSSValueToString(bleedverso.left));
+
+					widthStringLeft = `calc( ${CSSValueToString(width)} + ${CSSValueToString(bleedverso.left)} + ${CSSValueToString(bleedverso.right)} )`;
+					heightStringLeft = `calc( ${CSSValueToString(height)} + ${CSSValueToString(bleedverso.top)} + ${CSSValueToString(bleedverso.bottom)} )`;
+				}
+
 				let pageWidthVar = this.createVariable("--pagedjs-width", CSSValueToString(width));
 				let pageHeightVar = this.createVariable("--pagedjs-height", CSSValueToString(height));
 
-				rules.push(bleedTop, bleedRight, bleedBottom, bleedLeft, pageWidthVar, pageHeightVar);
+				rules.push(
+					bleedTop,
+					bleedRight,
+					bleedBottom,
+					bleedLeft,
+					bleedTopRecto,
+					bleedRightRecto,
+					bleedBottomRecto,
+					bleedLeftRecto,
+					bleedTopVerso,
+					bleedRightVerso,
+					bleedBottomVerso,
+					bleedLeftVerso,
+					pageWidthVar,
+					pageHeightVar
+				);
 			}
 
 			if (marks) {
@@ -25218,13 +27648,21 @@ img {
 				if (orientation !== "portrait") {
 					// reverse for orientation
 					[widthString, heightString] = [heightString, widthString];
+					[widthStringRight, heightStringRight] = [heightStringRight, widthStringRight];
+					[widthStringLeft, heightStringLeft] = [heightStringLeft, widthStringLeft];
 				}
 			}
 
 			let wVar = this.createVariable("--pagedjs-width", widthString);
 			let hVar = this.createVariable("--pagedjs-height", heightString);
 
-			rules.push(wVar, hVar);
+			let wVarR = this.createVariable("--pagedjs-width-right", widthStringRight);
+			let hVarR = this.createVariable("--pagedjs-height-right", heightStringRight);
+
+			let wVarL = this.createVariable("--pagedjs-width-left", widthStringLeft);
+			let hVarL = this.createVariable("--pagedjs-height-left", heightStringLeft);
+
+			rules.push(wVar, hVar, wVarR, hVarR, wVarL, hVarL);
 
 			let rule = this.createRule(selectors, rules);
 
@@ -25238,10 +27676,14 @@ img {
 			padding: 0;
 		}
 		*/
-		addRootPage(ast, size, bleed) {
+		addRootPage(ast, size, bleed, bleedrecto, bleedverso) {
 			let { width, height, orientation, format } = size;
 			let children = new lib.List();
+			let childrenLeft = new lib.List();
+			let childrenRight = new lib.List();
 			let dimensions = new lib.List();
+			let dimensionsLeft = new lib.List();
+			let dimensionsRight = new lib.List();
 
 			if (bleed) {
 				let widthCalculations = new lib.List();
@@ -25436,6 +27878,19 @@ img {
 				}
 			});
 
+			children.appendData({
+				type: "Declaration",
+				property: "padding",
+				loc: null,
+				value: {
+					type: "Value",
+					children: [{
+						type: "Dimension",
+						unit: "px",
+						value: 0
+					}]
+				}
+			});
 
 			let rule = ast.children.createItem({
 				type: "Atrule",
@@ -25449,6 +27904,294 @@ img {
 			});
 
 			ast.children.append(rule);
+
+			if (bleedverso) {
+				let widthCalculationsLeft = new lib.List();
+				let heightCalculationsLeft = new lib.List();
+
+				// width
+				widthCalculationsLeft.appendData({
+					type: "Dimension",
+					unit: width.unit,
+					value: width.value
+				});
+
+				widthCalculationsLeft.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculationsLeft.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				widthCalculationsLeft.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculationsLeft.appendData({
+					type: "Dimension",
+					unit: bleedverso.left.unit,
+					value: bleedverso.left.value
+				});
+
+				widthCalculationsLeft.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculationsLeft.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				widthCalculationsLeft.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculationsLeft.appendData({
+					type: "Dimension",
+					unit: bleedverso.right.unit,
+					value: bleedverso.right.value
+				});
+
+				// height
+				heightCalculationsLeft.appendData({
+					type: "Dimension",
+					unit: height.unit,
+					value: height.value
+				});
+
+				heightCalculationsLeft.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculationsLeft.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				heightCalculationsLeft.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculationsLeft.appendData({
+					type: "Dimension",
+					unit: bleedverso.top.unit,
+					value: bleedverso.top.value
+				});
+
+				heightCalculationsLeft.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculationsLeft.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				heightCalculationsLeft.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculationsLeft.appendData({
+					type: "Dimension",
+					unit: bleedverso.bottom.unit,
+					value: bleedverso.bottom.value
+				});
+
+				dimensionsLeft.appendData({
+					type: "Function",
+					name: "calc",
+					children: widthCalculationsLeft
+				});
+
+				dimensionsLeft.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				dimensionsLeft.appendData({
+					type: "Function",
+					name: "calc",
+					children: heightCalculationsLeft
+				});
+
+				childrenLeft.appendData({
+					type: "Declaration",
+					property: "size",
+					loc: null,
+					value: {
+						type: "Value",
+						children: dimensionsLeft
+					}
+				});
+
+				let ruleLeft = ast.children.createItem({
+					type: "Atrule",
+					prelude: null,
+					name: "page :left",
+					block: {
+						type: "Block",
+						loc: null,
+						children: childrenLeft
+					}
+				});
+
+				ast.children.append(ruleLeft);
+
+			}
+
+			if (bleedrecto) {
+				let widthCalculationsRight = new lib.List();
+				let heightCalculationsRight = new lib.List();
+
+				// width
+				widthCalculationsRight.appendData({
+					type: "Dimension",
+					unit: width.unit,
+					value: width.value
+				});
+
+				widthCalculationsRight.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculationsRight.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				widthCalculationsRight.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculationsRight.appendData({
+					type: "Dimension",
+					unit: bleedrecto.left.unit,
+					value: bleedrecto.left.value
+				});
+
+				widthCalculationsRight.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculationsRight.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				widthCalculationsRight.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				widthCalculationsRight.appendData({
+					type: "Dimension",
+					unit: bleedrecto.right.unit,
+					value: bleedrecto.right.value
+				});
+
+				// height
+				heightCalculationsRight.appendData({
+					type: "Dimension",
+					unit: height.unit,
+					value: height.value
+				});
+
+				heightCalculationsRight.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculationsRight.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				heightCalculationsRight.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculationsRight.appendData({
+					type: "Dimension",
+					unit: bleedrecto.top.unit,
+					value: bleedrecto.top.value
+				});
+
+				heightCalculationsRight.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculationsRight.appendData({
+					type: "Operator",
+					value: "+"
+				});
+
+				heightCalculationsRight.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				heightCalculationsRight.appendData({
+					type: "Dimension",
+					unit: bleedrecto.bottom.unit,
+					value: bleedrecto.bottom.value
+				});
+
+				dimensionsRight.appendData({
+					type: "Function",
+					name: "calc",
+					children: widthCalculationsRight
+				});
+
+				dimensionsRight.appendData({
+					type: "WhiteSpace",
+					value: " "
+				});
+
+				dimensionsRight.appendData({
+					type: "Function",
+					name: "calc",
+					children: heightCalculationsRight
+				});
+
+				childrenRight.appendData({
+					type: "Declaration",
+					property: "size",
+					loc: null,
+					value: {
+						type: "Value",
+						children: dimensionsRight
+					}
+				});
+
+				let ruleRight = ast.children.createItem({
+					type: "Atrule",
+					prelude: null,
+					name: "page :right",
+					block: {
+						type: "Block",
+						loc: null,
+						children: childrenRight
+					}
+				});
+
+				ast.children.append(ruleRight);
+
+			}
 		}
 
 		getNth(nth) {
@@ -25532,6 +28275,7 @@ img {
 			if (start) {
 				this.addPageAttributes(page, start, chunker.pages);
 			}
+			// page.element.querySelector('.paged_area').style.color = red;
 		}
 
 		afterPageLayout(fragment, page, breakToken, chunker) {
@@ -25570,14 +28314,14 @@ img {
 				if (centerContent) {
 					centerWidth = window.getComputedStyle(center)["max-width"];
 
-					if(centerWidth === "none" || centerWidth === "auto") {
-						if(!leftContent && !rightContent){
+					if (centerWidth === "none" || centerWidth === "auto") {
+						if (!leftContent && !rightContent) {
 							marginGroup.style["grid-template-columns"] = "0 1fr 0";
-						}else if(leftContent){
-							if(!rightContent){
-								if(leftWidth !== "none" && leftWidth !== "auto"){
+						} else if (leftContent) {
+							if (!rightContent) {
+								if (leftWidth !== "none" && leftWidth !== "auto") {
 									marginGroup.style["grid-template-columns"] = leftWidth + " 1fr " + leftWidth;
-								}else{
+								} else {
 									marginGroup.style["grid-template-columns"] = "auto auto 1fr";
 									left.style["white-space"] = "nowrap";
 									center.style["white-space"] = "nowrap";
@@ -25589,17 +28333,17 @@ img {
 									left.style["white-space"] = "normal";
 									center.style["white-space"] = "normal";
 								}
-							}else{
-								if(leftWidth !== "none" && leftWidth !== "auto"){
-									if(rightWidth !== "none" && rightWidth !== "auto"){
+							} else {
+								if (leftWidth !== "none" && leftWidth !== "auto") {
+									if (rightWidth !== "none" && rightWidth !== "auto") {
 										marginGroup.style["grid-template-columns"] = leftWidth + " 1fr " + rightWidth;
-									}else{
+									} else {
 										marginGroup.style["grid-template-columns"] = leftWidth + " 1fr " + leftWidth;
 									}
-								}else{
-									if(rightWidth !== "none" && rightWidth !== "auto"){
+								} else {
+									if (rightWidth !== "none" && rightWidth !== "auto") {
 										marginGroup.style["grid-template-columns"] = rightWidth + " 1fr " + rightWidth;
-									}else{
+									} else {
 										marginGroup.style["grid-template-columns"] = "auto auto 1fr";
 										left.style["white-space"] = "nowrap";
 										center.style["white-space"] = "nowrap";
@@ -25609,9 +28353,9 @@ img {
 										let rightOuterWidth = right.offsetWidth;
 										let outerwidths = leftOuterWidth + centerOuterWidth + rightOuterWidth;
 										let newcenterWidth = centerOuterWidth * 100 / outerwidths;
-										if(newcenterWidth > 40){
+										if (newcenterWidth > 40) {
 											marginGroup.style["grid-template-columns"] = "minmax(16.66%, 1fr) minmax(33%, " + newcenterWidth + "%) minmax(16.66%, 1fr)";
-										}else{
+										} else {
 											marginGroup.style["grid-template-columns"] = "repeat(3, 1fr)";
 										}
 										left.style["white-space"] = "normal";
@@ -25620,10 +28364,10 @@ img {
 									}
 								}
 							}
-						}else{
-							if(rightWidth !== "none" && rightWidth !== "auto"){
+						} else {
+							if (rightWidth !== "none" && rightWidth !== "auto") {
 								marginGroup.style["grid-template-columns"] = rightWidth + " 1fr " + rightWidth;
-							}else{
+							} else {
 								marginGroup.style["grid-template-columns"] = "auto auto 1fr";
 								right.style["white-space"] = "nowrap";
 								center.style["white-space"] = "nowrap";
@@ -25636,32 +28380,32 @@ img {
 								center.style["white-space"] = "normal";
 							}
 						}
-					}else if(centerWidth !== "none" && centerWidth !== "auto"){
-						if(leftContent && leftWidth !== "none" && leftWidth !== "auto"){
+					} else if (centerWidth !== "none" && centerWidth !== "auto") {
+						if (leftContent && leftWidth !== "none" && leftWidth !== "auto") {
 							marginGroup.style["grid-template-columns"] = leftWidth + " " + centerWidth + " 1fr";
-						}else if(rightContent && rightWidth !== "none" && rightWidth !== "auto"){
+						} else if (rightContent && rightWidth !== "none" && rightWidth !== "auto") {
 							marginGroup.style["grid-template-columns"] = "1fr " + centerWidth + " " + rightWidth;
-						}else{
+						} else {
 							marginGroup.style["grid-template-columns"] = "1fr " + centerWidth + " 1fr";
 						}
 
 					}
 
-				}else{
-					if(leftContent){
-						if(!rightContent){
+				} else {
+					if (leftContent) {
+						if (!rightContent) {
 							marginGroup.style["grid-template-columns"] = "1fr 0 0";
-						}else{
-							if(leftWidth !== "none" && leftWidth !== "auto"){
-								if(rightWidth !== "none" && rightWidth !== "auto"){
+						} else {
+							if (leftWidth !== "none" && leftWidth !== "auto") {
+								if (rightWidth !== "none" && rightWidth !== "auto") {
 									marginGroup.style["grid-template-columns"] = leftWidth + " 1fr " + rightWidth;
-								}else{
+								} else {
 									marginGroup.style["grid-template-columns"] = leftWidth + " 0 1fr";
 								}
-							}else{
-								if(rightWidth !== "none" && rightWidth !== "auto"){
+							} else {
+								if (rightWidth !== "none" && rightWidth !== "auto") {
 									marginGroup.style["grid-template-columns"] = "1fr 0 " + rightWidth;
-								}else{
+								} else {
 									marginGroup.style["grid-template-columns"] = "auto 1fr auto";
 									left.style["white-space"] = "nowrap";
 									right.style["white-space"] = "nowrap";
@@ -25669,16 +28413,16 @@ img {
 									let rightOuterWidth = right.offsetWidth;
 									let outerwidths = leftOuterWidth + rightOuterWidth;
 									let newLeftWidth = leftOuterWidth * 100 / outerwidths;
-									marginGroup.style["grid-template-columns"] = "minmax(16.66%, " + newLeftWidth  + "%) 0 1fr";
+									marginGroup.style["grid-template-columns"] = "minmax(16.66%, " + newLeftWidth + "%) 0 1fr";
 									left.style["white-space"] = "normal";
 									right.style["white-space"] = "normal";
 								}
 							}
 						}
-					}else{
-						if(rightWidth !== "none" && rightWidth !== "auto"){
+					} else {
+						if (rightWidth !== "none" && rightWidth !== "auto") {
 							marginGroup.style["grid-template-columns"] = "1fr 0 " + rightWidth;
-						}else{
+						} else {
 							marginGroup.style["grid-template-columns"] = "0 0 1fr";
 						}
 					}
@@ -25706,66 +28450,66 @@ img {
 				if (middle) {
 					middleHeight = window.getComputedStyle(middle)["max-height"];
 
-					if(middleHeight === "none" || middleHeight === "auto") {
-						if(!topContent && !bottomContent){
+					if (middleHeight === "none" || middleHeight === "auto") {
+						if (!topContent && !bottomContent) {
 							marginGroup.style["grid-template-rows"] = "0 1fr 0";
-						}else if(topContent){
-							if(!bottomContent){
-								if(topHeight !== "none" && topHeight !== "auto"){
+						} else if (topContent) {
+							if (!bottomContent) {
+								if (topHeight !== "none" && topHeight !== "auto") {
 									marginGroup.style["grid-template-rows"] = topHeight + " calc(100% - " + topHeight + "*2) " + topHeight;
 								}
-							}else{
-								if(topHeight !== "none" && topHeight !== "auto"){
-									if(bottomHeight !== "none" && bottomHeight !== "auto"){
+							} else {
+								if (topHeight !== "none" && topHeight !== "auto") {
+									if (bottomHeight !== "none" && bottomHeight !== "auto") {
 										marginGroup.style["grid-template-rows"] = topHeight + " calc(100% - " + topHeight + " - " + bottomHeight + ") " + bottomHeight;
-									}else{
+									} else {
 										marginGroup.style["grid-template-rows"] = topHeight + " calc(100% - " + topHeight + "*2) " + topHeight;
 									}
-								}else{
-									if(bottomHeight !== "none" && bottomHeight !== "auto"){
+								} else {
+									if (bottomHeight !== "none" && bottomHeight !== "auto") {
 										marginGroup.style["grid-template-rows"] = bottomHeight + " calc(100% - " + bottomHeight + "*2) " + bottomHeight;
 									}
 								}
 							}
-						}else{
-							if(bottomHeight !== "none" && bottomHeight !== "auto"){
+						} else {
+							if (bottomHeight !== "none" && bottomHeight !== "auto") {
 								marginGroup.style["grid-template-rows"] = bottomHeight + " calc(100% - " + bottomHeight + "*2) " + bottomHeight;
 							}
 						}
-					}else{
-						if(topContent && topHeight !== "none" && topHeight !== "auto"){
-							marginGroup.style["grid-template-rows"] = topHeight +" " + middleHeight + " calc(100% - (" + topHeight + " + " + middleHeight + "))";
-						}else if(bottomContent && bottomHeight !== "none" && bottomHeight !== "auto"){
+					} else {
+						if (topContent && topHeight !== "none" && topHeight !== "auto") {
+							marginGroup.style["grid-template-rows"] = topHeight + " " + middleHeight + " calc(100% - (" + topHeight + " + " + middleHeight + "))";
+						} else if (bottomContent && bottomHeight !== "none" && bottomHeight !== "auto") {
 							marginGroup.style["grid-template-rows"] = "1fr " + middleHeight + " " + bottomHeight;
-						}else{
+						} else {
 							marginGroup.style["grid-template-rows"] = "calc((100% - " + middleHeight + ")/2) " + middleHeight + " calc((100% - " + middleHeight + ")/2)";
 						}
 
 					}
 
-				}else{
-					if(topContent){
-						if(!bottomContent){
+				} else {
+					if (topContent) {
+						if (!bottomContent) {
 							marginGroup.style["grid-template-rows"] = "1fr 0 0";
-						}else{
-							if(topHeight !== "none" && topHeight !== "auto"){
-								if(bottomHeight !== "none" && bottomHeight !== "auto"){
+						} else {
+							if (topHeight !== "none" && topHeight !== "auto") {
+								if (bottomHeight !== "none" && bottomHeight !== "auto") {
 									marginGroup.style["grid-template-rows"] = topHeight + " 1fr " + bottomHeight;
-								}else{
+								} else {
 									marginGroup.style["grid-template-rows"] = topHeight + " 0 1fr";
 								}
-							}else{
-								if(bottomHeight !== "none" && bottomHeight !== "auto"){
+							} else {
+								if (bottomHeight !== "none" && bottomHeight !== "auto") {
 									marginGroup.style["grid-template-rows"] = "1fr 0 " + bottomHeight;
-								}else{
+								} else {
 									marginGroup.style["grid-template-rows"] = "1fr 0 1fr";
 								}
 							}
 						}
-					}else{
-						if(bottomHeight !== "none" && bottomHeight !== "auto"){
+					} else {
+						if (bottomHeight !== "none" && bottomHeight !== "auto") {
 							marginGroup.style["grid-template-rows"] = "1fr 0 " + bottomHeight;
-						}else{
+						} else {
 							marginGroup.style["grid-template-rows"] = "0 0 1fr";
 						}
 					}
@@ -25885,7 +28629,7 @@ img {
 			};
 		}
 
-		createCalculatedDimension(property, items, important, operator="+") {
+		createCalculatedDimension(property, items, important, operator = "+") {
 			let children = new lib.List();
 			let calculations = new lib.List();
 
@@ -26033,8 +28777,8 @@ img {
 					property === "page-break-before" ||
 					property === "page-break-after"
 			) {
-				let child$$1 = declaration.value.children.first();
-				let value = child$$1.name;
+				let child = declaration.value.children.first();
+				let value = child.name;
 				let selector = lib.generate(rule.ruleNode.prelude);
 
 				if (property === "page-break-before") {
@@ -26075,20 +28819,34 @@ img {
 					for (let prop of breaks[b]) {
 
 						if (prop.property === "break-after") {
-							let nodeAfter$$1 = elementAfter(elements[i], parsed);
+							let nodeAfter = displayedElementAfter(elements[i], parsed);
 
 							elements[i].setAttribute("data-break-after", prop.value);
 
-							if (nodeAfter$$1) {
-								nodeAfter$$1.setAttribute("data-previous-break-after", prop.value);
+							if (nodeAfter) {
+								nodeAfter.setAttribute("data-previous-break-after", prop.value);
+							}
+						} else if (prop.property === "break-before") {
+							let nodeBefore = displayedElementBefore(elements[i], parsed);
+
+							// Breaks are only allowed between siblings, not between a box and its container.
+							// If we cannot find a node before we should not break!
+							// https://drafts.csswg.org/css-break-3/#break-propagation
+							if (nodeBefore) {
+								if (prop.value === "page" && needsPageBreak(elements[i], nodeBefore)) {
+									// we ignore this explicit page break because an implicit page break is already needed
+									continue;
+								}
+								elements[i].setAttribute("data-break-before", prop.value);
+								nodeBefore.setAttribute("data-next-break-before", prop.value);
 							}
 						} else if (prop.property === "page") {
 							elements[i].setAttribute("data-page", prop.value);
 
-							let nodeAfter$$1 = elementAfter(elements[i], parsed);
+							let nodeAfter = displayedElementAfter(elements[i], parsed);
 
-							if (nodeAfter$$1) {
-								nodeAfter$$1.setAttribute("data-after-page", prop.value);
+							if (nodeAfter) {
+								nodeAfter.setAttribute("data-after-page", prop.value);
 							}
 						} else {
 							elements[i].setAttribute("data-" + prop.property, prop.value);
@@ -26204,9 +28962,10 @@ img {
 
 			prevPage = pages.children[index - 1];
 
+			let from; // Capture the last from element
 			splits.forEach((split) => {
 				let ref = split.dataset.ref;
-				let from = prevPage.querySelector("[data-ref='"+ ref +"']:not([data-split-to])");
+				from = prevPage.querySelector("[data-ref='"+ ref +"']:not([data-split-to])");
 
 				if (from) {
 					from.dataset.splitTo = ref;
@@ -26214,18 +28973,24 @@ img {
 					if (!from.dataset.splitFrom) {
 						from.dataset.splitOriginal = true;
 					}
-
-					this.handleAlignment(from);
 				}
 			});
+
+			// Fix alignment on the deepest split element
+			if (from) {
+				this.handleAlignment(from);
+			}
 		}
 
 		handleAlignment(node) {
 			let styles = window.getComputedStyle(node);
 			let align = styles["text-align"];
 			let alignLast = styles["text-align-last"];
+			node.dataset.lastSplitElement = "true";
 			if (align === "justify" && alignLast === "auto") {
-				node.style["text-align-last"] = "justify";
+				node.dataset.alignLastSplitElement = "justify";
+			} else {
+				node.dataset.alignLastSplitElement = alignLast;
 			}
 		}
 
@@ -26237,6 +29002,7 @@ img {
 
 			this.styleSheet = polisher.styleSheet;
 			this.counters = {};
+			this.resetCountersMap = new Map();
 		}
 
 		onDeclaration(declaration, dItem, dList, rule) {
@@ -26261,6 +29027,7 @@ img {
 
 		afterParsed(parsed) {
 			this.processCounters(parsed, this.counters);
+			this.scopeCounters(this.counters);
 		}
 
 		addCounter(name) {
@@ -26278,10 +29045,9 @@ img {
 		}
 
 		handleIncrement(declaration, rule) {
-			let identifier = declaration.value.children.first();
-			let number = declaration.value.children.getSize() > 1
-								&& declaration.value.children.last().value;
-			let name = identifier && identifier.name;
+			const identifier = declaration.value.children.first();
+			const number = declaration.value.children.getSize() > 1 ? declaration.value.children.last().value : 1;
+			const name = identifier && identifier.name;
 
 			if (name === "page" || name.indexOf("target-counter-") === 0) {
 				return;
@@ -26298,7 +29064,7 @@ img {
 
 			return counter.increments[selector] = {
 				selector: selector,
-				number: number || 1
+				number
 			};
 		}
 
@@ -26328,8 +29094,25 @@ img {
 				counter = this.counters[c];
 				this.processCounterIncrements(parsed, counter);
 				this.processCounterResets(parsed, counter);
-				this.addCounterValues(parsed, counter);
+				if (c !== "page") {
+					this.addCounterValues(parsed, counter);
+				}
 			}
+		}
+
+		scopeCounters(counters) {
+			let countersArray = [];
+			for (let c in counters) {
+				if(c !== "page") {
+					countersArray.push(`${counters[c].name} 0`);
+				}
+			}
+			// Add to pages to allow cross page scope
+			this.insertRule(`.pagedjs_pages { counter-reset: ${countersArray.join(" ")} page 0 pages var(--pagedjs-page-count)}`);
+		}
+
+		insertRule(rule) {
+			this.styleSheet.insertRule(rule, this.styleSheet.cssRules.length);
 		}
 
 		processCounterIncrements(parsed, counter) {
@@ -26339,8 +29122,9 @@ img {
 				// Find elements for increments
 				let incrementElements = parsed.querySelectorAll(increment.selector);
 				// Add counter data
-				for (var i = 0; i < incrementElements.length; i++) {
+				for (let i = 0; i < incrementElements.length; i++) {
 					incrementElements[i].setAttribute("data-counter-"+ counter.name +"-increment", increment.number);
+					incrementElements[i].setAttribute("data-counter-increment", counter.name);
 				}
 			}
 		}
@@ -26354,46 +29138,89 @@ img {
 				// Add counter data
 				for (var i = 0; i < resetElements.length; i++) {
 					resetElements[i].setAttribute("data-counter-"+ counter.name +"-reset", reset.number);
+					resetElements[i].setAttribute("data-counter-reset", counter.name);
 				}
 			}
 		}
 
 		addCounterValues(parsed, counter) {
-			let counterName = counter.name;
-			let elements = parsed.querySelectorAll("[data-counter-"+ counterName +"-reset], [data-counter-"+ counterName +"-increment]");
+			const counterName = counter.name;
+			const elements = parsed.querySelectorAll("[data-counter-"+ counterName +"-reset], [data-counter-"+ counterName +"-increment]");
 
 			let count = 0;
 			let element;
 			let increment, reset;
+			let resetValue, incrementValue, resetDelta;
+			let incrementArray;
 
-			for (var i = 0; i < elements.length; i++) {
+			for (let i = 0; i < elements.length; i++) {
 				element = elements[i];
+				resetDelta = 0;
+				incrementArray = [];
 
 				if (element.hasAttribute("data-counter-"+ counterName +"-reset")) {
 					reset = element.getAttribute("data-counter-"+ counterName +"-reset");
-					count = parseInt(reset);
+					resetValue = parseInt(reset);
+
+					// Use negative increment value inplace of reset
+					resetDelta = resetValue - count;
+					incrementArray.push(`${counterName} ${resetDelta}`);
+
+					count = resetValue;
 				}
 
 				if (element.hasAttribute("data-counter-"+ counterName +"-increment")) {
 
 					increment = element.getAttribute("data-counter-"+ counterName +"-increment");
+					incrementValue = parseInt(increment);
 
-					this.styleSheet.insertRule(`[data-ref="${element.dataset.ref}"] { counter-reset: ${counterName} ${count} }`, this.styleSheet.cssRules.length);
-					this.styleSheet.insertRule(`[data-ref="${element.dataset.ref}"] { counter-increment: ${counterName} ${increment}}`, this.styleSheet.cssRules.length);
-
-					count += parseInt(increment);
+					count += incrementValue;
 
 					element.setAttribute("data-counter-"+counterName+"-value", count);
+
+					incrementArray.push(`${counterName} ${incrementValue}`);
+				}
+
+				if (incrementArray.length > 0) {
+					this.incrementCounterForElement(element, incrementArray);
 				}
 
 			}
 		}
 
+		incrementCounterForElement(element, incrementArray) {
+			if (!element || !incrementArray || incrementArray.length === 0) return;
+
+			const ref = element.dataset.ref;
+			const prevIncrements = Array.from(this.styleSheet.cssRules).filter((rule) => {
+				return rule.selectorText === `[data-ref="${element.dataset.ref}"]:not([data-split-from])`
+							 && rule.style[0] === "counter-increment";
+			});
+
+			const increments = [];
+			for (let styleRule of prevIncrements) {
+				let values = styleRule.style.counterIncrement.split(" ");
+				for (let i = 0; i < values.length; i+=2) {
+					increments.push(values[i] + " " + values[i+1]);
+				}
+			}
+
+			Array.prototype.push.apply(increments, incrementArray);
+
+			this.insertRule(`[data-ref="${ref}"]:not([data-split-from]) { counter-increment: ${increments.join(" ")} }`);
+		}
+
 		afterPageLayout(pageElement, page) {
 			let pgreset = pageElement.querySelectorAll("[data-counter-page-reset]");
 			pgreset.forEach((reset) => {
-				let value = reset.datasetCounterPageReset;
-				this.styleSheet.insertRule(`[data-page-number="${pageElement.dataset.pageNumber}"] { counter-reset: page ${value} }`, this.styleSheet.cssRules.length);
+				const ref = reset.dataset && reset.dataset.ref;
+				if (ref && this.resetCountersMap.has(ref)) ; else {
+					if (ref) {
+						this.resetCountersMap.set(ref, "");
+					}
+					let value = reset.dataset.counterPageReset;
+					this.styleSheet.insertRule(`[data-page-number="${pageElement.dataset.pageNumber}"] { counter-increment: none; counter-reset: page ${value}; }`, this.styleSheet.cssRules.length);
+				}
 			});
 		}
 
@@ -26415,7 +29242,7 @@ img {
 			var orderedLists = pageElement.getElementsByTagName("ol");
 			for (var list of orderedLists) {
 				if (list.hasChildNodes()) {
-				list.start = list.firstElementChild.dataset.itemNum;
+					list.start = list.firstElementChild.dataset.itemNum;
 				}
 				else {
 					list.parentNode.removeChild(list);
@@ -26424,12 +29251,223 @@ img {
 		}
 
 		addDataNumbers(list) {
+			let start = 1;
+			if (list.hasAttribute("start")) {
+				start = parseInt(list.getAttribute("start"), 10);
+				if (isNaN(start)) {
+					start = 1;
+				}
+			}
 			let items = list.children;
 			for (var i = 0; i < items.length; i++) {
-				items[i].setAttribute("data-item-num", i + 1);
+				items[i].setAttribute("data-item-num", i + start);
 			}
 		}
 
+	}
+
+	class PositionFixed extends Handler {
+		constructor(chunker, polisher, caller) {
+			super(chunker, polisher, caller);
+			this.styleSheet = polisher.styleSheet;
+			this.fixedElementsSelector = [];
+			this.fixedElements = [];
+		}
+
+		onDeclaration(declaration, dItem, dList, rule) {
+			if (declaration.property === "position" && declaration.value.children.first().name === "fixed") {
+				let selector = lib.generate(rule.ruleNode.prelude);
+				this.fixedElementsSelector.push(selector);
+				dList.remove(dItem);
+			}
+		}
+
+		afterParsed(fragment) {
+			this.fixedElementsSelector.forEach(fixedEl => {
+				fragment.querySelectorAll(`${fixedEl}`).forEach(el => {
+					el.style.setProperty("position", "absolute");
+					this.fixedElements.push(el);
+					el.remove();
+				});
+			});
+		}
+
+		afterPageLayout(pageElement, page, breakToken) {
+			this.fixedElements.forEach(el => {
+				const clone = el.cloneNode(true);
+				pageElement.querySelector(".pagedjs_pagebox").insertAdjacentElement("afterbegin", clone);
+			});
+		}
+	}
+
+	class PageCounterIncrement extends Handler {
+		constructor(chunker, polisher, caller) {
+			super(chunker, polisher, caller);
+
+			this.styleSheet = polisher.styleSheet;
+			this.pageCounter = {
+				name: "page",
+				increments: {},
+				resets: {}
+			};
+		}
+
+		onDeclaration(declaration, dItem, dList, rule) {
+			const property = declaration.property;
+
+			if (property === "counter-increment") {
+				let inc = this.handleIncrement(declaration, rule);
+				if (inc) {
+					dList.remove(dItem);
+				}
+			}
+		}
+
+		afterParsed(_) {
+			for (const inc in this.pageCounter.increments) {
+				const increment = this.pageCounter.increments[inc];
+				this.insertRule(`${increment.selector} { --pagedjs-page-counter-increment: ${increment.number} }`);
+			}
+		}
+
+		handleIncrement(declaration, rule) {
+			const identifier = declaration.value.children.first();
+			const number = declaration.value.children.getSize() > 1 ? declaration.value.children.last().value : 1;
+			const name = identifier && identifier.name;
+
+			if (name.indexOf("target-counter-") === 0) {
+				return;
+			}
+			// A counter named page is automatically created and incremented by 1 on every page of the document,
+			// unless the counter-increment property in the page context explicitly specifies a different increment for the page counter.
+			// https://www.w3.org/TR/css-page-3/#page-based-counters
+			if (name !== "page") {
+				return;
+			}
+			// the counter-increment property is not defined on the page context (i.e. @page rule), ignoring...
+			if (rule.ruleNode.name === "page" && rule.ruleNode.type === "Atrule") {
+				return;
+			}
+			const selector = lib.generate(rule.ruleNode.prelude);
+			return this.pageCounter.increments[selector] = {
+				selector: selector,
+				number
+			};
+		}
+
+		insertRule(rule) {
+			this.styleSheet.insertRule(rule, this.styleSheet.cssRules.length);
+		}
+	}
+
+	class NthOfType extends Handler {
+		constructor(chunker, polisher, caller) {
+			super(chunker, polisher, caller);
+
+			this.styleSheet = polisher.styleSheet;
+			this.selectors = {};
+		}
+
+		onRule(ruleNode, ruleItem, rulelist) {
+			let selector = lib.generate(ruleNode.prelude);
+			if (selector.match(/:(first|last|nth)-of-type/)) {
+				
+				let declarations = lib.generate(ruleNode.block);
+				declarations = declarations.replace(/[{}]/g,"");
+
+				let uuid = "nth-of-type-" + UUID();
+
+				selector.split(",").forEach((s) => {
+					if (!this.selectors[s]) {
+						this.selectors[s] = [uuid, declarations];
+					} else {
+						this.selectors[s][1] = `${this.selectors[s][1]};${declarations}` ;
+					}
+				});
+
+				rulelist.remove(ruleItem);
+			}
+		}
+
+		afterParsed(parsed) {
+			this.processSelectors(parsed, this.selectors);
+		}
+
+		processSelectors(parsed, selectors) {
+			// add the new attributes to matching elements
+			for (let s in selectors) {
+				let elements = parsed.querySelectorAll(s);
+
+				for (var i = 0; i < elements.length; i++) {
+					let dataNthOfType = elements[i].getAttribute("data-nth-of-type");
+
+					if (dataNthOfType && dataNthOfType != "") {
+						dataNthOfType = `${dataNthOfType},${selectors[s][0]}`;
+						elements[i].setAttribute("data-nth-of-type", dataNthOfType);
+					} else {
+						elements[i].setAttribute("data-nth-of-type", selectors[s][0]);
+					}
+				}
+
+				let rule = `*[data-nth-of-type*='${selectors[s][0]}'] { ${selectors[s][1]}; }`;
+				this.styleSheet.insertRule(rule, this.styleSheet.cssRules.length);
+			}
+		}
+	}
+
+	class Following extends Handler {
+		constructor(chunker, polisher, caller) {
+			super(chunker, polisher, caller);
+
+			this.styleSheet = polisher.styleSheet;
+			this.selectors = {};
+		}
+
+		onRule(ruleNode, ruleItem, rulelist) {
+			let selector = lib.generate(ruleNode.prelude);
+			if (selector.match(/\+/)) {
+				
+				let declarations = lib.generate(ruleNode.block);
+				declarations = declarations.replace(/[{}]/g,"");
+
+				let uuid = "following-" + UUID();
+
+				selector.split(",").forEach((s) => {
+					if (!this.selectors[s]) {
+						this.selectors[s] = [uuid, declarations];
+					} else {
+						this.selectors[s][1] = `${this.selectors[s][1]};${declarations}` ;
+					}
+				});
+
+				rulelist.remove(ruleItem);
+			}
+		}
+
+		afterParsed(parsed) {
+			this.processSelectors(parsed, this.selectors);
+		}
+
+		processSelectors(parsed, selectors) {
+			// add the new attributes to matching elements
+			for (let s in selectors) {
+				let elements = parsed.querySelectorAll(s);
+
+				for (var i = 0; i < elements.length; i++) {
+					let dataFollowing = elements[i].getAttribute("data-following");
+
+					if (dataFollowing && dataFollowing != "") {
+						dataFollowing = `${dataFollowing},${selectors[s][0]}`;
+						elements[i].setAttribute("data-following", dataFollowing);
+					} else {
+						elements[i].setAttribute("data-following", selectors[s][0]);
+					}
+				}
+
+				let rule = `*[data-following*='${selectors[s][0]}'] { ${selectors[s][1]}; }`;
+				this.styleSheet.insertRule(rule, this.styleSheet.cssRules.length);
+			}
+		}
 	}
 
 	var pagedMediaHandlers = [
@@ -26438,7 +29476,11 @@ img {
 		PrintMedia,
 		Splits,
 		Counters,
-		Lists
+		Lists,
+		PositionFixed,
+		PageCounterIncrement,
+		NthOfType,
+		Following
 	];
 
 	class RunningHeaders extends Handler {
@@ -26498,7 +29540,7 @@ img {
 									func: func,
 									args: args,
 									value: value,
-									style: style,
+									style: style ,
 									selector: s,
 									fullSelector: selector
 								};
@@ -26661,13 +29703,37 @@ img {
 		}
 	}
 
+	function cleanPseudoContent(el, trim = "\"' ") {
+		if(el == null) return;
+		return el
+			.replace(new RegExp(`^[${trim}]+`), "")
+			.replace(new RegExp(`[${trim}]+$`), "")
+			.replace(/["']/g, match => {
+				return "\\" + match;
+			})
+			.replace(/[\n]/g, match => {
+				return "\\00000A";
+			});
+	}
+
+	function cleanSelector(el) {
+		if(el == null) return;
+		return el
+			.replace(new RegExp("::footnote-call", "g"), "")
+			.replace(new RegExp("::footnote-marker", "g"), "");
+	}
+
 	class StringSets extends Handler {
 		constructor(chunker, polisher, caller) {
 			super(chunker, polisher, caller);
 
 			this.stringSetSelectors = {};
-		}
+			this.type;
+			// pageLastString = last string variable defined on the page 
+			this.pageLastString;
 
+		}
+		
 		onDeclaration(declaration, dItem, dList, rule) {
 			if (declaration.property === "string-set") {
 				let selector = lib.generate(rule.ruleNode.prelude);
@@ -26683,50 +29749,114 @@ img {
 				});
 
 				this.stringSetSelectors[identifier] = {
-					identifier: identifier,
-					value: value,
-					selector: selector
+					identifier,
+					value,
+					selector
 				};
 			}
 		}
 
 		onContent(funcNode, fItem, fList, declaration, rule) {
+
 			if (funcNode.name === "string") {
 				let identifier = funcNode.children && funcNode.children.first().name;
+				this.type = funcNode.children.last().name;
 				funcNode.name = "var";
 				funcNode.children = new lib.List();
 
-				funcNode.children.append(funcNode.children.createItem({
-					type: "Identifier",
-					loc: null,
-					name: "--pagedjs-string-" + identifier
-				}));
+	 
+				if(this.type === "first" || this.type === "last" || this.type === "start" || this.type === "first-except"){
+					funcNode.children.append(
+						funcNode.children.createItem({
+							type: "Identifier",
+							loc: null,
+							name: "--pagedjs-string-" + this.type + "-" + identifier
+						})
+					);
+				}else {
+					funcNode.children.append(
+						funcNode.children.createItem({
+							type: "Identifier",
+							loc: null,
+							name: "--pagedjs-string-first-" + identifier
+						})
+					);
+				}
 			}
 		}
 
 		afterPageLayout(fragment) {
+
+		
+			if ( this.pageLastString === undefined )
+			{
+				this.pageLastString = {};
+			}
+		
+			
 			for (let name of Object.keys(this.stringSetSelectors)) {
+		
 				let set = this.stringSetSelectors[name];
-				let selected = fragment.querySelector(set.selector);
-				if (selected) {
-					let cssVar;
-					if (set.value === "content" || set.value === "content()" || set.value === "content(text)") {
-						cssVar = selected.textContent.replace(/\\([\s\S])|(["|'])/g,"\\$1$2");
-						// this.styleSheet.insertRule(`:root { --pagedjs-string-${name}: "${cssVar}"; }`, this.styleSheet.cssRules.length);
-						// fragment.style.setProperty(`--pagedjs-string-${name}`, `"${cssVar}"`);
-						set.first = cssVar;
-						fragment.style.setProperty(`--pagedjs-string-${name}`, `"${set.first}"`);
-					} else {
-						console.warn(set.value + "needs css replacement");
+				let selected = fragment.querySelectorAll(set.selector);
+
+				// Get the last found string for the current identifier
+				let stringPrevPage = ( name in this.pageLastString ) ? this.pageLastString[name] : "";
+
+				let varFirst, varLast, varStart, varFirstExcept;
+
+				if(selected.length == 0){
+					// if there is no sel. on the page
+					varFirst = stringPrevPage;
+					varLast = stringPrevPage;
+					varStart = stringPrevPage;
+					varFirstExcept = stringPrevPage;
+				}else {
+
+					selected.forEach((sel) => {
+						// push each content into the array to define in the variable the first and the last element of the page.
+						this.pageLastString[name] = selected[selected.length - 1].textContent;
+					
+					});	
+
+					/* FIRST */
+		
+					varFirst = selected[0].textContent;
+
+
+					/* LAST */
+
+					varLast = selected[selected.length - 1].textContent;
+
+
+					/* START */
+
+					// Hack to find if the sel. is the first elem of the page / find a better way 
+					let selTop = selected[0].getBoundingClientRect().top;
+					let pageContent = selected[0].closest(".pagedjs_page_content");
+					let pageContentTop = pageContent.getBoundingClientRect().top;
+
+					if(selTop == pageContentTop){
+						varStart = varFirst;
+					}else {
+						varStart = stringPrevPage;
 					}
-				} else {
-					// Use the previous values
-					if (set.first) {
-						fragment.style.setProperty(`--pagedjs-string-${name}`, `"${set.first}"`);
-					}
+
+					/* FIRST EXCEPT */
+
+					varFirstExcept = "";
+					
 				}
+
+				fragment.style.setProperty(`--pagedjs-string-first-${name}`, `"${cleanPseudoContent(varFirst)}`);
+				fragment.style.setProperty(`--pagedjs-string-last-${name}`, `"${cleanPseudoContent(varLast)}`);
+				fragment.style.setProperty(`--pagedjs-string-start-${name}`, `"${cleanPseudoContent(varStart)}`);
+				fragment.style.setProperty(`--pagedjs-string-first-except-${name}`, `"${cleanPseudoContent(varFirstExcept)}`);
+				
+		
 			}
 		}
+		
+
 	}
 
 	class TargetCounters extends Handler {
@@ -26741,6 +29871,7 @@ img {
 		onContent(funcNode, fItem, fList, declaration, rule) {
 			if (funcNode.name === "target-counter") {
 				let selector = lib.generate(rule.ruleNode.prelude);
+
 				let first = funcNode.children.first();
 				let func = first.name;
 
@@ -26750,6 +29881,7 @@ img {
 
 				first.children.forEach((child) => {
 					if (child.type === "Identifier") {
+
 						args.push(child.name);
 					}
 				});
@@ -26792,6 +29924,7 @@ img {
 					loc: 0,
 					name: variable
 				});
+
 				if (styleIdentifier) {
 					funcNode.children.appendData({type: "Operator", loc: null, value: ","});
 					funcNode.children.appendData(styleIdentifier);
@@ -26819,32 +29952,35 @@ img {
 						let selector = UUID();
 						selected.setAttribute("data-" + target.variable, selector);
 						// TODO: handle other counter types (by query)
+						let pseudo = "";
+						if (split.length > 1) {
+							pseudo += "::" + split[1];
+						}
 						if (target.counter === "page") {
 							let pages = chunker.pagesArea.querySelectorAll(".pagedjs_page");
 							let pg = 0;
-							for (var i = 0; i < pages.length; i++) {
+							for (let i = 0; i < pages.length; i++) {
 								let styles = window.getComputedStyle(pages[i]);
 								let reset = styles["counter-reset"].replace("page", "").trim();
+								let increment = styles["counter-increment"].replace("page", "").trim();
 
 								if (reset !== "none") {
 									pg = parseInt(reset);
 								}
-								pg += 1;
+								if (increment !== "none") {
+									pg += parseInt(increment);
+								}
 
-								if (pages[i].contains( element )){
+								if (pages[i].contains(element)) {
 									break;
 								}
 							}
 
-							let psuedo = "";
-							if (split.length > 1) {
-								psuedo += "::" + split[1];
-							}
-							this.styleSheet.insertRule(`[data-${target.variable}="${selector}"]${psuedo} { counter-reset: ${target.variable} ${pg}; }`, this.styleSheet.cssRules.length);
+							this.styleSheet.insertRule(`[data-${target.variable}="${selector}"]${pseudo} { counter-reset: ${target.variable} ${pg}; }`, this.styleSheet.cssRules.length);
 						} else {
 							let value = element.getAttribute(`data-counter-${target.counter}-value`);
 							if (value) {
-								this.styleSheet.insertRule(`[data-${target.variable}="${selector}"]${psuedo} { counter-reset: ${target.variable} ${target.variable} ${parseInt(value)}; }`, this.styleSheet.cssRules.length);
+								this.styleSheet.insertRule(`[data-${target.variable}="${selector}"]${pseudo} { counter-reset: ${target.variable} ${target.variable} ${parseInt(value)}; }`, this.styleSheet.cssRules.length);
 							}
 						}
 					}
@@ -26853,17 +29989,22 @@ img {
 		}
 	}
 
+	// import { nodeAfter } from "../../utils/dom";
+
 	class TargetText extends Handler {
 		constructor(chunker, polisher, caller) {
 			super(chunker, polisher, caller);
 
 			this.styleSheet = polisher.styleSheet;
 			this.textTargets = {};
+			this.beforeContent = "";
+			this.afterContent = "";
+			this.selector = {};
 		}
 
 		onContent(funcNode, fItem, fList, declaration, rule) {
 			if (funcNode.name === "target-text") {
-				let selector = lib.generate(rule.ruleNode.prelude);
+				this.selector = lib.generate(rule.ruleNode.prelude);
 				let first = funcNode.children.first();
 				let last = funcNode.children.last();
 				let func = first.name;
@@ -26872,7 +30013,7 @@ img {
 
 				let args = [];
 
-				first.children.forEach((child) => {
+				first.children.forEach(child => {
 					if (child.type === "Identifier") {
 						args.push(child.name);
 					}
@@ -26885,14 +30026,14 @@ img {
 
 				let variable = "--pagedjs-" + UUID();
 
-				selector.split(",").forEach((s) => {
+				this.selector.split(",").forEach(s => {
 					this.textTargets[s] = {
 						func: func,
 						args: args,
 						value: value,
 						style: style || "content",
 						selector: s,
-						fullSelector: selector,
+						fullSelector: this.selector,
 						variable: variable
 					};
 				});
@@ -26908,40 +30049,65 @@ img {
 			}
 		}
 
+		//   parse this on the ONCONTENT : get all before and after and replace the value with a variable
+		onPseudoSelector(pseudoNode, pItem, pList, selector, rule) {
+			// console.log(pseudoNode);
+			// console.log(rule);
+
+			rule.ruleNode.block.children.forEach(properties => {
+				if (pseudoNode.name === "before" && properties.property === "content") {
+					// let beforeVariable = "--pagedjs-" + UUID();
+
+					let contenu = properties.value.children;
+					contenu.forEach(prop => {
+						if (prop.type === "String") {
+							this.beforeContent = prop.value;
+						}
+					});
+				} else if (pseudoNode.name === "after" && properties.property === "content") {
+					properties.value.children.forEach(prop => {
+						if (prop.type === "String") {
+							this.afterContent = prop.value;
+						}
+					});
+				}
+			});
+		}
+
 		afterParsed(fragment) {
-			Object.keys(this.textTargets).forEach((name) => {
+			Object.keys(this.textTargets).forEach(name => {
 				let target = this.textTargets[name];
 				let split = target.selector.split("::");
 				let query = split[0];
 				let queried = fragment.querySelectorAll(query);
+				let textContent;
 				queried.forEach((selected, index) => {
 					let val = attr(selected, target.args);
 					let element = fragment.querySelector(querySelectorEscape(val));
 					if (element) {
-						if (target.style === "content") {
-							let selector = UUID();
-							selected.setAttribute("data-target-text", selector);
+						// content & first-letter & before & after refactorized
+						if (target.style) {
+							this.selector = UUID();
+							selected.setAttribute("data-target-text", this.selector);
 
 							let psuedo = "";
 							if (split.length > 1) {
 								psuedo += "::" + split[1];
 							}
-
-							let textContent = element.textContent.trim().replace(/["']/g, (match) => {
-								return "\\" + match;
-							}).replace(/[\n]/g, (match) => {
-								return "\\00000A";
-							});
-
-							// this.styleSheet.insertRule(`[data-target-text="${selector}"]${psuedo} { content: "${element.textContent}" }`, this.styleSheet.cssRules.length);
-							this.styleSheet.insertRule(`[data-target-text="${selector}"]${psuedo} { ${target.variable}: "${textContent}" }`, this.styleSheet.cssRules.length);
-
+							
+							if (target.style === "before" || target.style === "after") {
+								const pseudoType = `${target.style}Content`;
+								textContent = cleanPseudoContent(this[pseudoType]);
+							} else {
+								textContent = cleanPseudoContent(element.textContent, " ");
+							}
+							textContent = target.style === "first-letter" ? textContent.charAt(0) : textContent;
+							this.styleSheet.insertRule(`[data-target-text="${this.selector}"]${psuedo} { ${target.variable}: "${textContent}" }`);
+						} else {
+							console.warn("missed target", val);
 						}
-					} else {
-						console.warn("missed target", val);
 					}
 				});
-
 			});
 		}
 	}
@@ -26951,6 +30117,332 @@ img {
 		StringSets,
 		TargetCounters,
 		TargetText
+	];
+
+	class WhiteSpaceFilter extends Handler {
+		constructor(chunker, polisher, caller) {
+			super(chunker, polisher, caller);
+		}
+
+		filter(content) {
+
+			filterTree(content, (node) => {
+				return this.filterEmpty(node);
+			}, NodeFilter.SHOW_TEXT);
+
+		}
+
+		filterEmpty(node) {
+			if (node.textContent.length > 1 && isIgnorable(node)) {
+
+				// Do not touch the content if text is pre-formatted
+				let parent = node.parentNode;
+				let pre = isElement(parent) && parent.closest("pre");
+				if (pre) {
+					return NodeFilter.FILTER_REJECT;
+				}
+
+				const previousSibling = previousSignificantNode(node);
+				const nextSibling = nextSignificantNode(node);
+
+				if (nextSibling === null && previousSibling === null) {
+					// we should not remove a Node that does not have any siblings.
+					node.textContent = " ";
+					return NodeFilter.FILTER_REJECT;
+				}
+				if (nextSibling === null) {
+					// we can safely remove this node
+					return NodeFilter.FILTER_ACCEPT;
+				}
+				if (previousSibling === null) {
+					// we can safely remove this node
+					return NodeFilter.FILTER_ACCEPT;
+				}
+
+				// replace the content with a single space
+				node.textContent = " ";
+
+				// TODO: we also need to preserve sequences of white spaces when the parent has "white-space" rule:
+				// pre
+				// Sequences of white space are preserved. Lines are only broken at newline characters in the source and at <br> elements.
+				//
+				// pre-wrap
+				// Sequences of white space are preserved. Lines are broken at newline characters, at <br>, and as necessary to fill line boxes.
+				//
+				// pre-line
+				// Sequences of white space are collapsed. Lines are broken at newline characters, at <br>, and as necessary to fill line boxes.
+				//
+				// break-spaces
+				// The behavior is identical to that of pre-wrap, except that:
+				// - Any sequence of preserved white space always takes up space, including at the end of the line.
+				// - A line breaking opportunity exists after every preserved white space character, including between white space characters.
+				// - Such preserved spaces take up space and do not hang, and thus affect the box’s intrinsic sizes (min-content size and max-content size).
+				//
+				// See: https://developer.mozilla.org/en-US/docs/Web/CSS/white-space#Values
+
+				return NodeFilter.FILTER_REJECT;
+			} else {
+				return NodeFilter.FILTER_REJECT;
+			}
+		}
+
+	}
+
+	class CommentsFilter extends Handler {
+		constructor(chunker, polisher, caller) {
+			super(chunker, polisher, caller);
+		}
+
+		filter(content) {
+			filterTree(content, null, NodeFilter.SHOW_COMMENT);
+		}
+
+	}
+
+	class ScriptsFilter extends Handler {
+		constructor(chunker, polisher, caller) {
+			super(chunker, polisher, caller);
+		}
+
+		filter(content) {
+			content.querySelectorAll("script").forEach( script => { script.remove(); });
+		}
+
+	}
+
+	var clearCut = createCommonjsModule(function (module, exports) {
+	/**
+	 * Originally ported from https://github.com/keeganstreet/specificity/blob/866bf7ab4e7f62a7179c15b13a95af4e1c7b1afa/specificity.js
+	 *
+	 * Calculates the specificity of CSS selectors
+	 * http://www.w3.org/TR/css3-selectors/#specificity
+	 *
+	 * Returns a selector integer value
+	 */
+
+	// The following regular expressions assume that selectors matching the preceding regular expressions have been removed
+	var attributeRegex = /(\[[^\]]+\])/g;
+	var idRegex = /(#[^\s\+>~\.\[:]+)/g;
+	var classRegex = /(\.[^\s\+>~\.\[:]+)/g;
+	var pseudoElementRegex = /(::[^\s\+>~\.\[:]+|:first-line|:first-letter|:before|:after)/g;
+	var pseudoClassRegex = /(:[^\s\+>~\.\[:]+)/g;
+	var elementRegex = /([^\s\+>~\.\[:]+)/g;
+	var notRegex = /:not\(([^\)]*)\)/g;
+	var ruleRegex = /\{[^]*/gm;
+	var separatorRegex = /[\*\s\+>~]/g;
+	var straysRegex = /[#\.]/g;
+
+	// Find matches for a regular expression in a string and push their details to parts
+	// Type is "a" for IDs, "b" for classes, attributes and pseudo-classes and "c" for elements and pseudo-elements
+	var findMatch = function(regex, type, types, selector) {
+	  var matches = selector.match(regex);
+	  if (matches) {
+	    for (var i = 0; i < matches.length; i++) {
+	      types[type]++;
+	      // Replace this simple selector with whitespace so it won't be counted in further simple selectors
+	      selector = selector.replace(matches[i], ' ');
+	    }
+	  }
+
+	  return selector;
+	};
+
+	// Calculate the specificity for a selector by dividing it into simple selectors and counting them
+	var calculate = function(selector) {
+	  var commaIndex = selector.indexOf(',');
+	  if (commaIndex !== -1) {
+	    selector = selector.substring(0, commaIndex);
+	  }
+
+	  var  types = {
+	    a: 0,
+	    b: 0,
+	    c: 0
+	  };
+
+	  // Remove the negation psuedo-class (:not) but leave its argument because specificity is calculated on its argument
+	  selector = selector.replace(notRegex, ' $1 ');
+
+	  // Remove anything after a left brace in case a user has pasted in a rule, not just a selector
+	  selector = selector.replace(ruleRegex, ' ');
+
+	  // Add attribute selectors to parts collection (type b)
+	  selector = findMatch(attributeRegex, 'b', types, selector);
+
+	  // Add ID selectors to parts collection (type a)
+	  selector = findMatch(idRegex, 'a', types, selector);
+
+	  // Add class selectors to parts collection (type b)
+	  selector = findMatch(classRegex, 'b', types, selector);
+
+	  // Add pseudo-element selectors to parts collection (type c)
+	  selector = findMatch(pseudoElementRegex, 'c', types, selector);
+
+	  // Add pseudo-class selectors to parts collection (type b)
+	  selector = findMatch(pseudoClassRegex, 'b', types, selector);
+
+	  // Remove universal selector and separator characters
+	  selector = selector.replace(separatorRegex, ' ');
+
+	  // Remove any stray dots or hashes which aren't attached to words
+	  // These may be present if the user is live-editing this selector
+	  selector = selector.replace(straysRegex, ' ');
+
+	  // The only things left should be element selectors (type c)
+	  findMatch(elementRegex, 'c', types, selector);
+
+	  return (types.a * 100) + (types.b * 10) + (types.c * 1);
+	};
+
+	var specificityCache = {};
+
+	exports.calculateSpecificity = function(selector) {
+	  var specificity = specificityCache[selector];
+	  if (specificity === undefined) {
+	    specificity = calculate(selector);
+	    specificityCache[selector] = specificity;
+	  }
+	  return specificity;
+	};
+
+	var validSelectorCache = {};
+	var testSelectorElement = null;
+
+	exports.isSelectorValid = function(selector) {
+	  var valid = validSelectorCache[selector];
+	  if (valid === undefined) {
+	    if (testSelectorElement == null) {
+	      testSelectorElement = document.createElement('div');
+	    }
+
+	    try {
+	      testSelectorElement.querySelector(selector);
+	      valid = true;
+	    } catch (error) {
+	      valid = false;
+	    }
+	    validSelectorCache[selector] = valid;
+	  }
+	  return valid;
+	};
+
+	exports.validateSelector = function(selector) {
+	  if (!exports.isSelectorValid(selector)) {
+	    var error = new SyntaxError(selector + ' is not a valid selector');
+	    error.code = 'EBADSELECTOR';
+	    throw error;
+	  }
+	};
+	});
+	var clearCut_1 = clearCut.calculateSpecificity;
+	var clearCut_2 = clearCut.isSelectorValid;
+	var clearCut_3 = clearCut.validateSelector;
+
+	class UndisplayedFilter extends Handler {
+		constructor(chunker, polisher, caller) {
+			super(chunker, polisher, caller);
+			this.displayRules = {};
+		}
+
+		onDeclaration(declaration, dItem, dList, rule) {
+			if (declaration.property === "display") {
+				let selector = lib.generate(rule.ruleNode.prelude);
+				let value = declaration.value.children.first().name;
+
+				selector.split(",").forEach((s) => {
+					this.displayRules[s] = {
+						value: value,
+						selector: s,
+						specificity: clearCut_1(s),
+						important: declaration.important
+					};
+				});
+			}
+		}
+
+		filter(content) {
+			let { matches, selectors } = this.sortDisplayedSelectors(content, this.displayRules);
+
+			// Find matching elements that have display styles
+			for (let i = 0; i < matches.length; i++) {
+				let element = matches[i];
+				let selector = selectors[i];
+				let displayValue = selector[selector.length-1].value;
+				if(this.removable(element) && displayValue === "none") {
+					element.dataset.undisplayed = "undisplayed";
+				}
+			}
+
+			// Find elements that have inline styles
+			let styledElements = content.querySelectorAll("[style]");
+			for (let i = 0; i < styledElements.length; i++) {
+				let element = styledElements[i];
+				if (this.removable(element)) {
+					element.dataset.undisplayed = "undisplayed";
+				}
+			}
+		}
+
+		sorter(a, b) {
+			if (a.important && !b.important) {
+				return 1;
+			}
+
+			if (b.important && !a.important) {
+				return -1;
+			}
+
+			return a.specificity - b.specificity;
+		}
+
+		sortDisplayedSelectors(content, displayRules=[]) {
+			let matches = [];
+			let selectors = [];
+			for (let d in displayRules) {
+				let displayItem = displayRules[d];
+				let selector = displayItem.selector;
+				let query = [];
+				try {
+					try {
+						query = content.querySelectorAll(selector);
+					} catch (e) {
+						query = content.querySelectorAll(cleanSelector(selector));
+					}
+				} catch (e) {
+					query = [];
+				}
+				let elements = Array.from(query);
+				for (let e of elements) {
+					if (matches.includes(e)) {
+						let index = matches.indexOf(e);
+						selectors[index].push(displayItem);
+						selectors[index] = selectors[index].sort(this.sorter);
+					} else {
+						matches.push(e);
+						selectors.push([displayItem]);
+					}
+				}
+			}
+
+			return { matches, selectors };
+		}
+
+		removable(element) {
+			if (element.style &&
+					element.style.display !== "" &&
+					element.style.display !== "none") {
+				return false;
+			}
+
+			return true;
+		}
+	}
+
+	var filters = [
+		WhiteSpaceFilter,
+		CommentsFilter,
+		ScriptsFilter,
+		UndisplayedFilter
 	];
 
 	var isImplemented$3 = function () {
@@ -26964,8 +30456,10 @@ img {
 	var validTypes = { object: true, symbol: true };
 
 	var isImplemented$4 = function () {
+		var symbol;
 		if (typeof Symbol !== 'function') return false;
-		try { } catch (e) { return false; }
+		symbol = Symbol('test symbol');
+		try { String(symbol); } catch (e) { return false; }
 
 		// Return 'true' also for polyfills
 		if (!validTypes[typeof Symbol.iterator]) return false;
@@ -27379,7 +30873,7 @@ img {
 		return pipe;
 	};
 
-	let registeredHandlers = [...pagedMediaHandlers, ...generatedContentHandlers];
+	let registeredHandlers = [...pagedMediaHandlers, ...generatedContentHandlers, ...filters];
 
 	class Handlers {
 		constructor(chunker, polisher, caller) {
@@ -27405,17 +30899,21 @@ img {
 	}
 
 	class Previewer {
-		constructor() {
+		constructor(options) {
 			// this.preview = this.getParams("preview") !== "false";
+
+			this.settings = options || {};
 
 			// Process styles
 			this.polisher = new Polisher(false);
 
 			// Chunk contents
-			this.chunker = new Chunker();
+			this.chunker = new Chunker(undefined, undefined, this.settings);
 
 			// Hooks
 			this.hooks = {};
+			this.hooks.beforePreview = new Hook(this);
+			this.hooks.afterPreview = new Hook(this);
 
 			// default size
 			this.size = {
@@ -27431,13 +30929,8 @@ img {
 				orientation: undefined
 			};
 
-			let counter = 0;
 			this.chunker.on("page", (page) => {
-				counter += 1;
 				this.emit("page", page);
-				if (typeof window.PuppeteerLogger !== "undefined") {
-					window.PuppeteerLogger("page", counter);
-				}
 			});
 
 			this.chunker.on("rendering", () => {
@@ -27451,6 +30944,11 @@ img {
 			handlers.on("size", (size) => {
 				this.size = size;
 				this.emit("size", size);
+			});
+
+			handlers.on("atpages", (pages) => {
+				this.atpages = pages;
+				this.emit("atpages", pages);
 			});
 
 			return handlers;
@@ -27515,6 +31013,8 @@ img {
 
 		async preview(content, stylesheets, renderTo) {
 
+			await this.hooks.beforePreview.trigger(content, renderTo);
+
 			if (!content) {
 				content = this.wrapContent();
 			}
@@ -27535,15 +31035,13 @@ img {
 			let flow = await this.chunker.flow(content, renderTo);
 
 			let endTime = performance.now();
-			let msg = "Rendering " + flow.total + " pages took " + (endTime - startTime) + " milliseconds.";
 
 			flow.performance = (endTime - startTime);
 			flow.size = this.size;
 
-			this.emit("rendered", msg, this.size.width && this.size.width.value + this.size.width.unit, this.size.height && this.size.height.value + this.size.height.unit, this.size.orientation, this.size.format);
-			if (typeof window.onPagesRendered !== "undefined") {
-				window.onPagesRendered(msg, this.size.width && this.size.width.value + this.size.width.unit, this.size.height && this.size.height.value + this.size.height.unit, this.size.orientation, this.size.format);
-			}
+			this.emit("rendered", flow);
+
+			await this.hooks.afterPreview.trigger(flow.pages);
 
 			return flow;
 		}
@@ -27551,9 +31049,8 @@ img {
 
 	eventEmitter(Previewer.prototype);
 
-
-
 	var Paged = /*#__PURE__*/Object.freeze({
+		__proto__: null,
 		Chunker: Chunker,
 		Polisher: Polisher,
 		Previewer: Previewer,
@@ -27583,11 +31080,11 @@ img {
 		after: undefined,
 		content: undefined,
 		stylesheets: undefined,
-		renderTo: undefined
+		renderTo: undefined,
+		settings: undefined
 	};
 
-	let previewer = new Previewer(config.content, config.stylesheets, config.renderTo);
-
+	let previewer = new Previewer(config.settings);
 
 	ready.then(async function () {
 		let done;
@@ -27596,7 +31093,7 @@ img {
 		}
 
 		if(config.auto !== false) {
-			done = await previewer.preview();
+			done = await previewer.preview(config.content, config.stylesheets, config.renderTo);
 		}
 
 
@@ -27607,4 +31104,4 @@ img {
 
 	return previewer;
 
-}));
+})));

@@ -82,6 +82,7 @@ img {
 }
 pre {
   padding: 1em;
+  white-space: pre-wrap;
 }
 pre[class] {
   background: #f9f9f9;
