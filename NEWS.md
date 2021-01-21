@@ -18,6 +18,10 @@
 
 - `chrome_print()` no longer ignores runtime exceptions in Chrome. An R warning is now raised when Chrome encounters a runtime exception (#203).
 
+## MINOR CHANGES
+
+- The `fig_caption` argument is no longer hard-coded to `FALSE` in `html_resume()` (thanks, @nplatonov, #208).
+
 # CHANGES IN pagedown VERSION 0.13
 
 ## NEW FEATURES

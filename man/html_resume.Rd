@@ -8,11 +8,13 @@ html_resume(
   ...,
   css = "resume",
   template = pkg_resource("html", "resume.html"),
-  number_sections = FALSE
+  number_sections = FALSE,
+  fig_caption = FALSE
 )
 }
 \arguments{
-\item{..., css, template, number_sections}{See \code{\link{html_paged}()}.}
+\item{..., css, template, number_sections, fig_caption}{See
+\code{\link{html_paged}()}.}
 }
 \value{
 An R Markdown output format.
