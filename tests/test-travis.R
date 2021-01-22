@@ -10,7 +10,7 @@ print_pdf = function(input, output = tempfile(), ...) {
   )
 }
 
-if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
+if (!is.na(Sys.getenv('CI', NA))) {
   options(pagedown.remote.maxattempts = 100L)
   testit::test_pkg('pagedown', 'test-travis')
 }

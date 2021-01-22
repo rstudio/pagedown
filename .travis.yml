@@ -4,8 +4,6 @@ language: R
 sudo: false
 cache: packages
 pandoc_version: 2.3.1
-env:
-  - NOT_CRAN="true"
 addons:
   chrome: stable
   apt:
