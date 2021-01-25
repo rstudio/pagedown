@@ -278,7 +278,7 @@ h1 > .header-section-number {
   .pagedjs_first_page {
     box-shadow: 0 4px 10px rgb(0, 0, 0, 0.6), inset 0 0 3px rgb(0, 0, 0, 0.6);
   }
-  .pagedjs_left_page:last-of-type {
+  .pagedjs_left_page:nth-last-of-type(1) {
     box-shadow: 0 4px 10px rgb(0, 0, 0, 0.6), inset 0 0 3px rgb(0, 0, 0, 0.6);
   }
 }

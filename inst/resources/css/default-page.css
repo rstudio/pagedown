@@ -132,7 +132,7 @@
 .back-cover {
   break-before: verso;
 }
-.pagedjs_page:last-of-type {
+.pagedjs_page:nth-last-of-type(1) {
   background-image: var(--back-cover);
   background-position: center;
   background-size: contain;
