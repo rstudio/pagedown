@@ -73,7 +73,7 @@ Want more poster styles? You may take a look at [Brent Thorne's **posterdown** p
 
 - **pagedreport** by Thomas Vroylandt and David Keyes which helps using **pagedown** with some templates proposals: https://github.com/rfortherestofus/pagedreport
 
-- Jodavid Ferreira's CV (in Portuguese) : https://jodavid.github.io/cv/
+- Jodavid Ferreira's CV (in Portuguese) : https://jodavid.github.io/cv/ (source: https://github.com/jodavid/cv)
 
 ## Authors and contributors
 
