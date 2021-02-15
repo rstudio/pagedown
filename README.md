@@ -73,6 +73,8 @@ Want more poster styles? You may take a look at [Brent Thorne's **posterdown** p
 
 - **pagedreport** by Thomas Vroylandt and David Keyes which helps using **pagedown** with some templates proposals: https://github.com/rfortherestofus/pagedreport
 
+- Jodavid Ferreira's CV (in Portuguese) : https://jodavid.github.io/cv/ (source: https://github.com/jodavid/cv)
+
 ## Authors and contributors
 
 The main authors of this package are Yihui Xie (RStudio) and Romain Lesur. Romain has received a grant from the Shuttleworth Foundation for his work on both Paged.js and **pagedown**.
