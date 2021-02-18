@@ -43,6 +43,10 @@
     insertCSSForCover('back-cover');
     insertPageBreaksCSS();
 
+    let iframeHTMLWidgets = document.getElementsByTagName('autoscaling-iframe');
+    let widgetsReady = Promise.all([...iframeHTMLWidgets].map(el => {return el['ready'];}));
+    await widgetsReady;
+
     if (beforePaged) await beforePaged();
   };
 
@@ -104,38 +108,42 @@
     return result;
   };
   window.PagedConfig.after = (flow) => {
-    // force redraw, see https://github.com/rstudio/pagedown/issues/35#issuecomment-475905361
-    // and https://stackoverflow.com/a/24753578/6500804
-    document.body.style.display = 'none';
-    document.body.offsetHeight;
-    document.body.style.display = '';
+    let iframeHTMLWidgets = document.getElementsByTagName('autoscaling-iframe');
+    let widgetsReady = Promise.all([...iframeHTMLWidgets].map(el => {return el['ready'];}));
+    widgetsReady.then(() => {
+      // force redraw, see https://github.com/rstudio/pagedown/issues/35#issuecomment-475905361
+      // and https://stackoverflow.com/a/24753578/6500804
+      document.body.style.display = 'none';
+      document.body.offsetHeight;
+      document.body.style.display = '';
 
-    // run previous PagedConfig.after function if defined
-    if (afterPaged) afterPaged(flow);
+      // run previous PagedConfig.after function if defined
+      if (afterPaged) afterPaged(flow);
 
-    // pagedownListener is a binding added by the chrome_print function
-    // this binding exists only when chrome_print opens the html file
-    if (window.pagedownListener) {
-      // the html file is opened for printing
-      // call the binding to signal to the R session that Paged.js has finished
-      const tocList = flow.source.querySelector('.toc > ul');
-      const tocInfos = tocEntriesInfos(tocList);
-      pagedownListener(JSON.stringify({
-        pagedjs: true,
-        pages: flow.total,
-        elapsedtime: flow.performance,
-        tocInfos: tocInfos
-      }));
-      return;
-    }
-    if (sessionStorage.getItem('pagedown-scroll')) {
-      // scroll to the last position before the page is reloaded
-      window.scrollTo(0, sessionStorage.getItem('pagedown-scroll'));
-      return;
-    }
-    if (window.location.hash) {
-      const id = decodeURIComponent(window.location.hash).replace(/^#/, '');
-      document.getElementById(id).scrollIntoView({behavior: 'smooth'});
-    }
+      // pagedownListener is a binding added by the chrome_print function
+      // this binding exists only when chrome_print opens the html file
+      if (window.pagedownListener) {
+        // the html file is opened for printing
+        // call the binding to signal to the R session that Paged.js has finished
+        const tocList = flow.source.querySelector('.toc > ul');
+        const tocInfos = tocEntriesInfos(tocList);
+        pagedownListener(JSON.stringify({
+          pagedjs: true,
+          pages: flow.total,
+          elapsedtime: flow.performance,
+          tocInfos: tocInfos
+        }));
+        return;
+      }
+      if (sessionStorage.getItem('pagedown-scroll')) {
+        // scroll to the last position before the page is reloaded
+        window.scrollTo(0, sessionStorage.getItem('pagedown-scroll'));
+        return;
+      }
+      if (window.location.hash) {
+        const id = decodeURIComponent(window.location.hash).replace(/^#/, '');
+        document.getElementById(id).scrollIntoView({behavior: 'smooth'});
+      }
+    });
   };
 })();

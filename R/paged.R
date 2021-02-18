@@ -163,10 +163,107 @@ html_format = function(
       pagedown_dependency(xfun::with_ext(css2, '.css'), .pagedjs, .test)
     ))
   }
-  html_document2(
+  format = html_document2(
     ..., self_contained = self_contained, anchor_sections = anchor_sections, mathjax = mathjax, css = css,
     template = template, pandoc_args = pandoc_args
   )
+  if (isTRUE(.pagedjs)) format$knitr$opts_chunk[['render']] = paged_render(self_contained)
+  iframe_file(reset = TRUE)
+  format
+}
+
+paged_render = function(self_contained) {
+  function(x, options, ...) {
+    if (inherits(x, 'htmlwidget')) {
+      class(x) = c('iframehtmlwidget', class(x))
+    }
+    knitr::knit_print(x, options, ..., self_contained = self_contained)
+  }
+}
+
+knit_print.iframehtmlwidget = function(x, options, ..., self_contained) {
+  class(x) = tail(class(x), -1)
+  d = options$fig.path
+  if (!dir.exists(d)) {
+    dir.create(d, recursive = TRUE)
+    if (self_contained) on.exit({
+      unlink(d, recursive = TRUE) # doesn't work, don't understand why
+    }, add = TRUE)
+  }
+  f = save_widget(d, x, options)
+  src = NULL
+  srcdoc = NULL
+  if (self_contained) {
+    srcdoc = paste0(collapse = '\n', readLines(f))
+    file.remove(f)
+  } else {
+    src = f
+  }
+  knitr::knit_print(autoscaling_iframe(
+    src = src, srcdoc = srcdoc, width = options$out.width.px,
+    height = options$out.height.px, extra.attr = options$out.extra
+  ))
+}
+
+save_widget = function(directory, widget, options) {
+  old_wd = setwd(directory)
+  on.exit({
+    setwd(old_wd)
+  }, add = TRUE)
+  f = iframe_file()
+  htmlwidgets::saveWidget(
+    widget = widget, file = f,
+    # since chrome_print() does not handle network requests, use a self contained html file
+    # In order to use selcontained = FALSE, we should implement a networkidle option in chrome_print()
+    selfcontained = TRUE,
+    knitrOptions = options
+  )
+  return(paste0(directory, f))
+}
+
+iframe_file = (function() {
+  n = 0L
+  function(reset = FALSE) {
+    if (reset) n <<- -1L
+    n <<- n + 1L
+    sprintf('iframe%i.html', n)
+  }
+})()
+
+autoscaling_iframe = function(width = NULL, height = NULL, ..., extra.attr = '') {
+  if (length(extra.attr) == 0) extra.attr = ''
+  extra.attr = as_html_attrs(extra.attr)
+  tag = htmltools::tag(
+    'autoscaling-iframe',
+    c(extra.attr,
+      list(...),
+      list(htmltools::p("This browser does not support this feature."))
+    )
+  )
+  width = css_declaration('width', htmltools::validateCssUnit(width))
+  height = css_declaration('height', htmltools::validateCssUnit(height))
+  tag = do.call(
+    htmltools::tagAppendAttributes,
+    c(list(tag = tag), list(style = width, style = height))
+  )
+  htmltools::attachDependencies(
+    tag,
+    htmltools::htmlDependency(
+      'autoscalingiframe', packageVersion('pagedown'), src = pkg_resource(),
+      script = 'js/autoscaling_iframe.js', all_files = FALSE
+    )
+  )
+}
+
+as_html_attrs = function(string) {
+  doc = xml2::read_html(sprintf('<p %s>', string))
+  node = xml2::xml_find_first(doc, './/p')
+  xml2::xml_attrs(node)
+}
+
+css_declaration = function(property, value) {
+  if (is.null(value)) return('')
+  paste0(property, ':', value, ';')
 }
 
 chapter_name = function() {
