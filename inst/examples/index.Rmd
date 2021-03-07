@@ -736,6 +736,15 @@ links-to-footnotes: true
 
 The default behavior of pagedown is to render notes as endnotes because Paged.js does not natively support footnotes for now. However, we introduced an experimental support for footnotes. You can test it by including `paged-footnotes: true` in the YAML header of your document. Please, note that the `paged-footnotes` option only supports inline content^[see <https://github.com/rstudio/pagedown/issues/156>]. If you get any trouble with this experimental feature, please open an issue in the **pagedown** repository on GitHub.
 
+If you need to override the default footnotes style, you should use an `important` rule on elements of class `footnote`. For example,
+
+```css
+.footnote {
+  font-size: 20px !important;
+  color: red !important;
+}
+```
+
 ## Custom running headers {data-short-title="Running headers"}
 
 Sometimes a section title may be too long to fit the header or footer area. In this case, you can specify a shorter title for the running headers/footers via the attribute `data-short-title` after a title, e.g.,
