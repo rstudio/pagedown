@@ -63,8 +63,21 @@
       super(chunker, polisher, caller);
     }
     beforeParsed(content) {
-      const abbreviations = content.querySelectorAll('abbr');
-      if(abbreviations.length === 0) return;
+      // Find the abbreviation nodes
+      const abbrNodeList = content.querySelectorAll('abbr');
+
+      // Return early if there is no abbreviation
+      if (abbrNodeList.length === 0) return;
+
+      // Store unique values of abbreviations, see https://github.com/rstudio/pagedown/issues/218
+      let abbreviations = [];
+      for (const {title, innerHTML} of abbrNodeList.values()) {
+        if (abbreviations.find(el => el.title === title && el.innerHTML === innerHTML)) {
+          continue;
+        }
+        abbreviations.push({title: title, innerHTML: innerHTML});
+      }
+
       const loaTitle = pandocMeta['loa-title'] ? pandocMetaToString(pandocMeta['loa-title']) : 'List of Abbreviations';
       const loaId = 'LOA';
       const tocList = content.querySelector('.toc ul');

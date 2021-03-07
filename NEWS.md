@@ -6,6 +6,8 @@
 
 ## BUG FIXES
 
+- The multiple use of an abbreviation no longer ends up with duplicated entries in the list of abbreviations (thanks, @linogaliana, #218).
+
 - The default value of the `counter-reset` CSS property is correctly set to 0 instead of 1 (see <https://developer.mozilla.org/en-US/docs/Web/CSS/counter-reset>). To reset a `page` CSS counter to 1, the following declaration must be used: `counter-reset: page 1` (#202).
 
 - Numbered example lists (<https://pandoc.org/MANUAL.html#numbered-example-lists>) are correctly numbered (thanks, @atusy, #122 and #202).
