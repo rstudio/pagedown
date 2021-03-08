@@ -4,6 +4,10 @@
 
 - Paged.js is upgraded from version 0.1.32 to 0.1.43. This update speeds up the rendering time and fixes several bugs (see also <https://www.pagedjs.org/posts/2020-02-25-weekly/>, <https://www.pagedjs.org/posts/2020-03-03-update-pagedjs-0-1-39/>, <https://www.pagedjs.org/posts/2020-04-01-pagedjs-0-1-40/> and <https://www.pagedjs.org/posts/2020-06-22-pagedjs-0-1-42/>) (#202).
 
+## MINOR CHANGES
+
+- In order to be compatible with the **flextable** package, `pagedown::html_paged()` sets the value of the `ft.shadow` chunk option to `FALSE` by default (thanks, @tvroylandt and @davidgohel, #216).
+
 ## BUG FIXES
 
 - The multiple use of an abbreviation no longer ends up with duplicated entries in the list of abbreviations (thanks, @linogaliana, #218).

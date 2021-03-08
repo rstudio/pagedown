@@ -163,10 +163,19 @@ html_format = function(
       pagedown_dependency(xfun::with_ext(css2, '.css'), .pagedjs, .test)
     ))
   }
-  html_document2(
+
+  fmt = html_document2(
     ..., self_contained = self_contained, anchor_sections = anchor_sections, mathjax = mathjax, css = css,
     template = template, pandoc_args = pandoc_args
   )
+
+  # Deactivate the use of the shadow DOM by the flextable package (see https://github.com/rstudio/pagedown/issues/216)
+  # We may remove that when https://gitlab.pagedmedia.org/tools/pagedjs/issues/148 will be solved
+  if (isTRUE(.pagedjs)) {
+    fmt$knitr$opts_chunk[['ft.shadow']] = FALSE
+  }
+
+  fmt
 }
 
 chapter_name = function() {
