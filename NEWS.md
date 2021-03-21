@@ -6,6 +6,8 @@
 
 ## MINOR CHANGES
 
+- In `html_paged()`, links are now sanitized to avoid impossible line breaking of long URLs in a justified text (thanks, @julientaq). 
+
 - In order to be compatible with the **flextable** package, `pagedown::html_paged()` sets the value of the `ft.shadow` chunk option to `FALSE` by default (thanks, @tvroylandt and @davidgohel, #216).
 
 ## BUG FIXES
