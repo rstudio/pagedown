@@ -94,24 +94,28 @@ end
 local function appendLoft(doc)
   local lotHeader
   local lofHeader
+  local lotClasses = {"lot", "unnumbered", "front-matter"}
+  local lofClasses = {"lof", "unnumbered", "front-matter"}
   local idprefix = options.idprefix or ""
 
   if options.lof then
     table.insert(doc.blocks, 1, pandoc.BulletList(figuresList))
+    if options["lof-unlisted"] then table.insert(lofClasses, "unlisted") end
     lofHeader =
       pandoc.Header(1,
                     {table.unpack(options["lof-title"])},
-                    pandoc.Attr(idprefix .. "LOF", {"lof", "unnumbered", "front-matter"}, {})
+                    pandoc.Attr(idprefix .. "LOF", lofClasses, {})
       )
     table.insert(doc.blocks, 1, lofHeader)
   end
 
   if options.lot then
     table.insert(doc.blocks, 1, pandoc.BulletList(tablesList))
+    if options["lot-unlisted"] then table.insert(lotClasses, "unlisted") end
     lotHeader =
       pandoc.Header(1,
                     {table.unpack(options["lot-title"])},
-                    pandoc.Attr(idprefix .. "LOT", {"lot", "unnumbered", "front-matter"}, {})
+                    pandoc.Attr(idprefix .. "LOT", lotClasses, {})
       )
     table.insert(doc.blocks, 1, lotHeader)
   end

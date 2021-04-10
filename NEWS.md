@@ -10,6 +10,10 @@
 
 - In order to be compatible with the **flextable** package, `pagedown::html_paged()` sets the value of the `ft.shadow` chunk option to `FALSE` by default (thanks, @tvroylandt and @davidgohel, #216).
 
+## NEW FEATURES
+
+- In `html_paged()`, added two new options `lot-unlisted` and `lof-unlisted`. If `lot-unlisted` (resp. `lof-unlisted`) is set to `TRUE` in the YAML options, the list of tables (resp. figures) will not be included in a table of contents (thanks, @beatrizmilz, #221).    
+
 ## BUG FIXES
 
 - The multiple use of an abbreviation no longer ends up with duplicated entries in the list of abbreviations (thanks, @linogaliana, #218).

@@ -627,7 +627,7 @@ You can write an article for the [Journal of Statistical Sofware](https://jstats
 
 ## Lists of tables and figures
 
-Lists of tables and/or figures can be inserted in the document using the `lot` and `lof` variables in the YAML metadata. You also can customize their titles with the `lot-title` and `lof-title` variables. For instance:
+Lists of tables and/or figures can be inserted in the document using the `lot` and `lof` variables in the YAML metadata. You also can customize their titles with the `lot-title` and `lof-title` variables. By default, theses lists are referenced in the table of contents, if any. You can use the `lot-untitled` and `lof-untitled` options to remove them. For instance:
 
 ```yaml
 ---
@@ -637,9 +637,13 @@ toc-title: Contents
 lot: true
 # default: "List of Tables"
 lot-title: "Tables"
+# uncomment to remove from the TOC:
+#lot-unlisted: true
 lof: true
 # default: "List of Figures"
 lof-title: "Figures"
+# uncomment to remove from the TOC:
+#lof-unlisted: true
 ---
 ```
 
