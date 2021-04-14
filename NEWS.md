@@ -3,6 +3,10 @@
 
 # CHANGES IN pagedown VERSION 0.14
 
+## NEW FEATURES
+
+- In `html_paged()`, added two new options `lot-unlisted` and `lof-unlisted`. If `lot-unlisted` (resp. `lof-unlisted`) is set to `TRUE` in the YAML options, the list of tables (resp. figures) will not be included in a table of contents (thanks, @beatrizmilz, #221).    
+
 ## MAJOR CHANGES
 
 - Paged.js is upgraded from version 0.1.32 to 0.1.43. This update speeds up the rendering time and fixes several bugs (see also <https://www.pagedjs.org/posts/2020-02-25-weekly/>, <https://www.pagedjs.org/posts/2020-03-03-update-pagedjs-0-1-39/>, <https://www.pagedjs.org/posts/2020-04-01-pagedjs-0-1-40/> and <https://www.pagedjs.org/posts/2020-06-22-pagedjs-0-1-42/>) (#202).
@@ -13,9 +17,7 @@
 
 - In order to be compatible with the **flextable** package, `pagedown::html_paged()` sets the value of the `ft.shadow` chunk option to `FALSE` by default (thanks, @tvroylandt and @davidgohel, #216).
 
-## NEW FEATURES
-
-- In `html_paged()`, added two new options `lot-unlisted` and `lof-unlisted`. If `lot-unlisted` (resp. `lof-unlisted`) is set to `TRUE` in the YAML options, the list of tables (resp. figures) will not be included in a table of contents (thanks, @beatrizmilz, #221).    
+- The `fig_caption` argument is no longer hard-coded to `FALSE` in `html_resume()` (thanks, @nplatonov, #208).
 
 ## BUG FIXES
 
@@ -32,10 +34,6 @@
 - `chrome_print()` is now compatible with the stream transfer mode which can be used to generate large PDF files (#205).
 
 - `chrome_print()` no longer ignores runtime exceptions in Chrome. An R warning is now raised when Chrome encounters a runtime exception (#203).
-
-## MINOR CHANGES
-
-- The `fig_caption` argument is no longer hard-coded to `FALSE` in `html_resume()` (thanks, @nplatonov, #208).
 
 # CHANGES IN pagedown VERSION 0.13
 
