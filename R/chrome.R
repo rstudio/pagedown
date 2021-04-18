@@ -284,17 +284,19 @@ find_chrome = function() {
   switch(
     .Platform$OS.type,
     windows = {
-      res = tryCatch({
-        unlist(utils::readRegistry('ChromeHTML\\shell\\open\\command', 'HCR'))
-      }, error = function(e) '')
-      res = unlist(strsplit(res, '"'))
-      res = head(res[file.exists(res)], 1)
-      if (length(res) != 1) stop(
-        'Cannot find Google Chrome automatically from the Windows Registry Hive. ',
-        "Please pass the full path of chrome.exe to the 'browser' argument ",
+      res = unlist(lapply(c('ChromeHTML', 'MSEdgeHTM'), function(x) {
+        res = tryCatch({
+          unlist(utils::readRegistry(sprintf('%s\\shell\\open\\command', x), 'HCR'))
+        }, error = function(e) '')
+        res = unlist(strsplit(res, '"'))
+        res = head(res[file.exists(res)], 1)
+      }))
+      if (length(res) < 1) stop(
+        'Cannot find Google Chrome or Edge automatically from the Windows Registry Hive. ',
+        "Please pass the full path of chrome.exe or msedge.exe to the 'browser' argument ",
         "or to the environment variable 'PAGEDOWN_CHROME'."
       )
-      res
+      res[1]
     },
     unix = if (xfun::is_macos()) {
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
