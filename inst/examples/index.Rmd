@@ -143,12 +143,13 @@ Since the `--no-sandbox` option can lead to major security threats, do not use t
 Here is a minimal Dockerfile using a popular image from the [Rocker project](https://rocker-project.org) which uses RStudio:
 
 ```bash
-FROM rocker/verse:3.6.0
+FROM rocker/verse
 
-RUN apt-get update -qq && \
+RUN curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    apt-get update -qq && \
     apt-get -y install \
-    libssl-dev \
-    chromium
+    ./google-chrome-stable_current_amd64.deb && \
+    rm google-chrome-stable_current_amd64.deb
 
 RUN install2.r pagedown
 ```
