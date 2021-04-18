@@ -31,8 +31,9 @@
 #'    for the full list of options for PDF output, and
 #'   \code{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-captureScreenshot}
 #'    for options for screenshots. Note that for PDF output, we have changed the
-#'   defaults of \code{printBackground} (\code{TRUE}) and
-#'   \code{preferCSSPageSize} (\code{TRUE}) in this function.
+#'   defaults of \code{printBackground} (\code{TRUE}),
+#'   \code{preferCSSPageSize} (\code{TRUE}) and when available
+#'   \code{transferMode} (\code{ReturnAsStream}) in this function.
 #' @param selector A CSS selector used when capturing a screenshot.
 #' @param box_model The CSS box model used when capturing a screenshot.
 #' @param scale The scale factor used for screenshot.
@@ -104,8 +105,14 @@ chrome_print = function(
   }
   on.exit(kill_chrome(), add = TRUE)
 
-  if (!is_remote_protocol_ok(debug_port, verbose = verbose))
+  remote_protocol_ok = is_remote_protocol_ok(debug_port, verbose = verbose)
+  stream_pdf_available = isTRUE(xfun::attr(remote_protocol_ok, 'stream_pdf_available'))
+
+  if (!remote_protocol_ok)
     stop('A more recent version of Chrome is required. ')
+
+  if (format == 'pdf' && stream_pdf_available)
+    options = merge_list(list(transferMode = 'ReturnAsStream'), as.list(options))
 
   # If !async, use a private event loop to drive the websocket. This is
   # necessary to separate later callbacks relevant to chrome_print, from any
@@ -381,9 +388,19 @@ is_remote_protocol_ok = function(debug_port,
     )
   })
 
-  all(mapply(function(x, table) all(x %in% table), required_commands, remote_commands),
+  if (!all(mapply(function(x, table) all(x %in% table), required_commands, remote_commands),
       mapply(function(x, table) all(x %in% table), required_events, remote_events)
+  ))
+    return(FALSE)
+
+  stream_pdf_available = 'transferMode' %in% sapply(
+    remote_protocol[['domains']][remote_domains == 'Page'][[1]][['commands']][remote_commands[['Page']] == 'printToPDF'][[1]][['parameters']],
+    `[[`, 'name'
   )
+  res = TRUE
+  attr(res, 'stream_pdf_available') = stream_pdf_available
+
+  res
 }
 
 get_entrypoint = function(debug_port, verbose) {
@@ -555,7 +572,7 @@ print_page = function(
           resolve(output)
           token$done = TRUE
         } else {
-          if (verbose >= 1) message('Reading PDF from a stream')
+          if (verbose >= 1) message('Receiving PDF from a stream')
           # open a connection
           con <<- file(output, 'wb')
           # read the first chunk of the stream
@@ -569,7 +586,7 @@ print_page = function(
         # Command #17 received
         # if there is another chunk to read -> callback: IO.read
         # if EOF -> callback: command #18 IO.close
-        if (verbose >= 1) message('Stream chunk received')
+        if (verbose >= 1) message('    stream chunk received')
         if (isTRUE(msg$result$base64Encoded)) {
           writeBin(jsonlite::base64_dec(msg$result$data), con)
         } else {
@@ -578,7 +595,7 @@ print_page = function(
 
         if (isTRUE(msg$result$eof)) {
           if (verbose >= 1) message(
-            'No more stream chunk to read: closing Chrome stream'
+            'No more stream chunk to read\n    closing stream'
           )
           close(con)
           ws$send(to_json(list(
