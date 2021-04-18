@@ -2,7 +2,7 @@
 
 ## NEW FEATURES
 
-- `find_chrome()` now searches for Microsoft Edge on windows. That allows `chrome_print()` to work seamlessly with Microsoft Edge (thanks, @cderv, #160 and #225).    
+- `find_chrome()` now searches for Microsoft Edge on Windows. That allows `chrome_print()` to work seamlessly with Microsoft Edge (thanks, @cderv, #160 and #225).    
 
 ## MINOR CHANGES
 
