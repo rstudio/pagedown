@@ -94,9 +94,9 @@ Note that this overriding mechanism also works for other output formats in **pag
 
 There are three ways to print to PDF:
 
-1. with Google Chrome or Chromium using the menu "Print" or by pressing `Ctrl + P` (or `Command + P` on macOS). Remember to allow background graphics to be printed.
+1. with Google Chrome, Microsoft Edge or Chromium using the menu "Print" or by pressing `Ctrl + P` (or `Command + P` on macOS). Remember to allow background graphics to be printed.
 
-1. using the function `chrome_print()`. Its first argument (`input`) accepts a path to a local Rmd or HTML file or an URL. Google Chrome or Chromium must be installed on your system.
+1. using the function `chrome_print()`. Its first argument (`input`) accepts a path to a local Rmd or HTML file or an URL. Google Chrome, Microsoft Edge or Chromium must be installed on your system.
 
 1. in RStudio, adding the following line in the YAML header of your Rmd file:
 
@@ -105,7 +105,7 @@ There are three ways to print to PDF:
    ```
    
    With this metadata parameter, the behavior of the "Knit" button of RStudio is modified: it produces both the HTML document and the PDF with Chrome. This functionality is suitable for any R Markdown HTML output format and is mainly convenient for small documents like presentations or notes.  
-   If `chrome_print()` cannot find Chrome or Chromium automatically, set the `PAGEDOWN_CHROME` environment variable to the path to Chrome or Chromium executable. 
+   If `chrome_print()` cannot find Chrome, Edge or Chromium automatically, set the `PAGEDOWN_CHROME` environment variable to the path to Chrome, Edge or Chromium executable. 
 
 ### Print to PDF on a server
 
