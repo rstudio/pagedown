@@ -73,6 +73,8 @@ chrome_print = function(
     !missing(encoding) && length(match.call()) == 3
   if (is_rstudio_knit) verbose = 1
 
+  format = match.arg(format)
+
   if (missing(browser) && is.na(browser <- Sys.getenv('PAGEDOWN_CHROME', NA))) {
     browser = find_chrome()
   } else {
@@ -163,7 +165,6 @@ chrome_print = function(
       url = svr$url
     } else url = input  # the input is not a local file; assume it is just a URL
 
-    format = match.arg(format)
     # remove hash/query parameters in url
     if (missing(output) && !file.exists(input))
       output = xfun::with_ext(basename(gsub('[#?].*', '', url)), format)
