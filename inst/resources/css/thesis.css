@@ -375,6 +375,10 @@ thead {
 table > caption {
   margin-bottom: 0.3cm;
 }
+/* knitr::kables styling, see https://github.com/rstudio/pagedown/issues/214 */
+.kable_wrapper > tbody > tr > td {
+    vertical-align: top;
+}
 .footnotes {
   font-size: 90%;
 }

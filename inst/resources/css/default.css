@@ -117,6 +117,10 @@ table thead th {
 thead, tfoot, tr:nth-child(even) {
   background: #eee;
 }
+/* knitr::kables styling, see https://github.com/rstudio/pagedown/issues/214 */
+.kable_wrapper > tbody > tr > td {
+    vertical-align: top;
+}
 .footnotes {
   font-size: 90%;
 }

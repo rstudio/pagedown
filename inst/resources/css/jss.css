@@ -179,6 +179,10 @@ sub, sup {
 table {
   margin: auto;
 }
+/* knitr::kables styling, see https://github.com/rstudio/pagedown/issues/214 */
+.kable_wrapper > tbody > tr > td {
+    vertical-align: top;
+}
 
 /* bibliography */
 #references {
