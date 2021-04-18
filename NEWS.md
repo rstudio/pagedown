@@ -1,5 +1,8 @@
 # CHANGES IN pagedown VERSION 0.15
 
+## MAJOR CHANGES
+
+- In `chrome_print()`, when printing a document to PDF, the default transfer mode between Chrome and R now uses a stream when this option is available in Chrome. This change ensures that PDF files of any size can be generated (#206 and #224).
 
 # CHANGES IN pagedown VERSION 0.14
 
