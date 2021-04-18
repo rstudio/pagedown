@@ -1,5 +1,9 @@
 # CHANGES IN pagedown VERSION 0.15
 
+## NEW FEATURES
+
+- `find_chrome()` now searches for Microsoft Edge on windows. That allows `chrome_print()` to work seamlessly with Microsoft Edge (thanks, @cderv, #160 and #225).    
+
 ## MINOR CHANGES
 
 - Multiple `knitr::kables()` are now vertically aligned by default in `html_paged()`, `thesis_paged()` and `jss_paged()` output formats (thanks, @cderv and @andrew-fuller, #214).
