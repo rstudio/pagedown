@@ -4,6 +4,10 @@
 
 - In `chrome_print()`, when printing a document to PDF, the default transfer mode between Chrome and R now uses a stream when this option is available in Chrome. This change ensures that PDF files of any size can be generated (#206 and #224).
 
+## MINOR CHANGES
+
+- Multiple `knitr::kables()` are now vertically aligned by default in `html_paged()`, `thesis_paged()` and `jss_paged()` output formats (thanks, @cderv and @andrew-fuller, #214).
+
 # CHANGES IN pagedown VERSION 0.14
 
 ## NEW FEATURES
