@@ -57,8 +57,9 @@ not set.}
  for the full list of options for PDF output, and
 \code{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-captureScreenshot}
  for options for screenshots. Note that for PDF output, we have changed the
-defaults of \code{printBackground} (\code{TRUE}) and
-\code{preferCSSPageSize} (\code{TRUE}) in this function.}
+defaults of \code{printBackground} (\code{TRUE}),
+\code{preferCSSPageSize} (\code{TRUE}) and when available
+\code{transferMode} (\code{ReturnAsStream}) in this function.}
 
 \item{selector}{A CSS selector used when capturing a screenshot.}
 
