@@ -4,6 +4,10 @@
 
 - Multiple `knitr::kables()` are now vertically aligned by default in `html_paged()`, `thesis_paged()` and `jss_paged()` output formats (thanks, @cderv and @andrew-fuller, #214).
 
+## BUG FIXES
+
+- Fixed a bug introduced in `html_paged()` by **pagedown** 0.14, the content of each link was lost if it was not textual (thanks, @mcanouil, #226).
+
 # CHANGES IN pagedown VERSION 0.14
 
 ## NEW FEATURES
