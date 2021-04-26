@@ -45,10 +45,10 @@ printing (in certain cases, the page may not be immediately ready for
 printing, especially there are JavaScript applications on the page, so you
 may need to wait for a longer time).}
 
-\item{browser}{Path to Google Chrome or Chromium. This function will try to
-find it automatically via \code{\link{find_chrome}()} if the path is not
-explicitly provided and the environment variable \code{PAGEDOWN_CHROME} is
-not set.}
+\item{browser}{Path to Google Chrome, Microsoft Edge or Chromium. This
+function will try to find it automatically via \code{\link{find_chrome}()}
+if the path is not explicitly provided and the environment variable
+\code{PAGEDOWN_CHROME} is not set.}
 
 \item{format}{The output format.}
 
@@ -99,8 +99,8 @@ Path of the output file (invisibly). If \code{async} is \code{TRUE},
 }
 \description{
 Print an HTML page to PDF or capture a PNG/JPEG screenshot through the Chrome
-DevTools Protocol. Google Chrome (or Chromium on Linux) must be installed
-prior to using this function.
+DevTools Protocol. Google Chrome or Microsoft Edge (or Chromium on Linux)
+must be installed prior to using this function.
 }
 \references{
 \url{https://developers.google.com/web/updates/2017/04/headless-chrome}

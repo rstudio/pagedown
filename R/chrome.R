@@ -1,8 +1,8 @@
 #' Print a web page to PDF or capture a screenshot using the headless Chrome
 #'
 #' Print an HTML page to PDF or capture a PNG/JPEG screenshot through the Chrome
-#' DevTools Protocol. Google Chrome (or Chromium on Linux) must be installed
-#' prior to using this function.
+#' DevTools Protocol. Google Chrome or Microsoft Edge (or Chromium on Linux)
+#' must be installed prior to using this function.
 #' @param input A URL or local file path to an HTML page, or a path to a local
 #'   file that can be rendered to HTML via \code{rmarkdown::\link{render}()}
 #'   (e.g., an R Markdown document or an R script). If the \code{input} is to be
@@ -21,10 +21,10 @@
 #'   printing (in certain cases, the page may not be immediately ready for
 #'   printing, especially there are JavaScript applications on the page, so you
 #'   may need to wait for a longer time).
-#' @param browser Path to Google Chrome or Chromium. This function will try to
-#'   find it automatically via \code{\link{find_chrome}()} if the path is not
-#'   explicitly provided and the environment variable \code{PAGEDOWN_CHROME} is
-#'   not set.
+#' @param browser Path to Google Chrome, Microsoft Edge or Chromium. This
+#'   function will try to find it automatically via \code{\link{find_chrome}()}
+#'   if the path is not explicitly provided and the environment variable
+#'   \code{PAGEDOWN_CHROME} is not set.
 #' @param format The output format.
 #' @param options A list of page options. See
 #'   \code{https://chromedevtools.github.io/devtools-protocol/tot/Page#method-printToPDF}
@@ -280,29 +280,31 @@ add_outline = function(input, toc_infos, verbose) {
   invisible(input)
 }
 
-#' Find Google Chrome or Chromium in the system
+#' Find Google Chrome, Microsoft Edge or Chromium in the system
 #'
-#' On Windows, this function tries to find Chrome from the registry. On macOS,
-#' it returns a hard-coded path of Chrome under \file{/Applications}. On Linux,
-#' it searches for \command{chromium-browser} and \command{google-chrome} from
-#' the system's \var{PATH} variable.
+#' On Windows, this function tries to find Chrome or Edge from the registry. On
+#' macOS, it returns a hard-coded path of Chrome under \file{/Applications}. On
+#' Linux, it searches for \command{chromium-browser} and \command{google-chrome}
+#' from the system's \var{PATH} variable.
 #' @return A character string.
 #' @export
 find_chrome = function() {
   switch(
     .Platform$OS.type,
     windows = {
-      res = tryCatch({
-        unlist(utils::readRegistry('ChromeHTML\\shell\\open\\command', 'HCR'))
-      }, error = function(e) '')
-      res = unlist(strsplit(res, '"'))
-      res = head(res[file.exists(res)], 1)
-      if (length(res) != 1) stop(
-        'Cannot find Google Chrome automatically from the Windows Registry Hive. ',
-        "Please pass the full path of chrome.exe to the 'browser' argument ",
+      res = unlist(lapply(c('ChromeHTML', 'MSEdgeHTM'), function(x) {
+        res = tryCatch({
+          unlist(utils::readRegistry(sprintf('%s\\shell\\open\\command', x), 'HCR'))
+        }, error = function(e) '')
+        res = unlist(strsplit(res, '"'))
+        res = head(res[file.exists(res)], 1)
+      }))
+      if (length(res) < 1) stop(
+        'Cannot find Google Chrome or Edge automatically from the Windows Registry Hive. ',
+        "Please pass the full path of chrome.exe or msedge.exe to the 'browser' argument ",
         "or to the environment variable 'PAGEDOWN_CHROME'."
       )
-      res
+      res[1]
     },
     unix = if (xfun::is_macos()) {
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
@@ -638,7 +640,7 @@ print_page = function(
       }
       if (method == 'Runtime.exceptionThrown') {
         warning(
-          'A runtime exception has occured in Chrome\n',
+          'A runtime exception has occured while executing JavaScript\n',
           '  Runtime exception message:\n    ',
           msg$params$exceptionDetails$exception$description,
           call. = FALSE, immediate. = TRUE

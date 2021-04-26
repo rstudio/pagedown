@@ -5,7 +5,7 @@
 
 <a href="https://github.com/rstudio/pagedown"><img src="https://user-images.githubusercontent.com/163582/51942716-66be4180-23dd-11e9-8dbc-fdb4f465d1c2.png" alt="pagedown logo" align="right" /></a>
 
-Paginate the HTML Output of R Markdown with CSS for Print. You only need a modern web browser (e.g., Google Chrome) to generate PDF. No need to install LaTeX to get beautiful PDFs.
+Paginate the HTML Output of R Markdown with CSS for Print. You only need a modern web browser (e.g., Google Chrome or Microsoft Edge) to generate PDF. No need to install LaTeX to get beautiful PDFs.
 
 This R package stands on the shoulders of two giants to support typesetting with CSS for R Markdown documents: [Paged.js](https://gitlab.pagedmedia.org/tools/pagedjs) and [ReLaXed](https://github.com/RelaxedJS/ReLaXed) (we only borrowed some CSS from the ReLaXed repo and didn't really use the Node package).
 

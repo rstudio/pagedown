@@ -2,7 +2,7 @@
 % Please edit documentation in R/chrome.R
 \name{find_chrome}
 \alias{find_chrome}
-\title{Find Google Chrome or Chromium in the system}
+\title{Find Google Chrome, Microsoft Edge or Chromium in the system}
 \usage{
 find_chrome()
 }
@@ -10,8 +10,8 @@ find_chrome()
 A character string.
 }
 \description{
-On Windows, this function tries to find Chrome from the registry. On macOS,
-it returns a hard-coded path of Chrome under \file{/Applications}. On Linux,
-it searches for \command{chromium-browser} and \command{google-chrome} from
-the system's \var{PATH} variable.
+On Windows, this function tries to find Chrome or Edge from the registry. On
+macOS, it returns a hard-coded path of Chrome under \file{/Applications}. On
+Linux, it searches for \command{chromium-browser} and \command{google-chrome}
+from the system's \var{PATH} variable.
 }

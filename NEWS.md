@@ -1,5 +1,9 @@
 # CHANGES IN pagedown VERSION 0.15
 
+## NEW FEATURES
+
+- `find_chrome()` now searches for Microsoft Edge on Windows. That allows `chrome_print()` to work seamlessly with Microsoft Edge (thanks, @cderv, #160 and #225).    
+
 ## MAJOR CHANGES
 
 - In `chrome_print()`, when printing a document to PDF, the default transfer mode between Chrome and R now uses a stream when this option is available in Chrome. This change ensures that PDF files of any size can be generated (#206 and #224).
