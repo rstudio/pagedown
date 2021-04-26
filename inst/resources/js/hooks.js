@@ -537,6 +537,7 @@
         // or before a single slash (/), a tilde (~), a period, a comma, a hyphen,
         // an underline (_), a question mark, a number sign, or a percent symbol.
         const content = link.textContent;
+        if (!(link.childElementCount === 0 && content.match(/^http|^www/))) return;
         let printableUrl = content.replace(/\/\//g, "//\u003Cwbr\u003E");
         printableUrl = printableUrl.replace(/\,/g, ",\u003Cwbr\u003E");
         // put wbr around everything.
