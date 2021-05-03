@@ -88,6 +88,7 @@ jss_paged = function(
   jss_format = html_paged(
     ..., template = template, css = css,
     csl = csl, highlight = highlight,
+    number_sections = FALSE,
     pandoc_args = c(
       lua_filters('jss.lua'),
       '--metadata', 'link-citations=true',

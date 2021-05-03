@@ -16,6 +16,8 @@
 
 - Fixed a bug introduced in `html_paged()` by **pagedown** 0.14, the content of each link was lost if it was not textual (thanks, @mcanouil, #226).
 
+- Fixed figure and table numbering format in `jss_paged()` (thanks, @gglee4ai, #184).
+
 # CHANGES IN pagedown VERSION 0.14
 
 ## NEW FEATURES
