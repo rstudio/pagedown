@@ -1,0 +1,180 @@
+:root {
+  --background: whitesmoke;
+  --pagedjs-width: 6in;
+  --pagedjs-height: 9in;
+  --color-paper: white;
+  --color-mbox: rgba(0, 0, 0, 0.2);
+  --running-title-width: 2.5in;
+  --screen-pages-spacing: 5mm;
+}
+
+html {
+  line-height: 1.3;
+}
+
+/* generated content */
+a[href^="http"]:not([class="uri"])::after {
+  content: " (" attr(href) ")";
+  font-size: 90%;
+  hyphens: none;
+  word-break: break-all;
+}
+.references a[href^=http]:not([class=uri])::after {
+  content: none;
+}
+.main a[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
+  content: " (page " target-counter(attr(href), page) ")";
+}
+.main a.front-matter-ref[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
+  content: " (page " target-counter(attr(href), page, lower-roman) ")";
+}
+/* do not include page references in code blocks */
+.sourceCode a[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after,
+.sourceCode a.front-matter-ref[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
+  content: unset;
+}
+
+/* TOC, LOT, LOF */
+.toc ul, .lot ul, .lof ul {
+  list-style: none;
+  padding-left: 0;
+  overflow-x: hidden;
+}
+.toc li li {
+  padding-left: 1em;
+}
+.toc a, .lot a, .lof a {
+  text-decoration: none;
+  background: white;
+  padding-right: .33em;
+}
+.toc a::after, .lot a::after, .lof a::after {
+  /* content: leader(dotted) target-counter(attr(href), page); */
+  content: target-counter(attr(href), page);
+  float: right;
+  background: white;
+}
+.toc a.front-matter-ref::after, .lot a.front-matter-ref::after, .lof a.front-matter-ref::after {
+  /* content: leader(dotted) target-counter(attr(href), page, lower-roman); */
+  content: target-counter(attr(href), page, lower-roman);
+}
+.toc .leaders::before, .lot .leaders::before, .lof .leaders::before {
+  float: left;
+  width: 0;
+  white-space: nowrap;
+  content: ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ";
+}
+
+/* Chapter name */
+.chapter > h1 > .header-section-number::before, .chapter-ref > .toc-section-number::before {
+  content: var(--chapter-name-before, "Chapter ");
+}
+.chapter > h1 > .header-section-number::after, .chapter-ref > .toc-section-number::after {
+  content: var(--chapter-name-after, "");
+}
+
+/* misc elements */
+.subtitle span {
+  font-size: .9em;
+}
+img {
+  max-width: 100%;
+}
+pre {
+  padding: 1em;
+  white-space: pre-wrap;
+}
+pre[class] {
+  background: #f9f9f9;
+}
+abbr {
+  text-decoration: none;
+}
+
+@media screen {
+  div.sourceCode {
+    overflow: visible !important;
+  }
+  a.sourceLine::before {
+    text-decoration: unset !important;
+  }
+}
+pre.numberSource a.sourceLine {
+  left: 0 !important;
+  text-indent: -5em
+}
+pre.numberSource {
+  margin-left: 0 !important;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+  border-bottom: 1px solid #666;
+}
+table thead th {
+  border-bottom: 1px solid #ddd;
+}
+thead, tfoot, tr:nth-child(even) {
+  background: #eee;
+}
+/* knitr::kables styling, see https://github.com/rstudio/pagedown/issues/214 */
+.kable_wrapper > tbody > tr > td {
+    vertical-align: top;
+}
+.footnotes {
+  font-size: 90%;
+}
+.footnotes hr::before {
+  content: "Footnotes:";
+}
+.footnotes hr {
+  border: none;
+}
+.footnote-break {
+  width: 1in;
+}
+body {
+  hyphens: auto;
+}
+code {
+  hyphens: none;
+}
+
+/* two pages in a row if possible on screen */
+@media screen {
+  body {
+    background-color: var(--background);
+    margin: var(--screen-pages-spacing) auto 0 auto;
+  }
+  .pagedjs_pages {
+    display: flex;
+    max-width: calc(var(--pagedjs-width) * 2);
+    flex: 0;
+    flex-wrap: wrap;
+    margin: 0 auto;
+  }
+  .pagedjs_page {
+    background-color: var(--color-paper);
+    box-shadow: 0 0 0 1px var(--color-mbox);
+    flex-shrink: 0;
+    flex-grow: 0;
+    margin: auto auto var(--screen-pages-spacing) auto;
+  }
+}
+
+/* when a row can hold two pages, start first page on the right */
+@media screen and (min-width: 12.32in) {
+  .pagedjs_page {
+    margin: auto 0 var(--screen-pages-spacing) 0;
+  }
+  .pagedjs_first_page {
+    margin-left: var(--pagedjs-width);
+  }
+}
+
+/* use a fixed width body for mobiles */
+@media screen and (max-width:1180px)  {
+  body {
+    width: calc(var(--pagedjs-width) + 2 * var(--screen-pages-spacing));
+  }
+}

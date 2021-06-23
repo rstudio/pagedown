@@ -1,0 +1,190 @@
+@import 'https://fonts.googleapis.com/css?family=Paytone+One|PT+Sans';
+@import 'https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/semantic.min.css';
+
+@page {
+  size: 46.8in 33.1in;
+  margin: 0;
+}
+html, body {
+  background: #cce7f1;
+}
+html {
+  font-family: "PT Sans";
+  width: 46.8in;
+  height: 33.09669in;
+}
+body {
+  margin: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: grid;
+  grid-gap: 1.2in;
+  grid-template-columns: 60px 60px;
+  padding: 1.2in !important;
+}
+div .title.ribbon {
+  font-size: 0.6in;
+  border-radius: 0 0.2in 0.2in 0 !important;
+}
+.content {
+  max-width: 100%;
+}
+p {
+  margin-top: 0.5em;
+}
+body, p, .math, li {
+  font-size: 32px;
+}
+h2 {
+  font-size: 48px;
+}
+.figure {
+  break-inside: avoid;
+  box-shadow: 0 1px 3px 0 #d4d4d5, 0 0 0 1px #d4d4d5;
+  color: #666;
+  padding: 1em;
+}
+img {
+  max-width: 100%;
+}
+.figure img {
+  display: block;
+  margin: auto;
+}
+.figure .caption {
+  font-size: 24px;
+}
+.card {
+  line-height: 1.3em;
+}
+pre {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  width: 100%;
+  padding: 0.8em;
+  font-size: 36px;
+}
+body {
+  grid-template-areas:
+   "P P H H H M M"
+   "P P H H H M M"
+   "P P U U U M M"
+   "R R R R R M M"
+   "R R R R R S S";
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+}
+.section-1 {
+  grid-area: H;
+}
+.section-2 {
+  grid-area: U;
+}
+.section-3 {
+  grid-area: P;
+}
+.section-4 {
+  grid-area: M;
+}
+.section-5 {
+  grid-area: R;
+}
+.section-6 {
+  grid-area: S;
+}
+
+.section-1 h1 {
+  margin: 0;
+  font-size: 1.5in;
+  font-family: "Paytone One";
+  text-align: center;
+  text-transform: uppercase;
+  color: #2c2c2c;
+  letter-spacing: .05em;
+  text-shadow: 0.04em 0.04em 0px #cdeaf4, 0.07em 0.07em 0px rgba(0, 0, 0, 0.2);
+}
+.section-1 h1 .tiny {
+  display: block;
+  text-shadow: none;
+  font-size: 0.5em;
+  text-transform: none;
+  margin-top: -0.7em;
+  margin-bottom: -0.7em;
+}
+.section-1 p {
+  font-family: "Paytone One";
+  width: 100%;
+  height: auto;
+  outline: 0.1in dashed #98abb9;
+  outline-offset: -0.3in;
+  background-color: #556068;
+  margin-top: 1in;
+  -webkit-box-shadow: 0.1in 0.1in 0.1in #000;
+  color: #ffffffdd;
+  text-align: justify;
+  padding: 2.3em;
+}
+.section-1 a {
+  color: #fbbd08;
+}
+
+.section-2 p {
+  float: left;
+  margin: 0.5in 0.5cm auto 1cm;
+  width: 22%;
+}
+.section-2 .card {
+  display: inline-block;
+  height: 11cm;
+  vertical-align: top;
+  margin-right: 0.8cm;
+  margin-top: -3cm !important;
+}
+.section-2 .disclaimer {
+  position: absolute;
+  bottom: -0.6em;
+  right: 0.6em;
+  color: #aaa;
+}
+.section-2 .member-cards {
+  float: right;
+}
+
+.section-3 .content, .section-4 .content, .section-5 .content {
+  padding: 1cm;
+  text-align: justify;
+}
+
+.section-5 .content {
+  margin-top: -2cm;
+  column-count: 4;
+  column-gap: 2cm;
+  column-fill: auto;
+  padding-bottom: 0.3cm;
+  padding-top: 0.3cm;
+}
+.section-5 .content > p:first-of-type {
+  margin-top: 3cm;
+}
+
+.section-6 .content {
+  margin-top: -2cm;
+  column-count: 2;
+  column-gap: 2cm;
+  column-fill: auto;
+  padding: 1cm;
+  padding-bottom: 0.3cm;
+  padding-top: 0.3cm;
+}
+.section-6 .content p {
+  font-size: 26px;
+  margin-bottom: 0.2cm;
+}
+.section-6 .content .references div:first-child {
+  margin-top: 3cm;
+}
+
+@media screen {
+  body {
+    overflow-x: auto;
+  }
+}

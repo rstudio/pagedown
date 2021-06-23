@@ -1,0 +1,282 @@
+:root {
+  --background: #2888b8;
+  --pagedjs-width: 210mm;
+  --color-paper: white;
+  --screen-pages-spacing: 5mm;
+  --header-width: 462px;
+  --header-image-padding: 18px;
+}
+
+html {
+  font-size: 14px;
+}
+
+/* article header */
+.document-header {
+  border-width: 4px 0;
+  border-style: solid;
+  width: var(--header-width);
+  position: relative;
+  margin-left: auto;
+  margin-bottom: 110px;
+}
+.document-header::before {
+  content: "";
+  display: block;
+  position: absolute;
+  left: calc(var(--header-width) - var(--pagedjs-width) + var(--pagedjs-margin-left) + var(--pagedjs-margin-right));
+  border-width: 4px 0;
+  border-style: solid;
+  border-color: transparent;
+  top: -4px;
+  height: 100%;
+  width: calc(var(--pagedjs-width) - var(--pagedjs-margin-left) - var(--pagedjs-margin-right) - var(--header-width) - var(--header-image-padding));
+  background-clip: border-box;
+  background-image: url(https://www.jstatsoft.org/public/site/images/jstatsoft/jsslogo.jpg);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-origin: border-box;
+}
+.journal-name {
+  padding-top: 14px;
+  padding-left: 20px;
+  filter: invert(100%);
+  height: 50px;
+}
+.header-meta {
+  font-style: italic;
+  margin: 6px 0;
+  font-size: 14px;
+}
+.header-meta .doi {
+  float: right;
+}
+
+/* title */
+h1.title {
+  text-align: center;
+}
+
+/* authors block */
+.authors-container {
+  display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: wrap-reverse;
+  justify-content: space-around;
+}
+.author-item {
+  text-align: center;
+  padding: 0 6px;
+  flex: 1 1 33%;
+  order: calc(-1 * var(--rank));
+}
+.author {
+  font-weight: bold;
+}
+.author-affil {
+  font-size: 14px;
+}
+
+/* abstract */
+.abstract {
+  border-width: 1px 0;
+  border-style: solid;
+  margin-top: 8px;
+  margin-bottom: 50px;
+}
+h2.abstract-header {
+  font-size: 14px;
+  text-align: center;
+}
+.abstract-content {
+  font-size: 13px;
+  padding: 0 30px;
+  text-align: justify;
+  text-indent: 16px;
+}
+.keywords p {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.keywords-heading {
+  font-style: italic;
+}
+
+/* headers */
+main {
+  margin-top: 30px;
+}
+.level1 h1 {
+  text-align: center;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+.level1:not(:first-child) {
+  margin-top: 30px;
+}
+.level1:first-child h1 {
+  margin-top: 0;
+}
+.level1 {
+  counter-increment: section-level 1;
+}
+.level1 h1:before {
+  content: counter(section-level) ".";
+  padding-right: 6px;
+}
+.level2 h2 {
+  font-size: 16px;
+}
+.level2 {
+  counter-increment: subsection-level 1;
+}
+.level2 > h2:before {
+  content: counter(section-level) "." counter(subsection-level) ".";
+  padding-right: 6px;
+}
+
+/* main content */
+.section {
+  widows: 3;
+  orphans: 3;
+}
+p {
+  widows: 3;
+  orphans: 3;
+  text-align: justify;
+  font-size: 14px;
+  line-height: 16px;
+  margin: 7px 0;
+}
+a {
+  text-decoration: none;
+  color: #000080;
+}
+.uri, .email, .doi, a[href^="http"] {
+  color: #800000;
+}
+pre, code {
+  white-space: pre;
+}
+.r-chunk-code {
+  font-style: italic;
+}
+.smallcaps {
+  font-variant: small-caps;
+}
+main img {
+  max-width: 100%;
+  max-height: calc(var(--pagedjs-height) - var(--pagedjs-margin-top) - var(--pagedjs-margin-bottom));
+}
+.figure {
+  break-inside: avoid;
+}
+.caption {
+  text-align: justify;
+  margin: 14px 0;
+}
+.footnote-break {
+  width: 40%;
+  border-color: black;
+  border-width: 0.5px;
+}
+sub, sup {
+  line-height: 0.75;
+}
+.table-container {
+  break-inside: avoid;
+}
+table {
+  margin: auto;
+}
+/* knitr::kables styling, see https://github.com/rstudio/pagedown/issues/214 */
+.kable_wrapper > tbody > tr > td {
+    vertical-align: top;
+}
+
+/* bibliography */
+#references {
+  margin: 30px 0;
+}
+.references p {
+  text-indent: -12px;
+  padding: 7px 0 7px 12px;
+}
+
+/* footer */
+.article-footer {
+  break-inside: avoid;
+}
+.article-footer:not(:first-child) {
+  margin-top: 50px;
+}
+.affil-header {
+  font-size: 16px;
+  margin: 8px 0;
+}
+.article-footer address {
+  font-style: normal;
+}
+.article-footer address p {
+  margin: 0;
+}
+.article-footer .author {
+  font-weight: normal;
+}
+.last-page-footer {
+  border-width: 1px 0;
+  border-style: solid;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  font-size: 16px;
+  margin-bottom: 40px;
+}
+.jss-meta {
+  margin: 8px 0 4px 0;
+}
+.jss-meta .journal-name {
+  padding: 0;
+  margin: 0;
+  height: 17px;
+}
+.last-page-footer .uri {
+  float: right;
+}
+.footer-issue, .info-dates {
+  display: inline-block;
+  margin: 4px 0;
+  line-height: 18px;
+}
+.info-dates {
+  float: right;
+  text-align: right;
+}
+
+/* viewer */
+@media screen {
+  body {
+    background-color: var(--background);
+    margin: var(--screen-pages-spacing) auto 0 auto;
+  }
+  .pagedjs_pages {
+    display: flex;
+    max-width: var(--pagedjs-width);
+    flex: 0;
+    flex-wrap: wrap;
+    margin: 0 auto;
+  }
+  .pagedjs_page {
+     background: var(--color-paper);
+     box-shadow: 0 4px 10px rgb(0, 0, 0, 0.6), inset 0 0 3px rgb(0, 0, 0, 0.6);
+     flex-shrink: 0;
+     flex-grow: 0;
+     margin: auto auto var(--screen-pages-spacing) auto;
+  }
+}
+
+@media screen and (max-width:1180px)  {
+  body {
+    width: calc(var(--pagedjs-width) + 2 * var(--screen-pages-spacing));
+  }
+}

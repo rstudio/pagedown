@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta property="dc:format" content="text/html">
+<meta name="generator" content="pandoc">
+<meta name="viewport" content="width=device-width">
+<meta property="dc:type" content="Text">
+<meta property="dc:language" content="en">
+<meta property="dc:title og:title" content="A Capitalized Title: Something about a Package foo">
+
+<meta property="og:image" content="https://www.jstatsoft.org/public/site/images/jstatsoft/jsslogo.jpg">
+<link rel="icon" href="https://www.jstatsoft.org/public/journals/1/journalFavicon_en_US.gif">
+<meta name="description" property="dc:description og:description schema:description" content="A Capitalized Title: Something about a Package foo">
+
+
+<meta name="keywords" property="dc:subject" content="keywords, not capitalized, Java">
+
+<title>A Capitalized Title: Something about a Package foo</title>
+
+<script>
+window.PagedConfig = {
+  before: async () => {
+    // Expand the citations links
+    let citations = document.querySelectorAll('.citation');
+    for (let citation of citations) {
+      let anchor = citation.querySelector('a');
+      if (!anchor) continue;
+      let span = document.createElement('span');
+      span.innerHTML = anchor.innerHTML
+      anchor.insertAdjacentElement('afterend', span)
+      let href = anchor.getAttribute('href')
+      anchor.remove();
+
+      let newAnchor = document.createElement('a');
+      newAnchor.setAttribute('href', href);
+      citation.insertAdjacentElement('beforebegin', newAnchor);
+      newAnchor.appendChild(citation);
+    }
+
+    // For the table captions, we would want to write this CSS rule:
+    //     caption {caption-side: bottom-outside;}
+    // However, the bottom-outside value is not standard and not implemented in Chrome.
+    // So, we need to modify the DOM.
+    let tables = document.querySelectorAll('table');
+    for (let table of tables) {
+      let caption = table.querySelector('caption');
+      if (!caption) continue;
+      let tableContainer = document.createElement('div');
+      tableContainer.className = 'table-container';
+      table.insertAdjacentElement('beforebegin', tableContainer);
+      tableContainer.appendChild(table);
+      let bookdownIdentifier = caption.querySelector('span[id^="tab\\:"]');
+      if (!!bookdownIdentifier) {
+        let tableId = bookdownIdentifier.id;
+        bookdownIdentifier.removeAttribute('id');
+        table.id = tableId;
+      }
+      let newCaption = document.createElement('p');
+      newCaption.className = 'caption';
+      newCaption.innerHTML = caption.innerHTML;
+      caption.remove();
+      tableContainer.appendChild(newCaption);
+    }
+  }
+}
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function() {
+  let beforePaged = PagedConfig.before;
+
+  window.PagedConfig = {
+    before: async () => {
+      await beforePaged();
+      await new Promise((resolve, reject) => {
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        var src = `https://mathjax.rstudio.com/latest/MathJax.js` + "?config=TeX-MML-AM_CHTML";
+        if (location.protocol !== "file:" && /^https?:/.test(src))
+          src = src.replace(/^https?:/, '');
+        script.src = src;
+        window.MathJax = {
+          AuthorInit: () => {
+            MathJax.Hub.Register.StartupHook("Begin", () => {
+              MathJax.Hub.Queue(resolve);
+            });
+          }
+        };
+        document.getElementsByTagName("head")[0].appendChild(script);
+      });
+    }
+  };
+})();
+</script>
+
+<link href="jss-paged_files/paged/css/jss-fonts.css" rel="stylesheet" />
+<link href="jss-paged_files/paged/css/jss-page.css" rel="stylesheet" />
+<link href="jss-paged_files/paged/css/jss.css" rel="stylesheet" />
+<script src="jss-paged_files/paged/js/config.js"></script>
+<script src="jss-paged_files/paged/js/paged.js"></script>
+<script src="jss-paged_files/paged/js/hooks.js"></script>
+
+
+
+
+</head>
+
+<body>
+  <div style="display:none" aria-hidden="true">
+  \(
+    \let\pkg=\mathbf
+    \let\proglang=\textsf
+    \let\code=\texttt
+    \newcommand{\E}{\mathsf{E}}
+    \newcommand{\VAR}{\mathsf{VAR}}
+    \newcommand{\COV}{\mathsf{COV}}
+    \newcommand{\Prob}{\mathsf{P}}
+  \)
+  </div>
+
+
+<header class="document-header">
+<img class="journal-name" alt="Journal of Statistical Software" src="https://www.jstatsoft.org/public/journals/1/homeHeaderTitleImage_en_US.png">
+<p class="header-meta">
+  <span class="issue">MMMMMM YYYY, Volume VV, Issue II.</span>
+  <a href="https://doi.org/10.18637/jss.v000.i00" class="doi">doi: 10.18637/jss.v000.i00</a>
+</p>
+</header>
+
+<article>
+
+<header id="header" class="title-page">
+<h1 class="title">A Capitalized Title: Something about a Package <strong>foo</strong></h1>
+<span class="shorttitle" style="display: none;" aria-hidden="true"><strong>foo</strong>: A Capitalized Title</span>
+<div class="authors-container" role="list">
+<p class="author-item" role="listitem" style="--rank: 1;">
+<span class="author">Yihui Xie</span>
+<br><span class="author-affil">
+RStudio
+</span>
+</p>
+<p class="author-item" role="listitem" style="--rank: 2;">
+<span class="author">Romain Lesur</span>
+<br><span class="author-affil">
+Affiliation
+</span>
+</p>
+</div>
+</header>
+
+<section class="abstract" property="dc:abstract">
+<h2 class="abstract-header">Abstract</h2>
+<div class="abstract-content">
+The abstract of the article.
+</div>
+<section class="keywords" role="list" aria-labelledby="keywords-header">
+<p><span id="keywords-header" class="keywords-heading" aria-level="3" role="heading">Keywords</span>: <span role="listitem">keywords</span>, <span role="listitem">not capitalized</span>, <span role="listitem"><span class="proglang">Java</span></span>.</p>
+</section>
+</section>
+
+<main role="main">
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>This template demonstrates some of the basic <span class="proglang">markdown</span> you’ll need to know to create a JSS article with <strong>pagedown</strong> <span class="citation">(Xie et al. <a href="#ref-R-pagedown">2021</a>)</span>.</p>
+<div id="code-formatting" class="section level2">
+<h2>Code formatting</h2>
+<p>You should use <strong>Pandoc</strong>’s <span class="proglang">markdown</span> but you also can use <span class="math inline">\(\LaTeX\)</span> commands:</p>
+<ul>
+<li><span class="proglang">Java</span> or <span class="math inline">\(\proglang{Java}\)</span></li>
+<li><strong>plyr</strong>, <span class="pkg">plyr</span> or <span class="math inline">\(\pkg{plyr}\)</span></li>
+<li><code>print(&quot;abc&quot;)</code> or <span class="math inline">\(\code{print(&quot;abc&quot;)}\)</span></li>
+</ul>
+</div>
+</div>
+<div id="r-code" class="section level1">
+<h1><span class="proglang">R</span> code</h1>
+<p>Can be inserted in regular <span class="proglang">R Markdown</span> blocks.</p>
+<pre class="r r-chunk-code"><code>R&gt; x &lt;- 1:10
+R&gt; x</code></pre>
+<pre><code> [1]  1  2  3  4  5  6  7  8  9 10</code></pre>
+</div>
+<div id="render-the-document" class="section level1">
+<h1>Render the document</h1>
+<p>If you use the option <code>self_contained: false</code> (see line #22 of this <code>Rmd</code> file), don’t click on the <code>Knit</code> button in RStudio. Use instead the <strong>xaringan</strong> <span class="citation">(Xie <a href="#ref-R-xaringan">2021</a>)</span> RStudio add-in <em>Infinite Moon Reader</em>.</p>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-R-xaringan">
+<p>Xie Y (2021). <em>Xaringan: Presentation Ninja</em>. Retrieved from <a href="https://github.com/yihui/xaringan">https://github.com/yihui/xaringan</a></p>
+</div>
+<div id="ref-R-pagedown">
+<p>Xie Y, Lesur R, Thorne B, Tan X (2021). <em>Pagedown: Paginate the Html Output of R Markdown with Css for Print</em>. Retrieved from <a href="https://github.com/rstudio/pagedown">https://github.com/rstudio/pagedown</a></p>
+</div>
+</div>
+</div>
+</main>
+
+<footer class="article-footer">
+<h3 class="affil-header">Affiliation:</h3>
+<address>
+<p class="author">Yihui Xie</p>
+<p class="author-affil">RStudio</p>
+<p class="author-address">First line<br />
+Second line</p>
+<p>E-mail: <a href="mailto:name@company.com" class="email">name@company.com</a></p>
+<p>URL: <a href="https://rstudio.com" class="uri">https://rstudio.com</a></p>
+</address>
+<div class="last-page-footer">
+<p class="jss-meta">
+<img class="journal-name" alt="Journal of Statistical Software" src="https://www.jstatsoft.org/public/journals/1/homeHeaderTitleImage_en_US.png"> <a class="uri" href="https://www.jstatsoft.org/">http://www.jstatsoft.org/</a><br>
+published by the Foundation for Open Access Statistics <a class="uri" href="http://www.foastat.org/">http://www.foastat.org/</a>
+</p>
+<p class="footer-issue">
+MMMMMM YYYY, Volume VV, Issue II
+<br><a href="https://doi.org/10.18637/jss.v000.i00" class="doi">doi: 10.18637/jss.v000.i00</a>
+</p>
+<p class="info-dates">
+<em>Submitted:</em> yyyy-mm-dd<br>
+<em>Accepted:</em> yyyy-mm-dd
+</p>
+</div>
+</footer>
+</article>
+
+
+<script>
+// when the page is about to reload via servr, remember the scroll position
+document.addEventListener('servr:reload', function(e) {
+  sessionStorage.setItem('pagedown-scroll', window.scrollY);
+});
+</script>
+</body>
+</html>

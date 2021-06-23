@@ -1,0 +1,440 @@
+/* This template was modified by Brent Thorne from the 'default-page.css, and default.css' file please see the wonderful work done by Yihui Xhe and Romain Lesaur on that package at https://github.com/rstudio/pagedown */
+
+/* page size */
+@page {
+  size: A4;
+  margin: 1in, 1in, 1in, 1.5in;
+} /* var(--pagedjs-width) doesn't work in browser when printing */
+
+/* store some string variables */
+.shorttitle1 {
+  string-set: h1-text content(text);
+}
+
+.shorttitle2 {
+  string-set: h2-text content(text);
+}
+
+/* left page */
+.running-h1-title {
+  position: running(runningH1Title);
+  width: var(--running-title-width);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.running-h1-title:before {
+  content: string(h1-text);
+}
+
+@page chapter:left {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+    white-space: nowrap !important;
+  }
+  @bottom-right {
+    content: counter(page);
+    }
+}
+
+/* right page */
+.running-h2-title {
+  position: running(runningH2Title);
+  width: var(--running-title-width);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.running-h2-title:before {
+/* We would want to write: */
+/* content: string(h2-text, start); */
+/* However, this is yet unsupported by Paged.js, see https://gitlab.pagedmedia.org/tools/pagedjs/issues/38 */
+  content: string(h2-text);
+}
+@page chapter:right {
+  @top-right {
+    content: none;
+  }
+  @top-left {
+    content: none;
+    white-space: nowrap !important;
+  }
+  @bottom-right {
+    content: counter(page);
+  }
+}
+
+/* New chapter page */
+@page chapter:first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: counter(page);
+  }
+}
+@page :first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: none !important;
+  }
+}
+
+/* Front matter*/
+@page frontmatter:left {
+  @top-left {
+    content: counter(page, lower-roman);
+  }
+  @top-right {
+    content: element(runningH1Title);
+    white-space: nowrap !important;
+  }
+}
+@page frontmatter:right {
+  @top-right {
+    content: counter(page, lower-roman);
+  }
+  @top-left {
+    content: element(runningH1Title);
+    white-space: nowrap !important;
+  }
+}
+@page frontmatter:first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: counter(page, lower-roman);
+  }
+}
+/* page breaks; aka CSS fragmentation */
+.level1 {
+  page: chapter;
+}
+.front-matter-container .level1 {
+  page: frontmatter;
+}
+h1, h2, h3, h4, h5, h6 {
+  break-after: avoid;
+}
+.footenotes {
+  break-before: always;
+  break-after: always;
+}
+.figure {
+  break-inside: avoid;
+}
+#TOC {
+  counter-reset: page 1;
+}
+/* reset page numbering after front matter */
+.front-matter-container+.level1 h1 {
+  counter-reset: page 1;
+}
+
+a[href^="http"]:not([class="uri"])::after {
+  content: "";
+}
+div.dedication {
+  break-before: page;
+}
+div.abstract {
+  break-before: page;
+}
+div.preface {
+  break-before: page;
+}
+div.acknowledge {
+  break-before: page;
+}
+div.signpage {
+  break-before: page;
+  counter-reset: page 1;
+}
+.front-page {
+  padding-top: 1in;
+  text-align: center;
+}
+h1.title {
+  font-size: 16pt;
+  line-height: normal;
+  font-weight: normal;
+  text-transform: uppercase;
+}
+h2.degree {
+  font-weight: normal;
+}
+h1.subtitle {
+  font-size: 14pt;
+  line-height: normal;
+  font-weight: normal;
+  font-style: italic;
+  text-align: center;
+}
+p.titlep, p.institute {
+  line-height: normal;
+}
+h2.author {
+  font-size: 13pt;
+  font-weight: normal;
+}
+.dedication,.abstract, .preface, .acknowledge {
+  text-align: left;
+  line-height: 100%;
+}
+div.dedication > p {
+  text-align: center;
+  font-style: italic;
+  padding-top: 1in;
+}
+p.abstract {
+  line-height: 200%;
+}
+body {
+  font-family: "Trebuchet MS";
+  font-size: 11pt;
+  line-height: 200%;
+}
+TOC {
+  line-height: 50%;
+}
+h1 {
+  font-size: 14pt;
+}
+h2 {
+  font-size: 12pt;
+}
+ul, li, a {
+  color: #000000;
+}
+h3 {
+  font-size: 12pt;
+  font-weight: normal;
+  font-style: italic;
+}
+.caption {
+  font-size: 9pt;
+  line-height: normal;
+  padding-left: 1cm;
+  padding-right: 1cm;
+}
+#references p {
+  font-size: 9pt;
+  line-height: 120%;
+}
+span.citation {
+}
+code {
+  font-size: 9pt;
+  line-height: 110%;
+}
+.signature {
+  border: 0;
+  border-top: 1px solid #000;
+  padding: 0;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 0;
+  margin-bottom: 0.6in;
+  width: 3.5in;
+  position: relative;
+}
+p {
+  line-height: 200%;
+}
+.chapter > h1 > .header-section-number::before, .chapter-ref > .toc-section-number::before {
+  content: var(--chapter-name-before, "Chapter ");
+}
+.chapter > h1 > .header-section-number::after, .chapter-ref > .toc-section-number::after {
+  content: var(--chapter-name-after, "");
+}
+.chapter-ref {
+  font-weight: bold;
+  line-height: 115%;
+}
+a.chapter-ref {
+  padding: 0;
+  line-height: 110%;
+}
+#list-of-abbreviations {
+  line-height: 110%;
+}
+:root {
+  --background: whitesmoke;
+  --pagedjs-width: 6in;
+  --pagedjs-height: 9in;
+  --color-paper: white;
+  --color-mbox: rgba(0, 0, 0, 0.2);
+  --running-title-width: 2.5in;
+  --screen-pages-spacing: 5mm;
+}
+
+/* generated content */
+a[href^="http"]:not([class="uri"])::after {
+  font-size: 90%;
+  hyphens: none;
+  word-break: break-all;
+}
+.references a[href^=http]:not([class=uri])::after {
+  content: none;
+}
+.main a[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
+  content: " (page " target-counter(attr(href), page) ")";
+}
+.main a.front-matter-ref[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
+  content: " (page " target-counter(attr(href), page, lower-roman) ")";
+}
+#refs div {
+  margin-left: 2em;
+  text-indent: -2em;
+  text-align: justify;
+}
+/* TOC, LOT, LOF */
+.toc ul, .lot ul, .lof ul {
+  list-style: none;
+  padding-left: 0;
+  overflow-x: hidden;
+}
+.toc li li {
+  padding-left: 1em;
+}
+.toc a, .lot a, .lof a {
+  text-decoration: none;
+  background: white;
+  padding-right: .33em;
+}
+.toc a::after, .lot a::after, .lof a::after {
+  /* content: leader(dotted) target-counter(attr(href), page); */
+  content: target-counter(attr(href), page);
+  float: right;
+  background: white;
+}
+.toc a.front-matter-ref::after, .lot a.front-matter-ref::after, .lof a.front-matter-ref::after {
+  /* content: leader(dotted) target-counter(attr(href), page, lower-roman); */
+  content: target-counter(attr(href), page, lower-roman);
+}
+.toc .leaders::before, .lot .leaders::before, .lof .leaders::before {
+  float: left;
+  width: 0;
+  white-space: nowrap;
+  content: ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ";
+}
+/* Use empty space for sections that are of
+class chapter and chapter-ref*/
+.toc .chapter-ref .leaders::before {
+  float: left;
+  width: 0;
+  white-space: nowrap;
+  content: "                                                                                                                                                                                ";
+}
+
+
+/* misc elements */
+.subtitle span {
+  font-size: .9em;
+}
+img {
+  max-width: 100%;
+}
+pre {
+  padding: 1em;
+}
+pre[class] {
+  background: #f9f9f9;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  border-collapse:collapse;
+  font-size: 9pt;
+  line-height: 115%;
+}
+table th {
+  border-bottom: 1px solid #000;
+}
+th {
+  padding: 0.1cm;
+}
+thead {
+  border-bottom: 1px solid #000;
+  line-height: 140%;
+}
+table > caption {
+  margin-bottom: 0.3cm;
+}
+/* knitr::kables styling, see https://github.com/rstudio/pagedown/issues/214 */
+.kable_wrapper > tbody > tr > td {
+    vertical-align: top;
+}
+.footnotes {
+  font-size: 90%;
+}
+.footnotes hr::before {
+  content: "Footnotes:";
+}
+.footnotes hr {
+  border: none;
+}
+.footnote-break {
+  width: 1in;
+}
+body {
+  hyphens: auto;
+}
+code {
+  hyphens: none;
+}
+.sourceCode {
+  line-height: 1;
+}
+/* two pages in a row if possible on screen */
+@media screen {
+  body {
+    background-color: var(--background);
+    margin: var(--screen-pages-spacing) auto 0 auto;
+  }
+  .pagedjs_pages {
+    display: flex;
+    max-width: calc(var(--pagedjs-width) * 2);
+    flex: 0;
+    flex-wrap: wrap;
+    margin: 0 auto;
+  }
+  .pagedjs_page {
+    background: var(--color-paper);
+    box-shadow: 0 0 0 1px var(--color-mbox);
+    flex-shrink: 0;
+    flex-grow: 0;
+    margin: auto auto var(--screen-pages-spacing) auto;
+  }
+}
+
+/* when a row can hold two pages, start first page on the right */
+@media screen and (min-width: 12.32in) {
+  .pagedjs_page {
+    margin: auto 0 var(--screen-pages-spacing) 0;
+  }
+  .pagedjs_first_page {
+    margin-left: var(--pagedjs-width);
+  }
+}
+
+/* use a fixed width body for mobiles */
+@media screen and (max-width:1180px)  {
+  body {
+    width: calc(var(--pagedjs-width) + 2 * var(--screen-pages-spacing));
+  }
+}

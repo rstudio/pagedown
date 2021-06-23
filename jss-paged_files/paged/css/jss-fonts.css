@@ -1,0 +1,64 @@
+@font-face {
+  font-family: 'MJSerif';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://mathjax.rstudio.com/latest/fonts/HTML-CSS/TeX/woff/MathJax_Main-Regular.woff) format('woff');
+}
+@font-face {
+  font-family: 'MJSerif';
+  font-style: normal;
+  font-weight: bold;
+  src: url(https://mathjax.rstudio.com/latest/fonts/HTML-CSS/TeX/woff/MathJax_Main-Bold.woff) format('woff');
+}
+@font-face {
+  font-family: 'MJSerif';
+  font-style: italic;
+  font-weight: 400;
+  src: url(https://mathjax.rstudio.com/latest/fonts/HTML-CSS/TeX/woff/MathJax_Main-Italic.woff) format('woff');
+}
+
+@font-face {
+  font-family: 'MJSans';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://mathjax.rstudio.com/latest/fonts/HTML-CSS/TeX/woff/MathJax_SansSerif-Regular.woff) format('woff');
+}
+@font-face {
+  font-family: 'MJSans';
+  font-style: normal;
+  font-weight: bold;
+  src: url(https://mathjax.rstudio.com/latest/fonts/HTML-CSS/TeX/woff/MathJax_SansSerif-Bold.woff) format('woff');
+}
+@font-face {
+  font-family: 'MJSans';
+  font-style: italic;
+  font-weight: 400;
+  src: url(https://mathjax.rstudio.com/latest/fonts/HTML-CSS/TeX/woff/MathJax_SansSerif-Italic.woff) format('woff');
+}
+
+@font-face {
+  font-family: 'MJMono';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://mathjax.rstudio.com/latest/fonts/HTML-CSS/TeX/woff/MathJax_Typewriter-Regular.woff) format('woff');
+}
+
+body {
+  font-family: 'MathJax_Main', MJSerif, 'source-han-serif-sc', 'Source Han Serif SC', 'Source Han Serif CN', 'Source Han Serif TC', 'Source Han Serif TW', 'Source Han Serif', 'Songti SC', 'Microsoft YaHei', Times, serif;
+}
+
+blockquote {
+  font-family: 'MathJax_Main', MJSerif, 'STKaiti', 'KaiTi', '楷体', 'SimKai', 'DFKai-SB', 'NSimSun', Times, serif;
+}
+
+code, .uri, .email, .doi {
+  font-family: 'MathJax_Typewriter', MJMono, "Courier New", 'STKaiti', 'KaiTi', 'SimKai', Courier, monospace;
+}
+
+.pkg {
+  font-weight: bold;
+}
+
+.proglang {
+  font-family: 'MathJax_SansSerif', MJSans, sans-serif;
+}

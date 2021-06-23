@@ -1,0 +1,170 @@
+/* page size */
+@page {
+  size: 6in 9in; /* var(--pagedjs-width) doesn't work in browser when printing */
+}
+@page :blank {
+
+}
+
+/* store some string variables */
+.shorttitle1 {
+  string-set: h1-text content(text);
+}
+
+.shorttitle2 {
+  string-set: h2-text content(text);
+}
+
+/* left page */
+.running-h1-title {
+  position: running(runningH1Title);
+  width: var(--running-title-width);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.running-h1-title:before {
+  content: string(h1-text);
+}
+
+@page chapter:left {
+  @top-left {
+    content: counter(page);
+  }
+  @top-right {
+    content: element(runningH1Title);
+    white-space: nowrap !important;
+  }
+}
+
+/* right page */
+.running-h2-title {
+  position: running(runningH2Title);
+  width: var(--running-title-width);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.running-h2-title:before {
+  /* We would want to write: */
+  /* content: string(h2-text, start); */
+  /* However, this is yet unsupported by Paged.js, see https://gitlab.pagedmedia.org/tools/pagedjs/issues/38 */
+  content: string(h2-text);
+}
+@page chapter:right {
+  @top-right {
+    content: counter(page);
+  }
+  @top-left {
+    content: element(runningH2Title);
+    white-space: nowrap !important;
+  }
+}
+
+/* New chapter page */
+@page chapter:first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: counter(page);
+  }
+}
+@page :first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: none !important;
+  }
+  background-image: var(--front-cover);
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+/* Front cover */
+.front-cover {
+  break-after: recto;
+}
+
+/* Front page or title page */
+.front-page {
+  counter-reset: page 1;
+}
+
+/* Front matter*/
+@page frontmatter:left {
+  @top-left {
+    content: counter(page, lower-roman);
+  }
+  @top-right {
+    content: element(runningH1Title);
+    white-space: nowrap !important;
+  }
+}
+@page frontmatter:right {
+  @top-right {
+    content: counter(page, lower-roman);
+  }
+  @top-left {
+    content: element(runningH1Title);
+    white-space: nowrap !important;
+  }
+}
+@page frontmatter:first {
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-right {
+    content: counter(page, lower-roman);
+  }
+}
+
+/* last page or back cover */
+.back-cover {
+  break-before: verso;
+}
+.pagedjs_page:nth-last-of-type(1) {
+  background-image: var(--back-cover);
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+/* page breaks; aka CSS fragmentation */
+.level1 {
+  break-before: recto;
+  page: chapter;
+}
+.front-matter-container .level1 {
+  page: frontmatter;
+}
+.section > h1, .section > h2, .section > h3, .section > h4, .section > h5, .section > h6 {
+  break-after: avoid;
+}
+.footenotes {
+  break-before: always;
+  break-after: always;
+}
+.figure {
+  break-inside: avoid;
+}
+
+/* reset page numbering for main content */
+.main .level1:first-child h1 {
+  counter-reset: page 1;
+}
+
+/* do not break captions */
+caption {
+  break-inside: avoid;
+  break-after: avoid;
+}
