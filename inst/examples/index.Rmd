@@ -88,7 +88,21 @@ output:
       - default
 ```
 
+To use a different font you may also need to import it with a line beginning `@import` at the beginning of your custom `.css` file.
+The following contents of the same CSS file will make the resulting document use the [Comic Neue](http://comicneue.com/) font, for example:
+
+```css
+/* font location goes here:*/
+@import 'https://fonts.googleapis.com/css?family=Comic+Neue';
+
+body {
+  font-family: "Comic Neue";
+}
+```
+
 Note that this overriding mechanism also works for other output formats in **pagedown**.
+
+For more on setting fonts with CSS, see online documentation such as that provided by [w3schools.com](https://www.w3schools.com/css/css_font.asp)
 
 ## Print to PDF
 
