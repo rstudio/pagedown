@@ -4,16 +4,17 @@
 \alias{html_letter}
 \title{Create a letter in HTML}
 \usage{
-html_letter(..., css = c("default", "letter"))
+html_letter(..., css = c("default", "letter"), fig_caption = FALSE)
 }
 \arguments{
-\item{..., css}{Arguments passed to \code{\link{html_paged}()}.}
+\item{..., css, fig_caption}{Arguments passed to \code{\link{html_paged}()}.}
 }
 \value{
 An R Markdown output format.
 }
 \description{
-This output format is similar to \code{html_paged}. The only difference is in
-the default stylesheets. See \url{https://pagedown.rbind.io/html-letter/} for
-an example.
+This output format is similar to \code{html_paged}. The only differences are
+in the default stylesheets and the default value of the \code{fig_caption}
+parameter which is set to \code{FALSE}. See
+\url{https://pagedown.rbind.io/html-letter/} for an example.
 }

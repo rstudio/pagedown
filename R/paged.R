@@ -51,14 +51,15 @@ html_paged = function(
 
 #' Create a letter in HTML
 #'
-#' This output format is similar to \code{html_paged}. The only difference is in
-#' the default stylesheets. See \url{https://pagedown.rbind.io/html-letter/} for
-#' an example.
-#' @param ...,css Arguments passed to \code{\link{html_paged}()}.
+#' This output format is similar to \code{html_paged}. The only differences are
+#' in the default stylesheets and the default value of the \code{fig_caption}
+#' parameter which is set to \code{FALSE}. See
+#' \url{https://pagedown.rbind.io/html-letter/} for an example.
+#' @param ...,css,fig_caption Arguments passed to \code{\link{html_paged}()}.
 #' @return An R Markdown output format.
 #' @export
-html_letter = function(..., css = c('default', 'letter')) {
-  html_paged(..., css = css, fig_caption = FALSE)
+html_letter = function(..., css = c('default', 'letter'), fig_caption = FALSE) {
+  html_paged(..., css = css, fig_caption = fig_caption)
 }
 
 #' Create a book for Chapman & Hall/CRC

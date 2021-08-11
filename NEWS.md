@@ -1,5 +1,8 @@
 # CHANGES IN pagedown VERSION 0.16
 
+## MINOR CHANGES
+
+- Document that the `html_letter()` output format modifies the default value of the `fig_caption` parameter and allow the user to change it (thanks, @NewGraphEnvironment, #234).
 
 # CHANGES IN pagedown VERSION 0.15
 
