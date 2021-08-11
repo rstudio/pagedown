@@ -21,7 +21,7 @@ Description: Use the paged media properties in CSS and the JavaScript
   running headers, etc. Applications of this package include books, letters,
   reports, papers, business cards, resumes, and posters.
 Imports: rmarkdown (>= 1.16), bookdown (>= 0.8), htmltools, jsonlite, later (>= 1.0.0),
-  processx, servr (>= 0.18), httpuv, xfun, websocket
+  processx, servr (>= 0.22.1), httpuv, xfun, websocket
 Suggests: promises, testit, xaringan, pdftools, revealjs
 License: MIT + file LICENSE
 URL: https://github.com/rstudio/pagedown
@@ -29,3 +29,4 @@ BugReports: https://github.com/rstudio/pagedown/issues
 SystemRequirements: Pandoc (>= 2.2.3)
 Encoding: UTF-8
 RoxygenNote: 7.1.1
+Remotes: yihui/servr
