@@ -214,7 +214,7 @@ save_widget = function(widget, options) {
     selfcontained = TRUE,
     knitrOptions = options
   )
-  return(paste0(directory, f))
+  f
 }
 
 iframe_file = (function() {
