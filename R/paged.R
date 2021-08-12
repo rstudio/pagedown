@@ -189,7 +189,8 @@ knit_print.iframehtmlwidget = function(x, options, ..., self_contained) {
     d = normalizePath(d)
     if (self_contained) on.exit(unlink(d, recursive = TRUE), add = TRUE)
   }
-  f = save_widget(d, x, options)
+  f = xfun::in_dir(d, save_widget(x, options))
+  f = paste0(d, f)
   src = NULL
   srcdoc = NULL
   if (self_contained) {
