@@ -194,7 +194,7 @@ knit_print.iframehtmlwidget = function(x, options, ..., self_contained) {
   src = NULL
   srcdoc = NULL
   if (self_contained) {
-    srcdoc = paste0(collapse = '\n', readLines(f))
+    srcdoc = xfun::file_string(f)
     file.remove(f)
   } else {
     src = f
