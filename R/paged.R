@@ -186,8 +186,7 @@ knit_print.iframehtmlwidget = function(x, options, ..., self_contained) {
   d = options$fig.path
   if (!dir.exists(d)) {
     dir.create(d, recursive = TRUE)
-    d = normalizePath(d)
-    if (self_contained) on.exit(unlink(d, recursive = TRUE), add = TRUE)
+    if (self_contained) on.exit(unlink(normalizePath(d), recursive = TRUE), add = TRUE)
   }
   f = xfun::in_dir(d, save_widget(x, options))
   f = paste0(d, f)
