@@ -199,8 +199,10 @@ knit_print.iframehtmlwidget = function(x, options, ..., self_contained) {
     src = f
   }
   knitr::knit_print(autoscaling_iframe(
-    src = src, srcdoc = srcdoc, width = options$out.width.px,
-    height = options$out.height.px, extra.attr = options$out.extra
+    src = src, srcdoc = srcdoc,
+    class = paste(class(x), collapse = ' '),
+    width = options$out.width.px, height = options$out.height.px,
+    extra.attr = options$out.extra
   ))
 }
 
