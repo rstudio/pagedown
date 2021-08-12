@@ -89,6 +89,9 @@ pre[class] {
 abbr {
   text-decoration: none;
 }
+.htmlwidget {
+  max-width: 100%;
+}
 
 @media screen {
   div.sourceCode {
