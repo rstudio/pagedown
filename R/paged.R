@@ -205,11 +205,7 @@ knit_print.iframehtmlwidget = function(x, options, ..., self_contained) {
   ))
 }
 
-save_widget = function(directory, widget, options) {
-  old_wd = setwd(directory)
-  on.exit({
-    setwd(old_wd)
-  }, add = TRUE)
+save_widget = function(widget, options) {
   f = iframe_file()
   htmlwidgets::saveWidget(
     widget = widget, file = f,
