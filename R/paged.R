@@ -217,14 +217,14 @@ save_widget = function(widget, options) {
   f
 }
 
-iframe_file = (function() {
+iframe_file = local({
   n = 0L
   function(reset = FALSE) {
     if (reset) n <<- -1L
     n <<- n + 1L
     sprintf('iframe%i.html', n)
   }
-})()
+})
 
 autoscaling_iframe = function(width = NULL, height = NULL, ..., extra.attr = '') {
   if (length(extra.attr) == 0) extra.attr = ''
