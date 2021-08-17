@@ -95,7 +95,7 @@ chrome_print = function(
   ))
 
   debug_port = servr::random_port()
-  log_file = if (isTRUE(getOption('pagedown.keep.chrome.log'))) {
+  log_file = if (getOption('pagedown.chrome.log', FALSE)) {
     sprintf('chrome-stderr-%s.log', Sys.time())
   }
   ps = processx::process$new(browser, c(
