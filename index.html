@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta name="viewport" content="width=device-width">
+<meta property="og:title" content="pagedown: Create Paged HTML Documents for Printing from R Markdown" />
+
+
+
+
+<meta name="author" content="Yihui Xie and Romain Lesur" />
+
+<meta name="date" content="2021-08-18" />
+
+<meta name="description" content="pagedown: Create Paged HTML Documents for Printing from R Markdown">
+
+<script id="pandoc-meta" type="application/json">
+{"newpage_html_class":"page-break-after","shorttitle":"Printing R Markdown with CSS","toc-title":"Contents","lof":true,"paged-footnotes":true,"bibliography":"index.bib","date":"2021-08-18","subtitle":"A Less Traveled Road to PDF and Printing","lot":true,"output":{"pagedown::html_paged":{"self_contained":false,"toc":true,"front_cover":"pagedown_hex.svg"}},"author":"Yihui Xie and Romain Lesur","title":"pagedown: Create Paged HTML Documents for Printing from R Markdown"}
+</script>
+
+<title>pagedown: Create Paged HTML Documents for Printing from R Markdown</title>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function() {
+  // Retrieve previous config object if defined
+  window.PagedConfig = window.PagedConfig || {};
+  let beforePaged = PagedConfig.before;
+  window.PagedConfig.before = async () => {
+    if (beforePaged) await beforePaged();
+    return new Promise((resolve, reject) => {
+      var script = document.createElement("script");
+      script.type = "text/javascript";
+      var src = `https://mathjax.rstudio.com/latest/MathJax.js` + "?config=TeX-MML-AM_CHTML";
+      if (location.protocol !== "file:" && /^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+      script.src = src;
+      window.MathJax = {
+        AuthorInit: () => {
+          MathJax.Hub.Register.StartupHook("Begin", () => {
+            MathJax.Hub.Queue(resolve);
+          });
+        }
+      };
+      document.getElementsByTagName("head")[0].appendChild(script);
+    });
+  };
+})();
+</script>
+
+<link id="front-cover-1-pagedown-attachment" rel="attachment" href="index_files/front-cover-1/pagedown_hex.svg"/>
+<link href="index_files/paged/css/default-fonts.css" rel="stylesheet" />
+<link href="index_files/paged/css/default-page.css" rel="stylesheet" />
+<link href="index_files/paged/css/default.css" rel="stylesheet" />
+<script src="index_files/paged/js/config.js"></script>
+<script src="index_files/paged/js/paged.js"></script>
+<script src="index_files/paged/js/hooks.js"></script>
+
+
+<style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+
+</head>
+
+<body>
+
+<div class="running-h1-title"></div>
+
+<div class="running-h2-title"></div>
+
+
+
+<div class="front-page">
+<div id="header" class="title-page">
+<h1 class="shorttitle1" style="display: none;">Printing R Markdown with CSS</h1>
+<h1 class="title">pagedown: Create Paged HTML Documents for Printing from R Markdown</h1>
+<h1 class="subtitle"><span>A Less Traveled Road to PDF and Printing</span></h1>
+<h2 class="author">Yihui Xie and Romain Lesur</h2>
+<h2 class="date">2021-08-18</h2>
+</div>
+</div>
+
+<div class="front-matter-container">
+<div id="TOC" class="level1 toc front-matter">
+<h1 class="toc-title">Contents</h1>
+<ul>
+<li><a href="#LOT">List of Tables</a></li>
+<li><a href="#LOF">List of Figures</a></li>
+<li><a href="#introduction"><span class="toc-section-number">1</span> Introduction</a></li>
+<li><a href="#pagedjs"><span class="toc-section-number">2</span> Paged HTML documents</a><ul>
+<li><a href="#preview-paged-html-documents"><span class="toc-section-number">2.1</span> Preview paged HTML documents</a></li>
+<li><a href="#the-css-overriding-mechanism"><span class="toc-section-number">2.2</span> The CSS overriding mechanism</a></li>
+<li><a href="#print-to-pdf"><span class="toc-section-number">2.3</span> Print to PDF</a><ul>
+<li><a href="#print-to-pdf-on-a-server"><span class="toc-section-number">2.3.1</span> Print to PDF on a server</a></li>
+<li><a href="#print-to-pdf-with-cicd-services"><span class="toc-section-number">2.3.2</span> Print to PDF with CI/CD services</a></li>
+<li><a href="#print-to-pdf-using-docker"><span class="toc-section-number">2.3.3</span> Print to PDF using Docker</a></li>
+<li><a href="#troubleshooting-with-large-pdf-files-generation"><span class="toc-section-number">2.3.4</span> Troubleshooting with large PDF files generation</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#applications"><span class="toc-section-number">3</span> Applications</a><ul>
+<li><a href="#resume"><span class="toc-section-number">3.1</span> Resume</a></li>
+<li><a href="#poster"><span class="toc-section-number">3.2</span> Poster</a><ul>
+<li><a href="#the-relaxed-style"><span class="toc-section-number">3.2.1</span> The ReLaXed style</a></li>
+<li><a href="#the-jacobs-university-style"><span class="toc-section-number">3.2.2</span> The Jacobs University style</a></li>
+</ul></li>
+<li><a href="#business-card"><span class="toc-section-number">3.3</span> Business card</a><ul>
+<li><a href="#single-card"><span class="toc-section-number">3.3.1</span> Single card</a></li>
+<li><a href="#different-cards-with-shared-informations"><span class="toc-section-number">3.3.2</span> Different cards with shared informations</a></li>
+<li><a href="#styling-business-cards"><span class="toc-section-number">3.3.3</span> Styling business cards</a></li>
+</ul></li>
+<li><a href="#letter"><span class="toc-section-number">3.4</span> Letter</a></li>
+<li><a href="#thesis"><span class="toc-section-number">3.5</span> Thesis</a></li>
+<li><a href="#a-journal-of-statistical-software-article"><span class="toc-section-number">3.6</span> A Journal of Statistical Software article</a></li>
+</ul></li>
+<li><a href="#miscellaneous-features"><span class="toc-section-number">4</span> Miscellaneous features</a><ul>
+<li><a href="#lists-of-tables-and-figures"><span class="toc-section-number">4.1</span> Lists of tables and figures</a></li>
+<li><a href="#list-of-abbreviations"><span class="toc-section-number">4.2</span> List of abbreviations</a></li>
+<li><a href="#front-matter"><span class="toc-section-number">4.3</span> Front matter</a></li>
+<li><a href="#chapters-prefix"><span class="toc-section-number">4.4</span> Chapters prefix</a><ul>
+<li><a href="#internationalization"><span class="toc-section-number">4.4.1</span> Internationalization</a></li>
+</ul></li>
+<li><a href="#links"><span class="toc-section-number">4.5</span> Links</a><ul>
+<li><a href="#automatic-links"><span class="toc-section-number">4.5.1</span> Automatic links</a></li>
+<li><a href="#inline-links"><span class="toc-section-number">4.5.2</span> Inline links</a></li>
+</ul></li>
+<li><a href="#footnotes"><span class="toc-section-number">4.6</span> Footnotes</a></li>
+<li><a href="#custom-running-headers"><span class="toc-section-number">4.7</span> Custom running headers</a></li>
+<li><a href="#covers"><span class="toc-section-number">4.8</span> Covers</a></li>
+<li><a href="#page-references"><span class="toc-section-number">4.9</span> Page references</a></li>
+<li><a href="#line-numbering"><span class="toc-section-number">4.10</span> Line numbering</a></li>
+<li><a href="#page-breaks"><span class="toc-section-number">4.11</span> Page breaks</a></li>
+<li><a href="#mathjax"><span class="toc-section-number">4.12</span> MathJax</a></li>
+<li><a href="#figures-and-tables"><span class="toc-section-number">4.13</span> Figures and tables</a></li>
+</ul></li>
+<li><a href="#bibliography">Bibliography</a></li>
+</ul>
+</div>
+</div>
+
+<div class="main">
+<div id="LOT" class="section level1 lot unnumbered front-matter">
+<h1>List of Tables</h1>
+<ul>
+<li><a href="#tab:test-table">4.1</a> An example table.</li>
+</ul>
+</div>
+<div id="LOF" class="section level1 lof unnumbered front-matter">
+<h1>List of Figures</h1>
+<ul>
+<li><a href="#fig:resume-relaxed">3.1</a> The HTML resume in pagedown.</li>
+<li><a href="#fig:resume-sidenote">3.2</a> An example of side notes.</li>
+<li><a href="#fig:break-yes">3.3</a> Allow page breaks in a subsection.</li>
+<li><a href="#fig:break-no">3.4</a> Do not allow page breaks in a subsection.</li>
+</ul>
+</div>
+<div id="introduction" class="section level1">
+<h1><span class="header-section-number">1</span> Introduction</h1>
+<p>When talking about PDF and printing, we often think of tools like LaTeX and Microsoft Word. When talking about HTML and CSS, we may have never imagined their possible off-screen use such as printing to PDF.</p>
+<p>Can we print a book with HTML and CSS? W3C published <a href="https://www.w3.org/1999/06/WD-css3-page-19990623">the first working draft</a> on “Paged Media Properties for CSS(3)”, which was last updated in 2013. Although the working draft has been there for nearly two decades, it is still not common to see authors write or print books with HTML and CSS. The main reason is that the W3C specs are still in the draft mode, so most web browsers have not really implemented them.</p>
+<p>HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it comes to typesetting content under the constraint of “pages”. You may be disappointed by a lot of typesetting details on a paged HTML page. However, HTML and CSS can be extremely powerful and flexible in other aspects, especially when combined with the power of JavaScript. By the way, HTML works almost anywhere because it only requires a web browser.</p>
+<p>Although most web browsers have not implemented the W3C specs for Paged Media, a JavaScript polyfill library named <a href="https://www.pagedmedia.org/paged-js/">“paged.js”</a> is currently being developed to fill the gap. This library is still experimental and has many rough edges, but looks promising enough to us, so we created an R package <strong>pagedown</strong> <span class="citation">(Xie et al. 2021)</span> based on this JavaScript library to paginate the HTML output of R Markdown documents. You can install the package <a href="https://github.com/rstudio/pagedown">from Github</a>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&#39;rstudio/pagedown&#39;</span>)</a></code></pre></div>
+<p>To learn more about paged.js and CSS for Paged Media, you may check out <a href="https://www.pagedjs.org/documentation/cheatsheet/">the cheatsheet of paged.js</a>.</p>
+<p>The <strong>pagedown</strong> package contains output formats for paged HTML documents, letters, resumes, posters, business cards, and so on. Usually there is an R Markdown template for each output format, which you can access from RStudio’s menu <code>File -&gt; New File -&gt; R Markdown -&gt; From Template</code>.</p>
+</div>
+<div id="pagedjs" class="section level1" data-short-title="Paged documents">
+<h1><span class="header-section-number">2</span> Paged HTML documents</h1>
+<p>To create a paged HTML document, you can use the output format <code>pagedown::html_paged</code>, e.g.,</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="fu">output:</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">  <span class="fu">pagedown:</span><span class="at">:html_paged: </span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">    <span class="fu">toc:</span><span class="at"> true</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">    <span class="fu">number_sections:</span><span class="at"> false</span></a></code></pre></div>
+<div id="preview-paged-html-documents" class="section level2">
+<h2><span class="header-section-number">2.1</span> Preview paged HTML documents</h2>
+<p>This format is based on paged.js. Some other formats in this package are extensions of <code>html_paged</code>, such as <code>html_letter</code> and <code>html_resume</code>. Please note that you need a web server to view the output pages of these formats, because paged.js requires a web server. The web server could be either a local server or a remote one. When you compile an R Markdown document to HTML in RStudio, RStudio will display the HTML page through a local web server, so paged.js will work in RStudio Viewer. However, when you view such pages in a real web browser, you will need a separate web server. The easiest way to preview these HTML pages in a web browser may be through the RStudio addin “Infinite Moon Reader”, which requires the <strong>xaringan</strong> package <span class="citation">(Xie 2021b)</span>. Or equivalently, you can call the function <code>xaringan::inf_mr()</code>. This will launch a local web server via the <strong>servr</strong> package <span class="citation">(Xie 2021a)</span>.</p>
+<p>Please note that the layout of the pages is very sensitive to the zoom level in your browser. Elements on a page are often not zoomed strictly linearly, e.g., as you zoom out, certainly elements may start to collapse into each other. The 100% zoom level usually gives the best result (press <code>Ctrl + 0</code> or <code>Command + 0</code>). You are strongly recommended to use this level when printing the page to PDF.</p>
+</div>
+<div id="the-css-overriding-mechanism" class="section level2">
+<h2><span class="header-section-number">2.2</span> The CSS overriding mechanism</h2>
+<p>We have provided a few default CSS stylesheets in this output format:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="fu">output:</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">  <span class="fu">pagedown:</span><span class="at">:html_paged: </span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">    <span class="fu">css:</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">      <span class="kw">-</span> default-fonts</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">      <span class="kw">-</span> default-page</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">      <span class="kw">-</span> default</a></code></pre></div>
+<p>To find the actual CSS files behind these names, use <code>pagedown:::list_css()</code>. For example, <code>default-fonts</code> means the file <code>resources/css/default-fonts.css</code> in the installation directory of <strong>pagedown</strong>. The stylesheet <code>default-fonts</code> defines the typefaces of the document, <code>default-page</code> defines some page properties (such as the page size, running headers and footers, and rules for page breaks), and <code>default</code> defines the style of various elements (such as the table of contents).</p>
+<p>If you do not like any of these default stylesheets, you can use a subset of them, or override certain CSS rules. For example, if you do not like the default typeface, you may create a CSS file <code>my-fonts.css</code> (assuming it is under the same directory of your Rmd file):</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode css"><code class="sourceCode css"><a class="sourceLine" id="cb4-1" data-line-number="1">body {</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">  <span class="kw">font-family</span>: </a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">    <span class="st">&quot;Palatino Linotype&quot;</span>, <span class="st">&quot;Book Antiqua&quot;</span>,</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">    Palatino, <span class="dv">serif</span>;</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">}</a></code></pre></div>
+<p>Then include this CSS file via the <code>css</code> option:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="fu">output:</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">  <span class="fu">pagedown:</span><span class="at">:html_paged: </span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">    <span class="fu">css:</span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">      <span class="kw">-</span> my-fonts.css</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">      <span class="kw">-</span> default-page</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">      <span class="kw">-</span> default</a></code></pre></div>
+<p>Note that this overriding mechanism also works for other output formats in <strong>pagedown</strong>.</p>
+</div>
+<div id="print-to-pdf" class="section level2">
+<h2><span class="header-section-number">2.3</span> Print to PDF</h2>
+<p>There are three ways to print to PDF:</p>
+<ol style="list-style-type: decimal">
+<li><p>with Google Chrome, Microsoft Edge or Chromium using the menu “Print” or by pressing <code>Ctrl + P</code> (or <code>Command + P</code> on macOS). Remember to allow background graphics to be printed.</p></li>
+<li><p>using the function <code>chrome_print()</code>. Its first argument (<code>input</code>) accepts a path to a local Rmd or HTML file or an URL. Google Chrome, Microsoft Edge or Chromium must be installed on your system.</p></li>
+<li><p>in RStudio, adding the following line in the YAML header of your Rmd file:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="fu">knit:</span><span class="at"> pagedown::chrome_print</span></a></code></pre></div>
+<p>With this metadata parameter, the behavior of the “Knit” button of RStudio is modified: it produces both the HTML document and the PDF with Chrome. This functionality is suitable for any R Markdown HTML output format and is mainly convenient for small documents like presentations or notes.<br />
+If <code>chrome_print()</code> cannot find Chrome, Edge or Chromium automatically, set the <code>PAGEDOWN_CHROME</code> environment variable to the path to Chrome, Edge or Chromium executable.</p></li>
+</ol>
+<div id="print-to-pdf-on-a-server" class="section level3">
+<h3><span class="header-section-number">2.3.1</span> Print to PDF on a server</h3>
+<p>If you want to use <code>chrome_print()</code> on a server (an RStudio server, for instance), Chromium or Chrome has to be present on this server and available from the <code>PATH</code> or <code>PAGEDOWN_CHROME</code> environment variables.</p>
+<p>Be sure that the local IP address <code>127.0.0.1</code> is referenced in the <code>no_proxy</code> environment variable. Otherwise the R session won’t be able to connect to Chrome.</p>
+</div>
+<div id="print-to-pdf-with-cicd-services" class="section level3">
+<h3><span class="header-section-number">2.3.2</span> Print to PDF with CI/CD services</h3>
+<p>It is possible to produce a PDF with Chrome using a continuous integration service.</p>
+<p>With Travis, activate the Chrome addon by adding theses lines in <code>.travis.yml</code> file:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="fu">addons:</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">  <span class="fu">chrome:</span><span class="at"> stable</span></a></code></pre></div>
+<p>With GitLab CI, you have to use a Docker image with R, Pandoc, <strong>pagedown</strong> and Chromium or Chrome.<span id="fn1" class="footnote" data-pagedown-footnote-number="1" style="white-space: pre-line;">see an example below</span> Depending on the base image, you may have to install some extra fonts.</p>
+<p>Travis and GitLab CI are container-based environments running as root. As explained in the <a href="https://docs.travis-ci.com/user/chrome#sandboxing">Travis documentation</a>, you have to pass the <code>--no-sandbox</code> argument to <code>chrome_print()</code> (this is required for both Travis and GitLab CI):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">chrome_print</span>(</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">  ..., </a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="dt">extra_args =</span> <span class="kw">c</span>(<span class="st">&quot;--disable-gpu&quot;</span>, </a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">                 <span class="st">&quot;--no-sandbox&quot;</span>)</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">)</a></code></pre></div>
+<p>Since the <code>--no-sandbox</code> option can lead to major security threats, do not use these CI/CD services to print untrusted web pages.</p>
+</div>
+<div id="print-to-pdf-using-docker" class="section level3">
+<h3><span class="header-section-number">2.3.3</span> Print to PDF using Docker</h3>
+<p>Here is a minimal Dockerfile using a popular image from the <a href="https://rocker-project.org">Rocker project</a> which uses RStudio:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ex">FROM</span> rocker/verse</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3"><span class="ex">RUN</span> curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb <span class="kw">&amp;&amp;</span> <span class="kw">\</span></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">    <span class="ex">apt-get</span> update -qq <span class="kw">&amp;&amp;</span> <span class="kw">\</span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">    <span class="ex">apt-get</span> -y install \</a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">    ./google-chrome-stable_current_amd64.deb <span class="kw">&amp;&amp;</span> <span class="kw">\</span></a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">    <span class="fu">rm</span> google-chrome-stable_current_amd64.deb</a>
+<a class="sourceLine" id="cb9-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb9-9" data-line-number="9"><span class="ex">RUN</span> install2.r pagedown</a></code></pre></div>
+<p>If you save this Dockerfile in your current directory, you can build the image with:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="ex">docker</span> build myimages/pagedown .</a></code></pre></div>
+<p>If you intend to use <code>pagedown::chrome_print()</code> in a container running this image, <strong>do not launch the container as usual</strong>.</p>
+<p>You have to use Jessie Frazelle’s seccomp file for Chrome in Docker<span id="fn2" class="footnote" data-pagedown-footnote-number="2" style="white-space: pre-line;">download here <a href="https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json" class="uri">https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json</a></span> as follows:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="ex">docker</span> run -e PASSWORD=yourpassword --rm -p 8787:8787 --security-opt seccomp=<span class="st">&quot;</span><span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span><span class="st">/chrome.json&quot;</span> myimages/pagedown</a></code></pre></div>
+<p>With this seccomp file, you do not have to use the <code>&quot;--no-sandbox&quot;</code> option: this is much more secure!</p>
+</div>
+<div id="troubleshooting-with-large-pdf-files-generation" class="section level3">
+<h3><span class="header-section-number">2.3.4</span> Troubleshooting with large PDF files generation</h3>
+<p>In rare circumstances and if your document contains a lot of images, <code>chrome_print()</code> may fail to generate your PDF.</p>
+<p>On Linux environments with minimal resources (like a container), you may get this error message:</p>
+<pre><code>Chrome crashed. This may be caused by insufficient resources. Please, try to add &quot;--disable-dev-shm-usage&quot; to the `extra_args` argument.</code></pre>
+<p>Here, you just have to follow the advice.</p>
+<p>If you use an old version of Chrome, you may obtain the following error message:</p>
+<pre><code>[error] consume error: websocketpp.processor.4 (A message was too large)</code></pre>
+<p>In that case, you must install a more recent version of Chrome.</p>
+</div>
+</div>
+</div>
+<div id="applications" class="section level1">
+<h1><span class="header-section-number">3</span> Applications</h1>
+<div id="resume" class="section level2">
+<h2><span class="header-section-number">3.1</span> Resume</h2>
+<p>Currently <strong>pagedown</strong> has one resume format: <code>pagedown::html_resume</code>. See <a href="https://pagedown.rbind.io/html-resume/" class="uri">https://pagedown.rbind.io/html-resume/</a> for an example.</p>
+<div class="figure"><span style="display:block;" id="fig:resume-relaxed"></span>
+<img src="https://user-images.githubusercontent.com/163582/49983676-c940a880-ff29-11e8-9487-3b4c94614fcc.png" alt="The HTML resume in pagedown."  />
+<p class="caption">
+Figure 3.1: The HTML resume in pagedown.
+</p>
+</div>
+<p>The R Markdown source document should contain two parts titled “Aside” (for the sidebar) and “Main” (for the main body), respectively. Each part can contain any numbers of sections (e.g., education background and working experience). Each section can contain any numbers of subsections, and you can write more content in a subsection.<span id="fn3" class="footnote" data-pagedown-footnote-number="3" style="white-space: pre-line;">In case you are not very familiar with the Markdown syntax for section headings, a series of <code>=</code> under a heading is equivalent to <code>#</code> before a heading, and a series of <code>-</code> is equivalent to <code>##</code>. See Pandoc’s manual for details: <a href="https://pandoc.org/MANUAL.html#headers" class="uri">https://pandoc.org/MANUAL.html#headers</a>.</span> Below is a quick example:</p>
+<pre class="sourcecode"><code>---
+title: &quot;Someone&#39;s resume&quot;
+author: Your Name
+output: pagedown::html_resume
+---
+
+
+Aside
+====================================
+
+Picture, etc.
+
+Contact info
+------------------------------------
+
+Email, phone number, ...
+
+Skills
+------------------------------------
+
+- One
+- Two
+- Three
+
+Disclaimer
+------------------------------------
+
+A footer in the sidebar.
+
+
+Main
+====================================
+
+Your Name {#title}
+------------------------------------
+
+Arbitrary content.
+
+Education {data-icon=graduation-cap}
+------------------------------------
+
+### University One
+
+Title
+
+Location
+
+Year
+
+Arbitrary content
+
+### University Two
+
+...</code></pre>
+<p>The “Aside” part will be displayed in the right sidebar. This part can contain arbitrary content (not necessarily structured). For example, you can include a picture in the beginning. The “Disclaimer” section will be placed at the bottom of the first page. All icons for this resume template are from <a href="https://fontawesome.com">Font Awesome</a>. For example, <code>&lt;i class=&quot;fa fa-envelope&quot;&gt;&lt;/i&gt;</code> will generate an envelope icon. You can look up all icon names on the Font Awesome website if you want to use other icons.</p>
+<p>For the “Main” part, all sections must follow a specific structure except the first section. The first section usually shows your name and information that you want to highlight. For the rest of sections, they should contain a title and a number of subsections. You can specify an icon for a section title via the attribute <code>data-icon</code>, e.g., <code>{data-icon=graduation-cap}</code> means an icon of a graduation cap (which can be used as a symbol for education). For each subsection, it should contain a title, followed by at least three paragraphs:</p>
+<ul>
+<li><p>The first paragraph is a brief description of the subsection.</p></li>
+<li><p>The second paragraph is the location.</p></li>
+<li><p>The third paragraph is the time period. If this subsection has both a starting and ending time, separate them by a dash, e.g., <code>2014 - 2015</code> or <code>2014/07/27 - 2015/07/23</code>.</p></li>
+</ul>
+<p>The description, location, and time period can each be <code>N/A</code> if the relevant information is not available.</p>
+<p>You can write arbitrary content after the third paragraph (e.g., more paragraphs, bullet lists, and so on). If you want to write content in two columns, you may use a “concise” block, e.g.,</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb15-1" data-line-number="1">::: concise</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">- <span class="fl">Taught R language to beginners. </span></a>
+<a class="sourceLine" id="cb15-3" data-line-number="3"><span class="fl">- Wrote Shiny app demos.</span></a>
+<a class="sourceLine" id="cb15-4" data-line-number="4"><span class="fl">- Converted statistical tutorials from SPSS to R language.</span></a>
+<a class="sourceLine" id="cb15-5" data-line-number="5"><span class="fl">:::</span></a></code></pre></div>
+<p>If you want to write a side note, use an “aside” block, e.g.,</p>
+<pre class="sourcecode"><code>Section
+---------------
+
+### Subsection
+
+Title
+
+Location
+
+Year
+
+More info
+
+::: aside
+Some notes in the sidebar.
+:::</code></pre>
+<div class="figure"><span style="display:block;" id="fig:resume-sidenote"></span>
+<img src="https://user-images.githubusercontent.com/163582/50015125-654ecc00-ff8b-11e8-95be-fc6af8e4a66e.png" alt="An example of side notes."  />
+<p class="caption">
+Figure 3.2: An example of side notes.
+</p>
+</div>
+<p>There is a caveat about page breaks. By default, we allow page breaks within a subsection. Sometimes this may lead to odd output like the example in Figure <a href="#fig:break-yes">3.3</a>. The first bullet should not be split into two columns, and the rest of bullets should have a larger left margin.</p>
+<div class="figure"><span style="display:block;" id="fig:break-yes"></span>
+<img src="https://user-images.githubusercontent.com/163582/49983264-520a1500-ff27-11e8-8537-66a642f617c3.png" alt="Allow page breaks in a subsection."  />
+<p class="caption">
+Figure 3.3: Allow page breaks in a subsection.
+</p>
+</div>
+<p>If you want to avoid layout problems like this, you may disallow page breaks via CSS:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode css"><code class="sourceCode css"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="fu">.blocks</span> {</a>
+<a class="sourceLine" id="cb17-2" data-line-number="2">  <span class="kw">break-inside</span>: <span class="dv">avoid</span>;</a>
+<a class="sourceLine" id="cb17-3" data-line-number="3">}</a></code></pre></div>
+<p>However, this may lead to a new issue demonstrated in Figure <a href="#fig:break-no">3.4</a>: there may be a large bottom margin on the previous page. At this point, you may start to miss your old friends, Word and LaTeX.</p>
+<div class="figure"><span style="display:block;" id="fig:break-no"></span>
+<img src="https://user-images.githubusercontent.com/163582/49983263-520a1500-ff27-11e8-8e71-cbc69ccfbc6e.png" alt="Do not allow page breaks in a subsection."  />
+<p class="caption">
+Figure 3.4: Do not allow page breaks in a subsection.
+</p>
+</div>
+</div>
+<div id="poster" class="section level2">
+<h2><span class="header-section-number">3.2</span> Poster</h2>
+<p>You can create a poster with the output format <code>pagedown::poster_relaxed</code> or <code>pagedown::poster_jacobs</code>. See <a href="https://pagedown.rbind.io/poster-relaxed/" class="uri">https://pagedown.rbind.io/poster-relaxed/</a> and <a href="https://pagedown.rbind.io/poster-jacobs/" class="uri">https://pagedown.rbind.io/poster-jacobs/</a> for examples.</p>
+<p>We do not have time to document the poster formats yet, but here is a caveat: the layout of poster sections is hardcoded in CSS styleseets, which means you cannot add/delete sections unless you know CSS (in particular, CSS Grid Layout). If you are interested in learning CSS Grid Layout, you may take a look at <a href="https://github.com/rstudio/pagedown/blob/master/inst/resources/css/poster-jacobs.css">the CSS of <code>poster_jacobs</code></a>.</p>
+<div id="the-relaxed-style" class="section level3">
+<h3><span class="header-section-number">3.2.1</span> The ReLaXed style</h3>
+</div>
+<div id="the-jacobs-university-style" class="section level3">
+<h3><span class="header-section-number">3.2.2</span> The Jacobs University style</h3>
+</div>
+</div>
+<div id="business-card" class="section level2">
+<h2><span class="header-section-number">3.3</span> Business card</h2>
+<p>To create a simple business card, you can use the <code>pagedown::business_card</code> format. See <a href="https://pagedown.rbind.io/business-card/" class="uri">https://pagedown.rbind.io/business-card/</a> for an example.</p>
+<div id="single-card" class="section level3">
+<h3><span class="header-section-number">3.3.1</span> Single card</h3>
+<p>A single business card can be created with the following R Markdown file (this file contains only a YAML header).</p>
+<pre class="sourcecode"><code>---
+name: Jane Doe
+title: Miss Nobody
+phone: &quot;+1 123-456-7890&quot;
+email: &quot;jane.doe@example.com&quot;
+url: www.example.com
+address: |
+  2020 South Street
+  Sunshine, CA 90000
+logo: &quot;logo.png&quot;
+output: pagedown::business_card
+---</code></pre>
+<p>You can repeat the card on multiple pages using the <code>repeat</code> variable. The following example produces as many pages as cards (12).</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="fu">name:</span><span class="at"> Jane Doe</span></a>
+<a class="sourceLine" id="cb19-3" data-line-number="3"><span class="fu">title:</span><span class="at"> Miss Nobody</span></a>
+<a class="sourceLine" id="cb19-4" data-line-number="4"><span class="fu">phone:</span><span class="at"> </span><span class="st">&quot;+1 123-456-7890&quot;</span></a>
+<a class="sourceLine" id="cb19-5" data-line-number="5"><span class="fu">email:</span><span class="at"> </span><span class="st">&quot;jane.doe@example.com&quot;</span></a>
+<a class="sourceLine" id="cb19-6" data-line-number="6"><span class="fu">url:</span><span class="at"> www.example.com</span></a>
+<a class="sourceLine" id="cb19-7" data-line-number="7"><span class="fu">address:</span><span class="at"> |</span></a>
+<a class="sourceLine" id="cb19-8" data-line-number="8">  2020 South Street</a>
+<a class="sourceLine" id="cb19-9" data-line-number="9">  Sunshine, CA 90000</a>
+<a class="sourceLine" id="cb19-10" data-line-number="10"><span class="fu">logo:</span><span class="at"> </span><span class="st">&quot;logo.png&quot;</span></a>
+<a class="sourceLine" id="cb19-11" data-line-number="11"><span class="fu">repeat:</span><span class="at"> 12</span></a>
+<a class="sourceLine" id="cb19-12" data-line-number="12"><span class="fu">output:</span><span class="at"> pagedown::business_card</span></a>
+<a class="sourceLine" id="cb19-13" data-line-number="13"><span class="ot">---</span></a></code></pre></div>
+<p>In order to print the cards, you may prefer a layout with several cards on the same page: you can adjust the paper size with the <code>paperwidth</code> and <code>paperheight</code> variables and define a grid layout with the <code>cols</code> and <code>rows</code> variables (you may test some combinations of these parameters to find the most appropriate one).</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb20-2" data-line-number="2"><span class="fu">name:</span><span class="at"> Jane Doe</span></a>
+<a class="sourceLine" id="cb20-3" data-line-number="3"><span class="fu">title:</span><span class="at"> Miss Nobody</span></a>
+<a class="sourceLine" id="cb20-4" data-line-number="4"><span class="fu">phone:</span><span class="at"> </span><span class="st">&quot;+1 123-456-7890&quot;</span></a>
+<a class="sourceLine" id="cb20-5" data-line-number="5"><span class="fu">email:</span><span class="at"> </span><span class="st">&quot;jane.doe@example.com&quot;</span></a>
+<a class="sourceLine" id="cb20-6" data-line-number="6"><span class="fu">url:</span><span class="at"> www.example.com</span></a>
+<a class="sourceLine" id="cb20-7" data-line-number="7"><span class="fu">address:</span><span class="at"> |</span></a>
+<a class="sourceLine" id="cb20-8" data-line-number="8">  2020 South Street</a>
+<a class="sourceLine" id="cb20-9" data-line-number="9">  Sunshine, CA 90000</a>
+<a class="sourceLine" id="cb20-10" data-line-number="10"><span class="fu">logo:</span><span class="at"> </span><span class="st">&quot;logo.png&quot;</span></a>
+<a class="sourceLine" id="cb20-11" data-line-number="11"><span class="fu">repeat:</span><span class="at"> 12</span></a>
+<a class="sourceLine" id="cb20-12" data-line-number="12"><span class="fu">paperwidth:</span><span class="at"> 8.5in</span></a>
+<a class="sourceLine" id="cb20-13" data-line-number="13"><span class="fu">paperheight:</span><span class="at"> 11in</span></a>
+<a class="sourceLine" id="cb20-14" data-line-number="14"><span class="fu">cols:</span><span class="at"> 4</span></a>
+<a class="sourceLine" id="cb20-15" data-line-number="15"><span class="fu">rows:</span><span class="at"> 3</span></a>
+<a class="sourceLine" id="cb20-16" data-line-number="16"><span class="fu">output:</span><span class="at"> pagedown::business_card</span></a>
+<a class="sourceLine" id="cb20-17" data-line-number="17"><span class="ot">---</span></a></code></pre></div>
+<p>You also can use markdown to define a card. Be aware to use the <code>slot</code> attributes as follows.</p>
+<pre class="sourcecode"><code>---
+logo: &quot;logo.png&quot;
+paperwidth: 8.5in
+paperheight: 11in
+cols: 4
+rows: 3
+output: pagedown::business_card
+---
+
+::::: {.wrapper data-repeat=&quot;12&quot;}
+[Jane Doe]{slot=&quot;name&quot;}
+[Miss Nobody]{slot=&quot;title&quot;}
+[+1 123-456-7890]{slot=&quot;phone&quot;}
+[jane.doe@example.com]{slot=&quot;email&quot;}
+[www.example.com]{slot=&quot;url&quot;}
+
+::: {.address slot=&quot;address&quot;}
+2020 South Street
+Sunshine, CA 90000
+:::
+:::::</code></pre>
+</div>
+<div id="different-cards-with-shared-informations" class="section level3">
+<h3><span class="header-section-number">3.3.2</span> Different cards with shared informations</h3>
+<p>You can produce business cards for members of an organization sharing some informations (address, website…).<br />
+Common informations are declared as top level variables in the YAML header. Custom cards are defined using the <code>person</code> variable: each <code>key: value</code> pair of a <code>person</code> block overrides the corresponding top level pair.</p>
+<pre class="sourcecode"><code>---
+phone: &quot;+1 123-456-7890&quot;
+url: www.example.com
+address: |
+  2020 South Street
+  Sunshine, CA 90000
+logo: &quot;logo.png&quot;
+person:
+  - name: Jane Doe
+    title: Miss Nobody
+    email: &quot;jane.doe@example.com&quot;
+    repeat: 6
+  - name: John Doe
+    title: Mister Nobody
+    phone: &quot;+1 777-777-7777&quot; # overrides the default phone
+    email: &quot;john.doe@example.com&quot;
+    repeat: 6
+paperwidth: 8.5in
+paperheight: 11in
+cols: 4
+rows: 3
+output: pagedown::business_card
+---</code></pre>
+<p>If you prefer, you can use markdown to create a card as follows.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb23-1" data-line-number="1">---</a>
+<a class="sourceLine" id="cb23-2" data-line-number="2">name: Jane Doe</a>
+<a class="sourceLine" id="cb23-3" data-line-number="3">title: Miss Nobody</a>
+<a class="sourceLine" id="cb23-4" data-line-number="4">phone: &quot;+1 123-456-7890&quot;</a>
+<a class="sourceLine" id="cb23-5" data-line-number="5">email: &quot;jane.doe@example.com&quot;</a>
+<a class="sourceLine" id="cb23-6" data-line-number="6">url: www.example.com</a>
+<a class="sourceLine" id="cb23-7" data-line-number="7">address: |</a>
+<a class="sourceLine" id="cb23-8" data-line-number="8">  2020 South Street</a>
+<a class="sourceLine" id="cb23-9" data-line-number="9">  Sunshine, CA 90000</a>
+<a class="sourceLine" id="cb23-10" data-line-number="10">logo: &quot;logo.png&quot;</a>
+<a class="sourceLine" id="cb23-11" data-line-number="11">repeat: 6</a>
+<a class="sourceLine" id="cb23-12" data-line-number="12">paperwidth: 8.5in</a>
+<a class="sourceLine" id="cb23-13" data-line-number="13">paperheight: 11in</a>
+<a class="sourceLine" id="cb23-14" data-line-number="14">cols: 4</a>
+<a class="sourceLine" id="cb23-15" data-line-number="15">rows: 3</a>
+<a class="sourceLine" id="cb23-16" data-line-number="16">output: pagedown::business_card</a>
+<a class="sourceLine" id="cb23-17" data-line-number="17">---</a>
+<a class="sourceLine" id="cb23-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb23-19" data-line-number="19">::: {.wrapper data-repeat=&quot;6&quot;}</a>
+<a class="sourceLine" id="cb23-20" data-line-number="20">[John Doe]{slot=&quot;name&quot;}</a>
+<a class="sourceLine" id="cb23-21" data-line-number="21">[Mister Nobody]{slot=&quot;title&quot;}</a>
+<a class="sourceLine" id="cb23-22" data-line-number="22">[+1 777-777-7777]{slot=&quot;phone&quot;}</a>
+<a class="sourceLine" id="cb23-23" data-line-number="23">[john.doe@example.com]{slot=&quot;email&quot;}</a>
+<a class="sourceLine" id="cb23-24" data-line-number="24">[my.domain.com]{slot=&quot;url&quot;}</a>
+<a class="sourceLine" id="cb23-25" data-line-number="25">:::</a></code></pre></div>
+</div>
+<div id="styling-business-cards" class="section level3">
+<h3><span class="header-section-number">3.3.3</span> Styling business cards</h3>
+<div id="fonts" class="section level4">
+<h4><span class="header-section-number">3.3.3.1</span> Fonts</h4>
+<p>You can change the text font with the <code>mainfont</code> and/or <code>googlefonts</code> top level YAML variables:</p>
+<ul>
+<li><p><code>mainfont</code> will use the local font installed on your computer, e.g.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb24-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb24-2" data-line-number="2"><span class="fu">name:</span><span class="at"> Jane Doe</span></a>
+<a class="sourceLine" id="cb24-3" data-line-number="3"><span class="fu">title:</span><span class="at"> Miss Nobody</span></a>
+<a class="sourceLine" id="cb24-4" data-line-number="4"><span class="fu">phone:</span><span class="at"> </span><span class="st">&quot;+1 123-456-7890&quot;</span></a>
+<a class="sourceLine" id="cb24-5" data-line-number="5"><span class="fu">email:</span><span class="at"> </span><span class="st">&quot;jane.doe@example.com&quot;</span></a>
+<a class="sourceLine" id="cb24-6" data-line-number="6"><span class="fu">url:</span><span class="at"> www.example.com</span></a>
+<a class="sourceLine" id="cb24-7" data-line-number="7"><span class="fu">address:</span><span class="at"> |</span></a>
+<a class="sourceLine" id="cb24-8" data-line-number="8">  2020 South Street</a>
+<a class="sourceLine" id="cb24-9" data-line-number="9">  Sunshine, CA 90000</a>
+<a class="sourceLine" id="cb24-10" data-line-number="10"><span class="fu">logo:</span><span class="at"> </span><span class="st">&quot;logo.png&quot;</span></a>
+<a class="sourceLine" id="cb24-11" data-line-number="11"><span class="fu">mainfont:</span><span class="at"> Arial</span></a>
+<a class="sourceLine" id="cb24-12" data-line-number="12"><span class="fu">output:</span><span class="at"> pagedown::business_card</span></a>
+<a class="sourceLine" id="cb24-13" data-line-number="13"><span class="ot">---</span></a></code></pre></div></li>
+<li><p><code>googlefonts</code> to use fonts from <a href="https://fonts.google.com" class="uri">https://fonts.google.com</a>, e.g.</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb25-2" data-line-number="2"><span class="fu">name:</span><span class="at"> Jane Doe</span></a>
+<a class="sourceLine" id="cb25-3" data-line-number="3"><span class="fu">title:</span><span class="at"> Miss Nobody</span></a>
+<a class="sourceLine" id="cb25-4" data-line-number="4"><span class="fu">phone:</span><span class="at"> </span><span class="st">&quot;+1 123-456-7890&quot;</span></a>
+<a class="sourceLine" id="cb25-5" data-line-number="5"><span class="fu">email:</span><span class="at"> </span><span class="st">&quot;jane.doe@example.com&quot;</span></a>
+<a class="sourceLine" id="cb25-6" data-line-number="6"><span class="fu">url:</span><span class="at"> www.example.com</span></a>
+<a class="sourceLine" id="cb25-7" data-line-number="7"><span class="fu">address:</span><span class="at"> |</span></a>
+<a class="sourceLine" id="cb25-8" data-line-number="8">  2020 South Street</a>
+<a class="sourceLine" id="cb25-9" data-line-number="9">  Sunshine, CA 90000</a>
+<a class="sourceLine" id="cb25-10" data-line-number="10"><span class="fu">logo:</span><span class="at"> </span><span class="st">&quot;logo.png&quot;</span></a>
+<a class="sourceLine" id="cb25-11" data-line-number="11"><span class="fu">googlefonts:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;Roboto Condensed&quot;</span><span class="kw">,</span> <span class="st">&quot;Raleway&quot;</span><span class="kw">]</span></a>
+<a class="sourceLine" id="cb25-12" data-line-number="12"><span class="fu">output:</span><span class="at"> pagedown::business_card</span></a>
+<a class="sourceLine" id="cb25-13" data-line-number="13"><span class="ot">---</span></a></code></pre></div></li>
+</ul>
+</div>
+<div id="card-sizing" class="section level4">
+<h4><span class="header-section-number">3.3.3.2</span> Card sizing</h4>
+<p>You can modify the card size with the <code>cardwidth</code> and <code>cardheight</code> variables. You can get a landscape card with:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb26-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb26-2" data-line-number="2"><span class="fu">name:</span><span class="at"> Jane Doe</span></a>
+<a class="sourceLine" id="cb26-3" data-line-number="3"><span class="fu">title:</span><span class="at"> Miss Nobody</span></a>
+<a class="sourceLine" id="cb26-4" data-line-number="4"><span class="fu">phone:</span><span class="at"> </span><span class="st">&quot;+1 123-456-7890&quot;</span></a>
+<a class="sourceLine" id="cb26-5" data-line-number="5"><span class="fu">email:</span><span class="at"> </span><span class="st">&quot;jane.doe@example.com&quot;</span></a>
+<a class="sourceLine" id="cb26-6" data-line-number="6"><span class="fu">url:</span><span class="at"> www.example.com</span></a>
+<a class="sourceLine" id="cb26-7" data-line-number="7"><span class="fu">address:</span><span class="at"> |</span></a>
+<a class="sourceLine" id="cb26-8" data-line-number="8">  2020 South Street</a>
+<a class="sourceLine" id="cb26-9" data-line-number="9">  Sunshine, CA 90000</a>
+<a class="sourceLine" id="cb26-10" data-line-number="10"><span class="fu">logo:</span><span class="at"> </span><span class="st">&quot;logo.png&quot;</span></a>
+<a class="sourceLine" id="cb26-11" data-line-number="11"><span class="fu">cardwidth:</span><span class="at"> 3.5in</span></a>
+<a class="sourceLine" id="cb26-12" data-line-number="12"><span class="fu">cardheight:</span><span class="at"> 2in</span></a>
+<a class="sourceLine" id="cb26-13" data-line-number="13"><span class="fu">output:</span><span class="at"> pagedown::business_card</span></a>
+<a class="sourceLine" id="cb26-14" data-line-number="14"><span class="ot">---</span></a></code></pre></div>
+<p>If you render this card, you will see that the default style does not suit well with a landscape card. Read the next section to find an example of a landscape card with a better style.</p>
+</div>
+<div id="css" class="section level4">
+<h4><span class="header-section-number">3.3.3.3</span> CSS</h4>
+<p>Finally, you can modify the style of the card using CSS rules.<br />
+The markup of a card can be represented as follows<span id="fn4" class="footnote" data-pagedown-footnote-number="4" style="white-space: pre-line;">This is technically incorrect since the card template use a shadow DOM.</span>:</p>
+<pre class="sourcecode"><code>&lt;div class=&quot;wrapper&quot; data-repeat=&quot;1&quot;&gt;
+  &lt;img class=&quot;logo&quot; src=&quot;logo.png&quot; alt=&quot;Logo&quot; /&gt;
+  &lt;div class=&quot;me&quot;&gt;
+    &lt;div class=&quot;name&quot;&gt;&lt;span&gt;Jane Doe&lt;/span&gt;&lt;/div&gt;
+    &lt;div class=&quot;title&quot;&gt;&lt;span&gt;Miss Nobody&lt;/span&gt;&lt;/div&gt;
+    &lt;div class=&quot;coordinates&quot;&gt;
+      &lt;p class=&quot;phone&quot;&gt;&lt;span&gt;+1 123-456-7890&lt;/span&gt;&lt;/p&gt;
+      &lt;p class=&quot;contact-email&quot;&gt;&lt;span&gt;jane.doe@example.com&lt;/span&gt;&lt;/p&gt;
+      &lt;p class=&quot;website&quot;&gt;&lt;span&gt;www.example.com&lt;/span&gt;&lt;/p&gt;
+      &lt;div class=&quot;address&quot;&gt;2020 South Street Sunshine, CA 90000&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+<p>You can use these built-in classes to style your card with CSS.<br />
+A landscape card could be styled like this:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb28-1" data-line-number="1">---</a>
+<a class="sourceLine" id="cb28-2" data-line-number="2">name: Jane Doe</a>
+<a class="sourceLine" id="cb28-3" data-line-number="3">title: Miss Nobody</a>
+<a class="sourceLine" id="cb28-4" data-line-number="4">phone: &quot;+1 123-456-7890&quot;</a>
+<a class="sourceLine" id="cb28-5" data-line-number="5">email: &quot;jane.doe@example.com&quot;</a>
+<a class="sourceLine" id="cb28-6" data-line-number="6">url: www.example.com</a>
+<a class="sourceLine" id="cb28-7" data-line-number="7">address: |</a>
+<a class="sourceLine" id="cb28-8" data-line-number="8">  2020 South Street</a>
+<a class="sourceLine" id="cb28-9" data-line-number="9">  Sunshine, CA 90000</a>
+<a class="sourceLine" id="cb28-10" data-line-number="10">logo: &quot;logo.png&quot;</a>
+<a class="sourceLine" id="cb28-11" data-line-number="11">cardwidth: 3.5in</a>
+<a class="sourceLine" id="cb28-12" data-line-number="12">cardheight: 2in</a>
+<a class="sourceLine" id="cb28-13" data-line-number="13">output: pagedown::business_card</a>
+<a class="sourceLine" id="cb28-14" data-line-number="14">---</a>
+<a class="sourceLine" id="cb28-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb28-16" data-line-number="16"><span class="bn">```{css}</span></a>
+<a class="sourceLine" id="cb28-17" data-line-number="17"><span class="bn">.logo {</span></a>
+<a class="sourceLine" id="cb28-18" data-line-number="18"><span class="bn">  display: block;</span></a>
+<a class="sourceLine" id="cb28-19" data-line-number="19"><span class="bn">  height: 20%;</span></a>
+<a class="sourceLine" id="cb28-20" data-line-number="20"><span class="bn">  margin-right: .3in;</span></a>
+<a class="sourceLine" id="cb28-21" data-line-number="21"><span class="bn">  padding: .3in 0 0;</span></a>
+<a class="sourceLine" id="cb28-22" data-line-number="22"><span class="bn">  float: right;</span></a>
+<a class="sourceLine" id="cb28-23" data-line-number="23"><span class="bn">}</span></a>
+<a class="sourceLine" id="cb28-24" data-line-number="24"><span class="bn">.name {</span></a>
+<a class="sourceLine" id="cb28-25" data-line-number="25"><span class="bn">  margin-top: .1in;</span></a>
+<a class="sourceLine" id="cb28-26" data-line-number="26"><span class="bn">}</span></a>
+<a class="sourceLine" id="cb28-27" data-line-number="27"><span class="bn">```</span></a></code></pre></div>
+</div>
+</div>
+</div>
+<div id="letter" class="section level2">
+<h2><span class="header-section-number">3.4</span> Letter</h2>
+<p>You can write a letter with the <code>pagedown::html_letter</code> format. See <a href="https://pagedown.rbind.io/html-letter/" class="uri">https://pagedown.rbind.io/html-letter/</a> for an example.</p>
+</div>
+<div id="thesis" class="section level2">
+<h2><span class="header-section-number">3.5</span> Thesis</h2>
+<p>You can write a thesis with the <code>pagedown::thesis_paged</code> format created by Brent
+Thorne. See <a href="https://pagedown.rbind.io/thesis-paged/" class="uri">https://pagedown.rbind.io/thesis-paged/</a> for an example.</p>
+</div>
+<div id="a-journal-of-statistical-software-article" class="section level2">
+<h2><span class="header-section-number">3.6</span> A Journal of Statistical Software article</h2>
+<p>You can write an article for the <a href="https://jstatsoft.org/">Journal of Statistical Sofware</a>. See <a href="https://pagedown.rbind.io/jss-paged/" class="uri">https://pagedown.rbind.io/jss-paged/</a> for an example.</p>
+</div>
+</div>
+<div id="miscellaneous-features" class="section level1">
+<h1><span class="header-section-number">4</span> Miscellaneous features</h1>
+<div id="lists-of-tables-and-figures" class="section level2">
+<h2><span class="header-section-number">4.1</span> Lists of tables and figures</h2>
+<p>Lists of tables and/or figures can be inserted in the document using the <code>lot</code> and <code>lof</code> variables in the YAML metadata. You also can customize their titles with the <code>lot-title</code> and <code>lof-title</code> variables. By default, theses lists are referenced in the table of contents, if any. You can use the <code>lot-unlisted</code> and <code>lof-unlisted</code> options to remove them. For instance:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb29-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb29-2" data-line-number="2"><span class="fu">title:</span><span class="at"> </span><span class="st">&quot;A document with lists of tables and figures&quot;</span></a>
+<a class="sourceLine" id="cb29-3" data-line-number="3"><span class="fu">output:</span><span class="at"> pagedown::html_paged</span></a>
+<a class="sourceLine" id="cb29-4" data-line-number="4"><span class="fu">toc-title:</span><span class="at"> Contents</span></a>
+<a class="sourceLine" id="cb29-5" data-line-number="5"><span class="fu">lot:</span><span class="at"> true</span></a>
+<a class="sourceLine" id="cb29-6" data-line-number="6"><span class="co"># default: &quot;List of Tables&quot;</span></a>
+<a class="sourceLine" id="cb29-7" data-line-number="7"><span class="fu">lot-title:</span><span class="at"> </span><span class="st">&quot;Tables&quot;</span></a>
+<a class="sourceLine" id="cb29-8" data-line-number="8"><span class="co"># uncomment to remove from the TOC:</span></a>
+<a class="sourceLine" id="cb29-9" data-line-number="9"><span class="co">#lot-unlisted: true</span></a>
+<a class="sourceLine" id="cb29-10" data-line-number="10"><span class="fu">lof:</span><span class="at"> true</span></a>
+<a class="sourceLine" id="cb29-11" data-line-number="11"><span class="co"># default: &quot;List of Figures&quot;</span></a>
+<a class="sourceLine" id="cb29-12" data-line-number="12"><span class="fu">lof-title:</span><span class="at"> </span><span class="st">&quot;Figures&quot;</span></a>
+<a class="sourceLine" id="cb29-13" data-line-number="13"><span class="co"># uncomment to remove from the TOC:</span></a>
+<a class="sourceLine" id="cb29-14" data-line-number="14"><span class="co">#lof-unlisted: true</span></a>
+<a class="sourceLine" id="cb29-15" data-line-number="15"><span class="ot">---</span></a></code></pre></div>
+</div>
+<div id="list-of-abbreviations" class="section level2">
+<h2><span class="header-section-number">4.2</span> List of abbreviations</h2>
+<p>A list of abbreviations is automatically built if the document contains at least one HTML <code>abbr</code> element.</p>
+<p>For instance, if the R Markdown document contains <code>&lt;abbr title=&quot;Cascading Style Sheets&quot;&gt;CSS&lt;/abbr&gt;</code>, a list of abbreviations is built with the CSS definition.</p>
+<div id="loa-example" style="background-color:#f9f9f9;">
+<p><strong>List of abbreviations example</strong></p>
+<dl>
+<dt>CSS</dt>
+<dd>Cascading Style Sheets
+</dd>
+</dl>
+</div>
+<p>The title of this list of abbreviations can be customized using the <code>loa-title</code> field in the YAML header.</p>
+</div>
+<div id="front-matter" class="section level2">
+<h2><span class="header-section-number">4.3</span> Front matter</h2>
+<p>By default, the front matter is composed of the cover, the table of contents and the lists of figures, tables and abbreviations if any. The only difference between the front matter pages and the main content pages is the style of the page numbers.</p>
+<p>You can add extra sections to the front matter using the <code>front-matter</code> class. For instance, if you want to add a preface to the front matter, you need to write:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb30-1" data-line-number="1"><span class="fu"># Preface {.front-matter .unnumbered}</span></a></code></pre></div>
+</div>
+<div id="chapters-prefix" class="section level2">
+<h2><span class="header-section-number">4.4</span> Chapters prefix</h2>
+<p>The word “Chapter” can be prepended to chapter numbers in chapter titles using the <code>chapter</code> class :</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb31-1" data-line-number="1"><span class="fu"># A prefixed chapter {.chapter}</span></a></code></pre></div>
+<div id="internationalization" class="section level3">
+<h3><span class="header-section-number">4.4.1</span> Internationalization</h3>
+<p>The chapter title prefix can be customized using the <code>chapter_name</code> field in the YAML header or in <code>_bookdown.yml</code> file<span id="fn5" class="footnote" data-pagedown-footnote-number="5" style="white-space: pre-line;">see <a href="https://bookdown.org/yihui/bookdown/internationalization.html" class="uri">https://bookdown.org/yihui/bookdown/internationalization.html</a></span></p>
+<p>When defined in the YAML header the <code>chapter_name</code> field is parsed by Pandoc. Therefore, special characters like spaces have to be escaped<span id="fn6" class="footnote" data-pagedown-footnote-number="6" style="white-space: pre-line;">see <a href="https://pandoc.org/MANUAL#backslash-escapes" class="uri">https://pandoc.org/MANUAL#backslash-escapes</a></span>. For instance, if you want to use <code>'CHAPTER '</code> as a chapter title prefix, you have to write:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb32-1" data-line-number="1">---</a>
+<a class="sourceLine" id="cb32-2" data-line-number="2">title: &quot;Custom chapter title prefix&quot;</a>
+<a class="sourceLine" id="cb32-3" data-line-number="3">output: pagedown::html_paged</a>
+<a class="sourceLine" id="cb32-4" data-line-number="4">chapter_name: &quot;CHAPTER\\ &quot;</a>
+<a class="sourceLine" id="cb32-5" data-line-number="5">---</a>
+<a class="sourceLine" id="cb32-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb32-7" data-line-number="7"><span class="fu"># A chapter with a custom prefix {.chapter}</span></a></code></pre></div>
+<p>A suffix string can be added after the chapter number. For instance, to add a dot (<code>.</code>) after the chapter number, use the following value for the <code>chapter_name</code> field:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb33-1" data-line-number="1">---</a>
+<a class="sourceLine" id="cb33-2" data-line-number="2">title: &quot;Custom chapter title prefix&quot;</a>
+<a class="sourceLine" id="cb33-3" data-line-number="3">output: pagedown::html_paged</a>
+<a class="sourceLine" id="cb33-4" data-line-number="4">chapter_name: [&quot;CHAPTER\\ &quot;, &quot;.&quot;]</a>
+<a class="sourceLine" id="cb33-5" data-line-number="5">---</a>
+<a class="sourceLine" id="cb33-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb33-7" data-line-number="7"><span class="fu"># A chapter with a custom prefix {.chapter}</span></a></code></pre></div>
+<p>If defined in <code>_bookdown.yml</code> file, the <code>chapter_name</code> field will override a <code>chapter_name</code> field declared in the YAML header.<br />
+Note that contrary to the <strong>bookdown</strong> HTML formats, a custom function is not allowed as a value for the <code>chapter_name</code> field.</p>
+</div>
+</div>
+<div id="links" class="section level2">
+<h2><span class="header-section-number">4.5</span> Links</h2>
+<p>In Markdown, the usual ways to insert links are <em>automatic</em> and <em>inline</em> links.</p>
+<div id="automatic-links" class="section level3">
+<h3><span class="header-section-number">4.5.1</span> Automatic links</h3>
+<p>Automatic links are created using pointy brackets, e.g., <code>&lt;https://bookdown.org&gt;</code>. The full URL is then inserted in the final document <a href="https://bookdown.org" class="uri">https://bookdown.org</a>. This is convenient for a short and meaningful URL.</p>
+</div>
+<div id="inline-links" class="section level3">
+<h3><span class="header-section-number">4.5.2</span> Inline links</h3>
+<p>Inline links are useful when you do not want to show the full URL but an alternative text (because URLs are usually long and ugly). In Markdown, the link text is inserted in square brackets and the URL in parentheses, e.g. <code>[bookdown website](https://bookdown.org)</code>. On a website, the URL is hidden and replaced by the link text: <a href="">bookdown website</a>. The user can interactively access the URL by clicking on the link.</p>
+<p>When printing a document, we lose interactivity. So we need to show the hidden URLs. By default, the <code>html_paged</code> format adds the URLs after the link text in parentheses, for instance <code>[bookdown website](https://bookdown.org)</code> is rendered as <a href="https://bookdown.org">bookdown website</a>.</p>
+<p>You also can use the <code>links-to-footnotes</code> top-level YAML parameter: it transforms all the URLs to footnotes. You will get the same result as <code>bookdown website^[https://bookdown.org]</code>. To activate the <code>links-to-footnotes</code> option, insert <code>links-to-footnotes: true</code> in the YAML header. For instance:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb34-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb34-2" data-line-number="2"><span class="fu">title:</span><span class="at"> </span><span class="st">&quot;A paged HTML document&quot;</span></a>
+<a class="sourceLine" id="cb34-3" data-line-number="3"><span class="fu">output:</span><span class="at"> pagedown::html_paged</span></a>
+<a class="sourceLine" id="cb34-4" data-line-number="4"><span class="fu">links-to-footnotes:</span><span class="at"> true</span></a>
+<a class="sourceLine" id="cb34-5" data-line-number="5"><span class="ot">---</span></a></code></pre></div>
+</div>
+</div>
+<div id="footnotes" class="section level2">
+<h2><span class="header-section-number">4.6</span> Footnotes</h2>
+<p>The default behavior of pagedown is to render notes as endnotes because Paged.js does not natively support footnotes for now. However, we introduced an experimental support for footnotes. You can test it by including <code>paged-footnotes: true</code> in the YAML header of your document. Please, note that the <code>paged-footnotes</code> option only supports inline content<span id="fn7" class="footnote" data-pagedown-footnote-number="7" style="white-space: pre-line;">see <a href="https://github.com/rstudio/pagedown/issues/156" class="uri">https://github.com/rstudio/pagedown/issues/156</a></span>. If you get any trouble with this experimental feature, please open an issue in the <strong>pagedown</strong> repository on GitHub.</p>
+<p>If you need to override the default footnotes style, you should use an <code>important</code> rule on elements of class <code>footnote</code>. For example,</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode css"><code class="sourceCode css"><a class="sourceLine" id="cb35-1" data-line-number="1"><span class="fu">.footnote</span> {</a>
+<a class="sourceLine" id="cb35-2" data-line-number="2">  <span class="kw">font-size</span>: <span class="dv">20px</span> <span class="at">!important</span>;</a>
+<a class="sourceLine" id="cb35-3" data-line-number="3">  <span class="kw">color</span>: <span class="dv">red</span> <span class="at">!important</span>;</a>
+<a class="sourceLine" id="cb35-4" data-line-number="4">}</a></code></pre></div>
+</div>
+<div id="custom-running-headers" class="section level2" data-short-title="Running headers">
+<h2><span class="header-section-number">4.7</span> Custom running headers</h2>
+<p>Sometimes a section title may be too long to fit the header or footer area. In this case, you can specify a shorter title for the running headers/footers via the attribute <code>data-short-title</code> after a title, e.g.,</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb36-1" data-line-number="1"><span class="fu">## The actual long long long title {data-short-title=&quot;An alternative title&quot;}</span></a></code></pre></div>
+</div>
+<div id="covers" class="section level2">
+<h2><span class="header-section-number">4.8</span> Covers</h2>
+<p>Covers images can be added using the <code>front_cover</code> and <code>back_cover</code> parameters of <code>pagedown::html_paged()</code>. You can pass any path to a file or an url.</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb37-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb37-2" data-line-number="2"><span class="fu">output:</span></a>
+<a class="sourceLine" id="cb37-3" data-line-number="3">  <span class="fu">pagedown:</span><span class="at">:html_paged:</span></a>
+<a class="sourceLine" id="cb37-4" data-line-number="4">    <span class="fu">front_cover:</span><span class="at"> !expr system.file(&quot;img&quot;, &quot;Rlogo.png&quot;, package=&quot;png&quot;)</span></a>
+<a class="sourceLine" id="cb37-5" data-line-number="5">    <span class="fu">back_cover:</span><span class="at"> https://www.r-project.org/Rlogo.png</span></a>
+<a class="sourceLine" id="cb37-6" data-line-number="6"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb37-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb37-8" data-line-number="8"><span class="co"># Content</span></a></code></pre></div>
+<p>Several paths or links can be passed to the <code>front_cover</code> and <code>back_cover</code> parameters. For each image declared in the <code>front_cover</code> or <code>back_cover</code> parameter, a CSS variable is created: <code>--front-cover</code>, <code>--back-cover</code>, <code>--front-cover-2</code>, <code>--back-cover-2</code>, etc.<br />
+They can be used as value for the <code>background-image</code> CSS property:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode css"><code class="sourceCode css"><a class="sourceLine" id="cb38-1" data-line-number="1"><span class="im">@page</span> chapter:first {</a>
+<a class="sourceLine" id="cb38-2" data-line-number="2">  <span class="kw">background-image</span>: var(--front-cover-2);</a>
+<a class="sourceLine" id="cb38-3" data-line-number="3">}</a></code></pre></div>
+<p>You also can add textual content on the front and back covers using two special divs of classes <code>front-cover</code> and <code>back-cover</code>:</p>
+<pre class="sourcecode"><code>---
+output:
+  pagedown::html_paged:
+    front_cover: !expr system.file(&quot;img&quot;, &quot;Rlogo.png&quot;, package=&quot;png&quot;)
+    back_cover: https://www.r-project.org/Rlogo.png
+---
+
+:::front-cover
+# My great book about
+:::
+
+:::back-cover
+### Written with
+:::
+
+# Content</code></pre>
+<p>If the background properties of the default template does not suit your needs, here is a small hack to modify them.<br />
+The following lines are used to position the <strong>pagedown</strong> hex logo on the front page of the current document:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode css"><code class="sourceCode css"><a class="sourceLine" id="cb40-1" data-line-number="1"><span class="co">/* position the hex logo on the first page */</span></a>
+<a class="sourceLine" id="cb40-2" data-line-number="2"><span class="fu">.pagedjs_page.pagedjs_first_page</span> {</a>
+<a class="sourceLine" id="cb40-3" data-line-number="3">  <span class="kw">background-size</span>: <span class="dv">40%</span>;</a>
+<a class="sourceLine" id="cb40-4" data-line-number="4">  <span class="kw">background-position</span>: <span class="dv">center</span> <span class="dv">80%</span>;</a>
+<a class="sourceLine" id="cb40-5" data-line-number="5">}</a></code></pre></div>
+<style type="text/css">
+/* position the hex logo on the first page */
+.pagedjs_page.pagedjs_first_page {
+  background-size: 40%;
+  background-position: center 80%;
+}
+</style>
+</div>
+<div id="page-references" class="section level2">
+<h2><span class="header-section-number">4.9</span> Page references</h2>
+<p>Internal links will be followed by page numbers by default. For example, you can refer to another section using either <code>[Section Title]</code> or <code>[Link Text](#section-id)</code> (where <code>section-id</code> is the ID of the section header).</p>
+<p>Do you still remember <a href="#pagedjs">Paged.js</a> that we mentioned earlier?</p>
+</div>
+<div id="line-numbering" class="section level2">
+<h2><span class="header-section-number">4.10</span> Line numbering</h2>
+<p>For templates built on top of <code>html_paged</code>, line numbering can be added using the top-level YAML parameter <code>number-lines</code>. For example:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb41-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb41-2" data-line-number="2"><span class="fu">output:</span><span class="at"> pagedown::thesis_paged</span></a>
+<a class="sourceLine" id="cb41-3" data-line-number="3"><span class="fu">number-lines:</span><span class="at"> true</span></a>
+<a class="sourceLine" id="cb41-4" data-line-number="4"><span class="ot">---</span></a></code></pre></div>
+<p>The line numbers can be reset on each page using the <code>reset-page</code> option:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb42-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb42-2" data-line-number="2"><span class="fu">output:</span><span class="at"> pagedown::thesis_paged</span></a>
+<a class="sourceLine" id="cb42-3" data-line-number="3"><span class="fu">number-lines:</span></a>
+<a class="sourceLine" id="cb42-4" data-line-number="4">  <span class="fu">reset-page:</span><span class="at"> true</span></a>
+<a class="sourceLine" id="cb42-5" data-line-number="5"><span class="ot">---</span></a></code></pre></div>
+<p>You also can select the HTML elements by passing a CSS selector to the <code>selector</code> parameter. To number the lines of all the paragraphs and headers, you need to write:</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb43-1" data-line-number="1"><span class="ot">---</span></a>
+<a class="sourceLine" id="cb43-2" data-line-number="2"><span class="fu">output:</span><span class="at"> pagedown::thesis_paged</span></a>
+<a class="sourceLine" id="cb43-3" data-line-number="3"><span class="fu">number-lines:</span></a>
+<a class="sourceLine" id="cb43-4" data-line-number="4">  <span class="fu">selector:</span><span class="at"> </span><span class="st">&quot;p, h1, h2, h3, h4, h5, h6&quot;</span></a>
+<a class="sourceLine" id="cb43-5" data-line-number="5"><span class="ot">---</span></a></code></pre></div>
+<p>The default CSS selector is <code>&quot;.level1:not(.front-matter) h1, .level1 h2, .level1 h3, .level1 p&quot;</code>. Line numbering is deactivated for display math environments.</p>
+<p>Be aware that the value <code>&quot;normal&quot;</code> of the CSS <code>line-height</code> property is not supported: elements with a normal line height are not numbered. Since <code>&quot;normal&quot;</code> is the default value for the <code>line-height</code> property, the CSS stylesheets must define a different value. If your template relies on custom CSS files, you can add for example:</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode css"><code class="sourceCode css"><a class="sourceLine" id="cb44-1" data-line-number="1">html {</a>
+<a class="sourceLine" id="cb44-2" data-line-number="2">  <span class="kw">line-height</span>: <span class="dv">1.3</span>;</a>
+<a class="sourceLine" id="cb44-3" data-line-number="3">}</a></code></pre></div>
+<p>You can modify the horizontal positioning and the font size of the lines numbers using two CSS variables: <code>--line-numbers-padding-right</code> (default value <code>10px</code>) and <code>--line-numbers-font-size</code> (default value <code>8pt</code>). For further customisation, you can modify the style of the elements of class <code>maintextlinenumbers</code>. Here is an example:</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode css"><code class="sourceCode css"><a class="sourceLine" id="cb45-1" data-line-number="1"><span class="fu">.maintextlinenumbers</span> {</a>
+<a class="sourceLine" id="cb45-2" data-line-number="2">  --line-numbers-padding-right: <span class="dv">25px</span>;</a>
+<a class="sourceLine" id="cb45-3" data-line-number="3">  --line-numbers-font-size: <span class="dv">10pt</span>;</a>
+<a class="sourceLine" id="cb45-4" data-line-number="4">  <span class="kw">font-weight</span>: <span class="dv">bold</span>;</a>
+<a class="sourceLine" id="cb45-5" data-line-number="5">  <span class="kw">font-family</span>: <span class="dv">monospace</span>;</a>
+<a class="sourceLine" id="cb45-6" data-line-number="6">}</a></code></pre></div>
+<p>Please note that this feature is sensitive to elements which break the vertical rythm of the text like inline maths.</p>
+</div>
+<div id="page-breaks" class="section level2">
+<h2><span class="header-section-number">4.11</span> Page breaks</h2>
+<p>There are two ways to force a page break:</p>
+<ul>
+<li><p>with the <code>\newpage</code> <span class="math inline">\(\LaTeX\)</span> command (<code>\pagebreak</code> also works)</p></li>
+<li><p>using one of these two CSS classes: <code>page-break-before</code> or <code>page-break-after</code><br />
+For example, to force a page break before a given section, use:</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb46-1" data-line-number="1"><span class="fu">### New section {.page-break-before}</span></a></code></pre></div></li>
+</ul>
+</div>
+<div id="mathjax" class="section level2">
+<h2><span class="header-section-number">4.12</span> MathJax</h2>
+<p>The following test comes from <a href="http://www.cs.toronto.edu/~yujiali/test/mathjax.html" class="uri">http://www.cs.toronto.edu/~yujiali/test/mathjax.html</a>.</p>
+<p>Some RBM stuff:</p>
+<p><span class="math display">\[
+  E(\mathbf{v}, \mathbf{h}) = -\sum_{i,j}w_{ij}v_i h_j - \sum_i b_i v_i - \sum_j c_j h_j
+\]</span></p>
+<p>Multiline equations:</p>
+<p><span class="math display">\[
+  \begin{align}
+    p(v_i=1|\mathbf{h}) &amp; = \sigma\left(\sum_j w_{ij}h_j + b_i\right) \\
+    p(h_j=1|\mathbf{v}) &amp; = \sigma\left(\sum_i w_{ij}v_i + c_j\right)
+  \end{align}
+\]</span></p>
+<p>Here is an example of an inline expression: <span class="math inline">\(p(x|y) = \frac{p(y|x)p(x)}{p(y)}\)</span>.</p>
+</div>
+<div id="figures-and-tables" class="section level2 page-break-before">
+<h2><span class="header-section-number">4.13</span> Figures and tables</h2>
+<p>Table <a href="#tab:test-table">4.1</a>:</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb47-1" data-line-number="1">knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">head</span>(iris[, <span class="dv">-5</span>]), <span class="dt">caption =</span> <span class="st">&#39;An example table.&#39;</span>)</a></code></pre></div>
+<table>
+<caption><span id="tab:test-table">Table 4.1: </span>An example table.</caption>
+<thead>
+<tr class="header">
+<th align="right">Sepal.Length</th>
+<th align="right">Sepal.Width</th>
+<th align="right">Petal.Length</th>
+<th align="right">Petal.Width</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">5.1</td>
+<td align="right">3.5</td>
+<td align="right">1.4</td>
+<td align="right">0.2</td>
+</tr>
+<tr class="even">
+<td align="right">4.9</td>
+<td align="right">3.0</td>
+<td align="right">1.4</td>
+<td align="right">0.2</td>
+</tr>
+<tr class="odd">
+<td align="right">4.7</td>
+<td align="right">3.2</td>
+<td align="right">1.3</td>
+<td align="right">0.2</td>
+</tr>
+<tr class="even">
+<td align="right">4.6</td>
+<td align="right">3.1</td>
+<td align="right">1.5</td>
+<td align="right">0.2</td>
+</tr>
+<tr class="odd">
+<td align="right">5.0</td>
+<td align="right">3.6</td>
+<td align="right">1.4</td>
+<td align="right">0.2</td>
+</tr>
+<tr class="even">
+<td align="right">5.4</td>
+<td align="right">3.9</td>
+<td align="right">1.7</td>
+<td align="right">0.4</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="bibliography" class="section level1 unnumbered">
+<h1>Bibliography</h1>
+<script type="text/javascript">
+// insert a soft break to avoid an infinite loop with FF
+// this is because FF handles lists differently
+document.querySelector('#TOC h1').insertAdjacentHTML('afterend', '<wbr>');
+</script>
+<div id="refs" class="references">
+<div id="ref-R-servr">
+<p>Xie, Yihui. 2021a. <em>Servr: A Simple Http Server to Serve Static Files or Dynamic Documents</em>. <a href="https://github.com/yihui/servr">https://github.com/yihui/servr</a>.</p>
+</div>
+<div id="ref-R-xaringan">
+<p>———. 2021b. <em>Xaringan: Presentation Ninja</em>. <a href="https://github.com/yihui/xaringan">https://github.com/yihui/xaringan</a>.</p>
+</div>
+<div id="ref-R-pagedown">
+<p>Xie, Yihui, Romain Lesur, Brent Thorne, and Xianying Tan. 2021. <em>Pagedown: Paginate the Html Output of R Markdown with Css for Print</em>. <a href="https://github.com/rstudio/pagedown">https://github.com/rstudio/pagedown</a>.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+
+<script>
+// when the page is about to reload via servr, remember the scroll position
+document.addEventListener('servr:reload', function(e) {
+  sessionStorage.setItem('pagedown-scroll', window.scrollY);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+body {
+  font-family: Palatino, "Palatino Linotype", "Palatino LT STD", Georgia, 'Source Han Serif', 'Songti SC', serif;
+  line-height: 1.5em;
+}
+
+.title-page {
+  display: none;
+}
+
+.from, .date {
+  text-align: right;
+}
+.from p {
+  text-align: left;
+  display: inline-block;
+}
+
+.logo {
+  position: running(header-logo);
+  height: 1cm;
+}
+
+.date {
+  margin-top: 4em;
+}
+
+@page {
+  size: letter;
+  margin: 4cm 3cm;
+
+  @top-left {
+    content: element(header-logo);
+  }
+  @bottom-right {
+    content: counter(page);
+  }
+}
+
+@media screen and (min-width: 12.32in) {
+  .pagedjs_page, .pagedjs_first_page {
+    margin: auto auto 5mm auto;
+  }
+}

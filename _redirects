@@ -1,0 +1,2 @@
+http://pagedown.netlify.com/* https://pagedown.rbind.io/:splat 301!
+http://pagedown.rbind.io/*    https://pagedown.rbind.io/:splat 301!
