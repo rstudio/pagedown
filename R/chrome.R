@@ -96,7 +96,7 @@ chrome_print = function(
 
   debug_port = servr::random_port()
   log_file = if (getOption('pagedown.chrome.log', FALSE)) {
-    sprintf('chrome-stderr-%s.log', Sys.time())
+    sprintf('chrome-stderr-%s.log', format(Sys.time(), "%Y-%m-%d_%H-%M-%S"))
   }
   ps = processx::process$new(browser, c(
     paste0('--remote-debugging-port=', debug_port),
