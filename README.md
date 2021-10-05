@@ -3,7 +3,7 @@
 [![Travis build status](https://travis-ci.org/rstudio/pagedown.svg?branch=master)](https://travis-ci.org/rstudio/pagedown)
 [![Downloads from the RStudio CRAN mirror](https://cranlogs.r-pkg.org/badges/pagedown)](https://cran.r-project.org/package=pagedown)
 
-<a href="https://github.com/rstudio/pagedown"><img src="https://user-images.githubusercontent.com/163582/51942716-66be4180-23dd-11e9-8dbc-fdb4f465d1c2.png" alt="pagedown logo" align="right" /></a>
+<a href="https://github.com/rstudio/pagedown"><img src="https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/pagedown.svg" alt="pagedown logo" align="right" height="138.5"/></a>
 
 Paginate the HTML Output of R Markdown with CSS for Print. You only need a modern web browser (e.g., Google Chrome or Microsoft Edge) to generate PDF. No need to install LaTeX to get beautiful PDFs.
 
