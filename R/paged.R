@@ -148,7 +148,7 @@ html_format = function(
     }
   }
 
-  css2 = grep('[.]css$', css, value = TRUE, invert = TRUE)
+  css2 = grep('[.]s?css$', css, value = TRUE, invert = TRUE)
   css  = setdiff(css, css2)
   check_css(css2)
 
