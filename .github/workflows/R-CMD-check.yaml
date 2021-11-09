@@ -68,7 +68,7 @@ jobs:
         with:
           extra-packages: rcmdcheck
 
-      - names: Install extra dependencies
+      - name: Install extra dependencies
         if: runner.os == 'Linux'
         run: sudo apt-get install -y ghostscript
 
