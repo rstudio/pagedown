@@ -53,7 +53,7 @@ local function getFigCaption(div)
   local found
   for i, block in ipairs(listOfBlocks) do
     if block.t == "RawBlock" then
-      if block.c[2] == '<p class="caption">' then
+      if block.text == '<p class="caption">' then
         found = i + 1
         break
       end
