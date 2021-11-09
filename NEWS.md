@@ -8,6 +8,10 @@
 
 - In `chrome_print()`, set a timeout when R tries to detect headless Chrome.
 
+## BUG FIXES
+
+- Fix an issue with `loft.lua` filter following changes in Pandoc 2.16 (#249).
+
 # CHANGES IN pagedown VERSION 0.15
 
 ## NEW FEATURES
