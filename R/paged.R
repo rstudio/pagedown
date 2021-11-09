@@ -16,11 +16,11 @@
 #'
 #' @param ... Arguments passed to
 #'   \code{bookdown::\link[bookdown]{html_document2}}.
-#' @param css A character vector of CSS file paths. If a path does not contain
-#'   the \file{.css} extension, it is assumed to be a built-in CSS file. For
-#'   example, \code{default-fonts} means the file
-#'   \code{pagedown:::pkg_resource('css', 'default-fonts.css')}. To see all
-#'   built-in CSS files, run \code{pagedown:::list_css()}.
+#' @param css A character vector of CSS and Sass file paths. If a path
+#'   does not contain the \file{.css}, \file{.sass}, or \file{.scss} extension,
+#'   it is assumed to be a built-in CSS file. For example, \code{default-fonts}
+#'   means the file\code{pagedown:::pkg_resource('css', 'default-fonts.css')}.
+#'   To see all built-in CSS files, run \code{pagedown:::list_css()}.
 #' @param theme The Bootstrap theme. By default, Bootstrap is not used.
 #' @param template The path to the Pandoc template to convert Markdown to HTML.
 #' @param csl The path of the Citation Style Language (CSL) file used to format
@@ -148,7 +148,7 @@ html_format = function(
     }
   }
 
-  css2 = grep('[.]css$', css, value = TRUE, invert = TRUE)
+  css2 = grep('[.](?:sa|sc|c)ss$', css, value = TRUE, invert = TRUE)
   css  = setdiff(css, css2)
   check_css(css2)
 
