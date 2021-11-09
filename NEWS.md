@@ -8,6 +8,8 @@
 
 - In `chrome_print()`, set a timeout when R tries to detect headless Chrome.
 
+- Added support for Sass files.
+
 # CHANGES IN pagedown VERSION 0.15
 
 ## NEW FEATURES
