@@ -1,0 +1,14 @@
+name: 'Install Ghostscript'
+description: 'Install Ghostscript on all OS'
+runs:
+  using: "composite"
+  steps:
+      - if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get install -y ghostscript
+        shell: bash
+      - if: ${{ runner.os == 'Windows' }}
+        run: choco install ghostscript
+        shell: pwsh
+      - if: ${{ runner.os == 'macOS' }}
+        run: brew install ghostscript
+        shell: bash
