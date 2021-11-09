@@ -88,7 +88,7 @@ output:
       - default
 ```
 
-Note that it is possible to use Sass (including a file with `.sass` or `.scss` in the `css` option). Moreover, this overriding mechanism also works for other output formats in **pagedown**.
+Note that it is possible to use Sass (including a file with `.sass` or `.scss` extension in the `css` option). Moreover, this overriding mechanism also works for other output formats in **pagedown**.
 
 ## Print to PDF
 
