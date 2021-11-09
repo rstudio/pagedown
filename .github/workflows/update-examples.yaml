@@ -7,7 +7,7 @@ on:
       types:
         - completed
 
-name: R-CMD-check
+name: Build Examples
 
 jobs:
   R-CMD-check:
