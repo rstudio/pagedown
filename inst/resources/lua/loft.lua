@@ -18,10 +18,10 @@ local function getMeta(meta)
   options = meta
   -- If there is no given titles, use default titles
   if not options["lot-title"] then
-    options["lot-title"] = pandoc.MetaInlines("List of Tables")
+    options["lot-title"] = pandoc.MetaInlines(pandoc.Str("List of Tables"))
   end
   if not options["lof-title"] then
-    options["lof-title"] = pandoc.MetaInlines("List of Figures")
+    options["lof-title"] = pandoc.MetaInlines(pandoc.Str("List of Figures"))
   end
   return nil -- Do not modify Meta
 end
