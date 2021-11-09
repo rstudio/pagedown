@@ -1,0 +1,38 @@
+# For help debugging build failures open an issue on the RStudio community with the 'github-actions' tag.
+# https://community.rstudio.com/new-topic?category=Package%20development&tags=github-actions
+on:
+  workflow_dispatch:
+  workflow_run:
+      workflows: ["R-CMD-check"]
+      types:
+        - completed
+
+name: R-CMD-check
+
+jobs:
+  R-CMD-check:
+    runs-on: ubuntu-18.04
+    if: github.event.name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    name: 'ubuntu-18.04 (R release) [Pandoc 2.14.2]'
+
+    env:
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: r-lib/actions/setup-r@v1
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-pandoc@v1
+        with:
+          pandoc-version: 2.14.2
+
+      - uses: r-lib/actions/setup-r-dependencies@v1
+
+      - name: Build examples
+        run: Rscript tools/website.R
+        shell: bash
