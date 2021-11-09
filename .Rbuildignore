@@ -3,3 +3,5 @@
 ^\.Rproj\.user$
 ^tools$
 inst/examples$
+^codecov\.yml$
+^\.github$
