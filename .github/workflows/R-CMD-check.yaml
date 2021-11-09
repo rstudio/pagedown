@@ -68,6 +68,10 @@ jobs:
         with:
           extra-packages: rcmdcheck
 
+      - names: Install extra dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y ghostscript
+
       - uses: r-lib/actions/check-r-package@v1
 
       - name: Show testthat output
