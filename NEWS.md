@@ -10,6 +10,8 @@
 
 - Added support for Sass files with `.scss` and `.sass` extension (thanks, @felipecrp, #244).
 
+- Added support for long tables, i.e., repeat the table header when a page break the table. (thanks, @felipecrp, #250).
+
 # CHANGES IN pagedown VERSION 0.15
 
 ## NEW FEATURES
