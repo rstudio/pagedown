@@ -88,7 +88,7 @@ output:
       - default
 ```
 
-Note that this overriding mechanism also works for other output formats in **pagedown**.
+Note that it is possible to use Sass, by installing the Sass package (`install.packages("sass")`) and including a file with the `.sass` or `.scss` extension in the `css` option. Moreover, this overriding mechanism also works for other output formats in **pagedown**.
 
 ## Print to PDF
 
