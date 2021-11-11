@@ -13,15 +13,36 @@ local options = {}     -- where we store pandoc Meta
 local tablesList = {}  -- where we store the list of tables
 local figuresList = {} -- where we store the list of figures
 
+-- for debuging purpose
+local debug_mode = os.getenv("DEBUG_PANDOC_LUA") == "TRUE"
+local function print_debug(label,obj,iter)
+    obj = obj or nil
+    iter = iter or pairs
+    label = label or ""
+    label = "DEBUG (from pagedown - loft.lua): "..label
+    if (debug_mode) then
+        if not obj then
+            print(label.." nil")
+        elseif (type(obj) == "string") then
+            print(label.." "..obj)
+        elseif type(obj) == "table" then
+            for k,v in iter(obj) do
+                print(label.."id:"..k.. " val:"..v)
+            end
+        end
+    end
+    return nil
+end
+
 -- The following function stores pandoc Meta in the options local variable
 local function getMeta(meta)
   options = meta
   -- If there is no given titles, use default titles
   if not options["lot-title"] then
-    options["lot-title"] = pandoc.MetaInlines("List of Tables")
+    options["lot-title"] = pandoc.MetaInlines(pandoc.Str("List of Tables"))
   end
   if not options["lof-title"] then
-    options["lof-title"] = pandoc.MetaInlines("List of Figures")
+    options["lof-title"] = pandoc.MetaInlines(pandoc.Str("List of Figures"))
   end
   return nil -- Do not modify Meta
 end
@@ -32,7 +53,7 @@ local function getFigCaption(div)
   local found
   for i, block in ipairs(listOfBlocks) do
     if block.t == "RawBlock" then
-      if block.c[2] == '<p class="caption">' then
+      if block.text == '<p class="caption">' then
         found = i + 1
         break
       end

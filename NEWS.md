@@ -10,6 +10,10 @@
 
 - Added support for Sass files with `.scss` and `.sass` extension (thanks, @felipecrp, #244).
 
+## BUG FIXES
+
+- Fix an issue with `loft.lua` filter following changes in Pandoc 2.16 (#249).
+
 # CHANGES IN pagedown VERSION 0.15
 
 ## NEW FEATURES
