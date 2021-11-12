@@ -1,5 +1,9 @@
 # CHANGES IN pagedown VERSION 0.16
 
+## NEW FEATURES
+
+- Added support for long tables, i.e., repeat the table header when a page breaks the table (thanks, @felipecrp and @jdbarillas, #250 and #162).
+
 ## MINOR CHANGES
 
 - Document that the `html_letter()` output format modifies the default value of the `fig_caption` parameter and allow the user to change it (thanks, @NewGraphEnvironment, #234).
@@ -10,7 +14,9 @@
 
 - Added support for Sass files with `.scss` and `.sass` extension (thanks, @felipecrp, #244).
 
-- Added support for long tables, i.e., repeat the table header when a page breaks the table. (thanks, @felipecrp, #250).
+## BUG FIXES
+
+- Fix an issue with `loft.lua` filter following changes in Pandoc 2.16 (#249).
 
 # CHANGES IN pagedown VERSION 0.15
 

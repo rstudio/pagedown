@@ -1,6 +1,6 @@
 # pagedown
 
-[![Travis build status](https://travis-ci.org/rstudio/pagedown.svg?branch=main)](https://travis-ci.org/rstudio/pagedown)
+[![Build status](https://github.com/rstudio/pagedown/actions/workflows/R-CMD-check.yaml/badge.svg?branch=main)
 [![Downloads from the RStudio CRAN mirror](https://cranlogs.r-pkg.org/badges/pagedown)](https://cran.r-project.org/package=pagedown)
 
 <a href="https://github.com/rstudio/pagedown"><img src="https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/pagedown.svg" alt="pagedown logo" align="right" height="138.5"/></a>
