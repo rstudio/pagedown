@@ -1,180 +1,180 @@
+/* CSS for Paged.js interface – v0.2 */
+
+/* Change the look */
 :root {
-  --background: whitesmoke;
-  --pagedjs-width: 6in;
-  --pagedjs-height: 9in;
-  --color-paper: white;
-  --color-mbox: rgba(0, 0, 0, 0.2);
-  --running-title-width: 2.5in;
-  --screen-pages-spacing: 5mm;
+    --color-background: whitesmoke;
+    --color-pageSheet: #cfcfcf;
+    --color-pageBox: violet;
+    --color-paper: white;
+    --color-marginBox: transparent;
+    --pagedjs-crop-color: black;
+    --pagedjs-crop-shadow: white;
+    --pagedjs-crop-stroke: 1px;
 }
 
-html {
-  line-height: 1.3;
-}
-
-/* generated content */
-a[href^="http"]:not([class="uri"])::after {
-  content: " (" attr(href) ")";
-  font-size: 90%;
-  hyphens: none;
-  word-break: break-all;
-}
-.references a[href^=http]:not([class=uri])::after {
-  content: none;
-}
-.main a[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
-  content: " (page " target-counter(attr(href), page) ")";
-}
-.main a.front-matter-ref[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
-  content: " (page " target-counter(attr(href), page, lower-roman) ")";
-}
-/* do not include page references in code blocks */
-.sourceCode a[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after,
-.sourceCode a.front-matter-ref[href^="#"]:not([class^="footnote-"]):not([href*=":"])::after {
-  content: unset;
-}
-
-/* TOC, LOT, LOF */
-.toc ul, .lot ul, .lof ul {
-  list-style: none;
-  padding-left: 0;
-  overflow-x: hidden;
-}
-.toc li li {
-  padding-left: 1em;
-}
-.toc a, .lot a, .lof a {
-  text-decoration: none;
-  background: white;
-  padding-right: .33em;
-}
-.toc a::after, .lot a::after, .lof a::after {
-  /* content: leader(dotted) target-counter(attr(href), page); */
-  content: target-counter(attr(href), page);
-  float: right;
-  background: white;
-}
-.toc a.front-matter-ref::after, .lot a.front-matter-ref::after, .lof a.front-matter-ref::after {
-  /* content: leader(dotted) target-counter(attr(href), page, lower-roman); */
-  content: target-counter(attr(href), page, lower-roman);
-}
-.toc .leaders::before, .lot .leaders::before, .lof .leaders::before {
-  float: left;
-  width: 0;
-  white-space: nowrap;
-  content: ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ";
-}
-
-/* Chapter name */
-.chapter > h1 > .header-section-number::before, .chapter-ref > .toc-section-number::before {
-  content: var(--chapter-name-before, "Chapter ");
-}
-.chapter > h1 > .header-section-number::after, .chapter-ref > .toc-section-number::after {
-  content: var(--chapter-name-after, "");
-}
-
-/* misc elements */
-.subtitle span {
-  font-size: .9em;
-}
-img {
-  max-width: 100%;
-}
-pre {
-  padding: 1em;
-  white-space: pre-wrap;
-}
-pre[class] {
-  background: #f9f9f9;
-}
-abbr {
-  text-decoration: none;
-}
-
+/* To define how the book look on the screen: */
 @media screen {
-  div.sourceCode {
-    overflow: visible !important;
-  }
-  a.sourceLine::before {
-    text-decoration: unset !important;
-  }
-}
-pre.numberSource a.sourceLine {
-  left: 0 !important;
-  text-indent: -5em
-}
-pre.numberSource {
-  margin-left: 0 !important;
-}
-table {
-  margin: auto;
-  border-top: 1px solid #666;
-  border-bottom: 1px solid #666;
-}
-table thead th {
-  border-bottom: 1px solid #ddd;
-}
-thead, tfoot, tr:nth-child(even) {
-  background: #eee;
-}
-/* knitr::kables styling, see https://github.com/rstudio/pagedown/issues/214 */
-.kable_wrapper > tbody > tr > td {
-    vertical-align: top;
-}
-.footnotes {
-  font-size: 90%;
-}
-.footnotes hr::before {
-  content: "Footnotes:";
-}
-.footnotes hr {
-  border: none;
-}
-.footnote-break {
-  width: 1in;
-}
-body {
-  hyphens: auto;
-}
-code {
-  hyphens: none;
+    body {
+        background-color: var(--color-background);
+    }
+
+    .pagedjs_pages {
+        display: flex;
+        width: calc(var(--pagedjs-width) * 2);
+        flex: 0;
+        flex-wrap: wrap;
+        margin: 0 auto;
+    }
+
+    .pagedjs_page {
+        background-color: var(--color-paper);
+        box-shadow: 0 0 0 1px var(--color-pageSheet);
+        margin: 0;
+        flex-shrink: 0;
+        flex-grow: 0;
+        margin-top: 10mm;
+    }
+
+    .pagedjs_first_page {
+        margin-left: var(--pagedjs-width);
+    }
+
+    .pagedjs_page:last-of-type {
+        margin-bottom: 10mm;
+    }
+
+    .pagedjs_pagebox{
+        box-shadow: 0 0 0 1px var(--color-pageBox);
+    }
+
+    .pagedjs_left_page{
+        z-index: 20;
+        width: calc(var(--pagedjs-bleed-left) + var(--pagedjs-pagebox-width))!important;
+    }
+
+    .pagedjs_left_page .pagedjs_bleed-right .pagedjs_marks-crop {
+        border-color: transparent;
+    }
+    
+    .pagedjs_left_page .pagedjs_bleed-right .pagedjs_marks-middle{
+        width: 0;
+    } 
+
+    .pagedjs_right_page{
+        z-index: 10;
+        position: relative;
+        left: calc(var(--pagedjs-bleed-left)*-1);
+    }
+
+    /* show the margin-box */
+
+    .pagedjs_margin-top-left-corner-holder,
+    .pagedjs_margin-top,
+    .pagedjs_margin-top-left,
+    .pagedjs_margin-top-center,
+    .pagedjs_margin-top-right,
+    .pagedjs_margin-top-right-corner-holder,
+    .pagedjs_margin-bottom-left-corner-holder,
+    .pagedjs_margin-bottom,
+    .pagedjs_margin-bottom-left,
+    .pagedjs_margin-bottom-center,
+    .pagedjs_margin-bottom-right,
+    .pagedjs_margin-bottom-right-corner-holder,
+    .pagedjs_margin-right,
+    .pagedjs_margin-right-top,
+    .pagedjs_margin-right-middle,
+    .pagedjs_margin-right-bottom,
+    .pagedjs_margin-left,
+    .pagedjs_margin-left-top,
+    .pagedjs_margin-left-middle,
+    .pagedjs_margin-left-bottom {
+        box-shadow: 0 0 0 1px inset var(--color-marginBox);
+    }
+
+    /* uncomment this part for recto/verso book : ------------------------------------ */
+
+    /*
+    .pagedjs_pages {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .pagedjs_first_page {
+        margin-left: 0;
+    }
+
+    .pagedjs_page {
+        margin: 0 auto;
+        margin-top: 10mm;
+    } 
+
+    .pagedjs_left_page{
+        width: calc(var(--pagedjs-bleed-left) + var(--pagedjs-pagebox-width) + var(--pagedjs-bleed-left))!important;
+    }
+
+    .pagedjs_left_page .pagedjs_bleed-right .pagedjs_marks-crop{
+        border-color: var(--pagedjs-crop-color);
+    }
+
+    .pagedjs_left_page .pagedjs_bleed-right .pagedjs_marks-middle{
+        width: var(--pagedjs-cross-size)!important;
+    } 
+
+    .pagedjs_right_page{
+        left: 0; 
+    } 
+    */
+    
+    
+
+    /*--------------------------------------------------------------------------------------*/
+
+
+
+    /* uncomment this par to see the baseline : -------------------------------------------*/
+
+    
+    /* .pagedjs_pagebox {
+        --pagedjs-baseline: 22px;
+        --pagedjs-baseline-position: 5px;
+        --pagedjs-baseline-color: cyan;
+        background: linear-gradient(transparent 0%, transparent calc(var(--pagedjs-baseline) - 1px), var(--pagedjs-baseline-color) calc(var(--pagedjs-baseline) - 1px), var(--pagedjs-baseline-color) var(--pagedjs-baseline)), transparent;
+        background-size: 100% var(--pagedjs-baseline);
+        background-repeat: repeat-y;
+        background-position-y: var(--pagedjs-baseline-position);
+    }  */
+   
+
+    /*--------------------------------------------------------------------------------------*/
 }
 
-/* two pages in a row if possible on screen */
-@media screen {
-  body {
-    background-color: var(--background);
-    margin: var(--screen-pages-spacing) auto 0 auto;
-  }
-  .pagedjs_pages {
-    display: flex;
-    max-width: calc(var(--pagedjs-width) * 2);
-    flex: 0;
-    flex-wrap: wrap;
-    margin: 0 auto;
-  }
-  .pagedjs_page {
-    background-color: var(--color-paper);
-    box-shadow: 0 0 0 1px var(--color-mbox);
-    flex-shrink: 0;
-    flex-grow: 0;
-    margin: auto auto var(--screen-pages-spacing) auto;
-  }
+
+
+
+
+/* Marks (to delete when merge in paged.js) */
+
+.pagedjs_marks-crop{
+    z-index: 999999999999;
+  
 }
 
-/* when a row can hold two pages, start first page on the right */
-@media screen and (min-width: 12.32in) {
-  .pagedjs_page {
-    margin: auto 0 var(--screen-pages-spacing) 0;
-  }
-  .pagedjs_first_page {
-    margin-left: var(--pagedjs-width);
-  }
+.pagedjs_bleed-top .pagedjs_marks-crop, 
+.pagedjs_bleed-bottom .pagedjs_marks-crop{
+    box-shadow: 1px 0px 0px 0px var(--pagedjs-crop-shadow);
+}  
+
+.pagedjs_bleed-top .pagedjs_marks-crop:last-child,
+.pagedjs_bleed-bottom .pagedjs_marks-crop:last-child{
+    box-shadow: -1px 0px 0px 0px var(--pagedjs-crop-shadow);
+}  
+
+.pagedjs_bleed-left .pagedjs_marks-crop,
+.pagedjs_bleed-right .pagedjs_marks-crop{
+    box-shadow: 0px 1px 0px 0px var(--pagedjs-crop-shadow);
 }
 
-/* use a fixed width body for mobiles */
-@media screen and (max-width:1180px)  {
-  body {
-    width: calc(var(--pagedjs-width) + 2 * var(--screen-pages-spacing));
-  }
+.pagedjs_bleed-left .pagedjs_marks-crop:last-child,
+.pagedjs_bleed-right .pagedjs_marks-crop:last-child{
+    box-shadow: 0px -1px 0px 0px var(--pagedjs-crop-shadow);
 }
