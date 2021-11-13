@@ -14,6 +14,8 @@
 
 - Added support for Sass files with `.scss` and `.sass` extension (thanks, @felipecrp, #244).
 
+- Upgraded `paged.js` from version _0.1.43_ to _0.2.0_. (thanks, @felipecrp, #252).
+
 ## BUG FIXES
 
 - Fix an issue with `loft.lua` filter following changes in Pandoc 2.16 (#249).
