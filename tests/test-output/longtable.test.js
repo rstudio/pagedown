@@ -1,18 +1,22 @@
 const exec = require('child_process').execSync;
 
 describe("Long tables", () => {
+    // TODO encapsulate the file path to make it easier to replicate in other tests
+    const cwd = process.cwd();
+    const file = 'longtable'
+    const rmdFile = cwd + '/tests/test-output/' + file + '.Rmd';
+    const htmlFile = cwd + '/tests/test-output/' + file + '.html';
+    const htmlFileUri = 'file://' + cwd + '/tests/test-output/' + file + '.html';
+    
     beforeAll(async () => {
-        // TODO encapsulate the file path to make it easier to replicate in other tests
-        const cwd = process.cwd();
-        //const htmlFile = `file://{ $cwd }/tests/test-output/longtable.html`; // TODO not working
-        const file = 'longtable'
-        const rmdFile = cwd + '/tests/test-output/' + file + '.Rmd';
-        const htmlFile = 'file://' + cwd + '/tests/test-output/' + file + '.html';
-
         exec('Rscript -e "rmarkdown::render(\'' + rmdFile + '\')"');
-
-        await page.goto(htmlFile, { waitUntil: "networkidle2" });
+        await page.goto(htmlFileUri, { waitUntil: "networkidle2" });
     });
+    
+    afterAll(() => {
+        exec('rm \'' + htmlFile + '\'');
+    });
+    
 
     it("Must page break", async () => {
          const pageCount = await page.$$eval(
