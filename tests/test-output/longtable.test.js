@@ -10,9 +10,9 @@ describe("Long tables", () => {
 
     it("Must page break", async () => {
          const pageCount = await page.$$eval(
-            '.pagedjs_page', 
+            'div.pagedjs_page', 
             (el) => el.length);
         
         expect(pageCount).toEqual(8);
-    })
+    });
 });
