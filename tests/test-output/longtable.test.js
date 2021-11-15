@@ -5,7 +5,7 @@ describe("Long tables", () => {
         const cwd = process.cwd();
         //const htmlFile = `file://{ $cwd }/tests/test-output/longtable.html`; // TODO not working
         const htmlFile = 'file://' + cwd + '/tests/test-output/longtable.html';
-        await page.goto(htmlFile);
+        await page.goto(htmlFile, { waitUntil: "networkidle2" });
     });
 
     it("Must page break", async () => {
