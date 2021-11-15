@@ -15,4 +15,20 @@ describe("Long tables", () => {
         
         expect(pageCount).toEqual(8);
     });
+
+    it("Must break table", async () => {
+        const tableCount = await page.$$eval(
+           'table', 
+           (el) => el.length);
+       
+       expect(tableCount).toEqual(6);
+   });
+
+    it("Must page repeat thead", async () => {
+        const theadCount = await page.$$eval(
+           'thead', 
+           (el) => el.length);
+       
+       expect(theadCount).toEqual(6);
+   });
 });
