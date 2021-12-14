@@ -347,7 +347,7 @@ is_remote_protocol_ok = function(debug_port,
   sleep_time = getOption("pagedown.remote.sleeptime", 0.5)
   if (verbose >= 1) message('Trying to find headless Chrome in ', max_attempts, ' attempts')
   for (i in seq_len(max_attempts)) {
-    remote_protocol = xfun::Rscript_call('pagedown:::try_read_json', list(url), timeout = 10)
+    remote_protocol = tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
     if (!is.null(remote_protocol)) {
       if (verbose >= 1) message('Headless Chrome found at attempt ', i)
       break

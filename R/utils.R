@@ -38,7 +38,3 @@ run_servr = function() {
   # see https://github.com/rstudio/httpuv/issues/250
   later::with_loop(later::global_loop(), httpuv::service(NA))
 }
-
-try_read_json = function(url) {
-  tryCatch(suppressWarnings(jsonlite::read_json(url)), error = function(e) NULL)
-}

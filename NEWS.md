@@ -10,8 +10,6 @@
 
 - Created an option `pagedown.chrome.log` to ease `chrome_print()` debugging: when set to `TRUE`, the logs of Chrome are saved in the working directory.
 
-- In `chrome_print()`, set a timeout when R tries to detect headless Chrome.
-
 - Added support for Sass files with `.scss` and `.sass` extension (thanks, @felipecrp, #244).
 
 ## BUG FIXES
