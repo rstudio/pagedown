@@ -5,6 +5,8 @@
     - calculate the rank for each author
     - build the DOI from the volume and issue parameters and store it in a variable named doi
     - use fallback values for missing month, year, volume or issue
+
+    Developped using Pandoc 2.2.3 by @RLesur
 --]]
 local isInteger = function(number)
   return math.floor(number) == number
@@ -46,6 +48,19 @@ local getDOI = function(volume, issue)
   return "10.18637/jss.v" .. padVolume(volumeNumber) .. ".i" .. padIssue(issueNumber)
 end
 
+isType = function(meta, pandocType)
+  -- Pandoc 2.17 changes the way Meta works
+  -- .t tags was used to detect Meta type like MetaList
+  -- pandoc.utils.type was introduced for this simplify the type to usual
+  -- pandoc ones e.g MetaList -> List
+  -- This function allow to support earlier and later versions
+  -- https://github.com/rstudio/pagedown/issues/268
+  if not pandoc.utils.type and meta.t then
+    return meta.t == "Meta"..pandocType
+  else
+    return pandoc.utils.type(meta) == pandocType
+  end
+end
 
 Meta = function(meta)
   ---------------------------------------
@@ -56,7 +71,7 @@ Meta = function(meta)
   -- Store plain keywords:
   local plainKeywords = {}
 
-  if meta.keywords.t == "MetaList" then
+  if isType(meta.keywords, "List") then
     for i, v in ipairs(meta.keywords) do
       plainKeywords[i] = pandoc.utils.stringify(v)
     end
@@ -72,7 +87,7 @@ Meta = function(meta)
   ---------------------------------------
   local author = meta.author
 
-  if author.t == "MetaInlines" then
+  if isType(author, "Inlines") then
     meta.author = {data = author, rank = "1"}
   else
     for i, v in ipairs(author) do
