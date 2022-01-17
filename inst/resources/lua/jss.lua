@@ -6,7 +6,7 @@
     - build the DOI from the volume and issue parameters and store it in a variable named doi
     - use fallback values for missing month, year, volume or issue
 
-    Develop using Pandoc 2.2.3 by @RLesur
+    Developped using Pandoc 2.2.3 by @RLesur
 --]]
 local isInteger = function(number)
   return math.floor(number) == number
