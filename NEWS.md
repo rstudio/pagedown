@@ -1,3 +1,6 @@
+# CHANGES IN pagedown VERSION 0.17
+
+
 # CHANGES IN pagedown VERSION 0.16
 
 ## NEW FEATURES
@@ -9,8 +12,6 @@
 - Document that the `html_letter()` output format modifies the default value of the `fig_caption` parameter and allow the user to change it (thanks, @NewGraphEnvironment, #234).
 
 - Created an option `pagedown.chrome.log` to ease `chrome_print()` debugging: when set to `TRUE`, the logs of Chrome are saved in the working directory.
-
-- In `chrome_print()`, set a timeout when R tries to detect headless Chrome.
 
 - Added support for Sass files with `.scss` and `.sass` extension (thanks, @felipecrp, #244).
 
