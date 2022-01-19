@@ -45,4 +45,7 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      - name: Install extra dependencies
+        uses: ./.github/actions/install-ghostscript
+
       - uses: r-lib/actions/check-r-package@v2
