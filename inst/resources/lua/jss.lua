@@ -11,7 +11,7 @@
 
 -- REQUIREMENTS: Load shared lua function - see `shared.lua` in rmarkdown for more details.
 --  * pandocAvailable()
---  * type() (backward compatible after 2.17 changes)
+--  * pandoc_type() function (backward compatible type() after 2.17 changes)
 --  * print_debug()
 dofile(os.getenv 'RMARKDOWN_LUA_SHARED')
 
@@ -75,7 +75,7 @@ Meta = function(meta)
   -- Store plain keywords:
   local plainKeywords = {}
 
-  if type(meta.keywords) == "List" then
+  if pandoc_type(meta.keywords) == "List" then
     for i, v in ipairs(meta.keywords) do
       plainKeywords[i] = pandoc.utils.stringify(v)
     end
@@ -91,7 +91,7 @@ Meta = function(meta)
   ---------------------------------------
   local author = meta.author
 
-  if type(author) == "Inlines" then
+  if pandoc_type(author) == "Inlines" then
     meta.author = {data = author, rank = "1"}
   else
     for i, v in ipairs(author) do
