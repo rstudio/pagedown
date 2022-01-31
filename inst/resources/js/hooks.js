@@ -636,7 +636,7 @@
     layout(rendered, layout) {
         this.splitTablesRefs.forEach(ref => {
             const renderedTable = rendered.querySelector("[data-ref='" + ref + "']");
-            if (renderedTable) {
+            if (renderedTable && renderedTable.hasAttribute("data-split-from")) {
                 // this event can be triggered multiple times
                 // added a flag repeated-headers to control when table headers already repeated in current page.
                 if (!renderedTable.getAttribute("repeated-headers")) {
