@@ -1,5 +1,8 @@
 # CHANGES IN pagedown VERSION 0.17
 
+## BUG FIXES
+
+- Fix duplicating headers in tables that force new page (thanks, @Darxor, #272)
 
 # CHANGES IN pagedown VERSION 0.16
 
