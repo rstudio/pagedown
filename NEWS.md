@@ -50,7 +50,7 @@
 
 ## MAJOR CHANGES
 
-- Paged.js is upgraded from version 0.1.32 to 0.1.43. This update speeds up the rendering time and fixes several bugs (see also <https://pagedjs.org/posts/2020-02-25-weekly/>, <https://pagedjs.org/posts/2020-03-03-update-pagedjs-0-1-39/>, <https://pagedjs.org/posts/2020-04-01-pagedjs-0-1-40/> and <https://pagedjs.org/posts/2020-06-22-pagedjs-0-1-42/>) (#202).
+- Paged.js is upgraded from version 0.1.32 to 0.1.43. This update speeds up the rendering time and fixes several bugs (see also <https://pagedjs.org/post/weekly/>, <https://pagedjs.org/post/pagedjs-0-1-40/> and <https://pagedjs.org/post/pagedjs-0-1-42/>) (#202).
 
 ## MINOR CHANGES
 
