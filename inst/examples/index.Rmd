@@ -30,7 +30,7 @@ Although most web browsers have not implemented the W3C specs for Paged Media, a
 remotes::install_github('rstudio/pagedown')
 ```
 
-To learn more about paged.js and CSS for Paged Media, you may check out [the cheatsheet of paged.js](https://www.pagedjs.org/documentation/cheatsheet/).
+To learn more about paged.js and CSS for Paged Media, you may check out [the documentation of paged.js](https://pagedjs.org/documentation/).
 
 The **pagedown** package contains output formats for paged HTML documents, letters, resumes, posters, business cards, and so on. Usually there is an R Markdown template for each output format, which you can access from RStudio's menu `File -> New File -> R Markdown -> From Template`.
 
