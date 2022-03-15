@@ -8,6 +8,24 @@
 
     Developped using Pandoc 2.2.3 by @RLesur
 --]]
+
+-- REQUIREMENTS: Load shared lua function - see `shared.lua` in rmarkdown for more details.
+--  * pandocAvailable()
+--  * pandoc_type() function (backward compatible type() after 2.17 changes)
+--  * print_debug()
+dofile(os.getenv 'RMARKDOWN_LUA_SHARED')
+
+--[[
+  About the requirement:
+  * PANDOC_VERSION -> 2.2.3
+]]
+if (not pandocAvailable {2,2,3}) then
+    io.stderr:write("[WARNING] (jss.lua) requires at least Pandoc 2.1. Lua Filter skipped.\n")
+    return {}
+end
+
+-- START OF THE FILTER'S FUNCTIONS --
+
 local isInteger = function(number)
   return math.floor(number) == number
 end
@@ -48,20 +66,6 @@ local getDOI = function(volume, issue)
   return "10.18637/jss.v" .. padVolume(volumeNumber) .. ".i" .. padIssue(issueNumber)
 end
 
-isType = function(meta, pandocType)
-  -- Pandoc 2.17 changes the way Meta works
-  -- .t tags was used to detect Meta type like MetaList
-  -- pandoc.utils.type was introduced for this simplify the type to usual
-  -- pandoc ones e.g MetaList -> List
-  -- This function allow to support earlier and later versions
-  -- https://github.com/rstudio/pagedown/issues/268
-  if not pandoc.utils.type and meta.t then
-    return meta.t == "Meta"..pandocType
-  else
-    return pandoc.utils.type(meta) == pandocType
-  end
-end
-
 Meta = function(meta)
   ---------------------------------------
   --           Keywords                --
@@ -71,7 +75,7 @@ Meta = function(meta)
   -- Store plain keywords:
   local plainKeywords = {}
 
-  if isType(meta.keywords, "List") then
+  if pandoc_type(meta.keywords) == "List" then
     for i, v in ipairs(meta.keywords) do
       plainKeywords[i] = pandoc.utils.stringify(v)
     end
@@ -87,7 +91,7 @@ Meta = function(meta)
   ---------------------------------------
   local author = meta.author
 
-  if isType(author, "Inlines") then
+  if pandoc_type(author) == "Inlines" then
     meta.author = {data = author, rank = "1"}
   else
     for i, v in ipairs(author) do

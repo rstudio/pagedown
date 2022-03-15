@@ -1,5 +1,6 @@
 # CHANGES IN pagedown VERSION 0.18
 
+- Fix an issue in `jss_paged()` with Pandoc 2.17 and above.
 
 # CHANGES IN pagedown VERSION 0.17
 
