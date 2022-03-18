@@ -28,7 +28,8 @@ Suggests:
     xaringan,
     pdftools,
     revealjs,
-    covr
+    covr,
+    xml2
 License: MIT + file LICENSE
 URL: https://github.com/rstudio/pagedown
 BugReports: https://github.com/rstudio/pagedown/issues
