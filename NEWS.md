@@ -2,6 +2,8 @@
 
 - Fix an issue in `jss_paged()` with Pandoc 2.17 and above.
 
+- Fix an issue in `html_paged()` with LOT and LOF not showing anymore with Pandoc 2.17 and above (thanks, @adamvi, #280). 
+
 # CHANGES IN pagedown VERSION 0.17
 
 ## BUG FIXES
