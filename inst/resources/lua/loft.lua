@@ -143,4 +143,4 @@ local function appendLoft(doc)
   return pandoc.Pandoc(doc.blocks, doc.meta)
 end
 
-return {{Meta = getMeta}, {Div = addFigRef, Table = addTabRef, Doc = appendLoft}}
+return {{Meta = getMeta}, {Div = addFigRef, Table = addTabRef, Pandoc = appendLoft}}
