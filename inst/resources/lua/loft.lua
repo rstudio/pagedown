@@ -9,30 +9,26 @@
     ---
 --]]
 
+-- REQUIREMENTS: Load shared lua function - see `shared.lua` in rmarkdown for more details.
+--  * pandocAvailable()
+--  * pandoc_type() function (backward compatible type() after 2.17 changes)
+--  * print_debug()
+dofile(os.getenv 'RMARKDOWN_LUA_SHARED')
+
+--[[
+  About the requirement:
+  * PANDOC_VERSION -> 2.2.3
+]]
+if (not pandocAvailable {2,2,3}) then
+    io.stderr:write("[WARNING] (jss.lua) requires at least Pandoc 2.1. Lua Filter skipped.\n")
+    return {}
+end
+
+-- START OF THE FILTER'S FUNCTIONS --
+
 local options = {}     -- where we store pandoc Meta
 local tablesList = {}  -- where we store the list of tables
 local figuresList = {} -- where we store the list of figures
-
--- for debuging purpose
-local debug_mode = os.getenv("DEBUG_PANDOC_LUA") == "TRUE"
-local function print_debug(label,obj,iter)
-    obj = obj or nil
-    iter = iter or pairs
-    label = label or ""
-    label = "DEBUG (from pagedown - loft.lua): "..label
-    if (debug_mode) then
-        if not obj then
-            print(label.." nil")
-        elseif (type(obj) == "string") then
-            print(label.." "..obj)
-        elseif type(obj) == "table" then
-            for k,v in iter(obj) do
-                print(label.."id:"..k.. " val:"..v)
-            end
-        end
-    end
-    return nil
-end
 
 -- The following function stores pandoc Meta in the options local variable
 local function getMeta(meta)
@@ -45,6 +41,18 @@ local function getMeta(meta)
     options["lof-title"] = pandoc.MetaInlines(pandoc.Str("List of Figures"))
   end
   return nil -- Do not modify Meta
+end
+
+-- Helpers function --
+
+-- From a caption text, retrieve the reference and find it in reference list
+local function refFromCaption(captionText, refList)
+  local ref
+  -- build figure reference from figure caption
+  ref = "@ref" .. string.gsub(captionText, "#", "")
+  ref = string.gsub(ref, "%)", ") ") -- add a space
+  -- insert figure reference in figuresList
+  table.insert(refList, {pandoc.Plain(pandoc.Str(ref))})
 end
 
 -- This function is called only for Div of class figure inserted by bookdown
@@ -66,9 +74,14 @@ local function getFigCaption(div)
   end
 end
 
--- This function looks for div of class figure.
+-- Main AST processing functions
+
+-- This function looks for caption in div of class figures. Usually raw HTML of this
+-- structure is inserted by knitr::include_graphics() when `fig.cap` is provided
+-- which identified as a Div in AST (bc of native_divs).
 -- It builds and saves the items used by the list of figures.
 local function addFigRef(div)
+
   local captionText
   local figref
 
@@ -78,20 +91,38 @@ local function addFigRef(div)
   if div.classes:includes("figure") then
     captionText = getFigCaption(div)
     if not captionText then return nil end
-
-    -- build figure reference from figure caption
-    figref = "@ref" .. string.gsub(captionText, "#", "")
-    figref = string.gsub(figref, "%)", ") ") -- add a space
-    -- insert figure reference in figuresList
-    table.insert(figuresList, {pandoc.Plain(pandoc.Str(figref))})
+    refFromCaption(captionText, figuresList)
   end
   return nil -- Do not modify Div
+end
+
+-- This function inspects the Images captions when Images are part of Figures
+-- (when Pandoc adds fig: in title meaning implicit_figures have identified it)
+-- When a bookdown id is found, it builds and saves the items used by
+-- the list of figures.
+local function addFigRef2(img)
+
+  local captionText
+  local figref
+
+  -- do not build the lof if not required
+  if not options.lof then return nil end
+
+  -- Identified a figure
+  if img.title and img.title:sub(1,4) == "fig:" then
+    captionText = pandoc.utils.stringify(img.caption)
+    found = string.find(captionText, "%(#fig:.*%)")
+  if found then
+    refFromCaption(captionText, figuresList)
+  end
+  end
 end
 
 -- This function inspects the tables captions.
 -- When a bookdown id is found, it builds and saves the items used by
 --  the list of tables.
 local function addTabRef(tab)
+
   local caption
   local found
   local tabref
@@ -103,16 +134,16 @@ local function addTabRef(tab)
   -- test the presence of a bookdown table id
   found = string.find(caption, "%(#tab:.*%)")
   if found then
-    -- build table reference from table caption
-    tabref = "@ref" .. string.gsub(caption, "#", "")
-    tabref = string.gsub(tabref, "%)", ") ") -- add a space
-    -- insert table reference in tablesList
-    table.insert(tablesList, {pandoc.Plain(pandoc.Str(tabref))})
+    refFromCaption(caption, tablesList)
   end
   return nil -- Do not modify Table
 end
 
+
+-- This function appends the LOT/LOF to the document using custom titles
+-- if provided and is insert the new section into TOC unless opt-out
 local function appendLoft(doc)
+
   local lotHeader
   local lofHeader
   local lotClasses = {"lot", "unnumbered", "front-matter"}
@@ -143,4 +174,8 @@ local function appendLoft(doc)
   return pandoc.Pandoc(doc.blocks, doc.meta)
 end
 
-return {{Meta = getMeta}, {Div = addFigRef, Table = addTabRef, Pandoc = appendLoft}}
+-- Organize filters: Meta filter needs to run before others
+return {
+  {Meta = getMeta},
+  {Div = addFigRef, Image = addFigRef2, Table = addTabRef, Pandoc = appendLoft}
+}
