@@ -1,5 +1,7 @@
 # CHANGES IN pagedown VERSION 0.18
 
+- Figure inserted using markdown syntax and having a caption with `(#fig:lab)` are now correctly listed in the LOF (thanks, @adamvi, #283).
+
 - Fix an issue in `jss_paged()` with Pandoc 2.17 and above.
 
 - Fix an issue in `html_paged()` with LOT and LOF not showing anymore with Pandoc 2.17 and above (thanks, @adamvi, #280). 
