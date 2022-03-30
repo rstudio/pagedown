@@ -62,6 +62,14 @@ html_letter = function(..., css = c('default', 'letter'), fig_caption = FALSE) {
   html_paged(..., css = css, fig_caption = fig_caption)
 }
 
+#' Propuesta con formato de ProyAIS
+#'
+#' @return An R Markdown output format.
+#' @export
+html_propuesta = function(..., css = c('default', 'letter', 'propuesta'), fig_caption = FALSE) {
+  html_paged(..., css = css, fig_caption = fig_caption)
+}
+
 #' Create a book for Chapman & Hall/CRC
 #'
 #' This output format is similar to \code{\link{html_paged}}. The only

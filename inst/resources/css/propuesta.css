@@ -1,0 +1,33 @@
+.title-page {
+  display: block;
+  text-align: center;
+  line-height: 1;
+}
+
+* {
+  font-family: Ubuntu, ubuntu, serif;
+}
+
+.sign {
+  text-align: left;
+  width: 20rem;
+  padding-bottom: 3rem;
+  border-bottom: black solid;
+}
+
+.sign p {
+  text-align: left;
+  display: inline-block;
+}
+
+p {
+  text-align: justify;
+}
+
+table {
+  text-align: center;
+}
+
+td {
+  padding: 0.5rem;
+}

@@ -1,5 +1,5 @@
 pkg_resource = function(...) {
-  system.file('resources', ..., package = 'pagedown', mustWork = TRUE)
+  system.file('resources', ..., package = 'prysdown', mustWork = TRUE)
 }
 
 lua_filters = function(...) {
@@ -19,7 +19,7 @@ check_css = function(css) {
   hint = if (is.na(maybe)) '' else paste0('; did you mean "', maybe, '"?')
   stop(
     '"', invalid, '" is not a valid built-in CSS filename', if (hint != "") hint else ".",
-    " Use `pagedown:::list_css()` to view all built-in CSS filenames.", call. = FALSE
+    " Use `prysdown:::list_css()` to view all built-in CSS filenames.", call. = FALSE
   )
 }
 
