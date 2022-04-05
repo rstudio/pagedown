@@ -69,5 +69,3 @@ Creative, enthusiastic, excellent taste of design, with great attention to detai
 Yihui Xie  
 Software Engineer  
 RStudio, PBC
-
-<script src="https://yihui.name/js/center-img.js"></script>
