@@ -554,7 +554,7 @@
   });
 
   // Repeat table headers on multiple pages
-  // Authors: Julien Taquet, Lucas Maciuga and Tafael Caixeta, see https://gitlab.pagedmedia.org/tools/pagedjs/issues/84
+  // Authors: Julien Taquet, Lucas Maciuga and Tafael Caixeta, see https://gitlab.coko.foundation/pagedjs/pagedjs/-/issues/84
   // TODO: remove this hook when Paged.js integrates this feature
   Paged.registerHandlers(class RepeatingTableHeadersHandler extends Paged.Handler {
 

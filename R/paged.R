@@ -172,7 +172,7 @@ html_format = function(
   )
 
   # Deactivate the use of the shadow DOM by the flextable package (see https://github.com/rstudio/pagedown/issues/216)
-  # We may remove that when https://gitlab.pagedmedia.org/tools/pagedjs/issues/148 will be solved
+  # We may remove that when https://gitlab.coko.foundation/pagedjs/pagedjs/-/issues/148 will be solved
   if (isTRUE(.pagedjs)) {
     fmt$knitr$opts_chunk[['ft.shadow']] = FALSE
   }
