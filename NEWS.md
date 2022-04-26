@@ -1,3 +1,6 @@
+# CHANGES IN pagedown VERSION 0.19
+
+
 # CHANGES IN pagedown VERSION 0.18
 
 - Figure inserted using markdown syntax and having a caption with `(#fig:lab)` are now correctly listed in the LOF (thanks, @adamvi, #283).
