@@ -5,3 +5,4 @@
 inst/examples$
 ^codecov\.yml$
 ^\.github$
+^LICENSE\.md$
