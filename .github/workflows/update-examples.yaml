@@ -11,9 +11,9 @@ name: Build Examples
 
 jobs:
   R-CMD-check:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     if: github.event.name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
-    name: 'ubuntu-18.04 (R release) [Pandoc 2.14.2]'
+    name: 'ubuntu-latest (R release) [Pandoc 2.14.2]'
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
