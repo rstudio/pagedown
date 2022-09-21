@@ -40,7 +40,7 @@ jobs:
       - name: Clean source files for deployment
         run: |
           rm *.Rmd index.bib
-        working-directory: inst/example
+        working-directory: inst/examples
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
