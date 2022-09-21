@@ -34,3 +34,13 @@ jobs:
       - name: Build examples
         run: Rscript tools/website.R
         shell: bash
+
+      - name: Clean source files for deployment
+        run: |
+          rm *.Rmd index.bib
+        working-directory: inst/example
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: inst/examples # The folder the action should deploy.
