@@ -55,10 +55,12 @@
     <div class="name"><slot name="name"><span></span></slot></div>
     <div class="title"><slot name="title"><span></span></slot></div>
     <div class="coordinates">
-      <p class="phone"><slot name="phone"><span>+1 844-448-1212</span></slot></p>
+      <p class="phone"><slot name="phone"><span>+1
+844-448-1212</span></slot></p>
       <p class="contact-email"><slot name="email"><span>info@rstudio.com</span></slot></p>
       <p class="website"><slot name="url"><span>www.rstudio.com</span></slot></p>
-      <slot name="address"><div class="address"><span class="citation">@rstudio</span></div></slot>
+      <slot name="address"><div class="address"><p><span
+class="citation">@rstudio</span></p></div></slot>
     </div>
   </div>
   <style>
@@ -97,7 +99,7 @@
   </div>
     <div class="wrapper" data-repeat="12">
         <span slot="name">Yihui Xie</span>
-        <span slot="title">Responsible for bookdown, markdown</span>
+        <span slot="title">Responsible for bookdown, pagedown</span>
     
     <span slot="email">xie@yihui.name</span>
     <span slot="url">https://yihui.name</span>
@@ -106,7 +108,8 @@
   
   <!-- if you prefer you can create cards in markdown instead of YAML declaration -->
   <div class="wrapper" data-repeat="12">
-  <p><span slot="name">Another Name</span> <span slot="title">Another Title</span> <span slot="email">someone@rstudio.com</span></p>
+  <p><span slot="name">Another Name</span> <span slot="title">Another
+  Title</span> <span slot="email">someone@rstudio.com</span></p>
   </div>
   <!-- if you prefer black text on white background, set eval=TRUE on the chunk below -->
 

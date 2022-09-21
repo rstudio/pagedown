@@ -18,7 +18,7 @@
 <meta name="description" content="A paged html thesis template for R Markdown users">
 
 <script id="pandoc-meta" type="application/json">
-{"department":"Templates","newpage_html_class":"page-break-after","location":"St. Catharines, ON","link-citations":"yes","committee":[{"prefix":"Dr","name":"Jane Doe III","position":"Chair of Department"},{"prefix":"Dr","name":"John Smith","position":"Faculty Advisor"}],"toc-title":"Contents","lof":true,"acknowledge":"Put the ackknowledgements here.","faculty":"Reproducibility and FOSS","preface":"A preface to the thesis.","bibliography":"packages.bib","degree":"Master of Documentation","date":[{"year":"2019","month":"August"}],"subtitle":"A {pagedown} template.","lot":true,"output":{"pagedown::thesis_paged":{"self_contained":"no","toc":true,"pandoc_args":"–mathjax","number_sections":"yes"}},"sign_page":true,"dedication":"A dedication line or two goes here.","author":[{"edu":"BSc","name":"William Brent Thorne"}],"abstract":"This is the abstract.","title":"A paged html thesis template for R Markdown users","institute":"Typeset University"}
+{"abstract":"This is the abstract.","acknowledge":"Put the ackknowledgements here.","author":[{"edu":"BSc","name":"William Brent Thorne"}],"bibliography":"packages.bib","committee":[{"name":"Jane Doe III","position":"Chair of Department","prefix":"Dr"},{"name":"John Smith","position":"Faculty Advisor","prefix":"Dr"}],"date":[{"month":"August","year":"2019"}],"dedication":"A dedication line or two goes here.","degree":"Master of Documentation","department":"Templates","faculty":"Reproducibility and FOSS","institute":"Typeset University","link-citations":true,"location":"St. Catharines, ON","lof":true,"lot":true,"newpage_html_class":"page-break-after","output":{"pagedown::thesis_paged":{"number_sections":true,"pandoc_args":"–mathjax","self_contained":false,"toc":true}},"preface":"A preface to the thesis.","sign_page":true,"subtitle":"A {pagedown} template.","title":"A paged html thesis template for R Markdown users","toc-title":"Contents"}
 </script>
 
 <title>A paged html thesis template for R Markdown users</title>
@@ -58,26 +58,28 @@
 
 
 <style type="text/css">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(data-line-number);
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
+    border: none; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
@@ -86,15 +88,15 @@ pre.numberSource a.sourceLine::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  }
+  {   }
 @media screen {
-a.sourceLine::before { text-decoration: underline; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
 code span.at { color: #7d9029; } /* Attribute */
 code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
+code span.bu { color: #008000; } /* BuiltIn */
 code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
 code span.ch { color: #4070a0; } /* Char */
 code span.cn { color: #880000; } /* Constant */
@@ -107,7 +109,7 @@ code span.er { color: #ff0000; font-weight: bold; } /* Error */
 code span.ex { } /* Extension */
 code span.fl { color: #40a070; } /* Float */
 code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
+code span.im { color: #008000; font-weight: bold; } /* Import */
 code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
 code span.kw { color: #007020; font-weight: bold; } /* Keyword */
 code span.op { color: #666666; } /* Operator */
@@ -216,19 +218,21 @@ Container for the table of content, table of tables and table of figures etc.
 <div id="TOC" class="level1 toc front-matter">
 <h1 class="toc-title">Contents</h1>
 <ul>
-<li><a href="#LOT">List of Tables</a></li>
-<li><a href="#LOF">List of Figures</a></li>
-<li><a href="#literature-review">Literature Review</a></li>
-<li><a href="#the-basics"><span class="toc-section-number">1</span> The Basics</a><ul>
-<li><a href="#introduction"><span class="toc-section-number">1.1</span> Introduction</a></li>
-<li><a href="#second-level-heading"><span class="toc-section-number">1.2</span> Second level heading</a></li>
+<li><a href="#LOT" id="toc-LOT">List of Tables</a></li>
+<li><a href="#LOF" id="toc-LOF">List of Figures</a></li>
+<li><a href="#literature-review" id="toc-literature-review">Literature Review</a></li>
+<li><a href="#the-basics" id="toc-the-basics"><span class="toc-section-number">1</span> The Basics</a>
+<ul>
+<li><a href="#introduction" id="toc-introduction"><span class="toc-section-number">1.1</span> Introduction</a></li>
+<li><a href="#second-level-heading" id="toc-second-level-heading"><span class="toc-section-number">1.2</span> Second level heading</a></li>
 </ul></li>
-<li><a href="#understanding-the-method-to-the-madness"><span class="toc-section-number">2</span> Understanding the method to the madness</a><ul>
-<li><a href="#adding-tables"><span class="toc-section-number">2.1</span> Adding Tables</a></li>
+<li><a href="#understanding-the-method-to-the-madness" id="toc-understanding-the-method-to-the-madness"><span class="toc-section-number">2</span> Understanding the method to the madness</a>
+<ul>
+<li><a href="#adding-tables" id="toc-adding-tables"><span class="toc-section-number">2.1</span> Adding Tables</a></li>
 </ul></li>
-<li><a href="#the-final-chapter-to-my-pretend-thesis"><span class="toc-section-number">3</span> The final chapter to my pretend thesis</a></li>
-<li><a href="#references">References</a></li>
-<li><a href="#appendix-i">APPENDIX I</a></li>
+<li><a href="#the-final-chapter-to-my-pretend-thesis" id="toc-the-final-chapter-to-my-pretend-thesis"><span class="toc-section-number">3</span> The final chapter to my pretend thesis</a></li>
+<li><a href="#references" id="toc-references">References</a></li>
+<li><a href="#appendix-i" id="toc-appendix-i">APPENDIX I</a></li>
 </ul>
 </div>
 
@@ -250,29 +254,29 @@ Container for the table of content, table of tables and table of figures etc.
 <h1>Literature Review</h1>
 <p>This is where you can include a lit review if you don’t wish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the <code>{-}</code> notation beside the header text like this:</p>
 <p><em><strong>rmarkdown</strong></em>:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="fu"># Literature Review {-}</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">This is where you can include a lit review if you don&#39;t wish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the <span class="bn">`{-}`</span> notation beside the header text like this:</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Literature Review {-}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>This is where you can include a lit review if you don&#39;t wish for it to be an individual chapter or to be numbered. To make sure that a section heading is not numbered use the <span class="in">`{-}`</span> notation beside the header text like this:</span></code></pre></div>
 </div>
-<div id="the-basics" class="section level1 chapter">
+<div id="the-basics" class="section level1 chapter" number="1">
 <h1><span class="header-section-number">1</span> The Basics</h1>
-<div id="introduction" class="section level2">
+<div id="introduction" class="section level2" number="1.1">
 <h2><span class="header-section-number">1.1</span> Introduction</h2>
-<p>This template is based on the <code>pagedown::html_paged</code> template and modified to meet the requirements of a generic thesis document. Standard RMarkdown formatting can be used for smooth and distraction free writting, for example I will add a citation for the {knitr} package which is located in the <code>Thesis.bib</code> file auto-generated in this template <span class="citation">(Xie <a href="#ref-R-knitr">2021</a>)</span>.</p>
+<p>This template is based on the <code>pagedown::html_paged</code> template and modified to meet the requirements of a generic thesis document. Standard RMarkdown formatting can be used for smooth and distraction free writting, for example I will add a citation for the {knitr} package which is located in the <code>Thesis.bib</code> file auto-generated in this template <span class="citation">(<a href="#ref-R-knitr" role="doc-biblioref">Xie 2022</a>)</span>.</p>
 <p>Thanks to the <a href="https://github.com/rstudio/pagedown/issues/101">help</a> of <a href="https://github.com/RLesur">Romain Lesur</a> this template has the ability to tag section headers with the word “Chapter”. To have your chapters display as this one (<em>Chapter 1 The Basics</em>) use the <code>{.chapter}</code> class like this:</p>
 <p><em><strong>rmarkdown</strong></em></p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb2-1" data-line-number="1">---</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">output:</a>
-<a class="sourceLine" id="cb2-3" data-line-number="3">  pagedown::thesis_paged</a>
-<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="bn">    number_Sections: yes</span></a>
-<a class="sourceLine" id="cb2-5" data-line-number="5">---</a>
-<a class="sourceLine" id="cb2-6" data-line-number="6"><span class="fu"># The Basics {.chapter}</span></a>
-<a class="sourceLine" id="cb2-7" data-line-number="7"></a>
-<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="fu">## Introduction</span></a>
-<a class="sourceLine" id="cb2-9" data-line-number="9"></a>
-<a class="sourceLine" id="cb2-10" data-line-number="10">This template is based on the <span class="bn">`pagedown::html_paged`</span> template...</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">output:</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">  pagedown::thesis_paged</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">    number_Sections: yes</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu"># The Basics {.chapter}</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## Introduction</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>This template is based on the <span class="in">`pagedown::html_paged`</span> template...</span></code></pre></div>
 </div>
-<div id="second-level-heading" class="section level2">
+<div id="second-level-heading" class="section level2" number="1.2">
 <h2><span class="header-section-number">1.2</span> Second level heading</h2>
 <p>Here is some code and a plot, with a figure caption, Figure <a href="#fig:code">1.1</a>:</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:code"></span>
@@ -284,13 +288,13 @@ Figure 1.1: The automatic numbering of this figure will only work if it includes
 <p>Here is an example of an abbreviation where I use the <code>&lt;abbr&gt;</code> html tag <abbr title="Brent Thorne">BT</abbr>. In the future there may be a pandoc solution to abbreviation management, however <abbr title="Hyper Text Markup Language">HTML</abbr> is the way to go for now.</p>
 </div>
 </div>
-<div id="understanding-the-method-to-the-madness" class="section level1 chapter">
+<div id="understanding-the-method-to-the-madness" class="section level1 chapter" number="2">
 <h1><span class="header-section-number">2</span> Understanding the method to the madness</h1>
 <p>Need formulas? Here’s some <code>mathjax</code> notation:</p>
 <p><span class="math display">\[
 \beta = \sum^{1 - k}\frac{\delta D}{\sum\frac{\Delta \gamma A}{X-i}}
 \]</span></p>
-<div id="adding-tables" class="section level2">
+<div id="adding-tables" class="section level2" number="2.1">
 <h2><span class="header-section-number">2.1</span> Adding Tables</h2>
 <p>You can easily add tables to this document like so, and you can also reference them like a figure, Table <a href="#tab:atable">2.1</a>:</p>
 <table>
@@ -337,7 +341,7 @@ Figure 1.1: The automatic numbering of this figure will only work if it includes
 </table>
 </div>
 </div>
-<div id="the-final-chapter-to-my-pretend-thesis" class="section level1 chapter">
+<div id="the-final-chapter-to-my-pretend-thesis" class="section level1 chapter" number="3">
 <h1><span class="header-section-number">3</span> The final chapter to my pretend thesis</h1>
 <p>There are still a few features that would be nice to implement in the future for this template. For instance:</p>
 <ol style="list-style-type: decimal">
@@ -351,9 +355,9 @@ Figure 1.1: The automatic numbering of this figure will only work if it includes
 <!-- This '<div id="refs"></div>' needs to 
 be here if you have appendix pages 
 otherwise you can remove it.-->
-<div id="refs">
-<div id="ref-R-knitr">
-<p>Xie, Yihui. 2021. <em>Knitr: A General-Purpose Package for Dynamic Report Generation in R</em>. <a href="https://yihui.org/knitr/">https://yihui.org/knitr/</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-R-knitr" class="csl-entry">
+Xie, Yihui. 2022. <em>Knitr: A General-Purpose Package for Dynamic Report Generation in r</em>. <a href="https://yihui.org/knitr/">https://yihui.org/knitr/</a>.
 </div>
 </div>
 </div>

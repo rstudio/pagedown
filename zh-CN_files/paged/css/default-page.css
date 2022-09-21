@@ -46,7 +46,7 @@
 .running-h2-title:before {
   /* We would want to write: */
   /* content: string(h2-text, start); */
-  /* However, this is yet unsupported by Paged.js, see https://gitlab.pagedmedia.org/tools/pagedjs/issues/38 */
+  /* However, this is yet unsupported by Paged.js, see https://gitlab.coko.foundation/pagedjs/pagedjs/-/issues/38 */
   content: string(h2-text);
 }
 @page chapter:right {

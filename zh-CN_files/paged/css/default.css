@@ -38,7 +38,7 @@ a[href^="http"]:not([class="uri"])::after {
 .toc ul, .lot ul, .lof ul {
   list-style: none;
   padding-left: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 .toc li li {
   padding-left: 1em;
