@@ -30,6 +30,8 @@ jobs:
           pandoc-version: 2.19.2
 
       - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: local::.
 
       - name: Build examples
         run: Rscript tools/website.R
