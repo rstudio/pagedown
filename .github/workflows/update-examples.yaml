@@ -12,7 +12,7 @@ name: Build Examples
 jobs:
   R-CMD-check:
     runs-on: ubuntu-latest
-    if: github.event.name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     name: 'ubuntu-latest (R release) [Pandoc 2.14.2]'
 
     env:
