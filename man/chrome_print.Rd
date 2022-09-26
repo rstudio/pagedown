@@ -103,5 +103,5 @@ DevTools Protocol. Google Chrome or Microsoft Edge (or Chromium on Linux)
 must be installed prior to using this function.
 }
 \references{
-\url{https://developers.google.com/web/updates/2017/04/headless-chrome}
+\url{https://developer.chrome.com/blog/headless-chrome/}
 }

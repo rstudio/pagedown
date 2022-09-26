@@ -57,7 +57,7 @@
 #'   Ghostscript executable can be detected by \code{\link[tools]{find_gs_cmd}}.
 #' @param encoding Not used. This argument is required by RStudio IDE.
 #' @references
-#' \url{https://developers.google.com/web/updates/2017/04/headless-chrome}
+#' \url{https://developer.chrome.com/blog/headless-chrome/}
 #' @return Path of the output file (invisibly). If \code{async} is \code{TRUE},
 #'   this is a \code{\link[promises]{promise}} value.
 #' @export
