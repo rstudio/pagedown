@@ -1,3 +1,6 @@
+# CHANGES IN pagedown VERSION 0.20
+
+
 # CHANGES IN pagedown VERSION 0.19
 
 - Set `overflow-x: clip` in `default.css` to fix an issue with paged.js rendering in recent browser (thanks, @jimjam-slam, #292, pagedjs/pagedjs#84).
