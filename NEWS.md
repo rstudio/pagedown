@@ -5,6 +5,8 @@
 
 - Set `overflow-x: clip` in `default.css` to fix an issue with paged.js rendering in recent browser (thanks, @jimjam-slam, #292, pagedjs/pagedjs#84).
 
+- `chrome_print()` now attempts to remove the output file before printing to it and throws a clear error if it cannot be removed, as this is potential sign of a locked file, e.g a pdf opened in a PDF reader on Windows (thanks, @aito123, #124, #297).
+
 # CHANGES IN pagedown VERSION 0.18
 
 - Figure inserted using markdown syntax and having a caption with `(#fig:lab)` are now correctly listed in the LOF (thanks, @adamvi, #283).
