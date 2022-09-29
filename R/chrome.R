@@ -175,10 +175,8 @@ chrome_print = function(
     # try to remove the file and throw a clear error if it still exists as it may be locked
     if (!suppressWarnings(file.remove(output2)) && xfun::file_exists(output2)) {
       stop(
-        sprintf("The file %s cannot be removed%s.",
-                sQuote(output),
-                if (format == "pdf") " (may be locked by a PDF reader)" else ""
-        )
+        "The file '", output, "' cannot be overwritten",
+        if (format == "pdf") " (may be locked by a PDF reader?)", "."
       )
     }
     if (!dir.exists(d <- dirname(output2)) && !dir.create(d, recursive = TRUE)) stop(
