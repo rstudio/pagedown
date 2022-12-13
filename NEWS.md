@@ -68,7 +68,7 @@
 
 ## MAJOR CHANGES
 
-- Paged.js is upgraded from version 0.1.32 to 0.1.43. This update speeds up the rendering time and fixes several bugs (see also <https://pagedjs.org/posts/pagedjs-0.1.40/> and <https://pagedjs.org/posts/welcome-pagedjs-0.1.42/>) (#202).
+- Paged.js is upgraded from version 0.1.32 to 0.1.43. This update speeds up the rendering time and fixes several bugs (#202).
 
 ## MINOR CHANGES
 
