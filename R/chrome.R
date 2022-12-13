@@ -581,7 +581,7 @@ print_page = function(
         # if a stream handle is received -> callback: command #17 IO.read
         if (is.null(stream_handle <<- msg$result$stream)) {
           writeBin(jsonlite::base64_dec(msg$result$data), output)
-          if (!xfun::isFALSE(outline) && length(toc_infos)) add_outline(output, toc_infos, verbose)
+          if (!isFALSE(outline) && length(toc_infos)) add_outline(output, toc_infos, verbose)
           resolve(output)
           token$done = TRUE
         } else {
@@ -625,7 +625,7 @@ print_page = function(
       },
       {
         # Command #18 received -> callback: add outline & close Chrome
-        if (!xfun::isFALSE(outline) && length(toc_infos)) add_outline(output, toc_infos, verbose)
+        if (!isFALSE(outline) && length(toc_infos)) add_outline(output, toc_infos, verbose)
         resolve(output)
         token$done = TRUE
       }
