@@ -12,7 +12,8 @@ This R package stands on the shoulders of two giants to support typesetting with
 You may install this package from Github:
 
 ```r
-remotes::install_github('rstudio/pagedown')
+# install.packages("pak")
+pak::pak('rstudio/pagedown')
 ```
 
 This package requires a recent version of Pandoc (>= 2.2.3). If you use RStudio, you are recommended to install the [latest version](https://posit.co/download/rstudio-desktop/) (>= 1.2.1335), which has bundled Pandoc 2.x, otherwise you need to install Pandoc separately.
