@@ -15,12 +15,12 @@
 
 <meta name="author" content="Yihui Xie and Romain Lesur" />
 
-<meta name="date" content="2022-12-14" />
+<meta name="date" content="2023-03-20" />
 
 <meta name="description" content="pagedown: Create Paged HTML Documents for Printing from R Markdown">
 
 <script id="pandoc-meta" type="application/json">
-{"author":"Yihui Xie and Romain Lesur","bibliography":"index.bib","date":"2022-12-14","lof":true,"lot":true,"newpage_html_class":"page-break-after","output":{"pagedown::html_paged":{"front_cover":"pagedown_hex.svg","self_contained":false,"toc":true}},"paged-footnotes":true,"shorttitle":"Printing R Markdown with CSS","subtitle":"A Less Traveled Road to PDF and Printing","title":"pagedown: Create Paged HTML Documents for Printing from R Markdown","toc-title":"Contents"}
+{"author":"Yihui Xie and Romain Lesur","bibliography":"index.bib","date":"2023-03-20","lof":true,"lot":true,"newpage_html_class":"page-break-after","output":{"pagedown::html_paged":{"front_cover":"pagedown_hex.svg","self_contained":false,"toc":true}},"paged-footnotes":true,"shorttitle":"Printing R Markdown with CSS","subtitle":"A Less Traveled Road to PDF and Printing","title":"pagedown: Create Paged HTML Documents for Printing from R Markdown","toc-title":"Contents"}
 </script>
 
 <title>pagedown: Create Paged HTML Documents for Printing from R Markdown</title>
@@ -146,7 +146,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h1 class="title">pagedown: Create Paged HTML Documents for Printing from R Markdown</h1>
 <h1 class="subtitle"><span>A Less Traveled Road to PDF and Printing</span></h1>
 <h2 class="author">Yihui Xie and Romain Lesur</h2>
-<h2 class="date">2022-12-14</h2>
+<h2 class="date">2023-03-20</h2>
 </div>
 </div>
 
@@ -236,7 +236,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>When talking about PDF and printing, we often think of tools like LaTeX and Microsoft Word. When talking about HTML and CSS, we may have never imagined their possible off-screen use such as printing to PDF.</p>
 <p>Can we print a book with HTML and CSS? W3C published <a href="https://www.w3.org/1999/06/WD-css3-page-19990623">the first working draft</a> on “Paged Media Properties for CSS(3)”, which was last updated in 2013. Although the working draft has been there for nearly two decades, it is still not common to see authors write or print books with HTML and CSS. The main reason is that the W3C specs are still in the draft mode, so most web browsers have not really implemented them.</p>
 <p>HTML and CSS still cannot beat other dominating tools like Word or LaTeX when it comes to typesetting content under the constraint of “pages”. You may be disappointed by a lot of typesetting details on a paged HTML page. However, HTML and CSS can be extremely powerful and flexible in other aspects, especially when combined with the power of JavaScript. By the way, HTML works almost anywhere because it only requires a web browser.</p>
-<p>Although most web browsers have not implemented the W3C specs for Paged Media, a JavaScript polyfill library named <a href="https://pagedjs.org">“paged.js”</a> is currently being developed to fill the gap. This library is still experimental and has many rough edges, but looks promising enough to us, so we created an R package <strong>pagedown</strong> <span class="citation">(Xie et al. 2022)</span> based on this JavaScript library to paginate the HTML output of R Markdown documents. You can install the package <a href="https://github.com/rstudio/pagedown">from Github</a>:</p>
+<p>Although most web browsers have not implemented the W3C specs for Paged Media, a JavaScript polyfill library named <a href="https://pagedjs.org">“paged.js”</a> is currently being developed to fill the gap. This library is still experimental and has many rough edges, but looks promising enough to us, so we created an R package <strong>pagedown</strong> <span class="citation">(Xie et al. 2023)</span> based on this JavaScript library to paginate the HTML output of R Markdown documents. You can install the package <a href="https://github.com/rstudio/pagedown">from Github</a>:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&#39;rstudio/pagedown&#39;</span>)</span></code></pre></div>
 <p>To learn more about paged.js and CSS for Paged Media, you may check out <a href="https://pagedjs.org/documentation/">the documentation of paged.js</a>.</p>
 <p>The <strong>pagedown</strong> package contains output formats for paged HTML documents, letters, resumes, posters, business cards, and so on. Usually there is an R Markdown template for each output format, which you can access from RStudio’s menu <code>File -&gt; New File -&gt; R Markdown -&gt; From Template</code>.</p>
@@ -250,7 +250,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">number_sections</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
 <div id="preview-paged-html-documents" class="section level2" number="2.1">
 <h2><span class="header-section-number">2.1</span> Preview paged HTML documents</h2>
-<p>This format is based on paged.js. Some other formats in this package are extensions of <code>html_paged</code>, such as <code>html_letter</code> and <code>html_resume</code>. Please note that you need a web server to view the output pages of these formats, because paged.js requires a web server. The web server could be either a local server or a remote one. When you compile an R Markdown document to HTML in RStudio, RStudio will display the HTML page through a local web server, so paged.js will work in RStudio Viewer. However, when you view such pages in a real web browser, you will need a separate web server. The easiest way to preview these HTML pages in a web browser may be through the RStudio addin “Infinite Moon Reader”, which requires the <strong>xaringan</strong> package <span class="citation">(Xie 2022b)</span>. Or equivalently, you can call the function <code>xaringan::inf_mr()</code>. This will launch a local web server via the <strong>servr</strong> package <span class="citation">(Xie 2022a)</span>.</p>
+<p>This format is based on paged.js. Some other formats in this package are extensions of <code>html_paged</code>, such as <code>html_letter</code> and <code>html_resume</code>. Please note that you need a web server to view the output pages of these formats, because paged.js requires a web server. The web server could be either a local server or a remote one. When you compile an R Markdown document to HTML in RStudio, RStudio will display the HTML page through a local web server, so paged.js will work in RStudio Viewer. However, when you view such pages in a real web browser, you will need a separate web server. The easiest way to preview these HTML pages in a web browser may be through the RStudio addin “Infinite Moon Reader”, which requires the <strong>xaringan</strong> package <span class="citation">(Xie 2022)</span>. Or equivalently, you can call the function <code>xaringan::inf_mr()</code>. This will launch a local web server via the <strong>servr</strong> package <span class="citation">(Xie 2023)</span>.</p>
 <p>Please note that the layout of the pages is very sensitive to the zoom level in your browser. Elements on a page are often not zoomed strictly linearly, e.g., as you zoom out, certainly elements may start to collapse into each other. The 100% zoom level usually gives the best result (press <code>Ctrl + 0</code> or <code>Command + 0</code>). You are strongly recommended to use this level when printing the page to PDF.</p>
 </div>
 <div id="the-css-overriding-mechanism" class="section level2" number="2.2">
@@ -995,14 +995,14 @@ For example, to force a page break before a given section, use:</p>
 document.querySelector('#TOC h1').insertAdjacentHTML('afterend', '<wbr>');
 </script>
 <div id="refs" class="references csl-bib-body hanging-indent">
-<div id="ref-R-servr" class="csl-entry">
-Xie, Yihui. 2022a. <em>Servr: A Simple HTTP Server to Serve Static Files or Dynamic Documents</em>. <a href="https://github.com/yihui/servr">https://github.com/yihui/servr</a>.
-</div>
 <div id="ref-R-xaringan" class="csl-entry">
-———. 2022b. <em>Xaringan: Presentation Ninja</em>. <a href="https://github.com/yihui/xaringan">https://github.com/yihui/xaringan</a>.
+Xie, Yihui. 2022. <em>Xaringan: Presentation Ninja</em>. <a href="https://github.com/yihui/xaringan">https://github.com/yihui/xaringan</a>.
+</div>
+<div id="ref-R-servr" class="csl-entry">
+———. 2023. <em>Servr: A Simple HTTP Server to Serve Static Files or Dynamic Documents</em>. <a href="https://github.com/yihui/servr">https://github.com/yihui/servr</a>.
 </div>
 <div id="ref-R-pagedown" class="csl-entry">
-Xie, Yihui, Romain Lesur, Brent Thorne, and Xianying Tan. 2022. <em>Pagedown: Paginate the HTML Output of r Markdown with CSS for Print</em>. <a href="https://github.com/rstudio/pagedown">https://github.com/rstudio/pagedown</a>.
+Xie, Yihui, Romain Lesur, Brent Thorne, and Xianying Tan. 2023. <em>Pagedown: Paginate the HTML Output of r Markdown with CSS for Print</em>. <a href="https://github.com/rstudio/pagedown">https://github.com/rstudio/pagedown</a>.
 </div>
 </div>
 </div>
