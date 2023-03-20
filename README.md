@@ -1,9 +1,9 @@
 # pagedown <img src="man/figures/logo.png" align="right" height="138" />
 
-
-[![Build status](https://github.com/rstudio/pagedown/actions/workflows/R-CMD-check.yaml/badge.svg?branch=main)](https://github.com/rstudio/pagedown/actions/workflows/R-CMD-check.yaml?query=branch%3Amain)
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/rstudio/pagedown/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rstudio/pagedown/actions/workflows/R-CMD-check.yaml)
 [![Downloads from the RStudio CRAN mirror](https://cranlogs.r-pkg.org/badges/pagedown)](https://cran.r-project.org/package=pagedown)
-
+<!-- badges: end -->
 
 Paginate the HTML Output of R Markdown with CSS for Print. You only need a modern web browser (e.g., Google Chrome or Microsoft Edge) to generate PDF. No need to install LaTeX to get beautiful PDFs.
 
