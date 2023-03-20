@@ -1,13 +1,13 @@
 ---
 phone: "+1 844-448-1212"
-email: "info@rstudio.com"
-url: www.rstudio.com
+email: "info@posit.co"
+url: www.posit.co
 address: |
   @rstudio
-logo: "https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png"
+logo: "https://posit.co/wp-content/themes/Posit/dist/images/site-share-image.jpg"
 person: 
   - name: Tareef Kawaf
-    title: President of RStudio, PBC
+    title: President of Posit Software, PBC
     repeat: 12
   - name: Yihui Xie
     title: Responsible for `r head(grep('(?<!shut)down$', unique(.packages(T)), value=T, perl=T), 2)`
@@ -27,7 +27,7 @@ output: pagedown::business_card
 ::: {.wrapper data-repeat="12"}
 [Another Name]{slot="name"}
 [Another Title]{slot="title"}
-[someone@rstudio.com]{slot="email"}
+[someone@posit.co]{slot="email"}
 :::
 
 

@@ -6,7 +6,7 @@ author:
       First line  
       Second line
     email: <name@company.com>
-    url: <https://rstudio.com>
+    url: <https://posit.co>
   - name: Romain Lesur
     affiliation: Affiliation
 title: "A Capitalized Title: Something about a Package **foo**"

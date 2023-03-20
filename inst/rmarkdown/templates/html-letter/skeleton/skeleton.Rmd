@@ -10,7 +10,7 @@ paged-footnotes: true
 #knit: pagedown::chrome_print
 ---
 
-![The RStudio logo](https://www.rstudio.com/wp-content/uploads/2016/09/RStudio-Logo-Blue-Gray-250.png){.logo}
+![The Posit logo](https://posit.co/wp-content/themes/Posit/dist/images/site-share-image.jpg){.logo}
 
 ::: from
 Yihui Xie  
