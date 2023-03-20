@@ -9,7 +9,7 @@ Authors@R: c(
   person("Brent", "Thorne", role = "aut", comment = c(ORCID = "0000-0002-1099-3857")),
   person("Xianying", "Tan", role = "aut", comment = c(ORCID = "0000-0002-6072-3521")),
   person("Atsushi", "Yasumoto", role = c("ctb"), comment = c(ORCID = "0000-0002-8335-495X")),
-  person(given = "Posit Software, PBC", role = c("cph", "fnd"))
+  person(given = "Posit Software, PBC", role = c("cph", "fnd")),
   person("Adam", "Hyde", role = "ctb", comment = "paged.js in resources/js/"),
   person("Min-Zhong", "Lu", role = "ctb", comment = "resume.css in resources/css/"),
   person("Zulko", role = "ctb", comment = "poster-relaxed.css in resources/css/"),

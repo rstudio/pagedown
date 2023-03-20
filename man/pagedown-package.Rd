@@ -6,6 +6,8 @@
 \alias{pagedown-package}
 \title{pagedown: Paginate the HTML Output of R Markdown with CSS for Print}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 Use the paged media properties in CSS and the JavaScript library 'paged.js' to split the content of an HTML document into discrete pages. Each page can have its page size, page numbers, margin boxes, and running headers, etc. Applications of this package include books, letters, reports, papers, business cards, resumes, and posters.
 }
 \seealso{
@@ -13,6 +15,27 @@ Useful links:
 \itemize{
   \item \url{https://github.com/rstudio/pagedown}
   \item Report bugs at \url{https://github.com/rstudio/pagedown/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Yihui Xie \email{xie@yihui.name} (\href{https://orcid.org/0000-0003-0645-5666}{ORCID})
+
+Authors:
+\itemize{
+  \item Romain Lesur (\href{https://orcid.org/0000-0002-0721-5595}{ORCID}) [copyright holder]
+  \item Brent Thorne (\href{https://orcid.org/0000-0002-1099-3857}{ORCID})
+  \item Xianying Tan (\href{https://orcid.org/0000-0002-6072-3521}{ORCID})
+}
+
+Other contributors:
+\itemize{
+  \item Christophe Dervieux (\href{https://orcid.org/0000-0003-4474-2498}{ORCID}) [contributor]
+  \item Atsushi Yasumoto (\href{https://orcid.org/0000-0002-8335-495X}{ORCID}) [contributor]
+  \item Posit Software, PBC [copyright holder, funder]
+  \item Adam Hyde (paged.js in resources/js/) [contributor]
+  \item Min-Zhong Lu (resume.css in resources/css/) [contributor]
+  \item Zulko (poster-relaxed.css in resources/css/) [contributor]
 }
 
 }
