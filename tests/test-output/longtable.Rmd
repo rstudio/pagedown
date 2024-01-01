@@ -1,0 +1,14 @@
+---
+output:
+  pagedown::html_paged
+---
+
+```{r, echo=FALSE, message=FALSE, results=FALSE}
+data(iris)
+```
+
+# Table Test
+
+```{r, echo=FALSE}
+knitr::kable(iris)
+```
