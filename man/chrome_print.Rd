@@ -25,7 +25,7 @@ chrome_print(
 }
 \arguments{
 \item{input}{A URL or local file path to an HTML page, or a path to a local
-file that can be rendered to HTML via \code{rmarkdown::\link{render}()}
+file that can be rendered to HTML via \code{rmarkdown::\link[rmarkdown]{render}()}
 (e.g., an R Markdown document or an R script). If the \code{input} is to be
 rendered via \code{rmarkdown::render()} and you need to pass any arguments
 to it, you can pass the whole \code{render()} call to
