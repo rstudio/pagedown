@@ -22,7 +22,7 @@ Description: Use the paged media properties in CSS and the JavaScript
   reports, papers, business cards, resumes, and posters.
 Depends: R (>= 3.5.0)
 Imports: rmarkdown (>= 2.13), bookdown (>= 0.8), htmltools, jsonlite, later (>= 1.0.0),
-  processx, servr (>= 0.23), httpuv, xfun, websocket
+  processx, servr (>= 0.31), httpuv, xfun, websocket
 Suggests: 
     promises,
     testit,
