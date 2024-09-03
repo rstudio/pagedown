@@ -32,7 +32,7 @@ assert('find_chrome() finds Chrome executable', {
 })
 
 assert('chrome_print() works with an url', {
-  (is_pdf(print_pdf('http://httpbin.org/html')))
+  (is_pdf(print_pdf('https://example.org')))
 })
 
 assert('chrome_print() works with a local file path', {
