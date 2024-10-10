@@ -1,5 +1,7 @@
 # CHANGES IN pagedown VERSION 0.21
 
+- `html_paged()` and other formats using `paged.js` now informs **knitr** that its JS and CSS dependencies will be loaded by setting the `is.paged.js` global knit option. Use `isTRUE(knitr::opts_knit$get("is.paged.js"))` to detect it (thanks, @sylvaine31, @davidgohel, #332).
+
 
 # CHANGES IN pagedown VERSION 0.20
 

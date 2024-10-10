@@ -171,9 +171,14 @@ html_format = function(
     template = template, pandoc_args = pandoc_args
   )
 
-  # Deactivate the use of the shadow DOM by the flextable package (see https://github.com/rstudio/pagedown/issues/216)
-  # We may remove that when https://gitlab.coko.foundation/pagedjs/pagedjs/-/issues/148 will be solved
+
   if (isTRUE(.pagedjs)) {
+    # shadow DOM needs to be deactivated (until https://gitlab.coko.foundation/pagedjs/pagedjs/-/issues/148 is solved)
+    # e.g this is required for the flextable package (see https://github.com/rstudio/pagedown/issues/216) so we need to pass
+    # information about paged.js being used. 
+    fmt$knitr$opts_knit[['is.paged.js']] = TRUE
+
+    # Keeping this for flextable < 0.8.6
     fmt$knitr$opts_chunk[['ft.shadow']] = FALSE
   }
 
