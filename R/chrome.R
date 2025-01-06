@@ -111,7 +111,7 @@ chrome_print = function(
   on.exit(kill_chrome(), add = TRUE)
 
   remote_protocol_ok = is_remote_protocol_ok(debug_port, verbose = verbose)
-  stream_pdf_available = isTRUE(xfun::attr(remote_protocol_ok, 'stream_pdf_available'))
+  stream_pdf_available = isTRUE(attr(remote_protocol_ok, 'stream_pdf_available'))
 
   if (!remote_protocol_ok)
     stop('A more recent version of Chrome is required. ')
