@@ -1,3 +1,5 @@
+# CHANGES IN pagedown VERSION 0.23
+
 # CHANGES IN pagedown VERSION 0.22
 
 - No longer use `xfun::attr()` (which will be removed from **xfun**).
