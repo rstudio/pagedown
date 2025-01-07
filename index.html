@@ -15,12 +15,12 @@
 
 <meta name="author" content="Yihui Xie and Romain Lesur" />
 
-<meta name="date" content="2025-01-06" />
+<meta name="date" content="2025-01-07" />
 
 <meta name="description" content="pagedown: Create Paged HTML Documents for Printing from R Markdown">
 
 <script id="pandoc-meta" type="application/json">
-{"author":"Yihui Xie and Romain Lesur","bibliography":"index.bib","date":"2025-01-06","lof":true,"lot":true,"newpage_html_class":"page-break-after","output":{"pagedown::html_paged":{"front_cover":"pagedown_hex.svg","self_contained":false,"toc":true}},"paged-footnotes":true,"shorttitle":"Printing R Markdown with CSS","subtitle":"A Less Traveled Road to PDF and Printing","title":"pagedown: Create Paged HTML Documents for Printing from R Markdown","toc-title":"Contents"}
+{"author":"Yihui Xie and Romain Lesur","bibliography":"index.bib","date":"2025-01-07","lof":true,"lot":true,"newpage_html_class":"page-break-after","output":{"pagedown::html_paged":{"front_cover":"pagedown_hex.svg","self_contained":false,"toc":true}},"paged-footnotes":true,"shorttitle":"Printing R Markdown with CSS","subtitle":"A Less Traveled Road to PDF and Printing","title":"pagedown: Create Paged HTML Documents for Printing from R Markdown","toc-title":"Contents"}
 </script>
 
 <title>pagedown: Create Paged HTML Documents for Printing from R Markdown</title>
@@ -146,7 +146,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h1 class="title">pagedown: Create Paged HTML Documents for Printing from R Markdown</h1>
 <h1 class="subtitle"><span>A Less Traveled Road to PDF and Printing</span></h1>
 <h2 class="author">Yihui Xie and Romain Lesur</h2>
-<h2 class="date">2025-01-06</h2>
+<h2 class="date">2025-01-07</h2>
 </div>
 </div>
 
@@ -300,7 +300,7 @@ If <code>chrome_print()</code> cannot find Chrome, Edge or Chromium automaticall
 <p>With Travis, activate the Chrome addon by adding theses lines in <code>.travis.yml</code> file:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">addons</span><span class="kw">:</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">chrome</span><span class="kw">:</span><span class="at"> stable</span></span></code></pre></div>
-<p>With GitLab CI, you have to use a Docker image with R, Pandoc, <strong>pagedown</strong> and Chromium or Chrome.<span id="fn1" class="footnote" data-pagedown-footnote-number="1" style="white-space: pre-line;">see an example below</span> Depending on the base image, you may have to install some extra fonts.</p>
+<p>With GitLab CI, you have to use a Docker image with R, Pandoc, <strong>pagedown</strong> and Chromium or Chrome.<span id="fn1" class="footnote" style="white-space: pre-line;" data-pagedown-footnote-number="1">see an example below</span> Depending on the base image, you may have to install some extra fonts.</p>
 <p>Travis and GitLab CI are container-based environments running as root. As explained in the <a href="https://docs.travis-ci.com/user/chrome#sandboxing">Travis documentation</a>, you have to pass the <code>--no-sandbox</code> argument to <code>chrome_print()</code> (this is required for both Travis and GitLab CI):</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chrome_print</span>(</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  ..., </span>
@@ -324,7 +324,7 @@ If <code>chrome_print()</code> cannot find Chrome, Edge or Chromium automaticall
 <p>If you save this Dockerfile in your current directory, you can build the image with:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build myimages/pagedown .</span></code></pre></div>
 <p>If you intend to use <code>pagedown::chrome_print()</code> in a container running this image, <strong>do not launch the container as usual</strong>.</p>
-<p>You have to use Jessie Frazelle’s seccomp file for Chrome in Docker<span id="fn2" class="footnote" data-pagedown-footnote-number="2" style="white-space: pre-line;">download here <a href="https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json" class="uri">https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json</a></span> as follows:</p>
+<p>You have to use Jessie Frazelle’s seccomp file for Chrome in Docker<span id="fn2" class="footnote" style="white-space: pre-line;" data-pagedown-footnote-number="2">download here <a href="https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json" class="uri">https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json</a></span> as follows:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-e</span> PASSWORD=yourpassword <span class="at">--rm</span> <span class="at">-p</span> 8787:8787 <span class="at">--security-opt</span> seccomp=<span class="st">&quot;</span><span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span><span class="st">/chrome.json&quot;</span> myimages/pagedown</span></code></pre></div>
 <p>With this seccomp file, you do not have to use the <code>"--no-sandbox"</code> option: this is much more secure!</p>
 </div>
@@ -351,7 +351,7 @@ If <code>chrome_print()</code> cannot find Chrome, Edge or Chromium automaticall
 Figure 3.1: The HTML resume in pagedown.
 </p>
 </div>
-<p>The R Markdown source document should contain two parts titled “Aside” (for the sidebar) and “Main” (for the main body), respectively. Each part can contain any numbers of sections (e.g., education background and working experience). Each section can contain any numbers of subsections, and you can write more content in a subsection.<span id="fn3" class="footnote" data-pagedown-footnote-number="3" style="white-space: pre-line;">In case you are not very familiar with the Markdown syntax for section headings, a series of <code>=</code> under a heading is equivalent to <code>#</code> before a heading, and a series of <code>-</code> is equivalent to <code>##</code>. See Pandoc’s manual for details: <a href="https://pandoc.org/MANUAL.html#headers" class="uri">https://pandoc.org/MANUAL.html#headers</a>.</span> Below is a quick example:</p>
+<p>The R Markdown source document should contain two parts titled “Aside” (for the sidebar) and “Main” (for the main body), respectively. Each part can contain any numbers of sections (e.g., education background and working experience). Each section can contain any numbers of subsections, and you can write more content in a subsection.<span id="fn3" class="footnote" style="white-space: pre-line;" data-pagedown-footnote-number="3">In case you are not very familiar with the Markdown syntax for section headings, a series of <code>=</code> under a heading is equivalent to <code>#</code> before a heading, and a series of <code>-</code> is equivalent to <code>##</code>. See Pandoc’s manual for details: <a href="https://pandoc.org/MANUAL.html#headers" class="uri">https://pandoc.org/MANUAL.html#headers</a>.</span> Below is a quick example:</p>
 <pre class="sourcecode"><code>---
 title: &quot;Someone&#39;s resume&quot;
 author: Your Name
@@ -658,7 +658,7 @@ output: pagedown::business_card
 <div id="css" class="section level4" number="3.3.3.3">
 <h4><span class="header-section-number">3.3.3.3</span> CSS</h4>
 <p>Finally, you can modify the style of the card using CSS rules.<br />
-The markup of a card can be represented as follows<span id="fn4" class="footnote" data-pagedown-footnote-number="4" style="white-space: pre-line;">This is technically incorrect since the card template use a shadow DOM.</span>:</p>
+The markup of a card can be represented as follows<span id="fn4" class="footnote" style="white-space: pre-line;" data-pagedown-footnote-number="4">This is technically incorrect since the card template use a shadow DOM.</span>:</p>
 <pre class="sourcecode"><code>&lt;div class=&quot;wrapper&quot; data-repeat=&quot;1&quot;&gt;
   &lt;img class=&quot;logo&quot; src=&quot;logo.png&quot; alt=&quot;Logo&quot; /&gt;
   &lt;div class=&quot;me&quot;&gt;
@@ -766,8 +766,8 @@ Cascading Style Sheets
 <div class="sourceCode" id="cb31"><pre class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># A prefixed chapter {.chapter}</span></span></code></pre></div>
 <div id="internationalization" class="section level3" number="4.4.1">
 <h3><span class="header-section-number">4.4.1</span> Internationalization</h3>
-<p>The chapter title prefix can be customized using the <code>chapter_name</code> field in the YAML header or in <code>_bookdown.yml</code> file<span id="fn5" class="footnote" data-pagedown-footnote-number="5" style="white-space: pre-line;">see <a href="https://bookdown.org/yihui/bookdown/internationalization.html" class="uri">https://bookdown.org/yihui/bookdown/internationalization.html</a></span></p>
-<p>When defined in the YAML header the <code>chapter_name</code> field is parsed by Pandoc. Therefore, special characters like spaces have to be escaped<span id="fn6" class="footnote" data-pagedown-footnote-number="6" style="white-space: pre-line;">see <a href="https://pandoc.org/MANUAL#backslash-escapes" class="uri">https://pandoc.org/MANUAL#backslash-escapes</a></span>. For instance, if you want to use <code>'CHAPTER '</code> as a chapter title prefix, you have to write:</p>
+<p>The chapter title prefix can be customized using the <code>chapter_name</code> field in the YAML header or in <code>_bookdown.yml</code> file<span id="fn5" class="footnote" style="white-space: pre-line;" data-pagedown-footnote-number="5">see <a href="https://bookdown.org/yihui/bookdown/internationalization.html" class="uri">https://bookdown.org/yihui/bookdown/internationalization.html</a></span></p>
+<p>When defined in the YAML header the <code>chapter_name</code> field is parsed by Pandoc. Therefore, special characters like spaces have to be escaped<span id="fn6" class="footnote" style="white-space: pre-line;" data-pagedown-footnote-number="6">see <a href="https://pandoc.org/MANUAL#backslash-escapes" class="uri">https://pandoc.org/MANUAL#backslash-escapes</a></span>. For instance, if you want to use <code>'CHAPTER '</code> as a chapter title prefix, you have to write:</p>
 <div class="sourceCode" id="cb32"><pre class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;Custom chapter title prefix&quot;</span></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="an">output:</span><span class="co"> pagedown::html_paged</span></span>
@@ -808,7 +808,7 @@ Note that contrary to the <strong>bookdown</strong> HTML formats, a custom funct
 </div>
 <div id="footnotes" class="section level2" number="4.6">
 <h2><span class="header-section-number">4.6</span> Footnotes</h2>
-<p>The default behavior of pagedown is to render notes as endnotes because Paged.js does not natively support footnotes for now. However, we introduced an experimental support for footnotes. You can test it by including <code>paged-footnotes: true</code> in the YAML header of your document. Please, note that the <code>paged-footnotes</code> option only supports inline content<span id="fn7" class="footnote" data-pagedown-footnote-number="7" style="white-space: pre-line;">see <a href="https://github.com/rstudio/pagedown/issues/156" class="uri">https://github.com/rstudio/pagedown/issues/156</a></span>. If you get any trouble with this experimental feature, please open an issue in the <strong>pagedown</strong> repository on GitHub.</p>
+<p>The default behavior of pagedown is to render notes as endnotes because Paged.js does not natively support footnotes for now. However, we introduced an experimental support for footnotes. You can test it by including <code>paged-footnotes: true</code> in the YAML header of your document. Please, note that the <code>paged-footnotes</code> option only supports inline content<span id="fn7" class="footnote" style="white-space: pre-line;" data-pagedown-footnote-number="7">see <a href="https://github.com/rstudio/pagedown/issues/156" class="uri">https://github.com/rstudio/pagedown/issues/156</a></span>. If you get any trouble with this experimental feature, please open an issue in the <strong>pagedown</strong> repository on GitHub.</p>
 <p>If you need to override the default footnotes style, you should use an <code>important</code> rule on elements of class <code>footnote</code>. For example,</p>
 <div class="sourceCode" id="cb35"><pre class="sourceCode css"><code class="sourceCode css"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">.footnote</span> {</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">font-size</span>: <span class="dv">20</span><span class="dt">px</span> <span class="at">!important</span><span class="op">;</span></span>
