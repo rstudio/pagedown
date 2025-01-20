@@ -910,6 +910,211 @@ Table \@ref(tab:test-table):
 knitr::kable(head(iris[, -5]), caption = 'An example table.')
 ```
 
+# (APPENDIX) Appendix {-} 
+
+# Develop a custom pagedown template{data-short-title="- Custom templates"}
+
+This short guide provides a few tips for starting a new custom pagedown template. 
+
+## Development environment
+
+You need an internet connection, a recent Chromium or Chrome browser and Pandoc ≥ 2.2.3. If you use RStudio, you are recommended to install the [last preview of RStudio 1.2.x](https://www.rstudio.com/products/rstudio/download/preview/), which has bundled Pandoc 2.x. You also need to install the development version of pagedown with `remotes::install_github('rstudio/pagedown')` and the last version of xaringan.
+
+You will use two different environments: your favorite IDE (RStudio or any other one) to edit the source files and the Chrome Developers Tools to inspect HTML and experiment some CSS rules. If you are not familiar with the Chrome Developer Tools, you can find some introductive materials here: <https://developers.google.com/web/tools/chrome-devtools/>.
+
+## Project setup (with RStudio)
+
+Start a new RStudio project dedicated to the development of your template. Do not forget to use a control version system. The fastest way to start working on your new template is to modify the default stylesheets of `pagedown::html_paged`. So, you will need an `Rmd` file and the default CSS stylesheets.
+
+Create a new `Rmd` file using the _Paged HTML Document_ template (see the [introduction]).  
+Modify the output variable of the YAML header as follows:
+
+```yaml
+output:
+  pagedown::html_paged:
+    css:
+    - custom-fonts.css
+    - custom-page.css
+    - custom.css
+    toc: true
+    self_contained: false
+```
+
+You can modify the content of this `Rmd` file. 
+
+Create a copy of the default CSS files:
+
+```{r, eval=FALSE}
+files <- c("default-fonts", "default-page", "default")
+from <- pagedown:::pkg_resource(paste0("css/", files, ".css"))
+to <- c("custom-fonts.css", "custom-page.css", "custom.css")
+file.copy(from = from, to = to)
+```
+
+In RStudio, run `xaringan::inf_mr()`. In the R Console, a message ending with a url appears:
+
+```bash
+Serving the directory /home/romain/Documents/my_template at http://127.0.0.1:7343/index.html
+```
+
+Copy this url and open it in Chromium or Chrome. Back in RStudio, click on the button _Clear all viewer items_ of the viewer (and answer _Yes_). Now, you will edit the CSS files and inspect the result in Chrome.
+
+## Modify the fonts
+
+The first step is to modify the `custom-fonts.css` file. We recommend to use freely available CDN-hosted fonts (e.g. Google Fonts, Adobe Egde Web Fonts...).
+
+## Choose the paper size
+
+Open the `custom-page.css` file. The first CSS rule you can see is:
+
+```css
+@page {
+  size: 6in 9in;
+}
+```
+
+For instance, if you prefer a US Letter-size paper, write:
+
+```css
+@page {
+  size: 8.5in 11in;
+}
+```
+
+Modifying the paper size can mess the result you see in Chrome. This is because the paginated document is presented in a CSS viewer.
+
+## Adjust the CSS viewer parameters
+
+Now, open the `custom.css` file. The first lines you see are CSS variables declarations^[RStudio does not recognize these declarations and raises false warnings in the margin of the editor.]:
+
+```css
+:root {
+  --background: whitesmoke;
+  --pagedjs-width: 6in;
+  --pagedjs-height: 9in;
+  --color-paper: white;
+  --color-mbox: rgba(0, 0, 0, 0.2);
+  --running-title-width: 2.5in;
+  --screen-pages-spacing: 5mm;
+}
+```
+
+According to the paper size you just defined, modify the `--pagedjs-width` and `--pagedjs-height` values.  
+You can also modify the background color of the viewer with the `--background` variable^[for further customization of the viewer, see the media queries declarations at the very end of the `custom.css` file.].
+
+## Margins customizations
+
+Go back to the `custom-page.css` file.  
+
+This is the very specific part of CSS Paged Media: plan a good amount of time to learn some new cool features. 
+
+The Paged.js team wrote a great introduction here: https://www.pagedmedia.org/paged-js/  
+Read this document, modify the content of the `custom-page.css` file and have fun!  
+_Do not forget to commit frequently..._
+
+## Front page customization
+
+Depending on the design of the front page, this step might be highly time consuming: some designs (e.g. <https://bit.ly/pulpdown>) can take several days of work.  
+
+But you also can get nice results in a minute. For instance, you can use a gradient background image. This one will give a sunrise effect to your front page:
+
+```css
+@page :first {
+  background: linear-gradient(to top, #355C7D 30%, #6C5B7B, #C06C84, #F67280, #F8B195);
+}
+```
+
+If you want to implement a specific design, you will surely be disappointed by the default HTML markup of `pagedown::html_paged()`.  
+**Do not hesitate to customize the default Pandoc template!**
+
+First, copy the default template in your project:
+
+```{r, eval=FALSE}
+file.copy(
+  pagedown:::pkg_resource("html", "paged.html"), 
+  "custom_template.html"
+)
+```
+
+Then, modify the YAML header of your Rmd file:
+
+```yaml
+output:
+  pagedown::html_paged:
+    template: custom_template.html
+    css:
+    - custom-fonts.css
+    - custom-page.css
+    - custom.css
+    toc: true
+    self_contained: false
+```
+
+Now, you can open the `custom_template.html` file and customize the HTML markup.
+
+## Citations styling
+
+If you need to style citations, use the `csl` parameter of `pagedown::html_paged` to pass the link to a CSL file.  
+For example, if you want to use the APA citation style, write:
+
+```yaml
+output:
+  pagedown::html_paged:
+    template: custom_template.html
+    css:
+    - custom-fonts.css
+    - custom-page.css
+    - custom.css
+    toc: true
+    self_contained: false
+    csl: https://www.zotero.org/styles/apa
+```
+
+## Main content customisation
+
+In this step, you style headers, paragraphs, footnotes...
+
+Here, Chrome Developers Tools are your best friends. This step is quite fast and easy.
+
+## Customization with JavaScript libraries
+
+At some point, you may want to try some cool JavaScript libraries to enhance your content. This is a great idea! 
+
+But the first try rarely succeeds. 
+
+`pagedown::html_paged()` uses the Paged.js polyfill: Paged.js parses the HTML page, _destroys_ its content and builds a new paginated HTML content. Because most of JavaScript libraries work asynchronously, you have to be sure that Paged.js starts to analyze the content after others JavaScript libraries finished their jobs. 
+
+There are two means to synchronize Paged.js with other JavaScript libraries.
+
+**The first mean is to deactivate Paged.js auto mode**.  
+You only need to insert this JavaScript line:
+
+```js
+window.PagedConfig.auto = false;
+```
+
+Then, you'll have to run Paged.js after the tier JavaScript library finished (using a callback function, for instance). The command to launch Paged.js without auto mode is:
+
+```js
+window.PagedPolyfill.preview();
+```
+
+You can find an example in this issue: https://github.com/rstudio/pagedown/issues/76
+
+**The second mean is by using JavaScript promises/asynchronous functions**.
+
+In its automatic mode, you can execute tier JavaScript libraries before Paged.js begins to parse the document. The `PagedConfig` JavaScript global object has a `before` key that has to be an asynchronous function (or a function returning a promise). You can use it to execute some JavaScript code before Paged.js:
+
+```js
+// retrieve the pagedown default function
+const pagedownBefore = window.PagedConfig.before;
+window.PagedConfig.before = async () => {
+  await pagedownBefore();
+  // do async operations using other JS libraries
+}
+```
+
+
 # Bibliography {-}
 
 ```{r, include=FALSE}
