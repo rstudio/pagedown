@@ -1,7 +1,7 @@
 Package: pagedown
 Type: Package
 Title: Paginate the HTML Output of R Markdown with CSS for Print
-Version: 0.22.1
+Version: 0.22.2
 Authors@R: c(
   person("Yihui", "Xie", role = c("aut", "cre"), email = "xie@yihui.name", comment = c(ORCID = "0000-0003-0645-5666")),
   person("Romain", "Lesur", role = c("aut", "cph"), comment = c(ORCID = "0000-0002-0721-5595")),

@@ -1,5 +1,8 @@
 # CHANGES IN pagedown VERSION 0.23
 
+- Using non ASCII characters in headers, like french `## Présence d'une DAACT`, no longer causes an error in `html_paged()` for TOC processing (thanks, @sylvaine31, #339).
+  However, this is recommended to always use ascii only id when possible to avoid issues or side effects. This can be done by specifying ID e.g. doing `## Présence d'une DAACT {#presence-daact}`
+
 # CHANGES IN pagedown VERSION 0.22
 
 - No longer use `xfun::attr()` (which will be removed from **xfun**).
