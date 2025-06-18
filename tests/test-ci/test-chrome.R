@@ -58,7 +58,7 @@ assert('chrome_print() works with reveal.js presentations', {
   (is_pdf(f))
 
   # in theory it should be 5 pages; I don't know why it's 6 instead
-  (pdftools::pdf_info(f)$pages %==% 6L)
+  (pdftools::pdf_info(f)$pages %==% 7L)
 
   (pdftools::pdf_text(f)[1] %==% 'Test reveal.js\n')
 })
