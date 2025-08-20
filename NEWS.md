@@ -1,3 +1,6 @@
+# CHANGES IN pagedown VERSION 0.24
+
+
 # CHANGES IN pagedown VERSION 0.23
 
 - Using non ASCII characters in headers, like french `## Présence d'une DAACT`, no longer causes an error in `html_paged()` for TOC processing (thanks, @sylvaine31, #339).
