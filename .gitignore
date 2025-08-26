@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+node_modules
+tests/test-output/*.html
