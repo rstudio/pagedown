@@ -1,7 +1,7 @@
 # run tests on CI (these tests depend on Chrome)
 
 print_pdf = function(input, output = tempfile(), ...) {
-  chrome_print(input, output, ...)
+  pagedown::chrome_print(input, output, ...)
 }
 
 if (!is.na(Sys.getenv('CI', NA))) {
