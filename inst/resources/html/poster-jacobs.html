@@ -41,48 +41,42 @@ $endfor$
 
 $body$
 
-<script type="text/javascript">
-(function() {
-  // add appropriate classes to h1 and its parent div
-  var i, d, p, s, el, els = document.getElementsByTagName('h1');
-  for (i = 0; i < els.length; i++) {
-    el = els[i]; p = el.parentNode;
-    if (p.className === 'section level1') {
-      el.append(document.createElement('hr'));
-    }
-    p.className += ' section-' + (i + 1);
-    s = p.dataset['color'];
-    if (s) el.style.color = s;
-    s = p.dataset['backgroundColor'];
-    if (s) p.style.backgroundColor = s;
-    s = p.dataset['borderColor'];
-    if (s) {
-      el.style.backgroundColor = s;
-      p.style.borderColor = s;
-    }
-    d = document.createElement('div');
-    d.className = 'content';
-    while (el.nextSibling) {
-      d.append(el.nextSibling);
-    }
-    p.append(d);
+<script type="module">
+// add appropriate classes to h1 and its parent div
+document.querySelectorAll('h1').forEach((el, i) => {
+  const p = el.parentNode;
+  if (p.className.match(/^section level1$$/)) {
+    el.append(document.createElement('hr'));
   }
-})();
+  p.classList.add(`section-$${i + 1}`);
+  let s = p.dataset['color'];
+  if (s) el.style.color = s;
+  s = p.dataset['backgroundColor'];
+  if (s) p.style.backgroundColor = s;
+  s = p.dataset['borderColor'];
+  if (s) {
+    el.style.backgroundColor = s;
+    p.style.borderColor = s;
+  }
+  const d = document.createElement('div');
+  d.className = 'content';
+  while (el.nextSibling) {
+    d.append(el.nextSibling);
+  }
+  p.append(d);
+});
 </script>
 
 $if(math)$
 $if(mathjax)$
 <!-- dynamically load mathjax for compatibility with self-contained -->
-<script>
-  (function () {
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    var src = `$mathjaxurl$` + "?config=TeX-MML-AM_CHTML";
-    if (location.protocol !== "file:" && /^https?:/.test(src))
-      src = src.replace(/^https?:/, '');
-    script.src = src;
-    document.getElementsByTagName("head")[0].appendChild(script);
-  })();
+<script type="module">
+const script = document.createElement("script");
+let src = `$mathjaxurl$` + "?config=TeX-MML-AM_CHTML";
+if (location.protocol !== "file:" && /^https?:/.test(src))
+  src = src.replace(/^https?:/, '');
+script.src = src;
+document.getElementsByTagName("head")[0].appendChild(script);
 </script>
 $endif$
 $endif$
