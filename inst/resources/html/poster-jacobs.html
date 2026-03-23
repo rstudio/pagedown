@@ -45,7 +45,7 @@ $body$
 // add appropriate classes to h1 and its parent div
 document.querySelectorAll('h1').forEach((el, i) => {
   const p = el.parentNode;
-  if (p.className.match(/^section level1$$/)) {
+  if (p.className.match(/^section level1( unnumbered)?$$/)) {
     el.append(document.createElement('hr'));
   }
   p.classList.add(`section-$${i + 1}`);

@@ -1,5 +1,6 @@
 # CHANGES IN pagedown VERSION 0.24
 
+- Fixed the bug that horizontal lines are not added below unnumbered h1 headers in the `poster_jacobs` format (thanks, @djsimmonds, #345).
 
 # CHANGES IN pagedown VERSION 0.23
 
