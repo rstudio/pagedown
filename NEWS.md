@@ -1,5 +1,9 @@
 # CHANGES IN pagedown VERSION 0.25
 
+- Fixed an issue where figures inserted using Markdown syntax with a bookdown identifier `(#fig:)` were not included in the List of Figures when using Pandoc 3 (thanks, @remlapmot, #347).
+
+- `chrome_print()` no longer treats HTTP errors for sub-resources (e.g., a missing `favicon.ico`, images, or fonts) as fatal. Only errors for the main document now raise an error (thanks, @remlapmot, #347).
+
 # CHANGES IN pagedown VERSION 0.24
 
 - Fixed the bug that horizontal lines are not added below unnumbered h1 headers in the `poster_jacobs` format (thanks, @djsimmonds, #345).
