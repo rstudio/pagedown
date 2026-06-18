@@ -633,14 +633,18 @@ print_page = function(
     if (!is.null(method)) {
       if (method == "Network.responseReceived") {
         status = as.numeric(msg$params$response$status)
-        # only treat a failure of the main document as fatal; sub-resources such
-        # as favicon.ico, images or fonts may legitimately 404 without affecting
-        # the rendered output (the browser still loads the page)
-        if (status >= 400 && identical(msg$params$type, "Document")) {
-          token$error = sprintf(
+        # treat a failure of the main document as fatal; warn about sub-resources
+        # (favicon.ico, images, fonts, etc.) that fail but don't block rendering
+        if (status >= 400) {
+          msg = sprintf(
             'Failed to open %s (HTTP status code: %s)', msg$params$response$url, status
           )
-          reject(token$error)
+          if (identical(msg$params$type, "Document")) {
+            token$error = msg
+            reject(token$error)
+          } else {
+            warning(msg, call. = FALSE)
+          }
         }
       }
       if (method == 'Inspector.targetCrashed') {
