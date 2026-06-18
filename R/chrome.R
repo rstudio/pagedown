@@ -633,7 +633,10 @@ print_page = function(
     if (!is.null(method)) {
       if (method == "Network.responseReceived") {
         status = as.numeric(msg$params$response$status)
-        if (status >= 400) {
+        # only treat a failure of the main document as fatal; sub-resources such
+        # as favicon.ico, images or fonts may legitimately 404 without affecting
+        # the rendered output (the browser still loads the page)
+        if (status >= 400 && identical(msg$params$type, "Document")) {
           token$error = sprintf(
             'Failed to open %s (HTTP status code: %s)', msg$params$response$url, status
           )

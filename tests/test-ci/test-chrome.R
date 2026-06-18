@@ -27,6 +27,17 @@ run_promise = function(x) {
   state$value
 }
 
+# Extract the PDF outline as a nested list of title/children, comparable across
+# pdftools versions. pdftools >= 3.8.0 added an `is_open` field to pdf_toc(),
+# which also shifted the entries from `[[2L]]` to the `children` element; we
+# therefore select `children` by name and keep only `title`/`children`.
+pdf_outline = function(file) {
+  prune = function(x) lapply(x, function(node) list(
+    title = node$title, children = prune(node$children)
+  ))
+  prune(pdftools::pdf_toc(file)$children)
+}
+
 assert('find_chrome() finds Chrome executable', {
   (nzchar(find_chrome()))
 })
@@ -73,7 +84,7 @@ assert('chrome_print() generates expected outline', {
 
   (is_pdf(f))
 
-  toc = pdftools::pdf_toc(f)[[2L]]
+  toc = pdf_outline(f)
   res = list(
     list(title = "1 Title 1", children = list()),
     list(
@@ -97,14 +108,14 @@ assert('chrome_print() generates expected outline', {
   # works for async
   f = run_promise(print_pdf('test-outline.Rmd', async = TRUE))
   (is_pdf(f))
-  toc = pdftools::pdf_toc(f)[[2L]]
+  toc = pdf_outline(f)
   (toc %==% res)
 
   # works for output name with non-ASCII & white space
   output = tempfile(pattern = "\u4e2d \u6587")
   f = print_pdf('test-outline.Rmd', output = output)
   (is_pdf(f))
-  toc = pdftools::pdf_toc(f)[[2L]]
+  toc = pdf_outline(f)
   (toc %==% res)
 
   # works for input name with non-ASCII & white space
@@ -112,6 +123,6 @@ assert('chrome_print() generates expected outline', {
   file.copy('test-outline.Rmd', input)
   f = print_pdf(input)
   (is_pdf(f))
-  toc = pdftools::pdf_toc(f)[[2L]]
+  toc = pdf_outline(f)
   (toc %==% res)
 })

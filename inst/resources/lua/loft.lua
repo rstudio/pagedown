@@ -118,6 +118,24 @@ local function addFigRef2(img)
   end
 end
 
+-- Pandoc >= 3.0 wraps a lone image in a native Figure element instead of
+-- setting the image title to "fig:" (the implicit_figures behaviour that
+-- addFigRef2 relies on). Inspect the Figure caption for a bookdown id so that
+-- Markdown-syntax figures still appear in the list of figures.
+local function addFigRef3(fig)
+
+  local captionText
+
+  -- do not build the lof if not required
+  if not options.lof then return nil end
+
+  captionText = pandoc.utils.stringify(fig.caption.long)
+  if string.find(captionText, "%(#fig:.*%)") then
+    refFromCaption(captionText, figuresList)
+  end
+  return nil -- Do not modify Figure
+end
+
 -- This function inspects the tables captions.
 -- When a bookdown id is found, it builds and saves the items used by
 --  the list of tables.
@@ -175,7 +193,16 @@ local function appendLoft(doc)
 end
 
 -- Organize filters: Meta filter needs to run before others
+local lofFilter = {Div = addFigRef, Image = addFigRef2, Table = addTabRef, Pandoc = appendLoft}
+
+-- Pandoc 3.0 introduced the native Figure element for Markdown-syntax figures,
+-- which the Image filter no longer catches. Only register the Figure handler
+-- when it is available to keep the filter working with older Pandoc versions.
+if pandocAvailable {3,0,0} then
+  lofFilter.Figure = addFigRef3
+end
+
 return {
   {Meta = getMeta},
-  {Div = addFigRef, Image = addFigRef2, Table = addTabRef, Pandoc = appendLoft}
+  lofFilter
 }
