@@ -636,14 +636,15 @@ print_page = function(
         # treat a failure of the main document as fatal; warn about sub-resources
         # (favicon.ico, images, fonts, etc.) that fail but don't block rendering
         if (status >= 400) {
-          msg = sprintf(
+          is_doc = identical(msg$params$type, "Document")
+          err = sprintf(
             'Failed to open %s (HTTP status code: %s)', msg$params$response$url, status
           )
-          if (identical(msg$params$type, "Document")) {
-            token$error = msg
+          if (is_doc) {
+            token$error = err
             reject(token$error)
           } else {
-            warning(msg, call. = FALSE)
+            warning(err, call. = FALSE)
           }
         }
       }
