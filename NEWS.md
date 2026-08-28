@@ -1,3 +1,6 @@
+# CHANGES IN pagedown VERSION 0.26
+
+
 # CHANGES IN pagedown VERSION 0.25
 
 - Fixed an issue where figures inserted using Markdown syntax with a bookdown identifier `(#fig:)` were not included in the List of Figures when using Pandoc 3 (thanks, @remlapmot, #347).
