@@ -64,13 +64,11 @@ Want more poster styles? You may take a look at [Brent Thorne's **posterdown** p
 
 - "Template of Exec Summaries with pagedown" by Joshua David Barillas: https://github.com/jdbarillas/executive_summary
 
-- Ulrik Lyngs's CVs: https://ulyngs.github.io/pagedown-cv/
+- Ulrik Lyngs's CVs: https://ulyngs.github.io/pagedownCV/
 
 - Jiena Gu McLellan's CV: https://github.com/jienagu/Jiena_McLellan_CV
 
 - Thomas Vroylandt's template for the French Scouts and Guides Association: https://github.com/tvroylandt/sgdf_pagedown
-
-- Beatriz Milz's CV: https://beatrizmilz.github.io/resume/resume.html
 
 - **pagedreport** by Thomas Vroylandt and David Keyes which helps using **pagedown** with some templates proposals: https://github.com/rfortherestofus/pagedreport
 
